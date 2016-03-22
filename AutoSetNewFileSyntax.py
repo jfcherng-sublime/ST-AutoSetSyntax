@@ -21,6 +21,12 @@ def plugin_loaded():
     syntaxMapping = {}
     syntaxFiles = sublime.find_resources("*.sublime-syntax") + sublime.find_resources("*.tmLanguage")
     for syntaxFile in syntaxFiles:
+        fileName, fileExt = os.path.splitext(syntaxFile)
+        # we prefer .sublime-syntax to .tmLanguage
+        # so if a corresponding .sublime-syntax result already exists
+        # we drop .tmLanguage directly to gain some speed up
+        if fileExt == '.tmLanguage' and fileName+'.sublime-syntax' in syntaxMapping:
+            continue
         fileContent = sublime.load_resource(syntaxFile)
         firstLineMatch = findFirstLineMatch(fileContent)
         if firstLineMatch is not None:
@@ -28,7 +34,6 @@ def plugin_loaded():
                 syntaxMapping[syntaxFile] = re.compile(firstLineMatch)
             except:
                 print("{0}: regex compilation failed in {1}".format(PLUGIN, syntaxFile))
-    syntaxMapping = removeDuplicatedSyntaxFile(syntaxMapping)
 
 
 def findFirstLineMatch(content=''):
@@ -74,27 +79,6 @@ def findFirstLineMatchXml(content=''):
         return matches.group(1)
     else:
         return None
-
-
-def removeDuplicatedSyntaxFile(syntaxMapping={}):
-    """
-    there may be both .tmLanguage and .sublime-syntax for a syntax
-    if that happens, we just want to drop .tmLanguage to speed up
-    """
-
-    popKeys = []
-    for syntaxFile, firstLineMatchRe in syntaxMapping.items():
-        fileName, fileExt = os.path.splitext(syntaxFile)
-        # we prefer .sublime-syntax files
-        if fileExt == '.tmLanguage':
-            # if a corresponding .sublime-syntax exists
-            if fileName+'.sublime-syntax' in syntaxMapping:
-                # log syntax files that we do not want to use
-                popKeys.append(syntaxFile)
-    # remove .tmLanguage files from our syntax mapping
-    for popKey in popKeys:
-        syntaxMapping.pop(popKey, None)
-    return syntaxMapping
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
