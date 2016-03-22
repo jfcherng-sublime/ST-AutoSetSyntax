@@ -1,6 +1,8 @@
 Sublime-AutoSetNewFileSyntax
 ============================
-This plugin automatically sets the syntax for a plain text content depends on its first line. The original thought is from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
+This repository is a plugin for Sublime Text >= 3084. 
+It automatically sets the syntax for a plain text content depends on its first line. 
+The original thought is from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
 Examples
