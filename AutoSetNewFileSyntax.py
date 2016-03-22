@@ -32,6 +32,8 @@ def plugin_loaded():
 
 
 def findFirstLineMatch(content=''):
+    """ find "first_line_match" or "firstLineMatch" in syntax file content """
+
     content = content.strip()
     if content[0] == '%':
         return findFirstLineMatchYaml(content)
@@ -39,8 +41,9 @@ def findFirstLineMatch(content=''):
         return findFirstLineMatchXml(content)
 
 
-# find "first_line_match" for .sublime-syntax content
 def findFirstLineMatchYaml(content=''):
+    """ find "first_line_match" in .sublime-syntax content """
+
     # strip everything since "contexts:" to speed up searching
     try:
         content = content[0:content.find('contexts:')]
@@ -57,8 +60,9 @@ def findFirstLineMatchYaml(content=''):
         return None
 
 
-# find "firstLineMatch" for .tmLanguage content
 def findFirstLineMatchXml(content=''):
+    """ find "firstLineMatch" in .tmLanguage content """
+
     cutPoint = content.find('firstLineMatch')
     # early return
     if cutPoint == -1:
@@ -72,9 +76,12 @@ def findFirstLineMatchXml(content=''):
         return None
 
 
-# there may be both .tmLanguage and .sublime-syntax for a syntax
-# if that happens, we just want to drop .tmLanguage to speed up
 def removeDuplicatedSyntaxFile(syntaxMapping={}):
+    """
+    there may be both .tmLanguage and .sublime-syntax for a syntax
+    if that happens, we just want to drop .tmLanguage to speed up
+    """
+
     popKeys = []
     for syntaxFile, firstLineMatchRe in syntaxMapping.items():
         fileName, fileExt = os.path.splitext(syntaxFile)
