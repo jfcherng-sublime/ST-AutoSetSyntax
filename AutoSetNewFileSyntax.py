@@ -8,6 +8,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 import yaml
 
 
+PLUGIN = 'AutoSetNewFileSyntax'
+
 # key   = path of a syntax file
 # value = compiled first_line_match regex
 syntaxMapping = {}
@@ -25,7 +27,7 @@ def plugin_loaded():
             try:
                 syntaxMapping[syntaxFile] = re.compile(firstLineMatch)
             except:
-                pass
+                print("{0}: regex compilation failed in {1}".format(PLUGIN, syntaxFile))
     syntaxMapping = removeDuplicatedSyntaxFile(syntaxMapping)
 
 
