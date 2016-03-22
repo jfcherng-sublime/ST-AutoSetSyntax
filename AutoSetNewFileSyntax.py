@@ -84,6 +84,9 @@ def findFirstLineMatchXml(content=''):
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     global syntaxMapping
 
+    # we only take partial from the first line to prevent from a large one-line content
+    firstLineLengthMax = 80
+
     def on_modified_async(self, view):
         # check there is only one cursor
         cursorCnt = len(view.sel())
@@ -100,8 +103,15 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         self.matchAndSetSyntax(view)
 
     def matchAndSetSyntax(self, view):
-        firstLine = view.substr(view.line(0))
+        firstLine = self.getPartialFirstLine(view)
         for syntaxFile, firstLineMatchRe in syntaxMapping.items():
             if firstLineMatchRe.search(firstLine) is not None:
                 view.set_syntax_file(syntaxFile)
                 return
+
+    def getPartialFirstLine(self, view):
+        # get partial first line
+        firstLine = view.substr(sublime.Region(0, self.firstLineLengthMax))
+        # if there is a "\n" in the partial first line, we make it the real first line
+        firstLine = firstLine.split("\n", 1)[0]
+        return firstLine
