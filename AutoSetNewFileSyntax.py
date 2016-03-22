@@ -97,6 +97,9 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         if view.scope_name(0).strip() != 'text.plain':
             return
         # try to match the first line
+        self.matchAndSetSyntax(view)
+
+    def matchAndSetSyntax(self, view):
         firstLine = view.substr(view.line(0))
         for syntaxFile, firstLineMatchRe in syntaxMapping.items():
             if firstLineMatchRe.search(firstLine) is not None:
