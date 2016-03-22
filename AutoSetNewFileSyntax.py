@@ -27,6 +27,7 @@ def plugin_loaded():
                 syntaxMapping_asnfs[syntaxFile] = re.compile(firstLineMatch)
             except:
                 pass
+    syntaxMapping_asnfs = removeDuplicatedSyntaxFile(syntaxMapping_asnfs)
 
 
 def findFirstLineMatch(content=''):
@@ -68,6 +69,24 @@ def findFirstLineMatchXml(content=''):
         return matches.group(1)
     else:
         return None
+
+
+# there may be both .tmLanguage and .sublime-syntax for a syntax
+# if that happens, we just want to drop .tmLanguage to speed up
+def removeDuplicatedSyntaxFile(syntaxMapping={}):
+    popKeys = []
+    for syntaxFile, firstLineMatchRe in syntaxMapping.items():
+        fileName, fileExt = os.path.splitext(syntaxFile)
+        # we prefer .sublime-syntax files
+        if fileExt == '.tmLanguage':
+            # if a corresponding .sublime-syntax exists
+            if fileName+'.sublime-syntax' in syntaxMapping:
+                # log syntax files that we do not want to use
+                popKeys.append(syntaxFile)
+    # remove .tmLanguage files from our syntax mapping
+    for popKey in popKeys:
+        syntaxMapping.pop(popKey, None)
+    return syntaxMapping
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
