@@ -10,24 +10,23 @@ import yaml
 
 # key   = path of a syntax file
 # value = compiled first_line_match regex
-# _asnfs is just for naming conflict
-syntaxMapping_asnfs = {}
+syntaxMapping = {}
 
 
 def plugin_loaded():
-    global syntaxMapping_asnfs
+    global syntaxMapping
 
-    syntaxMapping_asnfs = {}
+    syntaxMapping = {}
     syntaxFiles = sublime.find_resources("*.sublime-syntax") + sublime.find_resources("*.tmLanguage")
     for syntaxFile in syntaxFiles:
         fileContent = sublime.load_resource(syntaxFile)
         firstLineMatch = findFirstLineMatch(fileContent)
         if firstLineMatch is not None:
             try:
-                syntaxMapping_asnfs[syntaxFile] = re.compile(firstLineMatch)
+                syntaxMapping[syntaxFile] = re.compile(firstLineMatch)
             except:
                 pass
-    syntaxMapping_asnfs = removeDuplicatedSyntaxFile(syntaxMapping_asnfs)
+    syntaxMapping = removeDuplicatedSyntaxFile(syntaxMapping)
 
 
 def findFirstLineMatch(content=''):
@@ -90,7 +89,7 @@ def removeDuplicatedSyntaxFile(syntaxMapping={}):
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
-    global syntaxMapping_asnfs
+    global syntaxMapping
 
     def on_modified_async(self, view):
         # check there is only one cursor
@@ -106,7 +105,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             return
         # try to match the first line
         firstLine = view.substr(view.line(0))
-        for syntaxFile, firstLineMatchRe in syntaxMapping_asnfs.items():
+        for syntaxFile, firstLineMatchRe in syntaxMapping.items():
             if firstLineMatchRe.search(firstLine) is not None:
                 view.set_syntax_file(syntaxFile)
                 return
