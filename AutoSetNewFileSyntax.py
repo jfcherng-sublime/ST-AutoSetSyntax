@@ -30,7 +30,8 @@ def plugin_loaded():
 
 
 def findFirstLineMatch(content=''):
-    if content.strip()[0] == '%':
+    content = content.strip()
+    if content[0] == '%':
         return findFirstLineMatchYaml(content)
     else:
         return findFirstLineMatchXml(content)
