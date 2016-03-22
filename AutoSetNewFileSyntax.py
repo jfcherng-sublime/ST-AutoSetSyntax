@@ -73,9 +73,20 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     global syntaxMapping_asnfs
 
     def on_modified_async(self, view):
-        if view.scope_name(0).strip() == 'text.plain':
-            firstLine = view.substr(view.line(0))
-            for syntaxFile, firstLineMatchRe in syntaxMapping_asnfs.items():
-                if firstLineMatchRe.search(firstLine) is not None:
-                    view.set_syntax_file(syntaxFile)
-                    return
+        # check there is only one cursor
+        cursorCnt = len(view.sel())
+        if cursorCnt != 1:
+            return
+        # check the cursor is at first few lines
+        rowPos = view.rowcol(view.sel()[0].a)[0]
+        if rowPos > 1:
+            return
+        # check the scope of the first line is plain text
+        if view.scope_name(0).strip() != 'text.plain':
+            return
+        # try to match the first line
+        firstLine = view.substr(view.line(0))
+        for syntaxFile, firstLineMatchRe in syntaxMapping_asnfs.items():
+            if firstLineMatchRe.search(firstLine) is not None:
+                view.set_syntax_file(syntaxFile)
+                return
