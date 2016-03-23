@@ -1,7 +1,7 @@
 Sublime-AutoSetNewFileSyntax
 ============================
 This repository is a plugin for Sublime Text >= 3084. 
-It automatically sets the syntax for a plain text content depends on its first line. 
+It automatically sets the syntax for plain text content while typing its first line. 
 The original thought is from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
@@ -14,9 +14,14 @@ If we create a new file in Sublime Text and type `<?php`, this plugin will set t
 
 How It Works
 ============
+When the plugin is loaded:
+
 0. Read all syntax definition files.
 0. Try to find `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
-0. Match the first line with results we found in the last step.
+
+When the first line of a plain text file is being edited:
+
+0. Match the first line with results we found in the previous step.
 0. If there is any luck, set the corresponding syntax for the user.
 
 

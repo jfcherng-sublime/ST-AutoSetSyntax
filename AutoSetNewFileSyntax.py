@@ -127,8 +127,9 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
                 return
 
     def getPartialFirstLine(self, view):
-        # get partial first line
-        firstLine = view.substr(sublime.Region(0, self.firstLineLengthMax))
-        # if there is a "\n" in the partial first line, we make it the real first line
-        firstLine = firstLine.split("\n", 1)[0]
-        return firstLine
+        # if the first line is longer than the max line length,
+        #  then use the max line length
+        # otherwise use the actual length of the first line
+        partialLineEndPos = min(view.line(0).end(), self.firstLineLengthMax)
+        # get the partial first line
+        return view.substr(sublime.Region(0, partialLineEndPos))
