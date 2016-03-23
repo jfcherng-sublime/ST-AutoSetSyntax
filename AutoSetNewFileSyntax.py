@@ -44,7 +44,8 @@ def findSyntaxResources (dropDuplicated=False):
     """
     find all syntax resources
 
-    dropDuplicated: if True, for a syntax, only the highest priority resource will be returned
+    dropDuplicated:
+        If True, for a syntax, only the highest priority resource will be returned.
     """
 
     # priority from high to low
@@ -104,7 +105,7 @@ def findFirstLineMatchXml(content=''):
         return None
     # cut string to speed up searching
     content = content[cutPoint:]
-    matches = re.search(r"firstLineMatch</key>[\r\n\s]*<string>(.*?)</string>", content, re.DOTALL)
+    matches = re.search(r"firstLineMatch</key>\s*<string>(.*?)</string>", content, re.DOTALL)
     if matches is not None:
         return matches.group(1)
     else:
@@ -114,7 +115,8 @@ def findFirstLineMatchXml(content=''):
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     global syntaxMapping
 
-    # we only take partial from the first line to prevent from a large one-line content
+    # we only take partial content from the first line
+    # to prevent lagging from a large one-line content
     firstLineLengthMax = 80
 
     def on_modified_async(self, view):
@@ -139,7 +141,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
     def getPartialFirstLine(self, view):
         # if the first line is longer than the max line length,
-        #  then use the max line length
+        # then use the max line length
         # otherwise use the actual length of the first line
         partialLineEndPos = min(view.line(0).end(), self.firstLineLengthMax)
         # get the partial first line
