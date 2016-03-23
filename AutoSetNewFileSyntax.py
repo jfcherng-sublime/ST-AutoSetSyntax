@@ -16,7 +16,7 @@ LOG_FORMAT = "%(name)s: %(levelname)s - %(message)s"
 settings = None
 
 # key   = path of a syntax file
-# value = compiled first_line_match regex
+# value = compiled first_line_match regexes
 syntaxMapping = {}
 
 # create logger stream handler
@@ -39,8 +39,12 @@ def plugin_loaded():
         firstLineMatch = findFirstLineMatch(sublime.load_resource(syntaxFile))
         if firstLineMatch is not None:
             try:
-                syntaxMapping[syntaxFile] = re.compile(firstLineMatch)
+                if syntaxFile not in syntaxMapping:
+                    syntaxMapping[syntaxFile] = []
+                syntaxMapping[syntaxFile] += re.compile(firstLineMatch)
             except:
+                if len(syntaxMapping[syntaxFile]) == 0:
+                    syntaxMapping.pop('syntaxFile', None)
                 logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
 
 
@@ -136,10 +140,11 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
     def matchAndSetSyntax(self, view):
         firstLine = self.getPartialFirstLine(view)
-        for syntaxFile, firstLineMatchRe in syntaxMapping.items():
-            if firstLineMatchRe.search(firstLine) is not None:
-                view.set_syntax_file(syntaxFile)
-                return
+        for syntaxFile, firstLineMatchRegexes in syntaxMapping.items():
+            for firstLineMatchRegex in firstLineMatchRegexes:
+                if firstLineMatchRegex.search(firstLine) is not None:
+                    view.set_syntax_file(syntaxFile)
+                    return
 
     def getPartialFirstLine(self, view):
         firstLineLengthMax = settings.get('first_line_length_max')
