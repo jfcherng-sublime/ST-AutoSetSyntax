@@ -1,0 +1,5 @@
+{
+    // we only take partial content from the first line
+    // to prevent lagging from a large one-line content
+    "first_line_length_max": 80
+}

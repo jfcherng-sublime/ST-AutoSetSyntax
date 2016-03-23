@@ -13,6 +13,8 @@ PLUGIN_NAME = 'AutoSetNewFileSyntax'
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(name)s: %(levelname)s - %(message)s"
 
+settings = None
+
 # key   = path of a syntax file
 # value = compiled first_line_match regex
 syntaxMapping = {}
@@ -27,7 +29,9 @@ logger.addHandler(loggingStreamHandler)
 
 
 def plugin_loaded():
-    global syntaxMapping
+    global settings, syntaxMapping
+
+    settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
 
     syntaxMapping = {}
     syntaxFiles = findSyntaxResources(True)
@@ -115,11 +119,7 @@ def findFirstLineMatchXml(content=''):
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
-    global syntaxMapping
-
-    # we only take partial content from the first line
-    # to prevent lagging from a large one-line content
-    firstLineLengthMax = 80
+    global settings, syntaxMapping
 
     def on_modified_async(self, view):
         # check there is only one cursor
@@ -145,6 +145,6 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         # if the first line is longer than the max line length,
         # then use the max line length
         # otherwise use the actual length of the first line
-        partialLineEndPos = min(view.line(0).end(), self.firstLineLengthMax)
+        partialLineEndPos = min(view.line(0).end(), settings.get('first_line_length_max'))
         # get the partial first line
         return view.substr(sublime.Region(0, partialLineEndPos))
