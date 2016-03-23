@@ -34,17 +34,14 @@ def plugin_loaded():
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
 
     syntaxMapping = {}
-    syntaxFiles = findSyntaxResources(True)
-    for syntaxFile in syntaxFiles:
+    for syntaxFile in findSyntaxResources(True):
+        if syntaxFile not in syntaxMapping:
+            syntaxMapping[syntaxFile] = []
         firstLineMatch = findFirstLineMatch(sublime.load_resource(syntaxFile))
         if firstLineMatch is not None:
             try:
-                if syntaxFile not in syntaxMapping:
-                    syntaxMapping[syntaxFile] = []
-                syntaxMapping[syntaxFile] += re.compile(firstLineMatch)
+                syntaxMapping[syntaxFile].append(re.compile(firstLineMatch))
             except:
-                if len(syntaxMapping[syntaxFile]) == 0:
-                    syntaxMapping.pop('syntaxFile', None)
                 logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
 
 
