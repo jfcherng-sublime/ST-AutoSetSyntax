@@ -19,21 +19,43 @@ def plugin_loaded():
     global syntaxMapping
 
     syntaxMapping = {}
-    syntaxFiles = sublime.find_resources("*.sublime-syntax") + sublime.find_resources("*.tmLanguage")
+    syntaxFiles = findSyntaxResources(True)
     for syntaxFile in syntaxFiles:
-        fileName, fileExt = os.path.splitext(syntaxFile)
-        # we prefer .sublime-syntax to .tmLanguage
-        # so if a corresponding .sublime-syntax result already exists
-        # we drop .tmLanguage directly to gain some speed up
-        if fileExt == '.tmLanguage' and fileName+'.sublime-syntax' in syntaxMapping:
-            continue
-        fileContent = sublime.load_resource(syntaxFile)
-        firstLineMatch = findFirstLineMatch(fileContent)
+        firstLineMatch = findFirstLineMatch(sublime.load_resource(syntaxFile))
         if firstLineMatch is not None:
             try:
                 syntaxMapping[syntaxFile] = re.compile(firstLineMatch)
             except:
                 print("{0}: regex compilation failed in {1}".format(PLUGIN, syntaxFile))
+
+
+def findSyntaxResources (dropDuplicated=False):
+    """
+    find all syntax resources
+
+    dropDuplicated: if True, for a syntax, only the highest priority resource will be returned
+    """
+
+    # priority from high to low
+    syntaxFileExts = ['.sublime-syntax', '.tmLanguage']
+    if dropDuplicated is False:
+        syntaxFiles = []
+        for syntaxFileExt in syntaxFileExts:
+            syntaxFiles += sublime.find_resources('*'+syntaxFileExt)
+    else:
+        # key   = syntax resource path without extension
+        # value = the corresponding extension
+        # example: { 'Packages/Java/Java': '.sublime-syntax' }
+        syntaxGriddle = {}
+        for syntaxFileExt in syntaxFileExts:
+            resources = sublime.find_resources('*'+syntaxFileExt)
+            for resource in resources:
+                resourceName, resourceExt = os.path.splitext(resource)
+                if resourceName not in syntaxGriddle:
+                    syntaxGriddle[resourceName] = resourceExt
+        # combine a name and an extension into a full path
+        syntaxFiles = [n+e for n, e in syntaxGriddle.items()]
+    return syntaxFiles
 
 
 def findFirstLineMatch(content=''):
