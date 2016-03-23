@@ -1,5 +1,12 @@
 {
     // the max lookup length for the first line
     // a negative number means no limitation
-    "first_line_length_max": 80
+    "first_line_length_max": 80,
+    "syntax_mapping": {
+        // example:
+        //     "Packages/PHP/PHP.sublime-syntax": [
+        //         "<\?php",
+        //         "<\?="
+        //     ]
+    }
 }

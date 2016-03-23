@@ -34,6 +34,18 @@ def plugin_loaded():
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
 
     syntaxMapping = {}
+
+    # load from user settings
+    for syntaxFile, firstLineMatches in settings.get('syntax_mapping').items():
+        if syntaxFile not in syntaxMapping:
+            syntaxMapping[syntaxFile] = []
+        for firstLineMatch in firstLineMatches:
+            try:
+                syntaxMapping[syntaxFile].append(re.compile(firstLineMatch))
+            except:
+                logger.error("regex compilation failed in user settings {0}: {1}".format(syntaxFile, firstLineMatch))
+
+    # load from ST packages
     for syntaxFile in findSyntaxResources(True):
         if syntaxFile not in syntaxMapping:
             syntaxMapping[syntaxFile] = []
@@ -43,6 +55,13 @@ def plugin_loaded():
                 syntaxMapping[syntaxFile].append(re.compile(firstLineMatch))
             except:
                 logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
+
+    # remove the key whose corresponding value is a empty list in syntaxMapping
+    syntaxMapping = {
+        syntaxFile: firstLineMatchRegexes
+        for syntaxFile, firstLineMatchRegexes in syntaxMapping.items()
+        if len(firstLineMatchRegexes) > 0
+    }
 
 
 def findSyntaxResources (dropDuplicated=False):
