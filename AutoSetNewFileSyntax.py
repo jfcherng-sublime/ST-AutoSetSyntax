@@ -108,12 +108,10 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
     def on_modified_async(self, view):
         # check there is only one cursor
-        cursorCnt = len(view.sel())
-        if cursorCnt != 1:
+        if len(view.sel()) != 1:
             return
         # check the cursor is at first few lines
-        rowPos = view.rowcol(view.sel()[0].a)[0]
-        if rowPos > 1:
+        if view.rowcol(view.sel()[0].a)[0] > 1:
             return
         # check the scope of the first line is plain text
         if view.scope_name(0).strip() != 'text.plain':
