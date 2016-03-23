@@ -25,11 +25,6 @@ When the first line of a plain text file is being edited:
 0. If there is any luck, set the corresponding syntax for the user.
 
 
-Future Works
-============
-- Let user add their own `first_line_match` and the corresponding syntax pairs.
-
-
 See Also
 ========
 - [ApplySyntax](https://github.com/facelessuser/ApplySyntax)
