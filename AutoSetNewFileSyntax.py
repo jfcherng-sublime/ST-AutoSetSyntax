@@ -84,7 +84,9 @@ def findFirstLineMatchYaml(content=''):
     """ find "first_line_match" in .sublime-syntax content """
 
     # strip everything since "contexts:" to speed up searching
-    content = content.split('contexts:', 1)[0]
+    cutPos = content.find('contexts:')
+    if cutPos != -1:
+        content = content[0:cutPos]
     # early return
     if content.find('first_line_match') == -1:
         return None
