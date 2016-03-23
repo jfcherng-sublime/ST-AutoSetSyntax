@@ -56,7 +56,7 @@ def plugin_loaded():
             except:
                 logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
 
-    # remove the key whose corresponding value is a empty list in syntaxMapping
+    # in syntaxMapping, remove keys whose corresponding value is a empty list
     syntaxMapping = {
         syntaxFile: firstLineMatchRegexes
         for syntaxFile, firstLineMatchRegexes in syntaxMapping.items()
@@ -72,7 +72,7 @@ def findSyntaxResources (dropDuplicated=False):
         If True, for a syntax, only the highest priority resource will be returned.
     """
 
-    # priority from high to low
+    # syntax priority is from high to low
     syntaxFileExts = ['.sublime-syntax', '.tmLanguage']
     if dropDuplicated is False:
         syntaxFiles = []
@@ -89,7 +89,7 @@ def findSyntaxResources (dropDuplicated=False):
                 resourceName, resourceExt = os.path.splitext(resource)
                 if resourceName not in syntaxGriddle:
                     syntaxGriddle[resourceName] = resourceExt
-        # combine a name and an extension into a full path
+        # combine a name and an extension back into a full path
         syntaxFiles = [n+e for n, e in syntaxGriddle.items()]
     return syntaxFiles
 
