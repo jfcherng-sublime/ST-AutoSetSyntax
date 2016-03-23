@@ -3,16 +3,27 @@ import sublime_plugin
 import sys
 import os
 import re
+import logging
 
 sys.path.insert(0, os.path.dirname(__file__))
 import yaml
 
 
-PLUGIN = 'AutoSetNewFileSyntax'
+PLUGIN_NAME = 'AutoSetNewFileSyntax'
+LOG_LEVEL = logging.INFO
+LOG_FORMAT = "%(name)s: %(levelname)s - %(message)s"
 
 # key   = path of a syntax file
 # value = compiled first_line_match regex
 syntaxMapping = {}
+
+# create logger stream handler
+loggingStreamHandler = logging.StreamHandler()
+loggingStreamHandler.setFormatter(logging.Formatter(LOG_FORMAT))
+# config logger
+logger = logging.getLogger(PLUGIN_NAME)
+logger.setLevel(LOG_LEVEL)
+logger.addHandler(loggingStreamHandler)
 
 
 def plugin_loaded():
@@ -26,7 +37,7 @@ def plugin_loaded():
             try:
                 syntaxMapping[syntaxFile] = re.compile(firstLineMatch)
             except:
-                print("{0}: regex compilation failed in {1}".format(PLUGIN, syntaxFile))
+                logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
 
 
 def findSyntaxResources (dropDuplicated=False):
