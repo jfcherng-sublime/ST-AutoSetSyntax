@@ -23,6 +23,14 @@ User Settings
             ...
         ],
         ...
+    },
+    "event_listeners": {
+        "on_activated_async": true,
+        "on_clone_async": true,
+        "on_load_async": true,
+        "on_modified_async": true,
+        "on_new_async": true,
+        "on_pre_save_async": true,
     }
 }
 ```
@@ -33,6 +41,13 @@ User Settings
 - syntax_mapping
     - key: The partial path of syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
     - value: Regular expressions to match the first line.
+- event_listeners
+    - on_activated_async": Called when a view gains input focus.
+    - on_clone_async": Called when a view is cloned from an existing one.
+    - on_load_async": Called when the file is finished loading.
+    - on_modified_async": Called after changes have been made to a view.
+    - on_new_async": Called when a new buffer is created.
+    - on_pre_save_async": Called just before a view is saved.
 
 
 How It Works
