@@ -14,6 +14,8 @@ class SyntaxMappings():
     syntaxMappings = []
     syntaxMappingsSt = [] # cache, syntax mappings built drom ST packages
 
+    syntaxFiles = []
+
     def __init__(self, settings=None, logger=None):
         self.settings = settings
         self.logger = logger
@@ -21,6 +23,7 @@ class SyntaxMappings():
         # rebuilt syntax mappings if there is an user settings update
         self.settings.add_on_change("syntax_mapping", self.rebuildSyntaxMappings)
 
+        self.syntaxFiles = self.findSyntaxResources(True)
         self.syntaxMappingsSt = self.buildSyntaxMappingsFromSt()
         self.rebuildSyntaxMappings()
 
@@ -45,7 +48,7 @@ class SyntaxMappings():
                 # syntaxFilePartial could be partial path
                 # we try to get the real path here
                 syntaxFileFound = False
-                for syntaxFile in self.findSyntaxResources(True):
+                for syntaxFile in self.syntaxFiles:
                     if syntaxFile.find(syntaxFilePartial) >= 0:
                         self.logger.info("match syntax file {0} with {1}".format(syntaxFilePartial, syntaxFile))
                         syntaxFileFound = True
@@ -59,7 +62,7 @@ class SyntaxMappings():
         """ load from ST packages (one-time job, unless restart ST) """
 
         syntaxMappings = []
-        for syntaxFile in self.findSyntaxResources(True):
+        for syntaxFile in self.syntaxFiles:
             firstLineMatch = self.findFirstLineMatch(sublime.load_resource(syntaxFile))
             if firstLineMatch is not None:
                 try:
