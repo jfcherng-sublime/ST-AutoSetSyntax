@@ -32,6 +32,7 @@ def plugin_loaded():
     global settings, syntaxMapping
 
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
+    settings.add_on_change("syntax_mapping", rebuildSyntaxMapping)
 
     syntaxMapping = {}
 
@@ -62,6 +63,11 @@ def plugin_loaded():
         for syntaxFile, firstLineMatchRegexes in syntaxMapping.items()
         if len(firstLineMatchRegexes) > 0
     }
+
+
+def rebuildSyntaxMapping():
+    global settings, syntaxMapping
+    # to be implemented
 
 
 def findSyntaxResources(dropDuplicated=False):
