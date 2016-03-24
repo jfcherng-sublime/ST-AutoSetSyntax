@@ -20,9 +20,6 @@ class SyntaxMappings():
         self.settings = settings
         self.logger = logger
 
-        # rebuilt syntax mappings if there is an user settings update
-        self.settings.add_on_change("syntax_mapping", self.rebuildSyntaxMappings)
-
         self.syntaxFiles = self.findSyntaxResources(True)
         self.syntaxMappingsSt = self.buildSyntaxMappingsFromSt()
         self.rebuildSyntaxMappings()

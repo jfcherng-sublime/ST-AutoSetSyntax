@@ -14,21 +14,34 @@ LOG_FORMAT = "%(name)s: [%(levelname)s] %(message)s"
 
 settings = None
 syntaxMappings = None
+loggingStreamHandler = None
+logger = None
 
-# create logger stream handler
-loggingStreamHandler = logging.StreamHandler()
-loggingStreamHandler.setFormatter(logging.Formatter(LOG_FORMAT))
-# config logger
-logger = logging.getLogger(PLUGIN_NAME)
-logger.setLevel(LOG_LEVEL)
-logger.addHandler(loggingStreamHandler)
+
+def plugin_unloaded():
+    global settings, loggingStreamHandler, logger
+
+    settings.clear_on_change("syntax_mapping")
+    logger.removeHandler(loggingStreamHandler)
 
 
 def plugin_loaded():
-    global settings, syntaxMappings, logger
+    global settings, syntaxMappings, loggingStreamHandler, logger
+
+    # create logger stream handler
+    loggingStreamHandler = logging.StreamHandler()
+    loggingStreamHandler.setFormatter(logging.Formatter(LOG_FORMAT))
+    # config logger
+    logger = logging.getLogger(PLUGIN_NAME)
+    logger.setLevel(LOG_LEVEL)
+    logger.addHandler(loggingStreamHandler)
 
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
+
     syntaxMappings = SyntaxMappings(settings=settings, logger=logger)
+
+    # rebuilt syntax mappings if there is an user settings update
+    settings.add_on_change("syntax_mapping", syntaxMappings.rebuildSyntaxMappings)
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
