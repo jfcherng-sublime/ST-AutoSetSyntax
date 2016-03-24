@@ -117,10 +117,13 @@ class SyntaxMappings():
         if content.find('first_line_match') == -1:
             return None
         # start parsing
-        yamlDict = yaml.load(content)
-        if 'first_line_match' in yamlDict:
-            return yamlDict['first_line_match']
-        else:
+        try:
+            yamlDict = yaml.load(content)
+            if 'first_line_match' in yamlDict:
+                return yamlDict['first_line_match']
+            else:
+                return None
+        except:
             return None
 
     def findFirstLineMatchXml(self, content=''):
