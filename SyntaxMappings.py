@@ -34,15 +34,25 @@ class SyntaxMappings():
         """ load from user settings """
 
         syntaxMappings = []
-        for syntaxFile, firstLineMatches in self.settings.get('syntax_mapping').items():
+        for syntaxFilePartial, firstLineMatches in self.settings.get('syntax_mapping').items():
             firstLineMatchRegexes = []
             for firstLineMatch in firstLineMatches:
                 try:
                     firstLineMatchRegexes.append(re.compile(firstLineMatch))
                 except:
-                    self.logger.error("regex compilation failed in user settings {0}: {1}".format(syntaxFile, firstLineMatch))
+                    self.logger.error("regex compilation failed in user settings {0}: {1}".format(syntaxFilePartial, firstLineMatch))
             if len(firstLineMatchRegexes) > 0:
-                syntaxMappings.append((syntaxFile, firstLineMatchRegexes))
+                # syntaxFilePartial could be partial path
+                # we try to get the real path here
+                syntaxFileFound = False
+                for syntaxFile in self.findSyntaxResources(True):
+                    if syntaxFile.find(syntaxFilePartial) >= 0:
+                        self.logger.info("match syntax file {0} with {1}".format(syntaxFilePartial, syntaxFile))
+                        syntaxFileFound = True
+                        syntaxMappings.append((syntaxFile, firstLineMatchRegexes))
+                        break
+                if syntaxFileFound is False:
+                    self.logger.error("cannot find a syntax file in user settings {0}".format(syntaxFilePartial))
         return syntaxMappings
 
     def buildSyntaxMappingsFromSt(self):
