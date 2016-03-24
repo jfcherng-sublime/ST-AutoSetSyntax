@@ -48,19 +48,29 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     global settings, syntaxMappings
 
     def on_activated_async(self, view):
-        if self.isScopePlainText(view):
+        if (
+            self.isEventListenerEnabled('on_activated_async') and
+            self.isScopePlainText(view)
+        ):
             self.matchAndSetSyntax(view)
 
     def on_clone_async(self, view):
-        if self.isScopePlainText(view):
+        if (
+            self.isEventListenerEnabled('on_clone_async') and
+            self.isScopePlainText(view)
+        ):
             self.matchAndSetSyntax(view)
 
     def on_load_async(self, view):
-        if self.isScopePlainText(view):
+        if (
+            self.isEventListenerEnabled('on_load_async') and
+            self.isScopePlainText(view)
+        ):
             self.matchAndSetSyntax(view)
 
     def on_modified_async(self, view):
         if (
+            self.isEventListenerEnabled('on_modified_async') and
             self.isOnlyOneCursor(view) and
             self.isFirstCursorNearBeginning(view) and
             self.isScopePlainText(view)
@@ -68,8 +78,19 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.matchAndSetSyntax(view)
 
     def on_pre_save_async(self, view):
-        if self.isScopePlainText(view):
+        if (
+            self.isEventListenerEnabled('on_pre_save_async') and
+            self.isOnlyOneCursor(view) and
+            self.isFirstCursorNearBeginning(view) and
+            self.isScopePlainText(view)
+        ):
             self.matchAndSetSyntax(view)
+
+    def isEventListenerEnabled(self, event):
+        try:
+            return settings.get("event_listeners", None)[event]
+        except:
+            return False
 
     def isOnlyOneCursor(self, view):
         """ check there is only one cursor """
