@@ -10,7 +10,7 @@ from SyntaxMappings import *
 
 PLUGIN_NAME = 'AutoSetNewFileSyntax'
 LOG_LEVEL = logging.INFO
-LOG_FORMAT = "%(name)s: %(levelname)s - %(message)s"
+LOG_FORMAT = "%(name)s: [%(levelname)s] %(message)s"
 
 settings = None
 syntaxMappings = None
