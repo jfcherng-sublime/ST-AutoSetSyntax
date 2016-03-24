@@ -48,6 +48,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     global settings, syntaxMappings
 
     def on_activated_async(self, view):
+        """ called when a view gains input focus """
+
         if (
             self.isEventListenerEnabled('on_activated_async') and
             self.isScopePlainText(view)
@@ -55,6 +57,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.matchAndSetSyntax(view)
 
     def on_clone_async(self, view):
+        """ called when a view is cloned from an existing one """
+
         if (
             self.isEventListenerEnabled('on_clone_async') and
             self.isScopePlainText(view)
@@ -62,6 +66,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.matchAndSetSyntax(view)
 
     def on_load_async(self, view):
+        """ called when the file is finished loading """
+
         if (
             self.isEventListenerEnabled('on_load_async') and
             self.isScopePlainText(view)
@@ -69,6 +75,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.matchAndSetSyntax(view)
 
     def on_modified_async(self, view):
+        """ called after changes have been made to a view """
+
         if (
             self.isEventListenerEnabled('on_modified_async') and
             self.isOnlyOneCursor(view) and
@@ -78,6 +86,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.matchAndSetSyntax(view)
 
     def on_pre_save_async(self, view):
+        """ called just before a view is saved """
+
         if (
             self.isEventListenerEnabled('on_pre_save_async') and
             self.isScopePlainText(view)
@@ -85,6 +95,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.matchAndSetSyntax(view)
 
     def isEventListenerEnabled(self, event):
+        """ check a event listener is enabled """
+
         try:
             return settings.get("event_listeners", None)[event]
         except:
@@ -106,6 +118,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         return view.scope_name(0).strip() == 'text.plain'
 
     def matchAndSetSyntax(self, view):
+        """ match the first line and set the corresponding syntax """
+
         firstLine = self.getPartialFirstLine(view)
         for syntaxMapping in syntaxMappings.value():
             syntaxFile, firstLineMatchRegexes = syntaxMapping
@@ -115,11 +129,12 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
                     return
 
     def getPartialFirstLine(self, view):
+        """ get the (partial) first line """
+
         region = view.line(0)
         firstLineLengthMax = settings.get('first_line_length_max')
         if firstLineLengthMax >= 0:
             # if the first line is longer than the max line length,
-            # then use the max line length
-            # otherwise use the actual length of the first line
+            # then we use the max line length
             region = sublime.Region(0, min(region.end(), firstLineLengthMax))
         return view.substr(region)
