@@ -5,8 +5,8 @@
     "syntax_mapping": {
         // example:
         //     "Packages/PHP/PHP.sublime-syntax": [
-        //         "<\?php",
-        //         "<\?="
+        //         "<\\?php",
+        //         "<\\?="
         //     ]
     }
 }
