@@ -80,8 +80,6 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_pre_save_async(self, view):
         if (
             self.isEventListenerEnabled('on_pre_save_async') and
-            self.isOnlyOneCursor(view) and
-            self.isFirstCursorNearBeginning(view) and
             self.isScopePlainText(view)
         ):
             self.matchAndSetSyntax(view)
