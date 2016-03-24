@@ -32,7 +32,8 @@ User Settings
         "on_new_async": true,
         "on_post_text_command": true,
         "on_pre_save_async": true,
-    }
+    },
+    "work_on_non_plain_text": false
 }
 ```
 
@@ -50,7 +51,8 @@ User Settings
     - on_new_async": Called when a new buffer is created.
     - on_post_paste": Called after there is a paste operation.
     - on_pre_save_async": Called just before a view is saved.
-
+- work_on_non_plain_text
+    - Should this plugin also work on non-plaintext content?
 
 How It Works
 ============

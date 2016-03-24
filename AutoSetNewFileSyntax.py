@@ -138,6 +138,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def isScopePlainText(self, view):
         """ check the scope of the first line is plain text """
 
+        if settings.get('work_on_non_plain_text', False):
+            return True
         return view.scope_name(0).strip() == 'text.plain'
 
     def matchAndSetSyntax(self, view):
