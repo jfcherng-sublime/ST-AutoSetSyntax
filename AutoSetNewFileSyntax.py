@@ -97,8 +97,10 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_post_text_command(self, view, command_name, args):
         """ called after a text command has been executed """
 
+        if not self.isScopePlainText(view):
+            return
         if (
-            self.isScopePlainText(view) and
+            self.isEventListenerEnabled('on_post_paste') and
             (
                 command_name == 'patse' or
                 command_name == 'paste_and_indent'

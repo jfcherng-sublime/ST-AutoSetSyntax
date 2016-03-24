@@ -14,7 +14,7 @@
         "on_load_async": true,
         "on_modified_async": true,
         "on_new_async": true,
-        "on_post_text_command": true,
+        "on_post_paste": true,
         "on_pre_save_async": true,
     }
 }
