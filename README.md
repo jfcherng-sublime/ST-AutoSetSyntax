@@ -30,10 +30,10 @@ User Settings
         "on_load_async": true,
         "on_modified_async": true,
         "on_new_async": true,
-        "on_post_text_command": true,
+        "on_post_paste": true,
         "on_pre_save_async": true,
     },
-    "work_on_non_plain_text": false
+    "working_scope": "^text.plain\\b"
 }
 ```
 
@@ -51,8 +51,8 @@ User Settings
     - on_new_async": Called when a new buffer is created.
     - on_post_paste": Called after there is a paste operation.
     - on_pre_save_async": Called just before a view is saved.
-- work_on_non_plain_text
-    - Should this plugin also work on non-plaintext content?
+- working_scope
+    - The scope that this plugin should work (regular expression).
 
 How It Works
 ============
@@ -61,7 +61,7 @@ When the plugin is loaded:
 0. Read all syntax definition files.
 0. Try to find `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
 
-When the first line of a plain text file is being edited:
+When the first line of a plain text file (by default) is being edited:
 
 0. Match the first line with results we found in the previous step.
 0. If there is any luck, set the corresponding syntax for the user.
@@ -71,6 +71,7 @@ Debug
 =====
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>`</kbd>), which looks like
 ```
+AutoSetNewFileSyntax: [ERROR] regex compilation failed in user settings working_scope: ^text.plain\b+
 AutoSetNewFileSyntax: [INFO] match syntax file php-grammar/PHP. with Packages/php-grammar/PHP.sublime-syntax
 ```
 
