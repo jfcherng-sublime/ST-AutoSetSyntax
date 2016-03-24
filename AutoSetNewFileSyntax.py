@@ -48,17 +48,27 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     global settings, syntaxMappings
 
     def on_modified_async(self, view):
-        # check there is only one cursor
-        if len(view.sel()) != 1:
-            return
-        # check the cursor is at first few lines
-        if view.rowcol(view.sel()[0].a)[0] > 1:
-            return
-        # check the scope of the first line is plain text
-        if view.scope_name(0).strip() != 'text.plain':
-            return
-        # try to match the first line
-        self.matchAndSetSyntax(view)
+        if (
+            self.isOnlyOneCursor(view) and
+            self.isFirstCursorNearBeginning(view) and
+            self.isScopePlainText(view)
+        ):
+            self.matchAndSetSyntax(view)
+
+    def isOnlyOneCursor(self, view):
+        """ check there is only one cursor """
+
+        return len(view.sel()) == 1
+
+    def isFirstCursorNearBeginning(self, view):
+        """ check the cursor is at first few lines """
+
+        return view.rowcol(view.sel()[0].a)[0] < 2
+
+    def isScopePlainText(self, view):
+        """ check the scope of the first line is plain text """
+
+        return view.scope_name(0).strip() == 'text.plain'
 
     def matchAndSetSyntax(self, view):
         firstLine = self.getPartialFirstLine(view)
