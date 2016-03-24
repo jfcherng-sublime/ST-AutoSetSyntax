@@ -40,19 +40,19 @@ class SyntaxMappings():
                 try:
                     firstLineMatchRegexes.append(re.compile(firstLineMatch))
                 except:
-                    self.logger.error("regex compilation failed in user settings {0}: {1}".format(syntaxFilePartial, firstLineMatch))
+                    self.logger.error('regex compilation failed in user settings "{0}": {1}'.format(syntaxFilePartial, firstLineMatch))
             if len(firstLineMatchRegexes) > 0:
                 # syntaxFilePartial could be partial path
                 # we try to get the real path here
                 syntaxFileFound = False
                 for syntaxFile in self.syntaxFiles:
                     if syntaxFile.find(syntaxFilePartial) >= 0:
-                        self.logger.info("match syntax file {0} with {1}".format(syntaxFilePartial, syntaxFile))
+                        self.logger.info('match syntax file "{0}" with "{1}"'.format(syntaxFilePartial, syntaxFile))
                         syntaxFileFound = True
                         syntaxMappings.append((syntaxFile, firstLineMatchRegexes))
                         break
                 if syntaxFileFound is False:
-                    self.logger.error("cannot find a syntax file in user settings {0}".format(syntaxFilePartial))
+                    self.logger.error('cannot find a syntax file in user settings "{0}"'.format(syntaxFilePartial))
         return syntaxMappings
 
     def buildSyntaxMappingsFromSt(self):
@@ -65,7 +65,7 @@ class SyntaxMappings():
                 try:
                     syntaxMappings.append((syntaxFile, [re.compile(firstLineMatch)]))
                 except:
-                    self.logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
+                    self.logger.error('regex compilation failed in "{0}": {1}'.format(syntaxFile, firstLineMatch))
         return syntaxMappings
 
     def findSyntaxResources(self, dropDuplicated=False):
@@ -132,7 +132,7 @@ class SyntaxMappings():
             return None
         # cut string to speed up searching
         content = content[cutPoint:]
-        matches = re.search(r"firstLineMatch</key>\s*<string>(.*?)</string>", content, re.DOTALL)
+        matches = re.search(r'firstLineMatch</key>\s*<string>(.*?)</string>', content, re.DOTALL)
         if matches is not None:
             return matches.group(1)
         else:

@@ -23,8 +23,8 @@ logger = None
 def plugin_unloaded():
     global settings, loggingStreamHandler, logger
 
-    settings.clear_on_change("syntax_mapping")
-    settings.clear_on_change("working_scope")
+    settings.clear_on_change('syntax_mapping')
+    settings.clear_on_change('working_scope')
     logger.removeHandler(loggingStreamHandler)
 
 
@@ -39,14 +39,14 @@ def plugin_loaded():
     logger.setLevel(LOG_LEVEL)
     logger.addHandler(loggingStreamHandler)
 
-    settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
+    settings = sublime.load_settings(PLUGIN_NAME+'.sublime-settings')
 
     syntaxMappings = SyntaxMappings(settings=settings, logger=logger)
     compileWorkingScope()
 
     # rebuilt syntax mappings if there is an user settings update
-    settings.add_on_change("syntax_mapping", syntaxMappings.rebuildSyntaxMappings)
-    settings.add_on_change("working_scope", compileWorkingScope)
+    settings.add_on_change('syntax_mapping', syntaxMappings.rebuildSyntaxMappings)
+    settings.add_on_change('working_scope', compileWorkingScope)
 
 
 def compileWorkingScope():
@@ -142,7 +142,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ check a event listener is enabled """
 
         try:
-            return settings.get("event_listeners", None)[event]
+            return settings.get('event_listeners', None)[event]
         except:
             return False
 

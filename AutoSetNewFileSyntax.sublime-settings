@@ -19,5 +19,6 @@
         // ]
     },
     // the scope that this plugin should work (regular expression)
+    // leave it blank to match any scope
     "working_scope": "^text.plain\\b"
 }
