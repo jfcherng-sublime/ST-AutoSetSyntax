@@ -58,7 +58,9 @@ def compileWorkingScope():
     try:
         workingScopeRegex = re.compile(workingScope)
     except:
-        logger.error("regex compilation failed in user settings {0}: {1}".format('working_scope', workingScope))
+        errorMessage = 'regex compilation failed in user settings "{0}": {1}'.format('working_scope', workingScope)
+        logger.error(errorMessage)
+        sublime.error_message(errorMessage)
         workingScopeRegex = None
 
 
