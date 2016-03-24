@@ -47,12 +47,28 @@ def plugin_loaded():
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     global settings, syntaxMappings
 
+    def on_activated_async(self, view):
+        if self.isScopePlainText(view):
+            self.matchAndSetSyntax(view)
+
+    def on_clone_async(self, view):
+        if self.isScopePlainText(view):
+            self.matchAndSetSyntax(view)
+
+    def on_load_async(self, view):
+        if self.isScopePlainText(view):
+            self.matchAndSetSyntax(view)
+
     def on_modified_async(self, view):
         if (
             self.isOnlyOneCursor(view) and
             self.isFirstCursorNearBeginning(view) and
             self.isScopePlainText(view)
         ):
+            self.matchAndSetSyntax(view)
+
+    def on_pre_save_async(self, view):
+        if self.isScopePlainText(view):
             self.matchAndSetSyntax(view)
 
     def isOnlyOneCursor(self, view):
