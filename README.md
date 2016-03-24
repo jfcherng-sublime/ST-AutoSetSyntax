@@ -48,7 +48,7 @@ User Settings
     - on_load_async": Called when the file is finished loading.
     - on_modified_async": Called after changes have been made to a view.
     - on_new_async": Called when a new buffer is created.
-    - on_post_text_command": Called after a text command has been executed.
+    - on_post_paste": Called after there is a paste operation.
     - on_pre_save_async": Called just before a view is saved.
 
 
