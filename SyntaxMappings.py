@@ -101,7 +101,7 @@ class SyntaxMappings():
         """ find "first_line_match" or "firstLineMatch" in syntax file content """
 
         content = content.strip()
-        if content[0] == '%':
+        if content.startswith('%'):
             return self.findFirstLineMatchYaml(content)
         else:
             return self.findFirstLineMatchXml(content)
