@@ -1,9 +1,9 @@
+import logging
+import os
+import re
 import sublime
 import sublime_plugin
 import sys
-import os
-import re
-import logging
 
 sys.path.insert(0, os.path.dirname(__file__))
 from SyntaxMappings import *

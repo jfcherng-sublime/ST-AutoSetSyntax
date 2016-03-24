@@ -18,6 +18,6 @@
         "on_post_paste": true,
         "on_pre_save_async": true,
     },
-    // the scope that this plugin should work
+    // the scope that this plugin should work (regular expression)
     "working_scope": "^text.plain\\b"
 }

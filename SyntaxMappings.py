@@ -1,6 +1,6 @@
-import sublime
 import os
 import re
+import sublime
 import yaml
 
 
