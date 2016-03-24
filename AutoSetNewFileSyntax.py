@@ -45,7 +45,7 @@ def plugin_loaded():
             except:
                 logger.error("regex compilation failed in user settings {0}: {1}".format(syntaxFile, firstLineMatch))
 
-    # load from ST packages
+    # load from ST packages (one-time job, unless restart ST)
     for syntaxFile in findSyntaxResources(True):
         if syntaxFile not in syntaxMapping:
             syntaxMapping[syntaxFile] = []
@@ -64,7 +64,7 @@ def plugin_loaded():
     }
 
 
-def findSyntaxResources (dropDuplicated=False):
+def findSyntaxResources(dropDuplicated=False):
     """
     find all syntax resources
 
