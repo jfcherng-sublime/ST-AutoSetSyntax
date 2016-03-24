@@ -12,6 +12,29 @@ Examples
 If we create a new file in Sublime Text and type `<?php`, this plugin will set the syntax to PHP automatically.
 
 
+User Settings
+=============
+```javascript
+{
+    "first_line_length_max": 80,
+    "syntax_mapping": {
+        "PHP/PHP": [
+            "<\\?php",
+            ...
+        ],
+        ...
+    }
+}
+```
+
+- first_line_length_max
+    - \>= 0: The maximum length to lookup in the first line.
+    - < 0: No limitation.
+- syntax_mapping
+    - key: The partial path of syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
+    - value: Regular expressions to match the first line.
+
+
 How It Works
 ============
 When the plugin is loaded:
@@ -23,6 +46,14 @@ When the first line of a plain text file is being edited:
 
 0. Match the first line with results we found in the previous step.
 0. If there is any luck, set the corresponding syntax for the user.
+
+
+Debug
+=====
+Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>`</kbd>), which looks like
+```
+AutoSetNewFileSyntax: [INFO] match syntax file php-grammar/PHP. with Packages/php-grammar/PHP.sublime-syntax
+```
 
 
 See Also
