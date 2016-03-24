@@ -101,10 +101,10 @@ class SyntaxMappings():
         """ find "first_line_match" or "firstLineMatch" in syntax file content """
 
         content = content.strip()
-        if content.startswith('%'):
-            return self.findFirstLineMatchYaml(content)
-        else:
+        if content.startswith('<?xml '):
             return self.findFirstLineMatchXml(content)
+        else:
+            return self.findFirstLineMatchYaml(content)
 
     def findFirstLineMatchYaml(self, content=''):
         """ find "first_line_match" in .sublime-syntax content """
