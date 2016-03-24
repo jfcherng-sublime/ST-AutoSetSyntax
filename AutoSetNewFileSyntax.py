@@ -2,6 +2,7 @@ import sublime
 import sublime_plugin
 import sys
 import os
+import re
 import logging
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -13,6 +14,7 @@ LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(name)s: [%(levelname)s] %(message)s"
 
 settings = None
+workingScopeRegex = None
 syntaxMappings = None
 loggingStreamHandler = None
 logger = None
@@ -22,11 +24,12 @@ def plugin_unloaded():
     global settings, loggingStreamHandler, logger
 
     settings.clear_on_change("syntax_mapping")
+    settings.clear_on_change("working_scope")
     logger.removeHandler(loggingStreamHandler)
 
 
 def plugin_loaded():
-    global settings, syntaxMappings, loggingStreamHandler, logger
+    global settings, workingScopeRegex, syntaxMappings, loggingStreamHandler, logger
 
     # create logger stream handler
     loggingStreamHandler = logging.StreamHandler()
@@ -39,20 +42,33 @@ def plugin_loaded():
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
 
     syntaxMappings = SyntaxMappings(settings=settings, logger=logger)
+    compileWorkingScope()
 
     # rebuilt syntax mappings if there is an user settings update
     settings.add_on_change("syntax_mapping", syntaxMappings.rebuildSyntaxMappings)
+    settings.add_on_change("working_scope", compileWorkingScope)
+
+
+def compileWorkingScope():
+    global settings, workingScopeRegex, logger
+
+    workingScope = settings.get('working_scope')
+    try:
+        workingScopeRegex = re.compile(workingScope)
+    except:
+        logger.error("regex compilation failed in user settings {0}: {1}".format('working_scope', workingScope))
+        workingScopeRegex = None
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
-    global settings, syntaxMappings
+    global settings, workingScopeRegex, syntaxMappings
 
     def on_activated_async(self, view):
         """ called when a view gains input focus """
 
         if (
             self.isEventListenerEnabled('on_activated_async') and
-            self.isScopePlainText(view)
+            self.isOnWorkingScope(view)
         ):
             self.matchAndSetSyntax(view)
 
@@ -61,7 +77,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         if (
             self.isEventListenerEnabled('on_clone_async') and
-            self.isScopePlainText(view)
+            self.isOnWorkingScope(view)
         ):
             self.matchAndSetSyntax(view)
 
@@ -70,7 +86,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         if (
             self.isEventListenerEnabled('on_load_async') and
-            self.isScopePlainText(view)
+            self.isOnWorkingScope(view)
         ):
             self.matchAndSetSyntax(view)
 
@@ -81,7 +97,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isEventListenerEnabled('on_modified_async') and
             self.isOnlyOneCursor(view) and
             self.isFirstCursorNearBeginning(view) and
-            self.isScopePlainText(view)
+            self.isOnWorkingScope(view)
         ):
             self.matchAndSetSyntax(view)
 
@@ -90,7 +106,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         if (
             self.isEventListenerEnabled('on_new_async') and
-            self.isScopePlainText(view)
+            self.isOnWorkingScope(view)
         ):
             self.matchAndSetSyntax(view)
 
@@ -98,7 +114,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ called after a text command has been executed """
 
         if (
-            self.isScopePlainText(view) and
+            self.isOnWorkingScope(view) and
             (
                 self.isEventListenerEnabled('on_post_paste') and
                 (
@@ -114,7 +130,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         if (
             self.isEventListenerEnabled('on_pre_save_async') and
-            self.isScopePlainText(view)
+            self.isOnWorkingScope(view)
         ):
             self.matchAndSetSyntax(view)
 
@@ -136,12 +152,15 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         return view.rowcol(view.sel()[0].a)[0] < 2
 
-    def isScopePlainText(self, view):
-        """ check the scope of the first line is plain text """
+    def isOnWorkingScope(self, view):
+        """ check the scope of the first line is matched by working_scope """
 
-        if settings.get('work_on_non_plain_text', False):
-            return True
-        return view.scope_name(0).strip() == 'text.plain'
+        if (
+            workingScopeRegex is None or
+            workingScopeRegex.search(view.scope_name(0)) is None
+        ):
+            return False
+        return True
 
     def matchAndSetSyntax(self, view):
         """ match the first line and set the corresponding syntax """
