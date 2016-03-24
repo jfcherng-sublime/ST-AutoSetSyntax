@@ -13,6 +13,7 @@
         "on_clone_async": true,
         "on_load_async": true,
         "on_modified_async": true,
+        "on_new_async": true,
         "on_pre_save_async": true,
     }
 }

@@ -85,6 +85,15 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         ):
             self.matchAndSetSyntax(view)
 
+    def on_new_async(self, view):
+        """ called when a new buffer is created """
+
+        if (
+            self.isEventListenerEnabled('on_new_async') and
+            self.isScopePlainText(view)
+        ):
+            self.matchAndSetSyntax(view)
+
     def on_pre_save_async(self, view):
         """ called just before a view is saved """
 
