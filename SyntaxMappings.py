@@ -63,8 +63,7 @@ class SyntaxMappings():
             firstLineMatch = self.findFirstLineMatch(sublime.load_resource(syntaxFile))
             if firstLineMatch is False:
                 self.logger.error('fail parsing file: {0}'.format(syntaxFile))
-                continue
-            if firstLineMatch is not None:
+            elif firstLineMatch is not None:
                 try:
                     syntaxMappings.append((syntaxFile, [re.compile(firstLineMatch)]))
                 except:
