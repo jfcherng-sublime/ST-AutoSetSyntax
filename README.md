@@ -52,7 +52,7 @@ User Settings
     - key: The partial path of a syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
     - value: Regular expressions to match the first line.
 - working_scope
-    - The scope that this plugin should work (regular expression).
+    - The scope that this plugin should work (regular expression). Leave it blank to match any scope.
 
 
 How It Works
