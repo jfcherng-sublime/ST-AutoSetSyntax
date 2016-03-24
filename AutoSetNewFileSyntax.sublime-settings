@@ -1,13 +1,4 @@
 {
-    // the max lookup length for the first line
-    // a negative number means no limitation
-    "first_line_length_max": 80,
-    "syntax_mapping": {
-        // "Packages/PHP/PHP.sublime-syntax": [
-        //     "<\\?php",
-        //     "<\\?="
-        // ]
-    },
     // when should this plugin work?
     "event_listeners": {
         "on_activated_async": true,
@@ -17,6 +8,15 @@
         "on_new_async": true,
         "on_post_paste": true,
         "on_pre_save_async": true,
+    },
+    // the max lookup length for the first line
+    // a negative number means no limitation
+    "first_line_length_max": 80,
+    "syntax_mapping": {
+        // "Packages/PHP/PHP.sublime-syntax": [
+        //     "<\\?php",
+        //     "<\\?="
+        // ]
     },
     // the scope that this plugin should work (regular expression)
     "working_scope": "^text.plain\\b"

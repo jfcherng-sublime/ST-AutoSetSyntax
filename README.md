@@ -16,14 +16,6 @@ User Settings
 =============
 ```javascript
 {
-    "first_line_length_max": 80,
-    "syntax_mapping": {
-        "PHP/PHP": [
-            "<\\?php",
-            ...
-        ],
-        ...
-    },
     "event_listeners": {
         "on_activated_async": true,
         "on_clone_async": true,
@@ -33,16 +25,18 @@ User Settings
         "on_post_paste": true,
         "on_pre_save_async": true,
     },
+    "first_line_length_max": 80,
+    "syntax_mapping": {
+        "PHP/PHP": [
+            "<\\?php",
+            ...
+        ],
+        ...
+    },
     "working_scope": "^text.plain\\b"
 }
 ```
 
-- first_line_length_max
-    - \>= 0: The maximum length to lookup in the first line.
-    - < 0: No limitation.
-- syntax_mapping
-    - key: The partial path of syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
-    - value: Regular expressions to match the first line.
 - event_listeners
     - on_activated_async": Called when a view gains input focus.
     - on_clone_async": Called when a view is cloned from an existing one.
@@ -51,8 +45,15 @@ User Settings
     - on_new_async": Called when a new buffer is created.
     - on_post_paste": Called after there is a paste operation.
     - on_pre_save_async": Called just before a view is saved.
+- first_line_length_max
+    - \>= 0: The maximum length to lookup in the first line.
+    - < 0: No limitation.
+- syntax_mapping
+    - key: The partial path of a syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
+    - value: Regular expressions to match the first line.
 - working_scope
     - The scope that this plugin should work (regular expression).
+
 
 How It Works
 ============

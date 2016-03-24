@@ -50,6 +50,8 @@ def plugin_loaded():
 
 
 def compileWorkingScope():
+    """ compile workingScope into regex object to get better speed """
+
     global settings, workingScopeRegex, logger
 
     workingScope = settings.get('working_scope')
