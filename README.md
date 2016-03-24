@@ -30,6 +30,7 @@ User Settings
         "on_load_async": true,
         "on_modified_async": true,
         "on_new_async": true,
+        "on_post_text_command": true,
         "on_pre_save_async": true,
     }
 }
@@ -47,6 +48,7 @@ User Settings
     - on_load_async": Called when the file is finished loading.
     - on_modified_async": Called after changes have been made to a view.
     - on_new_async": Called when a new buffer is created.
+    - on_post_text_command": Called after a text command has been executed.
     - on_pre_save_async": Called just before a view is saved.
 
 

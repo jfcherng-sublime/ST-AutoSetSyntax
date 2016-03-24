@@ -94,6 +94,18 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         ):
             self.matchAndSetSyntax(view)
 
+    def on_post_text_command(self, view, command_name, args):
+        """ called after a text command has been executed """
+
+        if (
+            self.isScopePlainText(view) and
+            (
+                command_name == 'patse' or
+                command_name == 'paste_and_indent'
+            )
+        ):
+            self.matchAndSetSyntax(view)
+
     def on_pre_save_async(self, view):
         """ called just before a view is saved """
 
