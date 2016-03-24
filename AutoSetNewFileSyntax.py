@@ -15,9 +15,11 @@ LOG_FORMAT = "%(name)s: %(levelname)s - %(message)s"
 
 settings = None
 
-# key   = path of a syntax file
-# value = compiled first_line_match regexes
-syntaxMapping = {}
+# contents of this list are tuples whose values are
+#     [0] = path of a syntax file
+#     [1] = a list of compiled first_line_match regexes
+syntaxMappings = []
+syntaxMappingsSt = [] # cache, syntax mappings built drom ST packages
 
 # create logger stream handler
 loggingStreamHandler = logging.StreamHandler()
@@ -29,40 +31,44 @@ logger.addHandler(loggingStreamHandler)
 
 
 def plugin_loaded():
-    global settings, syntaxMapping
+    global settings, syntaxMappings, syntaxMappingsSt
 
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
     settings.add_on_change("syntax_mapping", rebuildSyntaxMapping)
 
-    syntaxMapping = {}
+    syntaxMappings = buildSyntaxMappingsFromUser() + buildSyntaxMappingsFromSt()
 
-    # load from user settings
+
+def buildSyntaxMappingsFromUser():
+    """ load from user settings """
+
+    global settings
+
+    syntaxMappings = []
     for syntaxFile, firstLineMatches in settings.get('syntax_mapping').items():
-        if syntaxFile not in syntaxMapping:
-            syntaxMapping[syntaxFile] = []
+        firstLineMatchRegexes = []
         for firstLineMatch in firstLineMatches:
             try:
-                syntaxMapping[syntaxFile].append(re.compile(firstLineMatch))
+                firstLineMatchRegexes.append(re.compile(firstLineMatch))
             except:
                 logger.error("regex compilation failed in user settings {0}: {1}".format(syntaxFile, firstLineMatch))
+        if len(firstLineMatchRegexes) > 0:
+            syntaxMappings.append((syntaxFile, firstLineMatchRegexes))
+    return syntaxMappings
 
-    # load from ST packages (one-time job, unless restart ST)
+
+def buildSyntaxMappingsFromSt():
+    """ load from ST packages (one-time job, unless restart ST) """
+
+    syntaxMappings = []
     for syntaxFile in findSyntaxResources(True):
-        if syntaxFile not in syntaxMapping:
-            syntaxMapping[syntaxFile] = []
         firstLineMatch = findFirstLineMatch(sublime.load_resource(syntaxFile))
         if firstLineMatch is not None:
             try:
-                syntaxMapping[syntaxFile].append(re.compile(firstLineMatch))
+                syntaxMappings.append((syntaxFile, [re.compile(firstLineMatch)]))
             except:
                 logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
-
-    # in syntaxMapping, remove keys whose corresponding value is a empty list
-    syntaxMapping = {
-        syntaxFile: firstLineMatchRegexes
-        for syntaxFile, firstLineMatchRegexes in syntaxMapping.items()
-        if len(firstLineMatchRegexes) > 0
-    }
+    return syntaxMappings
 
 
 def rebuildSyntaxMapping():
@@ -145,7 +151,7 @@ def findFirstLineMatchXml(content=''):
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
-    global settings, syntaxMapping
+    global settings, syntaxMappings
 
     def on_modified_async(self, view):
         # check there is only one cursor
@@ -162,7 +168,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
     def matchAndSetSyntax(self, view):
         firstLine = self.getPartialFirstLine(view)
-        for syntaxFile, firstLineMatchRegexes in syntaxMapping.items():
+        for syntaxMapping in syntaxMappings:
+            syntaxFile, firstLineMatchRegexes = syntaxMapping
             for firstLineMatchRegex in firstLineMatchRegexes:
                 if firstLineMatchRegex.search(firstLine) is not None:
                     view.set_syntax_file(syntaxFile)
