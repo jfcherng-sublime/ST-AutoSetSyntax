@@ -31,12 +31,20 @@ logger.addHandler(loggingStreamHandler)
 
 
 def plugin_loaded():
-    global settings, syntaxMappings, syntaxMappingsSt
+    global settings, syntaxMappingsSt
 
     settings = sublime.load_settings(PLUGIN_NAME+".sublime-settings")
-    settings.add_on_change("syntax_mapping", rebuildSyntaxMapping)
+    # rebuilt syntax mappings if there is an user settings update
+    settings.add_on_change("syntax_mapping", rebuildSyntaxMappings)
 
-    syntaxMappings = buildSyntaxMappingsFromUser() + buildSyntaxMappingsFromSt()
+    syntaxMappingsSt = buildSyntaxMappingsFromSt()
+    rebuildSyntaxMappings()
+
+
+def rebuildSyntaxMappings():
+    global syntaxMappings, syntaxMappingsSt
+
+    syntaxMappings = buildSyntaxMappingsFromUser() + syntaxMappingsSt
 
 
 def buildSyntaxMappingsFromUser():
@@ -69,11 +77,6 @@ def buildSyntaxMappingsFromSt():
             except:
                 logger.error("regex compilation failed in {0}: {1}".format(syntaxFile, firstLineMatch))
     return syntaxMappings
-
-
-def rebuildSyntaxMapping():
-    global settings, syntaxMapping
-    # to be implemented
 
 
 def findSyntaxResources(dropDuplicated=False):
