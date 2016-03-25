@@ -60,7 +60,7 @@ Commands
 You may disable all `event_listeners` in your user settings and add a key binding to set syntax.
 
 ```javascript
-{ "keys": ["ctrl+alt+s", "ctrl+alt+s"], "command": "match_and_set_syntax" },
+{ "keys": ["ctrl+alt+s", "ctrl+alt+s"], "command": "auto_set_new_file_syntax" },
 ```
 
 
@@ -71,13 +71,13 @@ When this plugin is loaded:
 0. Read all syntax definition files.
 0. Try to find `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
 
-When an event listener is triggered:
+When an event is triggered:
 
 0. May check conditions like cursor counts, cursor position and etc...
 0. Make sure `working_scope` matches the scope of the first character.
-0. Call command `match_and_set_syntax`.
+0. Call command `auto_set_new_file_syntax`.
 
-When command `match_and_set_syntax` is called:
+When command `auto_set_new_file_syntax` is called:
 
 0. Match the first line with results we found while loading plugin.
 0. If there is any luck, set the corresponding syntax for the user.
