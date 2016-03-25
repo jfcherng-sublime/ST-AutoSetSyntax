@@ -62,9 +62,11 @@ When the plugin is loaded:
 0. Read all syntax definition files.
 0. Try to find `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
 
-When the first line of a plain text file (by default) is being edited:
+When an event listener is triggered:
 
-0. Match the first line with results we found in the previous step.
+0. May check conditions like cursor counts, cursor position and etc...
+0. Make sure `working_scope` matches the scope of the first character.
+0. Match the first line with results we found while loading plugin.
 0. If there is any luck, set the corresponding syntax for the user.
 
 
