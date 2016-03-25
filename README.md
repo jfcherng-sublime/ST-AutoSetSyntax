@@ -1,4 +1,4 @@
-Sublime-AutoSetNewFileSyntax
+Sublime-AutoSetSyntax
 ============================
 This repository is a plugin for Sublime Text >= 3084. 
 It automatically sets the syntax for plain text content while typing its first line. 
@@ -7,7 +7,7 @@ The original thought is from [here](https://forum.sublimetext.com/t/automaticall
 
 Examples
 ========
-![example](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetNewFileSyntax/gh-pages/images/example.gif)
+![example](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example.gif)
 
 If we create a new file in Sublime Text and type `<?php`, this plugin will set the syntax to PHP automatically.
 
@@ -60,7 +60,7 @@ Commands
 You may disable all `event_listeners` in your user settings and add a key binding to set syntax.
 
 ```javascript
-{ "keys": ["ctrl+alt+s", "ctrl+alt+s"], "command": "auto_set_new_file_syntax" },
+{ "keys": ["ctrl+alt+s", "ctrl+alt+s"], "command": "auto_set_syntax" },
 ```
 
 
@@ -75,9 +75,9 @@ When an event is triggered:
 
 0. May check conditions like cursor counts, cursor position and etc...
 0. Make sure `working_scope` matches the scope of the first character.
-0. Call command `auto_set_new_file_syntax`.
+0. Call command `auto_set_syntax`.
 
-When command `auto_set_new_file_syntax` is called:
+When command `auto_set_syntax` is called:
 
 0. Match the first line with results we found while loading plugin.
 0. If there is any luck, set the corresponding syntax for the user.
@@ -87,9 +87,9 @@ Debug
 =====
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>`</kbd>), which looks like
 ```
-AutoSetNewFileSyntax: [ERROR] regex compilation failed in user settings working_scope: ^text.plain\b+
-AutoSetNewFileSyntax: [WARNING] event_listeners->on_pre_save_async is not set in user settings (assumed true)
-AutoSetNewFileSyntax: [INFO] match syntax file php-grammar/PHP. with Packages/php-grammar/PHP.sublime-syntax
+AutoSetSyntax: [ERROR] regex compilation failed in user settings working_scope: ^text.plain\b+
+AutoSetSyntax: [WARNING] event_listeners->on_pre_save_async is not set in user settings (assumed true)
+AutoSetSyntax: [INFO] match syntax file php-grammar/PHP. with Packages/php-grammar/PHP.sublime-syntax
 ```
 
 
