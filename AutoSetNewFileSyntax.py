@@ -144,7 +144,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         try:
             return settings.get('event_listeners', None)[event]
         except:
-            return False
+            return True
 
     def isOnlyOneCursor(self, view):
         """ check there is only one cursor """
