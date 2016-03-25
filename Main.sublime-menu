@@ -12,17 +12,17 @@
 				"children":
 				[
 					{
-						"caption": "AutoSetNewFileSyntax",
+						"caption": "AutoSetSyntax",
 						"children":
 						[
 							{
 								"command": "open_file",
-								"args": {"file": "${packages}/AutoSetNewFileSyntax/AutoSetNewFileSyntax.sublime-settings"},
+								"args": {"file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings"},
 								"caption": "Settings – Default"
 							},
 							{
 								"command": "open_file",
-								"args": {"file": "${packages}/User/AutoSetNewFileSyntax.sublime-settings"},
+								"args": {"file": "${packages}/User/AutoSetSyntax.sublime-settings"},
 								"caption": "Settings – User"
 							}
 						]
