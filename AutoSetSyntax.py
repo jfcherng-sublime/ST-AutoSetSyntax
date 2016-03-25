@@ -10,6 +10,9 @@ from SyntaxMappings import SyntaxMappings
 
 
 PLUGIN_NAME = 'AutoSetSyntax'
+PLUGIN_DIR = "Packages/%s" % PLUGIN_NAME
+PLUGIN_SETTINGS = PLUGIN_NAME + '.sublime-settings'
+
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(name)s: [%(levelname)s] %(message)s"
 
@@ -39,7 +42,7 @@ def plugin_loaded():
     logger.setLevel(LOG_LEVEL)
     logger.addHandler(loggingStreamHandler)
 
-    settings = sublime.load_settings(PLUGIN_NAME+'.sublime-settings')
+    settings = sublime.load_settings(PLUGIN_SETTINGS)
 
     syntaxMappings = SyntaxMappings(settings=settings, logger=logger)
     compileWorkingScope()
