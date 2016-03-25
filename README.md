@@ -1,7 +1,7 @@
 Sublime-AutoSetSyntax
 ============================
 This repository is a plugin for Sublime Text >= 3084. 
-It automatically sets the syntax for plain text content while typing its first line. 
+It automatically sets the syntax for your file if an event is triggered.
 The original thought is from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
@@ -9,7 +9,9 @@ Examples
 ========
 ![example](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example.gif)
 
-If we create a new file in Sublime Text and type `<?php`, this plugin will set the syntax to PHP automatically.
+0. Create a new tab.
+0. Type `<?php`.
+0. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
 
 
 User Settings
@@ -70,6 +72,7 @@ When this plugin is loaded:
 
 0. Read all syntax definition files.
 0. Try to find `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
+0. Merge `syntax_mapping` with results from the previous step.
 
 When an event is triggered:
 
@@ -87,9 +90,9 @@ Debug
 =====
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>`</kbd>), which looks like
 ```
-AutoSetSyntax: [ERROR] regex compilation failed in user settings working_scope: ^text.plain\b+
-AutoSetSyntax: [WARNING] event_listeners->on_pre_save_async is not set in user settings (assumed true)
-AutoSetSyntax: [INFO] match syntax file php-grammar/PHP. with Packages/php-grammar/PHP.sublime-syntax
+AutoSetSyntax: [ERROR] regex compilation failed in user settings "working_scope": ^text.plain\b+
+AutoSetSyntax: [WARNING] "event_listeners -> on_pre_save_async" is not set in user settings (assumed true)
+AutoSetSyntax: [INFO] match syntax file "php-grammar/PHP." with "Packages/php-grammar/PHP.sublime-syntax"
 ```
 
 
