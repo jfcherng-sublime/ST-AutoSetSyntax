@@ -30,8 +30,11 @@ class SyntaxMappings():
 
         self.logger.debug('found syntax files: {0}'.format(self.syntaxFiles))
 
-    def value(self):
-        return self.syntaxMappings
+    def value(self, val=None):
+        if val is None:
+            return self.syntaxMappings
+        else:
+            self.syntaxMappings = val
 
     def buildSyntaxMappings(self):
         self.syntaxMappings = self.buildSyntaxMappingsFromUser() + self.syntaxMappingsSt
