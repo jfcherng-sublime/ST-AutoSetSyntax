@@ -55,9 +55,18 @@ User Settings
     - The scope that this plugin should work (regular expression). Leave it blank to match any scope.
 
 
+Commands
+========
+You may disable all `event_listeners` in your user settings and add a key binding to set syntax.
+
+```javascript
+{ "keys": ["ctrl+alt+s", "ctrl+alt+s"], "command": "match_and_set_syntax" },
+```
+
+
 How It Works
 ============
-When the plugin is loaded:
+When this plugin is loaded:
 
 0. Read all syntax definition files.
 0. Try to find `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
@@ -66,6 +75,10 @@ When an event listener is triggered:
 
 0. May check conditions like cursor counts, cursor position and etc...
 0. Make sure `working_scope` matches the scope of the first character.
+0. Call command `match_and_set_syntax`.
+
+When command `match_and_set_syntax` is called:
+
 0. Match the first line with results we found while loading plugin.
 0. If there is any luck, set the corresponding syntax for the user.
 
@@ -75,6 +88,7 @@ Debug
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>`</kbd>), which looks like
 ```
 AutoSetNewFileSyntax: [ERROR] regex compilation failed in user settings working_scope: ^text.plain\b+
+AutoSetNewFileSyntax: [WARNING] event_listeners->on_pre_save_async is not set in user settings (assumed true)
 AutoSetNewFileSyntax: [INFO] match syntax file php-grammar/PHP. with Packages/php-grammar/PHP.sublime-syntax
 ```
 
