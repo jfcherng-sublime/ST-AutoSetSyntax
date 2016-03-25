@@ -144,7 +144,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         try:
             return settings.get('event_listeners', None)[event]
         except:
-            logger.warning('{0} is not set in user settings (assumed true)'.format('event_listeners->'+event))
+            logger.warning('"{0}" is not set in user settings (assumed true)'.format('event_listeners -> '+event))
             return True
 
     def isOnlyOneCursor(self, view):
