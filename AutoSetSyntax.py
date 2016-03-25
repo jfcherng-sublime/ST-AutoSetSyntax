@@ -77,7 +77,7 @@ def compileWorkingScope():
         workingScopeRegex = re.compile(workingScope)
     except:
         errorMessage = 'regex compilation failed in user settings "{0}": {1}'.format('working_scope', workingScope)
-        logger.error(errorMessage)
+        logger.critical(errorMessage)
         sublime.error_message(errorMessage)
         workingScopeRegex = None
 
