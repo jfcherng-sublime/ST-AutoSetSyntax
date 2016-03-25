@@ -28,6 +28,7 @@ User Settings
         "on_pre_save_async": true,
     },
     "first_line_length_max": 80,
+    "log_level": "INFO",
     "syntax_mapping": {
         "PHP/PHP": [
             "<\\?php",
@@ -50,6 +51,9 @@ User Settings
 - first_line_length_max
     - \>= 0: The maximum length to lookup in the first line.
     - < 0: No limitation.
+- log_level
+    - Determine how detailed log messages are. The value could be
+      "CRITICAL", "ERROR", "WARNING", "INFO" (by default), "DEBUG" and "NOTSET" (most detailed).
 - syntax_mapping
     - key: The partial path of a syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
     - value: Regular expressions to match the first line.
