@@ -50,7 +50,7 @@ def plugin_loaded():
 
     # when the user settings is modified...
     settings.add_on_change('log_level', applyLogLevel)
-    settings.add_on_change('syntax_mapping', syntaxMappings.rebuildSyntaxMappings)
+    settings.add_on_change('syntax_mapping', syntaxMappings.buildSyntaxMappings)
     settings.add_on_change('working_scope', compileWorkingScope)
 
 
