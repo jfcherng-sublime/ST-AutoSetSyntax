@@ -26,12 +26,12 @@ class SyntaxMappings():
 
         self.syntaxFiles = self.findSyntaxResources(True)
         self.syntaxMappingsSt = self.buildSyntaxMappingsFromSt()
-        self.rebuildSyntaxMappings()
+        self.buildSyntaxMappings()
 
     def value(self):
         return self.syntaxMappings
 
-    def rebuildSyntaxMappings(self):
+    def buildSyntaxMappings(self):
         self.syntaxMappings = self.buildSyntaxMappingsFromUser() + self.syntaxMappingsSt
 
     def buildSyntaxMappingsFromUser(self):
