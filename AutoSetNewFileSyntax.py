@@ -74,7 +74,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isEventListenerEnabled('on_activated_async') and
             self.isOnWorkingScope(view)
         ):
-            self.matchAndSetSyntax(view)
+            view.run_command('match_and_set_syntax')
 
     def on_clone_async(self, view):
         """ called when a view is cloned from an existing one """
@@ -83,7 +83,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isEventListenerEnabled('on_clone_async') and
             self.isOnWorkingScope(view)
         ):
-            self.matchAndSetSyntax(view)
+            view.run_command('match_and_set_syntax')
 
     def on_load_async(self, view):
         """ called when the file is finished loading """
@@ -92,7 +92,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isEventListenerEnabled('on_load_async') and
             self.isOnWorkingScope(view)
         ):
-            self.matchAndSetSyntax(view)
+            view.run_command('match_and_set_syntax')
 
     def on_modified_async(self, view):
         """ called after changes have been made to a view """
@@ -103,7 +103,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isFirstCursorNearBeginning(view) and
             self.isOnWorkingScope(view)
         ):
-            self.matchAndSetSyntax(view)
+            view.run_command('match_and_set_syntax')
 
     def on_new_async(self, view):
         """ called when a new buffer is created """
@@ -112,7 +112,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isEventListenerEnabled('on_new_async') and
             self.isOnWorkingScope(view)
         ):
-            self.matchAndSetSyntax(view)
+            view.run_command('match_and_set_syntax')
 
     def on_post_text_command(self, view, command_name, args):
         """ called after a text command has been executed """
@@ -127,7 +127,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
                 )
             )
         ):
-            self.matchAndSetSyntax(view)
+            view.run_command('match_and_set_syntax')
 
     def on_pre_save_async(self, view):
         """ called just before a view is saved """
@@ -136,7 +136,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isEventListenerEnabled('on_pre_save_async') and
             self.isOnWorkingScope(view)
         ):
-            self.matchAndSetSyntax(view)
+            view.run_command('match_and_set_syntax')
 
     def isEventListenerEnabled(self, event):
         """ check a event listener is enabled """
@@ -167,24 +167,28 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             return False
         return True
 
-    def matchAndSetSyntax(self, view):
+
+class matchAndSetSyntaxCommand(sublime_plugin.TextCommand):
+    global settings, syntaxMappings
+
+    def run(self, edit):
         """ match the first line and set the corresponding syntax """
 
-        firstLine = self.getPartialFirstLine(view)
+        firstLine = self.getPartialFirstLine()
         for syntaxMapping in syntaxMappings.value():
             syntaxFile, firstLineMatchRegexes = syntaxMapping
             for firstLineMatchRegex in firstLineMatchRegexes:
                 if firstLineMatchRegex.search(firstLine) is not None:
-                    view.set_syntax_file(syntaxFile)
+                    self.view.set_syntax_file(syntaxFile)
                     return
 
-    def getPartialFirstLine(self, view):
+    def getPartialFirstLine(self):
         """ get the (partial) first line """
 
-        region = view.line(0)
+        region = self.view.line(0)
         firstLineLengthMax = settings.get('first_line_length_max')
         if firstLineLengthMax >= 0:
             # if the first line is longer than the max line length,
             # then we use the max line length
             region = sublime.Region(0, min(region.end(), firstLineLengthMax))
-        return view.substr(region)
+        return self.view.substr(region)
