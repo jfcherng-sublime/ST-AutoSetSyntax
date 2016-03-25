@@ -13,7 +13,7 @@ PLUGIN_NAME = 'AutoSetSyntax'
 PLUGIN_DIR = "Packages/%s" % PLUGIN_NAME
 PLUGIN_SETTINGS = PLUGIN_NAME + '.sublime-settings'
 
-LOG_LEVEL = logging.INFO
+LOG_LEVEL_DEFAULT = 'INFO'
 LOG_FORMAT = "%(name)s: [%(levelname)s] %(message)s"
 
 settings = None
@@ -26,6 +26,7 @@ logger = None
 def plugin_unloaded():
     global settings, loggingStreamHandler, logger
 
+    settings.clear_on_change('log_level')
     settings.clear_on_change('syntax_mapping')
     settings.clear_on_change('working_scope')
     logger.removeHandler(loggingStreamHandler)
@@ -34,22 +35,36 @@ def plugin_unloaded():
 def plugin_loaded():
     global settings, workingScopeRegex, syntaxMappings, loggingStreamHandler, logger
 
+    settings = sublime.load_settings(PLUGIN_SETTINGS)
+
     # create logger stream handler
     loggingStreamHandler = logging.StreamHandler()
     loggingStreamHandler.setFormatter(logging.Formatter(LOG_FORMAT))
     # config logger
     logger = logging.getLogger(PLUGIN_NAME)
-    logger.setLevel(LOG_LEVEL)
     logger.addHandler(loggingStreamHandler)
-
-    settings = sublime.load_settings(PLUGIN_SETTINGS)
+    applyLogLevel()
 
     syntaxMappings = SyntaxMappings(settings=settings, logger=logger)
     compileWorkingScope()
 
-    # rebuilt syntax mappings if there is an user settings update
+    # when the user settings is modified...
+    settings.add_on_change('log_level', applyLogLevel)
     settings.add_on_change('syntax_mapping', syntaxMappings.rebuildSyntaxMappings)
     settings.add_on_change('working_scope', compileWorkingScope)
+
+
+def applyLogLevel():
+    """ apply log_level to this plugin """
+
+    global settings, logger
+
+    logLevel = settings.get('log_level')
+    try:
+        logger.setLevel(logging._levelNames[logLevel])
+    except:
+        logger.warning('unknown "{0}": {1} (assumed "{2}")'.format('log_level', logLevel, LOG_LEVEL_DEFAULT))
+        logger.setLevel(logging._levelNames[LOG_LEVEL_DEFAULT])
 
 
 def compileWorkingScope():

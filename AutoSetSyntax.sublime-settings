@@ -12,6 +12,10 @@
     // the max lookup length for the first line
     // a negative number means no limitation
     "first_line_length_max": 80,
+    // how detailed log messages should be?
+    // "CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG" and "NOTSET" (most tedious)
+    "log_level": "INFO",
+    // syntax maaping rules
     "syntax_mapping": {
         // "Packages/PHP/PHP.sublime-syntax": [
         //     "<\\?php",
