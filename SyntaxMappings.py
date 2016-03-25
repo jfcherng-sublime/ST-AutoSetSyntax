@@ -28,6 +28,8 @@ class SyntaxMappings():
         self.syntaxMappingsSt = self.buildSyntaxMappingsFromSt()
         self.buildSyntaxMappings()
 
+        self.logger.debug('found syntax files: {0}'.format(self.syntaxFiles))
+
     def value(self):
         return self.syntaxMappings
 
