@@ -4,6 +4,10 @@ import sublime
 import yaml
 
 
+ST_SUPPORT_SYNTAX = int(sublime.version()) >= 3084
+ST_LANGUAGES = ['.sublime-syntax', '.tmLanguage'] if ST_SUPPORT_SYNTAX else ['.tmLanguage']
+
+
 class SyntaxMappings():
     settings = None
     logger = None
@@ -78,18 +82,16 @@ class SyntaxMappings():
             If True, for a syntax, only the highest priority resource will be returned.
         """
 
-        # syntax priority is from high to low
-        syntaxFileExts = ['.sublime-syntax', '.tmLanguage']
         if dropDuplicated is False:
             syntaxFiles = []
-            for syntaxFileExt in syntaxFileExts:
+            for syntaxFileExt in ST_LANGUAGES:
                 syntaxFiles += sublime.find_resources('*'+syntaxFileExt)
         else:
             # key   = syntax resource path without extension
             # value = the corresponding extension
             # example: { 'Packages/Java/Java': '.sublime-syntax' }
             syntaxGriddle = {}
-            for syntaxFileExt in syntaxFileExts:
+            for syntaxFileExt in ST_LANGUAGES:
                 resources = sublime.find_resources('*'+syntaxFileExt)
                 for resource in resources:
                     resourceName, resourceExt = os.path.splitext(resource)
