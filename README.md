@@ -7,12 +7,26 @@ The original thought is from [here](https://forum.sublimetext.com/t/automaticall
 
 Examples
 ========
-![example](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example.gif)
+
+### PHP Tag
+![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
 
 0. Create a new tab.
 0. Type `<?php`.
 0. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
 
+### Colored Git Log
+![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/git-log.gif)
+
+0. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://packagecontrol.io/packages/SideBarGit).
+0. Set your colored git log command. I personally set `git config --global alias.l "log --graph --date=short --pretty=format:'%C(yellow bold)%h%Creset%C(auto)%d%Creset - %s %C(green bold)[%an]%Creset %C(blue bold)(%ad, %cr)%Creset'"`.
+0. Add `"ANSIescape/ANSI.tmLanguage": ["^\\s*\\[SideBarGit@.*\\] git l\\b"]` to `syntax_mapping`.
+0. Add `source.diff` to `working_scope` like `"working_scope": "(?x)^(text.plain | source.diff)\\b"`.
+0. Execute your customized git log command. In this example, it is `git l` as set in the previous step.
+0. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
+
+### More Creative Usages To Share?
+Feel free to create an issue or a pull request.
 
 User Settings
 =============
