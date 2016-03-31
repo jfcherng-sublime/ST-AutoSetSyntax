@@ -192,21 +192,23 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         """ match the first line and set the corresponding syntax """
 
+        view = self.view
         firstLine = self.getPartialFirstLine()
         for syntaxMapping in syntaxMappings.value():
             syntaxFile, firstLineMatchRegexes = syntaxMapping
             for firstLineMatchRegex in firstLineMatchRegexes:
                 if firstLineMatchRegex.search(firstLine) is not None:
-                    self.view.set_syntax_file(syntaxFile)
+                    view.set_syntax_file(syntaxFile)
                     return
 
     def getPartialFirstLine(self):
         """ get the (partial) first line """
 
-        region = self.view.line(0)
+        view = self.view
+        region = view.line(0)
         firstLineLengthMax = settings.get('first_line_length_max')
         if firstLineLengthMax >= 0:
             # if the first line is longer than the max line length,
             # then we use the max line length
             region = sublime.Region(0, min(region.end(), firstLineLengthMax))
-        return self.view.substr(region)
+        return view.substr(region)
