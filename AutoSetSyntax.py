@@ -198,7 +198,7 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
             syntaxFile, firstLineMatchRegexes = syntaxMapping
             for firstLineMatchRegex in firstLineMatchRegexes:
                 if firstLineMatchRegex.search(firstLine) is not None:
-                    view.set_syntax_file(syntaxFile)
+                    view.assign_syntax(syntaxFile)
                     return
 
     def getPartialFirstLine(self):
