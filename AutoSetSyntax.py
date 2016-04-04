@@ -26,9 +26,7 @@ logger = None
 def plugin_unloaded():
     global settings, loggingStreamHandler, logger
 
-    settings.clear_on_change('log_level')
-    settings.clear_on_change('syntax_mapping')
-    settings.clear_on_change('working_scope')
+    settings.clear_on_change(PLUGIN_SETTINGS)
     logger.removeHandler(loggingStreamHandler)
 
 
@@ -49,9 +47,15 @@ def plugin_loaded():
     compileWorkingScope()
 
     # when the user settings is modified...
-    settings.add_on_change('log_level', applyLogLevel)
-    settings.add_on_change('syntax_mapping', syntaxMappings.buildSyntaxMappings)
-    settings.add_on_change('working_scope', compileWorkingScope)
+    settings.add_on_change(PLUGIN_SETTINGS, pluginSettingsListener)
+
+
+def pluginSettingsListener():
+    """ called when the settings file is changed """
+
+    applyLogLevel()
+    compileWorkingScope()
+    syntaxMappings.buildSyntaxMappings()
 
 
 def applyLogLevel():
