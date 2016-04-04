@@ -1,6 +1,7 @@
 Sublime-AutoSetSyntax
 ============================
-This repository is a plugin for Sublime Text 3. 
+
+This repository is a plugin for Sublime Text 3.
 It automatically sets the syntax for your file if an event is triggered.
 The original thought is from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
@@ -9,6 +10,7 @@ Examples
 ========
 
 ### PHP Tag
+
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
 
 0. Create a new tab.
@@ -16,6 +18,7 @@ Examples
 0. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
 
 ### Colored Git Log
+
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/git-log.gif)
 
 0. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://packagecontrol.io/packages/SideBarGit).
@@ -28,8 +31,10 @@ Examples
 ### More Creative Usages To Share?
 Feel free to create an issue or a pull request.
 
+
 User Settings
 =============
+
 ```javascript
 {
     "event_listeners": {
@@ -77,6 +82,7 @@ User Settings
 
 Commands
 ========
+
 You may disable all `event_listeners` in your user settings and add a key binding to set syntax.
 
 ```javascript
@@ -86,6 +92,7 @@ You may disable all `event_listeners` in your user settings and add a key bindin
 
 How It Works
 ============
+
 When this plugin is loaded:
 
 0. Read all syntax definition files.
@@ -106,7 +113,9 @@ When command `auto_set_syntax` is called:
 
 Debug
 =====
+
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>`</kbd>), which looks like
+
 ```
 AutoSetSyntax: [ERROR] regex compilation failed in user settings "working_scope": ^text.plain\b+
 AutoSetSyntax: [WARNING] "event_listeners -> on_pre_save_async" is not set in user settings (assumed true)
@@ -116,11 +125,13 @@ AutoSetSyntax: [INFO] match syntax file "php-grammar/PHP." with "Packages/php-gr
 
 See Also
 ========
+
 - [ApplySyntax](https://github.com/facelessuser/ApplySyntax)
 
 
 License
 =======
+
 The MIT License (MIT)
 
 Copyright (c) 2016 Jack Cherng
@@ -142,4 +153,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
