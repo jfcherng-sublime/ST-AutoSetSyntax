@@ -2,7 +2,7 @@ import logging
 import re
 import sublime
 import sublime_plugin
-from SyntaxMappings import SyntaxMappings
+from .SyntaxMappings import SyntaxMappings
 
 
 PLUGIN_NAME = 'AutoSetSyntax'
