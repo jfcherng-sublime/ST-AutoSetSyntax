@@ -1,11 +1,7 @@
 import logging
-import os
 import re
 import sublime
 import sublime_plugin
-import sys
-
-sys.path.insert(0, os.path.dirname(__file__))
 from SyntaxMappings import SyntaxMappings
 
 
