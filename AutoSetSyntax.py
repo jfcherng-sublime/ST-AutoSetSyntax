@@ -83,7 +83,7 @@ def compileWorkingScope():
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
-    global settings, workingScopeRegex, syntaxMappings
+    global settings, workingScopeRegex
 
     def on_activated_async(self, view):
         """ called when a view gains input focus """
@@ -173,7 +173,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def isFirstCursorNearBeginning(self, view):
         """ check the cursor is at first few lines """
 
-        return view.rowcol(view.sel()[0].a)[0] < 2
+        return view.rowcol(view.sel()[0].begin())[0] < 2
 
     def isOnWorkingScope(self, view):
         """ check the scope of the first line is matched by working_scope """
@@ -187,18 +187,19 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
 
 class autoSetSyntaxCommand(sublime_plugin.TextCommand):
-    global settings, syntaxMappings
+    global settings, syntaxMappings, logger
 
     def run(self, edit):
         """ match the first line and set the corresponding syntax """
 
         view = self.view
         firstLine = self.getPartialFirstLine()
-        for syntaxMapping in syntaxMappings.value():
+        for syntaxMapping in syntaxMappings:
             syntaxFile, firstLineMatchRegexes = syntaxMapping
             for firstLineMatchRegex in firstLineMatchRegexes:
                 if firstLineMatchRegex.search(firstLine) is not None:
                     view.assign_syntax(syntaxFile)
+                    logger.info('assign syntax to "{0}" due to: {1}'.format(syntaxFile, firstLineMatchRegex.pattern))
                     return
 
     def getPartialFirstLine(self):

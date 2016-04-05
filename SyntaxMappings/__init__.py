@@ -30,6 +30,12 @@ class SyntaxMappings():
 
         self.logger.debug('found syntax files: {0}'.format(self.syntaxFiles))
 
+    def __iter__(self):
+        return iter(self.value())
+
+    def __len__(self):
+        return len(self.value())
+
     def value(self, val=None):
         if val is None:
             return self.syntaxMappings
@@ -50,7 +56,7 @@ class SyntaxMappings():
                     firstLineMatchRegexes.append(re.compile(firstLineMatch))
                 except:
                     self.logger.error('regex compilation failed in user settings "{0}": {1}'.format(syntaxFilePartial, firstLineMatch))
-            if len(firstLineMatchRegexes) > 0:
+            if firstLineMatchRegexes:
                 # syntaxFilePartial could be partial path
                 # we try to get the real path here
                 syntaxFileFound = False
@@ -121,15 +127,15 @@ class SyntaxMappings():
         # strip everything since "contexts:" to speed up searching
         cutPos = content.find('contexts:')
         if cutPos != -1:
-            content = content[0:cutPos]
+            content = content[:cutPos]
         # early return
         if content.find('first_line_match') == -1:
             return None
         # start parsing
         try:
-            yamlDict = yaml.load(content)
-            if 'first_line_match' in yamlDict:
-                return yamlDict['first_line_match']
+            parsed = yaml.load(content)
+            if 'first_line_match' in parsed:
+                return parsed['first_line_match']
             else:
                 return None
         except:
@@ -138,13 +144,13 @@ class SyntaxMappings():
     def findFirstLineMatchXml(self, content=''):
         """ find "firstLineMatch" in .tmLanguage content """
 
-        cutPoint = content.find('firstLineMatch')
+        cutPos = content.find('<key>firstLineMatch</key>')
         # early return
-        if cutPoint == -1:
+        if cutPos == -1:
             return None
         # cut string to speed up searching
-        content = content[cutPoint:]
-        matches = re.search(r'firstLineMatch</key>\s*<string>(.*?)</string>', content, re.DOTALL)
+        content = content[cutPos:]
+        matches = re.search(r'<key>firstLineMatch</key>\s*<string>(.*?)</string>', content, re.DOTALL)
         if matches is not None:
             return matches.group(1)
         else:
