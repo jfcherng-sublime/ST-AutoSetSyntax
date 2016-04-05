@@ -5,7 +5,7 @@ import sublime_plugin
 from .SyntaxMappings import SyntaxMappings
 
 
-PLUGIN_NAME = 'AutoSetSyntax'
+PLUGIN_NAME = __package__
 PLUGIN_DIR = "Packages/%s" % PLUGIN_NAME
 PLUGIN_SETTINGS = PLUGIN_NAME + '.sublime-settings'
 
