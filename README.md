@@ -72,7 +72,7 @@ User Settings
     - < 0: No limitation.
 - log_level
     - Determine how detailed log messages are. The value could be
-      "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) and "NOTSET" (nothing).
+      "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) and "NOTHING" (nothing).
 - syntax_mapping
     - key: The partial path of a syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
     - value: Regular expressions to match the first line.

@@ -13,7 +13,7 @@
     // a negative number means no limitation
     "first_line_length_max": 80,
     // how detailed log messages should be?
-    // "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) and "NOTSET" (nothing)
+    // "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) and "NOTHING" (nothing)
     "log_level": "INFO",
     // syntax maaping rules
     "syntax_mapping": {
