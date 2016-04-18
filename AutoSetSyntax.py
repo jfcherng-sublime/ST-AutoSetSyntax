@@ -31,6 +31,7 @@ def plugin_loaded():
 
     settings = sublime.load_settings(PLUGIN_SETTINGS)
 
+    logging.addLevelName(101, 'NOTHING')
     # create logger stream handler
     loggingStreamHandler = logging.StreamHandler()
     loggingStreamHandler.setFormatter(logging.Formatter(LOG_FORMAT))
