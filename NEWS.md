@@ -1,3 +1,10 @@
+AutoSetSyntax 1.8.5
+===================
+
+- Add config for `"log_level": "NOTHING"`.
+  `"NOTSET"` is not what I just thought. So add my own `"log_lovel": "NOTHING"`.
+
+
 AutoSetSyntax 1.8.4
 ===================
 
