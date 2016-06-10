@@ -1,3 +1,9 @@
+AutoSetSyntax 1.8.6
+===================
+
+- Fix autocomplete is triggered in quick panel & search panel (#3)
+
+
 AutoSetSyntax 1.8.5
 ===================
 
