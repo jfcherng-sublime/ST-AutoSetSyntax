@@ -194,6 +194,11 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
         """ match the first line and set the corresponding syntax """
 
         view = self.view
+
+        # to make sure the target view is not a panel
+        if view.name() == '':
+            return
+
         firstLine = self.getPartialFirstLine()
         for syntaxMapping in syntaxMappings:
             syntaxFile, firstLineMatchRegexes = syntaxMapping
