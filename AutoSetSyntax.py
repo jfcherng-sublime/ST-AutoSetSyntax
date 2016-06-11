@@ -195,8 +195,8 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
 
         view = self.view
 
-        # to make sure the target view is not a panel
-        if view.name() == '':
+        # make sure the target view is not a panel
+        if view.settings().get('is_widget'):
             return
 
         firstLine = self.getPartialFirstLine()
