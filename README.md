@@ -49,7 +49,7 @@ User Settings
     "first_line_length_max": 80,
     "log_level": "INFO",
     "syntax_mapping": {
-        "PHP/PHP": [
+        "PHP/PHP.": [
             "<\\?php",
             ...
         ],
