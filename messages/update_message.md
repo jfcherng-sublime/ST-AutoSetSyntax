@@ -1,5 +1,2 @@
-AutoSetSyntax
-=============
-
 AutoSetSyntax has been updated. To see the changelog, visit
-Preferences > Package Settings > AutoSetSyntax > Changelog
+Preferences » Package Settings » AutoSetSyntax » Changelog
