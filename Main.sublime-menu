@@ -1,34 +1,44 @@
-[
-	{
-		"caption": "Preferences",
-		"mnemonic": "n",
-		"id": "preferences",
-		"children":
-		[
-			{
-				"caption": "Package Settings",
-				"mnemonic": "P",
-				"id": "package-settings",
-				"children":
-				[
-					{
-						"caption": "AutoSetSyntax",
-						"children":
-						[
-							{
-								"command": "open_file",
-								"args": {"file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings"},
-								"caption": "Settings – Default"
-							},
-							{
-								"command": "open_file",
-								"args": {"file": "${packages}/User/AutoSetSyntax.sublime-settings"},
-								"caption": "Settings – User"
-							}
-						]
-					}
-				]
-			}
-		]
-	}
-]
+[{
+    "caption": "Preferences",
+    "mnemonic": "n",
+    "id": "preferences",
+    "children": [{
+        "caption": "Package Settings",
+        "mnemonic": "P",
+        "id": "package-settings",
+        "children": [{
+            "caption": "AutoSetSyntax",
+            "children": [{
+                "caption": "-"
+            }, {
+                "command": "open_file",
+                "caption": "Settings – Default",
+                "args": {
+                    "file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings"
+                }
+            }, {
+                "command": "open_file",
+                "caption": "Settings – User",
+                "args": {
+                    "file": "${packages}/User/AutoSetSyntax.sublime-settings"
+                },
+            }, {
+                "caption": "-"
+            }, {
+                "caption": "README",
+                "command": "open_file",
+                "args": {
+                    "file": "${packages}/AutoSetSyntax/README.md"
+                }
+            }, {
+                "caption": "Changelog",
+                "command": "open_file",
+                "args": {
+                    "file": "${packages}/AutoSetSyntax/CHANGELOG.md"
+                }
+            }, {
+                "caption": "-"
+            }]
+        }]
+    }]
+}]

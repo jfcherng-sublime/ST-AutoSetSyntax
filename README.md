@@ -3,7 +3,7 @@ Sublime-AutoSetSyntax
 
 This repository is a plugin for Sublime Text 3.
 It automatically sets the syntax for your file if an event is triggered.
-The original thought is from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
+The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
 Examples
@@ -29,6 +29,7 @@ Examples
 0. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
 
 ### More Creative Usages To Share?
+
 Feel free to create an issue or a pull request.
 
 
@@ -153,3 +154,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+Supporters <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ATXYY9Y78EQ3Y" target="_blank"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" /></a>
+==========
+
+Thank you guys for sending me some cups of coffee.

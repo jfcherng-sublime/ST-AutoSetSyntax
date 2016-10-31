@@ -1,3 +1,9 @@
+AutoSetSyntax 1.8.7
+===================
+
+- Just some directory structure tweaks.
+
+
 AutoSetSyntax 1.8.6
 ===================
 
