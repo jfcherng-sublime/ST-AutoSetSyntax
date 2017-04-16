@@ -13,20 +13,20 @@ Examples
 
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
 
-0. Create a new tab.
-0. Type `<?php`.
-0. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
+1. Create a new tab.
+1. Type `<?php`.
+1. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
 
 ### Colored Git Log
 
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/git-log.gif)
 
-0. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://packagecontrol.io/packages/SideBarGit).
-0. Set your colored git log command. I personally set `git config --global alias.l "log --graph --date=short --pretty=format:'%C(yellow bold)%h%Creset%C(auto)%d%Creset - %s %C(green bold)[%an]%Creset %C(blue bold)(%ad, %cr)%Creset'"`.
-0. Add `"ANSIescape/ANSI.tmLanguage": ["^\\s*\\[SideBarGit@.*\\] git l\\b"]` to `syntax_mapping`.
-0. Add `source.diff` to `working_scope` like `"working_scope": "(?x)^(text.plain | source.diff)\\b"`.
-0. Execute your customized git log command. In this example, it is `git l` as set in the previous step.
-0. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
+1. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://packagecontrol.io/packages/SideBarGit).
+1. Set your colored git log command. I personally set `git config --global alias.l "log --graph --date=short --pretty=format:'%C(yellow bold)%h%Creset%C(auto)%d%Creset - %s %C(green bold)[%an]%Creset %C(blue bold)(%ad, %cr)%Creset'"`.
+1. Add `"ANSIescape/ANSI.tmLanguage": ["^\\s*\\[SideBarGit@.*\\] git l\\b"]` to `syntax_mapping`.
+1. Add `source.diff` to `working_scope` like `"working_scope": "(?x)^(text.plain | source.diff)\\b"`.
+1. Execute your customized git log command. In this example, it is `git l` as set in the previous step.
+1. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
 
 ### More Creative Usages To Share?
 
@@ -96,20 +96,20 @@ How It Works
 
 When this plugin is loaded:
 
-0. Read all syntax definition files.
-0. Try to find `first_line_match` in `.sublime-syntax`s (if ST >= 3084) and `firstLineMatch` in `.tmLanguage`s.
-0. Merge `syntax_mapping` with results from the previous step.
+1. Read all syntax definition files.
+1. Try to find `first_line_match` in `.sublime-syntax`s (if ST >= 3084) and `firstLineMatch` in `.tmLanguage`s.
+1. Merge `syntax_mapping` with results from the previous step.
 
 When an event is triggered:
 
-0. May check conditions like cursor counts, cursor position and etc...
-0. Make sure `working_scope` matches the scope of the first character.
-0. Call command `auto_set_syntax`.
+1. May check conditions like cursor counts, cursor position and etc...
+1. Make sure `working_scope` matches the scope of the first character.
+1. Call command `auto_set_syntax`.
 
 When command `auto_set_syntax` is called:
 
-0. Match the first line with results we found while loading plugin.
-0. If there is any luck, set the corresponding syntax for the user.
+1. Match the first line with results we found while loading plugin.
+1. If there is any luck, set the corresponding syntax for the user.
 
 
 Debug
