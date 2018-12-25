@@ -9,6 +9,14 @@ The original thought comes from [here](https://forum.sublimetext.com/t/automatic
 Examples
 ========
 
+### Guess the Syntax After Stripping Unimportant File Extensions
+
+![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/try-strip-file-exts.gif)
+
+1. `config_gitlab.yml.example` -> `config_gitlab.yml` -> Ah! `.yml` should use the `YAML` syntax.
+1. See `try_filename_remove_exts` settings for details.
+
+
 ### PHP Tag
 
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
@@ -16,6 +24,7 @@ Examples
 1. Create a new tab.
 1. Type `<?php`.
 1. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
+
 
 ### Colored Git Log
 
@@ -27,6 +36,7 @@ Examples
 1. Add `source.diff` to `working_scope` like `"working_scope": "(?x)^(text.plain | source.diff)\\b"`.
 1. Execute your customized git log command. In this example, it is `git l` as set in the previous step.
 1. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
+
 
 ### More Creative Usages To Share?
 
