@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import sublime
 import sublime_plugin
@@ -107,10 +108,14 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_load_async(self, view):
         """ called when the file is finished loading """
 
+        if view.scope_name(0).strip() == 'text.plain':
+            view.run_command('auto_set_syntax_for_text_by_ext')
+
         if (
             self.isEventListenerEnabled('on_load_async') and
             self.isOnWorkingScope(view)
         ):
+            print(view.scope_name(0))
             view.run_command('auto_set_syntax')
 
     def on_modified_async(self, view):
@@ -185,6 +190,52 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         ):
             return False
         return True
+
+
+class autoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
+    global settings, syntaxMappings, logger
+
+    def run(self, edit):
+        """ match the extension and set the corresponding syntax """
+
+        view = self.view
+
+        filePath = view.file_name()
+
+        # make sure this is a real file
+        if filePath is None:
+            return
+
+        fileBaseName = os.path.basename(filePath)
+
+        for tryFilenameRemoveExt in self.getTryFilenameRemoveExts():
+            if not fileBaseName.endswith(tryFilenameRemoveExt):
+                continue
+
+            fileBaseNameStripped = fileBaseName[0:-len(tryFilenameRemoveExt)]
+
+            for syntaxMapping in syntaxMappings:
+                syntaxFile = syntaxMapping['file_path']
+                fileExtensions = syntaxMapping['file_extensions']
+
+                if fileExtensions is None:
+                    continue
+
+                for fileExtension in fileExtensions:
+                    if (
+                        fileBaseNameStripped.endswith('.'+fileExtension) or
+                        fileBaseNameStripped == fileExtension
+                    ):
+                        view.assign_syntax(syntaxFile)
+                        logger.info('assign syntax to "{0}" due to stripped file name: {1}'.format(syntaxFile, fileBaseNameStripped))
+                        return
+
+    def getTryFilenameRemoveExts(self):
+        exts = settings.get('try_filename_remove_exts', [])
+        exts = list(filter(len, exts))
+        exts.sort(key=len, reverse=True)
+
+        return exts
 
 
 class autoSetSyntaxCommand(sublime_plugin.TextCommand):
