@@ -56,7 +56,17 @@ User Settings
         ],
         ...
     },
-    "working_scope": "^text.plain\\b"
+    "working_scope": "^text.plain\\b",
+    "try_filename_remove_exts": [
+        ".backup",
+        ".bak",
+        ".dist",
+        ".example",
+        ".inc",
+        ".include",
+        ".local",
+        ".sample"
+    ]
 }
 ```
 
@@ -79,6 +89,9 @@ User Settings
     - value: Regular expressions to match the first line.
 - working_scope
     - The scope that this plugin should work (regular expression). Leave it blank to match any scope.
+- try_filename_remove_exts
+    - For `text.plain` scope, try to remove these file extensions from the file name
+      and may set a syntax corresponding syntax by the stripped file name.
 
 
 Commands
