@@ -115,7 +115,6 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isEventListenerEnabled('on_load_async') and
             self.isOnWorkingScope(view)
         ):
-            print(view.scope_name(0))
             view.run_command('auto_set_syntax')
 
     def on_modified_async(self, view):
