@@ -1,6 +1,11 @@
 # AutoSetSyntax
 
 
+## 1.9.1
+
+- Remove debugging codes.
+
+
 ## 1.9.0
 
 - New feature: Auto set syntax by stripping file extensions.
