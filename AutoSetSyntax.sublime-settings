@@ -35,6 +35,6 @@
         ".inc",
         ".include",
         ".local",
-        ".sample"
-    ]
+        ".sample",
+    ],
 }

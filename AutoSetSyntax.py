@@ -168,6 +168,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             return settings.get('event_listeners', None)[event]
         except:
             logger.warning('"{0}" is not set in user settings (assumed true)'.format('event_listeners -> '+event))
+
             return True
 
     def isOnlyOneCursor(self, view):
@@ -188,6 +189,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             workingScopeRegex.search(view.scope_name(0)) is None
         ):
             return False
+
         return True
 
 
@@ -198,7 +200,6 @@ class autoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
         """ match the extension and set the corresponding syntax """
 
         view = self.view
-
         filePath = view.file_name()
 
         # make sure this is a real file
@@ -227,6 +228,7 @@ class autoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
                     ):
                         view.assign_syntax(syntaxFile)
                         logger.info('assign syntax to "{0}" due to stripped file name: {1}'.format(syntaxFile, fileBaseNameStripped))
+
                         return
 
     def getTryFilenameRemoveExts(self):
@@ -261,6 +263,7 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
                 if firstLineMatchRegex.search(firstLine) is not None:
                     view.assign_syntax(syntaxFile)
                     logger.info('assign syntax to "{0}" due to: {1}'.format(syntaxFile, firstLineMatchRegex.pattern))
+
                     return
 
     def getPartialFirstLine(self):
@@ -269,8 +272,10 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
         view = self.view
         region = view.line(0)
         firstLineLengthMax = settings.get('first_line_length_max', 120)
+
         if firstLineLengthMax >= 0:
             # if the first line is longer than the max line length,
             # then we use the max line length
             region = sublime.Region(0, min(region.end(), firstLineLengthMax))
+
         return view.substr(region)

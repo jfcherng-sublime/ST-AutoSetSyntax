@@ -74,6 +74,7 @@ class SyntaxMappings():
                             'first_line_match': firstLineMatches,
                             'first_line_match_compiled': firstLineMatchRegexes,
                         })
+
                         break
 
                 if isSyntaxFileFound is False:
@@ -97,6 +98,7 @@ class SyntaxMappings():
 
             if attrs is None:
                 self.logger.error('fail parsing file: {0}'.format(syntaxFile))
+
                 continue
 
             # use 'file_extensions' as the formal key
@@ -144,8 +146,10 @@ class SyntaxMappings():
                     resourceName, resourceExt = os.path.splitext(resource)
                     if resourceName not in syntaxGriddle:
                         syntaxGriddle[resourceName] = resourceExt
+
             # combine a name and an extension back into a full path
             syntaxFiles = [n+e for n, e in syntaxGriddle.items()]
+
         return syntaxFiles
 
     def getAttributesFromSyntaxFileContent(self, content='', attrs=[]):
@@ -211,8 +215,10 @@ class SyntaxMappings():
 
     def snakeToCamel(self, snake):
         parts = snake.split('_')
+
         return parts[0] + ''.join(part.title() for part in parts[1:])
 
     def camelToSnake(self, camel):
         s = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel)
+
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s).lower()

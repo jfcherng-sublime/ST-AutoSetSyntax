@@ -65,8 +65,8 @@ User Settings
         ".inc",
         ".include",
         ".local",
-        ".sample"
-    ]
+        ".sample",
+    ],
 }
 ```
 
