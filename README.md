@@ -70,6 +70,7 @@ User Settings
     "try_filename_remove_exts": [
         ".backup",
         ".bak",
+        ".default",
         ".dist",
         ".example",
         ".inc",
