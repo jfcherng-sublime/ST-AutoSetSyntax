@@ -1,9 +1,9 @@
+from .SyntaxMappings import SyntaxMappings
 import logging
 import os
 import re
 import sublime
 import sublime_plugin
-from .SyntaxMappings import SyntaxMappings
 
 
 PLUGIN_NAME = __package__
@@ -28,7 +28,7 @@ def plugin_unloaded():
 
 
 def plugin_loaded():
-    global settings, workingScopeRegex, syntaxMappings, loggingStreamHandler, logger
+    global settings, syntaxMappings, loggingStreamHandler, logger, workingScopeRegex
 
     settings = sublime.load_settings(PLUGIN_SETTINGS)
 
@@ -39,10 +39,10 @@ def plugin_loaded():
     # config logger
     logger = logging.getLogger(PLUGIN_NAME)
     logger.addHandler(loggingStreamHandler)
-    applyLogLevel()
+    applyLogLevel(settings, logger)
 
-    syntaxMappings = SyntaxMappings(settings=settings, logger=logger)
-    compileWorkingScope()
+    workingScopeRegex = compileWorkingScope(settings, logger)
+    syntaxMappings = SyntaxMappings(settings, logger)
 
     # when the user settings is modified...
     settings.add_on_change(PLUGIN_SETTINGS, pluginSettingsListener)
@@ -51,17 +51,18 @@ def plugin_loaded():
 def pluginSettingsListener():
     """ called when the settings file is changed """
 
-    applyLogLevel()
-    compileWorkingScope()
-    syntaxMappings.buildSyntaxMappings()
+    global settings, syntaxMappings, logger, workingScopeRegex
+
+    applyLogLevel(settings, logger)
+    workingScopeRegex = compileWorkingScope(settings, logger)
+    syntaxMappings = SyntaxMappings(settings, logger)
 
 
-def applyLogLevel():
+def applyLogLevel(settings, logger):
     """ apply log_level to this plugin """
 
-    global settings, logger
+    logLevel = settings.get('log_level', 'debug')
 
-    logLevel = settings.get('log_level')
     try:
         logger.setLevel(logging._levelNames[logLevel])
     except:
@@ -69,19 +70,19 @@ def applyLogLevel():
         logger.setLevel(logging._levelNames[LOG_LEVEL_DEFAULT])
 
 
-def compileWorkingScope():
+def compileWorkingScope(settings, logger):
     """ compile workingScope into regex object to get better speed """
 
-    global settings, workingScopeRegex, logger
+    workingScope = settings.get('working_scope', r'text\.plain')
 
-    workingScope = settings.get('working_scope')
     try:
-        workingScopeRegex = re.compile(workingScope)
+        return re.compile(workingScope)
     except:
         errorMessage = 'regex compilation failed in user settings "{0}": {1}'.format('working_scope', workingScope)
         logger.critical(errorMessage)
         sublime.error_message(errorMessage)
-        workingScopeRegex = None
+
+        return None
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
@@ -193,7 +194,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         return True
 
 
-class autoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
+class AutoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
     global settings, syntaxMappings, logger
 
     def run(self, edit):
@@ -207,8 +208,9 @@ class autoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
             return
 
         fileBaseName = os.path.basename(filePath)
+        tryFilenameRemoveExts = settings.get('try_filename_remove_exts', [])
 
-        for tryFilenameRemoveExt in self.getTryFilenameRemoveExts():
+        for tryFilenameRemoveExt in tryFilenameRemoveExts:
             if not fileBaseName.endswith(tryFilenameRemoveExt):
                 continue
 
@@ -231,15 +233,8 @@ class autoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
 
                         return
 
-    def getTryFilenameRemoveExts(self):
-        exts = settings.get('try_filename_remove_exts', [])
-        exts = list(filter(len, exts))
-        exts.sort(key=len, reverse=True)
 
-        return exts
-
-
-class autoSetSyntaxCommand(sublime_plugin.TextCommand):
+class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
     global settings, syntaxMappings, logger
 
     def run(self, edit):
@@ -251,7 +246,8 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
         if view.settings().get('is_widget'):
             return
 
-        firstLine = self.getPartialFirstLine()
+        firstLine = self._getPartialFirstLine()
+
         for syntaxMapping in syntaxMappings:
             syntaxFile = syntaxMapping['file_path']
             firstLineMatchRegexes = syntaxMapping['first_line_match_compiled']
@@ -266,12 +262,12 @@ class autoSetSyntaxCommand(sublime_plugin.TextCommand):
 
                     return
 
-    def getPartialFirstLine(self):
+    def _getPartialFirstLine(self):
         """ get the (partial) first line """
 
         view = self.view
         region = view.line(0)
-        firstLineLengthMax = settings.get('first_line_length_max', 120)
+        firstLineLengthMax = settings.get('first_line_length_max', 80)
 
         if firstLineLengthMax >= 0:
             # if the first line is longer than the max line length,

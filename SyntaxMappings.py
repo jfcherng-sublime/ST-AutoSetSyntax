@@ -1,3 +1,4 @@
+from . import functions
 import os
 import plistlib
 import re
@@ -18,17 +19,16 @@ class SyntaxMappings():
     #     first_line_match
     #     first_line_match_compiled
     syntaxMappings = []
-    syntaxMappingsSt = [] # cache, syntax mappings built drom ST packages
 
+    # the path of all syntax files
     syntaxFiles = []
 
-    def __init__(self, settings=None, logger=None):
+    def __init__(self, settings, logger):
         self.settings = settings
         self.logger = logger
 
-        self.syntaxFiles = self.findSyntaxResources(True)
-        self.syntaxMappingsSt = self.buildSyntaxMappingsFromSt()
-        self.buildSyntaxMappings()
+        self.syntaxFiles = self.findSyntaxFilePaths(True)
+        self.syntaxMappings = self._buildSyntaxMappings()
 
         self.logger.debug('found syntax files: {0}'.format(self.syntaxFiles))
 
@@ -44,10 +44,40 @@ class SyntaxMappings():
         else:
             self.syntaxMappings = val
 
-    def buildSyntaxMappings(self):
-        self.syntaxMappings = self.buildSyntaxMappingsFromUser() + self.syntaxMappingsSt
+    def findSyntaxFilePaths(self, dropDuplicated=False):
+        """
+        @brief find the path of all syntax files
 
-    def buildSyntaxMappingsFromUser(self):
+        @param dropDuplicated if True, for a syntax, only the highest priority resource will be returned
+
+        @return list<string> the path of all syntax files
+        """
+
+        if dropDuplicated is False:
+            syntaxFiles = []
+            for syntaxFileExt in ST_LANGUAGES:
+                syntaxFiles += sublime.find_resources('*'+syntaxFileExt)
+        else:
+            # key   = syntax resource path without extension
+            # value = the corresponding extension
+            # example: { 'Packages/Java/Java': '.sublime-syntax' }
+            syntaxGriddle = {}
+            for syntaxFileExt in ST_LANGUAGES:
+                resources = sublime.find_resources('*'+syntaxFileExt)
+                for resource in resources:
+                    resourceName, resourceExt = os.path.splitext(resource)
+                    if resourceName not in syntaxGriddle:
+                        syntaxGriddle[resourceName] = resourceExt
+
+            # combine a name and an extension back into a full path
+            syntaxFiles = [n+e for n, e in syntaxGriddle.items()]
+
+        return syntaxFiles
+
+    def _buildSyntaxMappings(self):
+        return self._buildSyntaxMappingsFromUser() + self._buildSyntaxMappingsFromSt()
+
+    def _buildSyntaxMappingsFromUser(self):
         """ load from user settings """
 
         syntaxMappings = []
@@ -82,7 +112,7 @@ class SyntaxMappings():
 
         return syntaxMappings
 
-    def buildSyntaxMappingsFromSt(self):
+    def _buildSyntaxMappingsFromSt(self):
         """ load from ST packages (one-time job, unless restart ST) """
 
         syntaxMappings = []
@@ -90,7 +120,7 @@ class SyntaxMappings():
 
             syntaxFileContent = sublime.load_resource(syntaxFile).strip()
 
-            attrs = self.getAttributesFromSyntaxFileContent(syntaxFileContent, [
+            attrs = self._getAttributesFromSyntaxFileContent(syntaxFileContent, [
                 'file_extensions',
                 'file_types', # i.e., the 'file_extensions' in XML
                 'first_line_match',
@@ -123,44 +153,15 @@ class SyntaxMappings():
 
         return syntaxMappings
 
-    def findSyntaxResources(self, dropDuplicated=False):
-        """
-        find all syntax resources
-
-        dropDuplicated:
-            If True, for a syntax, only the highest priority resource will be returned.
-        """
-
-        if dropDuplicated is False:
-            syntaxFiles = []
-            for syntaxFileExt in ST_LANGUAGES:
-                syntaxFiles += sublime.find_resources('*'+syntaxFileExt)
-        else:
-            # key   = syntax resource path without extension
-            # value = the corresponding extension
-            # example: { 'Packages/Java/Java': '.sublime-syntax' }
-            syntaxGriddle = {}
-            for syntaxFileExt in ST_LANGUAGES:
-                resources = sublime.find_resources('*'+syntaxFileExt)
-                for resource in resources:
-                    resourceName, resourceExt = os.path.splitext(resource)
-                    if resourceName not in syntaxGriddle:
-                        syntaxGriddle[resourceName] = resourceExt
-
-            # combine a name and an extension back into a full path
-            syntaxFiles = [n+e for n, e in syntaxGriddle.items()]
-
-        return syntaxFiles
-
-    def getAttributesFromSyntaxFileContent(self, content='', attrs=[]):
+    def _getAttributesFromSyntaxFileContent(self, content='', attrs=[]):
         """ find "first_line_match" or "firstLineMatch" in syntax file content """
 
-        if content.startswith('<'):
-            return self.getAttributesFromXmlSyntaxFileContent(content, attrs)
+        if content.lstrip().startswith('<'):
+            return self._getAttributesFromXmlSyntaxFileContent(content, attrs)
         else:
-            return self.getAttributesFromYamlSyntaxFileContent(content, attrs)
+            return self._getAttributesFromYamlSyntaxFileContent(content, attrs)
 
-    def getAttributesFromYamlSyntaxFileContent(self, content='', attrs=[]):
+    def _getAttributesFromYamlSyntaxFileContent(self, content='', attrs=[]):
         """ find attributes in .sublime-syntax content """
 
         results = {}
@@ -169,7 +170,7 @@ class SyntaxMappings():
             # "contexts:" is usually the last (and largest) part of a syntax deinition.
             # to speed up searching, strip everything behinds "contexts:"
             cutPos = content.find('contexts:')
-            if cutPos != -1:
+            if cutPos >= 0:
                 content = content[:cutPos]
 
             parsed = yaml.safe_load(content)
@@ -180,25 +181,22 @@ class SyntaxMappings():
             return None
 
         for attr in attrs:
-            if attr in parsed:
-                results[attr] = parsed[attr]
-            else:
-                results[attr] = None
+            results[attr] = parsed[attr] if attr in parsed else None
 
         return results
 
-    def getAttributesFromXmlSyntaxFileContent(self, content='', attrs=[]):
+    def _getAttributesFromXmlSyntaxFileContent(self, content='', attrs=[]):
         """ find attributes in .tmLanguage content """
 
-        results = {}
+        attrs = [functions.snakeToCamel(attr) for attr in attrs]
 
-        attrs = [self.snakeToCamel(attr) for attr in attrs]
+        results = {}
 
         try:
             # "<key>patterns</key>" is usually the last (and largest) part of a syntax deinition.
             # to speed up searching, strip everything behinds "<key>patterns</key>"
             cutPos = content.find('<key>patterns</key>')
-            if cutPos != -1:
+            if cutPos >= 0:
                 content = content[:cutPos] + r'</dict></plist>'
 
             parsed = plistlib.readPlistFromBytes(content.encode('UTF-8'))
@@ -206,19 +204,7 @@ class SyntaxMappings():
             return None
 
         for attr in attrs:
-            if attr in parsed:
-                results[self.camelToSnake(attr)] = parsed[attr]
-            else:
-                results[self.camelToSnake(attr)] = None
+            attr_snake = functions.camelToSnake(attr)
+            results[attr_snake] = parsed[attr] if attr in parsed else None
 
         return results
-
-    def snakeToCamel(self, snake):
-        parts = snake.split('_')
-
-        return parts[0] + ''.join(part.title() for part in parts[1:])
-
-    def camelToSnake(self, camel):
-        s = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', camel)
-
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s).lower()
