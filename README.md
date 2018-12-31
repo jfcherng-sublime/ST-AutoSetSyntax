@@ -66,6 +66,7 @@ User Settings
         ],
         ...
     },
+    "new_file_syntax": "",
     "working_scope": "^text.plain\\b",
     "try_filename_remove_exts": [
         ".backup",
@@ -98,6 +99,9 @@ User Settings
 - syntax_mapping
     - key: The partial path of a syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
     - value: Regular expressions to match the first line.
+- new_file_syntax
+    - The partial path of a syntax file. This syntax would be applied when creating a new file.
+      Nothing would happen if this is a empty string.
 - working_scope
     - The scope that this plugin should work (regular expression). Leave it blank to match any scope.
 - try_filename_remove_exts
