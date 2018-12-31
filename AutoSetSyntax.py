@@ -86,7 +86,7 @@ def compileWorkingScope(settings, logger):
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
-    global settings, workingScopeRegex
+    global settings, syntaxMappings, workingScopeRegex, logger
 
     def on_activated_async(self, view):
         """ called when a view gains input focus """
@@ -109,8 +109,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_load_async(self, view):
         """ called when the file is finished loading """
 
-        if view.scope_name(0).strip() == 'text.plain':
-            view.run_command('auto_set_syntax_for_text_by_ext')
+        self._applySyntaxForStrippedFileName(view, logger)
 
         if (
             self.isEventListenerEnabled('on_load_async') and
@@ -137,6 +136,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             self.isOnWorkingScope(view)
         ):
             view.run_command('auto_set_syntax')
+
+        self._applyFileSyntaxForNewFile(view)
 
     def on_post_text_command(self, view, command_name, args):
         """ called after a text command has been executed """
@@ -193,14 +194,30 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         return True
 
+    def _applyFileSyntaxForNewFile(self, view):
+        """ may apply a syntax for a new buffer """
 
-class AutoSetSyntaxForTextByExtCommand(sublime_plugin.TextCommand):
-    global settings, syntaxMappings, logger
+        syntaxFilePartial = settings.get('new_file_syntax', '')
 
-    def run(self, edit):
-        """ match the extension and set the corresponding syntax """
+        if (
+            syntaxFilePartial != '' and
+            view.scope_name(0).strip() == 'text.plain'
+        ):
+            for syntaxMap in syntaxMappings:
+                syntaxFile = syntaxMap['file_path']
 
-        view = self.view
+                if syntaxFile.find(syntaxFilePartial) >= 0:
+                    view.assign_syntax(syntaxFile)
+                    logger.info('assign syntax to "{0}" due to new_file_syntax: {1}'.format(syntaxFile, syntaxFilePartial))
+
+                    return
+
+    def _applySyntaxForStrippedFileName(self, view, logger):
+        """ may match the extension and set the corresponding syntax """
+
+        if view.scope_name(0).strip() != 'text.plain':
+            return
+
         filePath = view.file_name()
 
         # make sure this is a real file

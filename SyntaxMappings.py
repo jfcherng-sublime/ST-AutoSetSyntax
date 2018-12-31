@@ -81,7 +81,7 @@ class SyntaxMappings():
         """ load from user settings """
 
         syntaxMappings = []
-        for syntaxFilePartial, firstLineMatches in self.settings.get('syntax_mapping').items():
+        for syntaxFilePartial, firstLineMatches in self.settings.get('syntax_mapping', {}).items():
             firstLineMatchRegexes = []
             for firstLineMatch in firstLineMatches:
                 try:

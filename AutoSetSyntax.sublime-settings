@@ -22,6 +22,8 @@
         //     "<\\?="
         // ]
     },
+    // the partial file path of the syntax file used when creating a new file
+    "new_file_syntax": "",
     // the scope that this plugin should work (regular expression)
     // leave it blank to match any scope
     "working_scope": "^text.plain\\b",
