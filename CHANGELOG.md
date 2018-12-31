@@ -1,6 +1,13 @@
 # AutoSetSyntax
 
 
+## 1.10.0
+
+- New feature: Auto set syntax when creating a new file.
+
+  See the "new_file_syntax" settings.
+
+
 ## 1.9.1
 
 - Remove debugging codes.
