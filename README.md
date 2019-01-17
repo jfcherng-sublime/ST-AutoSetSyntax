@@ -2,7 +2,7 @@ Sublime-AutoSetSyntax
 ============================
 
 This repository is a plugin for Sublime Text 3.
-It automatically sets the syntax for your file if an event is triggered.
+It automatically sets the syntax for your file if possible.
 The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
