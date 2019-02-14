@@ -6,6 +6,12 @@ It automatically sets the syntax for your file if possible.
 The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
+Installation
+============
+
+This package is available on Package Control by the name of [AutoSetSyntax](https://packagecontrol.io/packages/AutoSetSyntax).
+
+
 Examples
 ========
 
