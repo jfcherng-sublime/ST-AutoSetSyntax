@@ -89,13 +89,13 @@ User Settings
 ```
 
 - event_listeners
-    - on_activated_async": Called when a view gains input focus.
-    - on_clone_async": Called when a view is cloned from an existing one.
-    - on_load_async": Called when the file is finished loading.
-    - on_modified_async": Called after changes have been made to a view.
-    - on_new_async": Called when a new buffer is created.
-    - on_post_paste": Called after there is a paste operation.
-    - on_pre_save_async": Called just before a view is saved.
+    - on_activated_async: Called when a view gains input focus.
+    - on_clone_async: Called when a view is cloned from an existing one.
+    - on_load_async: Called when the file is finished loading.
+    - on_modified_async: Called after changes have been made to a view.
+    - on_new_async: Called when a new buffer is created.
+    - on_post_paste: Called after there is a paste operation.
+    - on_pre_save_async: Called just before a view is saved.
 - first_line_length_max
     - \>= 0: The maximum length to lookup in the first line.
     - < 0: No limitation.

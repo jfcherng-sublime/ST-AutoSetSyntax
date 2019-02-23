@@ -1,12 +1,19 @@
 {
     // when should this plugin work?
     "event_listeners": {
+        // called when a view gains input focus
         "on_activated_async": true,
+        // called when a view is cloned from an existing one
         "on_clone_async": true,
+        // called when the file is finished loading
         "on_load_async": true,
+        // called after changes have been made to a view
         "on_modified_async": true,
+        // called when a new buffer is created
         "on_new_async": true,
+        // called after there is a paste operation
         "on_post_paste": true,
+        // called just before a view is saved
         "on_pre_save_async": true,
     },
     // the max lookup length for the first line
