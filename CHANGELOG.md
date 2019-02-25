@@ -1,6 +1,11 @@
 # AutoSetSyntax
 
 
+## 1.10.1
+
+- Use a new side-by-side window to edit settings.
+
+
 ## 1.10.0
 
 - New feature: Auto set syntax when creating a new file.
