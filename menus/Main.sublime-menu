@@ -1,43 +1,36 @@
 [{
     "caption": "Preferences",
-    "mnemonic": "n",
     "id": "preferences",
     "children": [{
         "caption": "Package Settings",
-        "mnemonic": "P",
         "id": "package-settings",
         "children": [{
             "caption": "AutoSetSyntax",
             "children": [{
-                "caption": "-"
+                "caption": "-",
             }, {
-                "command": "open_file",
-                "caption": "Settings – Default",
+                "caption": "Settings",
+                "command": "edit_settings",
                 "args": {
-                    "file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings"
-                }
-            }, {
-                "command": "open_file",
-                "caption": "Settings – User",
-                "args": {
-                    "file": "${packages}/User/AutoSetSyntax.sublime-settings"
+                    "base_file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings",
+                    "default": "{\n\t$0\n}\n",
                 },
             }, {
-                "caption": "-"
+                "caption": "-",
             }, {
                 "caption": "README",
                 "command": "open_file",
                 "args": {
-                    "file": "${packages}/AutoSetSyntax/README.md"
-                }
+                    "file": "${packages}/AutoSetSyntax/README.md",
+                },
             }, {
                 "caption": "Changelog",
                 "command": "open_file",
                 "args": {
-                    "file": "${packages}/AutoSetSyntax/CHANGELOG.md"
-                }
+                    "file": "${packages}/AutoSetSyntax/CHANGELOG.md",
+                },
             }, {
-                "caption": "-"
+                "caption": "-",
             }]
         }]
     }]
