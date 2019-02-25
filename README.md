@@ -1,8 +1,7 @@
 Sublime-AutoSetSyntax
-============================
+=====================
 
-This repository is a plugin for Sublime Text 3.
-It automatically sets the syntax for your file if possible.
+This plugin automatically sets the syntax for your file if possible.
 The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
@@ -15,15 +14,16 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 Examples
 ========
 
-### Guess the Syntax After Stripping Unimportant File Extensions
+<details><summary>Guess the Syntax After Stripping Unimportant File Extensions</summary>
 
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/try-strip-file-exts.gif)
 
 1. `config_gitlab.yml.example` -> `config_gitlab.yml` -> Ah! `.yml` should use the `YAML` syntax.
 1. See `try_filename_remove_exts` settings for details.
 
+</details>
 
-### PHP Tag
+<details><summary>PHP Tag</summary>
 
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
 
@@ -31,8 +31,9 @@ Examples
 1. Type `<?php`.
 1. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
 
+</details>
 
-### Colored Git Log
+<details><summary>Colored Git Log</summary>
 
 ![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/git-log.gif)
 
@@ -43,6 +44,8 @@ Examples
 1. Execute your customized git log command. In this example, it is `git l` as set in the previous step.
 1. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
 
+</details>
+
 
 ### More Creative Usages To Share?
 
@@ -51,6 +54,8 @@ Feel free to create an issue or a pull request.
 
 User Settings
 =============
+
+<details><summary>Click to expand</summary>
 
 ```javascript
 {
@@ -114,6 +119,8 @@ User Settings
     - For `text.plain` scope, try to remove these file extensions from the file name
       and may set a syntax corresponding syntax by the stripped file name.
 
+</details>
+
 
 Commands
 ========
@@ -149,7 +156,7 @@ When command `auto_set_syntax` is called:
 Debug
 =====
 
-Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>`</kbd>), which looks like
+Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>\`</kbd>), which looks like
 
 ```
 AutoSetSyntax: [ERROR] regex compilation failed in user settings "working_scope": ^text.plain\b+
