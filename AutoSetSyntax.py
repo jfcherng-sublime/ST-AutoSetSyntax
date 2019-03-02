@@ -65,7 +65,7 @@ def applyLogLevel(settings, logger):
 
     try:
         logger.setLevel(logging._levelNames[logLevel])
-    except:
+    except re.error:
         logger.warning('unknown "{0}": {1} (assumed "{2}")'.format('log_level', logLevel, LOG_LEVEL_DEFAULT))
         logger.setLevel(logging._levelNames[LOG_LEVEL_DEFAULT])
 
@@ -77,7 +77,7 @@ def compileWorkingScope(settings, logger):
 
     try:
         return re.compile(workingScope)
-    except:
+    except re.error:
         errorMessage = 'regex compilation failed in user settings "{0}": {1}'.format('working_scope', workingScope)
         logger.critical(errorMessage)
         sublime.error_message(errorMessage)
@@ -92,8 +92,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ called when a view gains input focus """
 
         if (
-            self.isEventListenerEnabled('on_activated_async') and
-            self.isOnWorkingScope(view)
+            self.isEventListenerEnabled('on_activated_async')
+            and self.isOnWorkingScope(view)
         ):
             view.run_command('auto_set_syntax')
 
@@ -101,8 +101,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ called when a view is cloned from an existing one """
 
         if (
-            self.isEventListenerEnabled('on_clone_async') and
-            self.isOnWorkingScope(view)
+            self.isEventListenerEnabled('on_clone_async')
+            and self.isOnWorkingScope(view)
         ):
             view.run_command('auto_set_syntax')
 
@@ -112,8 +112,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         self._applySyntaxForStrippedFileName(view, logger)
 
         if (
-            self.isEventListenerEnabled('on_load_async') and
-            self.isOnWorkingScope(view)
+            self.isEventListenerEnabled('on_load_async')
+            and self.isOnWorkingScope(view)
         ):
             view.run_command('auto_set_syntax')
 
@@ -121,10 +121,10 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ called after changes have been made to a view """
 
         if (
-            self.isEventListenerEnabled('on_modified_async') and
-            self.isOnlyOneCursor(view) and
-            self.isFirstCursorNearBeginning(view) and
-            self.isOnWorkingScope(view)
+            self.isEventListenerEnabled('on_modified_async')
+            and self.isOnlyOneCursor(view)
+            and self.isFirstCursorNearBeginning(view)
+            and self.isOnWorkingScope(view)
         ):
             view.run_command('auto_set_syntax')
 
@@ -132,8 +132,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ called when a new buffer is created """
 
         if (
-            self.isEventListenerEnabled('on_new_async') and
-            self.isOnWorkingScope(view)
+            self.isEventListenerEnabled('on_new_async')
+            and self.isOnWorkingScope(view)
         ):
             view.run_command('auto_set_syntax')
 
@@ -143,14 +143,9 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ called after a text command has been executed """
 
         if (
-            self.isOnWorkingScope(view) and
-            (
-                self.isEventListenerEnabled('on_post_paste') and
-                (
-                    command_name == 'patse' or
-                    command_name == 'paste_and_indent'
-                )
-            )
+            self.isOnWorkingScope(view)
+            and self.isEventListenerEnabled('on_post_paste')
+            and (command_name == 'patse' or command_name == 'paste_and_indent')
         ):
             view.run_command('auto_set_syntax')
 
@@ -158,8 +153,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ called just before a view is saved """
 
         if (
-            self.isEventListenerEnabled('on_pre_save_async') and
-            self.isOnWorkingScope(view)
+            self.isEventListenerEnabled('on_pre_save_async')
+            and self.isOnWorkingScope(view)
         ):
             view.run_command('auto_set_syntax')
 
@@ -167,8 +162,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ check a event listener is enabled """
 
         try:
-            return settings.get('event_listeners', None)[event]
-        except:
+            return settings.get('event_listeners', {})[event]
+        except KeyError:
             logger.warning('"{0}" is not set in user settings (assumed true)'.format('event_listeners -> '+event))
 
             return True
@@ -187,8 +182,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ check the scope of the first line is matched by working_scope """
 
         if (
-            workingScopeRegex is None or
-            workingScopeRegex.search(view.scope_name(0)) is None
+            workingScopeRegex is None
+            or workingScopeRegex.search(view.scope_name(0)) is None
         ):
             return False
 
@@ -200,8 +195,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         syntaxFilePartial = settings.get('new_file_syntax', '')
 
         if (
-            syntaxFilePartial != '' and
-            view.scope_name(0).strip() == 'text.plain'
+            syntaxFilePartial != ''
+            and view.scope_name(0).strip() == 'text.plain'
         ):
             for syntaxMap in syntaxMappings:
                 syntaxFile = syntaxMap['file_path']
@@ -242,8 +237,8 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
                 for fileExtension in fileExtensions:
                     if (
-                        fileBaseNameStripped.endswith('.'+fileExtension) or
-                        fileBaseNameStripped == fileExtension
+                        fileBaseNameStripped.endswith('.'+fileExtension)
+                        or fileBaseNameStripped == fileExtension
                     ):
                         view.assign_syntax(syntaxFile)
                         logger.info('assign syntax to "{0}" due to stripped file name: {1}'.format(syntaxFile, fileBaseNameStripped))
