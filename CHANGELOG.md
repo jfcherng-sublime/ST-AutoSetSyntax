@@ -1,6 +1,11 @@
 # AutoSetSyntax
 
 
+## 1.10.2
+
+- Add the command to the command palette.
+
+
 ## 1.10.1
 
 - Use a new side-by-side window to edit settings.
