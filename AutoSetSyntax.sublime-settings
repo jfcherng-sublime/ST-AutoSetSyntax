@@ -37,6 +37,11 @@
     // try to remove these file extensions from the file name and set
     // a corresponding syntax if there is a matching one
     "try_filename_remove_exts": [
+        "-dev",
+        "-development",
+        "-prod",
+        "-production",
+        "-test",
         ".backup",
         ".bak",
         ".default",
@@ -46,5 +51,7 @@
         ".include",
         ".local",
         ".sample",
+        ".test",
+        ".tpl",
     ],
 }
