@@ -22,7 +22,7 @@
                     "file": "${packages}/AutoSetSyntax/README.md",
                 },
             }, {
-                "caption": "Changelog",
+                "caption": "CHANGELOG",
                 "command": "open_file",
                 "args": {
                     "file": "${packages}/AutoSetSyntax/CHANGELOG.md",
