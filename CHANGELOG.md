@@ -1,6 +1,14 @@
 # AutoSetSyntax
 
 
+## 1.10.3
+
+- Put menu files to `menus/`.
+- Update `try_filename_remove_exts`.
+
+  Add "-dev", "-development", "-prod", "-production", "-test", ".test", ".tpl".
+
+
 ## 1.10.2
 
 - Add the command to the command palette.
