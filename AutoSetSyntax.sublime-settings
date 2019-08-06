@@ -39,6 +39,7 @@
     "try_filename_remove_exts": [
         "-dev",
         "-development",
+        "-dist",
         "-prod",
         "-production",
         "-test",
