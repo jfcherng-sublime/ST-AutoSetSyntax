@@ -3,10 +3,10 @@ import os
 import re
 import sublime
 import sublime_plugin
+from .functions import view_assign_syntax
 from .Globals import Globals
 from .settings import get_package_name, get_setting, get_settings_object, get_settings_file
 from .SyntaxMappings import SyntaxMappings
-
 
 LOG_LEVEL_DEFAULT = "INFO"
 LOG_FORMAT = "[%(name)s][%(levelname)s] %(message)s"
@@ -29,9 +29,9 @@ def plugin_loaded() -> None:
             # todo: use "triegex" to improve regex
             return re.compile(working_scope)
         except Exception as e:
-            error_message = 'Fail to compile regex for "working_scope" `{regex} because {reason}`'.format(
-                regex=working_scope, reason=e
-            )
+            error_message = (
+                'Failed to compile regex for "working_scope" `{regex} because {reason}`'
+            ).format(regex=working_scope, reason=e)
 
             Globals.logger.critical(error_message)
             sublime.error_message(error_message)
@@ -46,12 +46,15 @@ def plugin_loaded() -> None:
         except Exception:
             Globals.logger.setLevel(logging._levelNames[LOG_LEVEL_DEFAULT])
             Globals.logger.warning(
-                'Unknown "log_level": {1} (assumed "{2}")'.format(log_level, LOG_LEVEL_DEFAULT)
+                'Unknown "log_level": {log_level} '
+                '(assumed "{log_level_default}")'.format(
+                    log_level=log_level, log_level_default=LOG_LEVEL_DEFAULT
+                )
             )
 
     def get_plugin_logger() -> logging.Logger:
         def set_logger_hander(logger: logging.Logger) -> None:
-            # remove all log handlers
+            # remove all existing log handlers
             for handler in logger.handlers:
                 logger.removeHandler(handler)
 
@@ -81,15 +84,13 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_activated_async(self, view: sublime.View) -> None:
         """ called when a view gains input focus """
 
-        if self._is_event_listener_enabled("on_activated_async") and self._is_on_working_scope(
-            view
-        ):
+        if self._is_listener_enabled("on_activated_async") and self._is_on_working_scope(view):
             view.run_command("auto_set_syntax")
 
     def on_clone_async(self, view: sublime.View) -> None:
         """ called when a view is cloned from an existing one """
 
-        if self._is_event_listener_enabled("on_clone_async") and self._is_on_working_scope(view):
+        if self._is_listener_enabled("on_clone_async") and self._is_on_working_scope(view):
             view.run_command("auto_set_syntax")
 
     def on_load_async(self, view: sublime.View) -> None:
@@ -97,14 +98,14 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         self._apply_syntax_for_stripped_file_name(view)
 
-        if self._is_event_listener_enabled("on_load_async") and self._is_on_working_scope(view):
+        if self._is_listener_enabled("on_load_async") and self._is_on_working_scope(view):
             view.run_command("auto_set_syntax")
 
     def on_modified_async(self, view: sublime.View) -> None:
         """ called after changes have been made to a view """
 
         if (
-            self._is_event_listener_enabled("on_modified_async")
+            self._is_listener_enabled("on_modified_async")
             and self._is_only_one_cursor(view)
             and self._is_first_cursor_near_beginning(view)
             and self._is_on_working_scope(view)
@@ -114,17 +115,17 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_new_async(self, view: sublime.View) -> None:
         """ called when a new buffer is created """
 
-        if self._is_event_listener_enabled("on_new_async") and self._is_on_working_scope(view):
+        if self._is_listener_enabled("on_new_async") and self._is_on_working_scope(view):
             view.run_command("auto_set_syntax")
 
-        self._apply_file_syntax_for_new_file(view)
+        self._apply_syntax_for_new_file(view)
 
     def on_post_text_command(self, view: sublime.View, command_name: str, args: dict) -> None:
         """ called after a text command has been executed """
 
         if (
             self._is_on_working_scope(view)
-            and self._is_event_listener_enabled("on_post_paste")
+            and self._is_listener_enabled("on_post_paste")
             and (command_name == "patse" or command_name == "paste_and_indent")
         ):
             view.run_command("auto_set_syntax")
@@ -132,22 +133,24 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_pre_save_async(self, view: sublime.View) -> None:
         """ called just before a view is saved """
 
-        if self._is_event_listener_enabled("on_pre_save_async") and self._is_on_working_scope(view):
+        if self._is_listener_enabled("on_pre_save_async") and self._is_on_working_scope(view):
             view.run_command("auto_set_syntax")
 
-    def _is_event_listener_enabled(self, event: str) -> bool:
+    def _is_listener_enabled(self, event: str) -> bool:
         """ check a event listener is enabled """
 
         try:
-            return bool(get_setting("event_listeners", {})[event])
+            enabled = get_setting("event_listeners", {})[event]
         except KeyError:
+            enabled = True
+
             Globals.logger.warning(
-                '"{0}" is not set in user settings (assumed true)'.format(
-                    "event_listeners -> " + event
+                '"event_listeners.{event}" is not set in user settings (assumed {enabled})'.format(
+                    event=event, enabled=str(enabled)
                 )
             )
 
-            return True
+        return bool(enabled)
 
     def _is_only_one_cursor(self, view: sublime.View) -> bool:
         """ check there is only one cursor """
@@ -162,71 +165,78 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def _is_on_working_scope(self, view: sublime.View) -> bool:
         """ check the scope of the first line is matched by working_scope """
 
-        return Globals.working_scope_regex_obj.search(view.scope_name(0))
+        return bool(Globals.working_scope_regex_obj.search(view.scope_name(0)))
 
-    def _apply_file_syntax_for_new_file(self, view: sublime.View) -> None:
+    def _apply_syntax_for_new_file(self, view: sublime.View) -> bool:
         """ may apply a syntax for a new buffer """
 
         syntax_file_partial = get_setting("new_file_syntax")
 
         if not syntax_file_partial or view.scope_name(0).strip() != "text.plain":
-            return
+            return False
 
         for syntax_map in Globals.syntax_mappings:
             syntax_file = syntax_map["file_path"]
 
             if syntax_file.find(syntax_file_partial) >= 0:
-                view.assign_syntax(syntax_file)
-                Globals.logger.info(
-                    'Assign syntax to "{0}" due to new_file_syntax: {1}'.format(
-                        syntax_file, syntax_file_partial
-                    )
-                )
+                view_assign_syntax(view, syntax_file, '"new_file_syntax": ' + syntax_file_partial)
 
-                return
+                return True
 
-    def _apply_syntax_for_stripped_file_name(self, view: sublime.View) -> None:
+        return False
+
+    def _apply_syntax_for_stripped_file_name(self, view: sublime.View) -> bool:
         """ may match the extension and set the corresponding syntax """
 
         if view.scope_name(0).strip() != "text.plain":
-            return
+            return False
 
         file_path = view.file_name()
 
         # make sure this is not a buffer
-        if file_path is None:
-            return
+        if not file_path:
+            return False
 
-        file_base_name = os.path.basename(file_path)
-        try_filename_remove_exts = get_setting("try_filename_remove_exts")
+        file_name = os.path.basename(file_path)
 
-        for try_filename_remove_ext in try_filename_remove_exts:
-            if not file_base_name.endswith(try_filename_remove_ext):
-                continue
-
-            file_base_name_stripped = file_base_name[0 : -len(try_filename_remove_ext)]
-
+        for file_name_try in self._file_name_stripped_generator(file_name):
             for syntax_mapping in Globals.syntax_mappings:
-                syntax_file = syntax_mapping["file_path"]
-                fileExtensions = syntax_mapping["file_extensions"]
-
-                if fileExtensions is None:
-                    continue
-
-                for fileExtension in fileExtensions:
+                for file_extension in syntax_mapping["file_extensions"]:
                     if (
-                        not file_base_name_stripped.endswith("." + fileExtension)
-                        and file_base_name_stripped != fileExtension
+                        not file_name_try.endswith("." + file_extension)
+                        and file_name_try != file_extension
                     ):
                         continue
 
-                    view.assign_syntax(syntax_file)
-                    Globals.logger.info(
-                        'Assign syntax to "{syntax}" due to stripped file name: "{old_name}" -> "{new_name}"'.format(
-                            syntax=syntax_file,
-                            old_name=file_base_name,
-                            new_name=file_base_name_stripped,
-                        )
+                    view_assign_syntax(
+                        view,
+                        syntax_mapping["file_path"],
+                        'stripped file name: "{old_name}" -> "{new_name}"'.format(
+                            old_name=file_name, new_name=file_name_try
+                        ),
                     )
 
-                    return
+                    return True
+
+        return False
+
+    def _file_name_stripped_generator(self, file_name: str) -> str:
+        remove_exts = get_setting("try_filename_remove_exts")
+
+        # try to remove the longest matched ext first
+        remove_exts.sort(key=len, reverse=True)
+
+        while True:
+            is_new_name_found = False
+
+            for remove_ext in remove_exts:
+                if not file_name.endswith(remove_ext):
+                    continue
+
+                is_new_name_found = True
+                file_name = file_name[: -len(remove_ext)]
+
+                yield file_name
+
+            if not is_new_name_found:
+                break

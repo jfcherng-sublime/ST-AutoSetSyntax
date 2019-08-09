@@ -1,4 +1,6 @@
 import re
+import sublime
+from .Globals import Globals
 
 
 def snake_to_camel(snake: str, upper_first: bool = False) -> str:
@@ -16,3 +18,14 @@ def camel_to_snake(camel: str) -> str:
     camel = camel[0].upper() + camel[1:]
 
     return "_".join(re.findall(r"[A-Z][^A-Z]*", camel)).lower()
+
+
+def view_assign_syntax(view: sublime.View, syntax_file: str, reason: str = ""):
+    view.assign_syntax(syntax_file)
+
+    if reason:
+        msg = 'Assign syntax to "{syntax}" because {reason}'
+    else:
+        msg = 'Assign syntax to "{syntax}"'
+
+    Globals.logger.info(msg.format(syntax=syntax_file, reason=reason))

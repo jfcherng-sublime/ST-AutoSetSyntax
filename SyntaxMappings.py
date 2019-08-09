@@ -1,3 +1,6 @@
+import copy
+import json
+import logging
 import os
 import plistlib
 import re
@@ -8,74 +11,111 @@ from .functions import snake_to_camel, camel_to_snake
 ST_SYNTAX_FILE_EXTS = [".sublime-syntax", ".tmLanguage"]
 
 
-class SyntaxMappings:
+class SyntaxMappings(object):
     settings = None
     logger = None
 
-    # contents of this list are dict whose keys are
-    #     file_extensions
-    #     file_path
-    #     first_line_match
-    #     first_line_match_compiled
+    # items of this list are dicts whose keys are
+    #     rule_source: str
+    #     file_extensions: set[str]
+    #     file_path: str
+    #     first_line_match: list[str]
+    #     first_line_match_compiled: list[compiled regex object]
     syntax_mappings = []
 
     # the path of all syntax files
     syntax_files = []
 
-    def __init__(self, settings, logger):
+    def __init__(self, settings: sublime.Settings, logger: logging.Logger) -> None:
         self.settings = settings
         self.logger = logger
 
-        self.syntax_files = self._find_syntax_file_paths(True)
+        self.syntax_files = self._find_syntax_file_paths()
         self.syntax_mappings = self._build_syntax_mappings()
 
-        self.logger.debug("Found syntax files: {0}".format(self.syntax_files))
+        self.logger.debug("Found syntax files: {}".format(self.syntax_files))
 
     def __iter__(self):
         return iter(self.value())
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.value())
 
-    def value(self, val=None):
-        if val is None:
+    def __str__(self) -> str:
+        def regex_object_prestringify(re_obj):
+            return (re_obj.pattern, re_obj.flags) if re_obj else None
+
+        syntax_mappings = []
+        for syntax_mapping in self.syntax_mappings:
+            syntax_mapping = copy.copy(syntax_mapping)
+
+            syntax_mapping["file_extensions"] = list(syntax_mapping["file_extensions"])
+            syntax_mapping["first_line_match_compiled"] = [
+                regex_object_prestringify(regex_object)
+                for regex_object in syntax_mapping["first_line_match_compiled"]
+            ]
+
+            syntax_mappings.append(syntax_mapping)
+
+        return json.dumps(syntax_mappings)
+
+    def value(self, val=...):
+        if val is ...:
             return self.syntax_mappings
         else:
             self.syntax_mappings = val
 
-    def _find_syntax_file_paths(self, drop_duplicated: bool = False) -> list:
+    def _find_syntax_file_paths(
+        self, drop_duplicated: bool = True, remove_useless: bool = True
+    ) -> list:
         """
         @brief find the path of all syntax files
 
         @param drop_duplicated if True, for a syntax, only the highest priority resource will be returned
 
-        @return list<string> the path of all syntax files
+        @return list[str] the path of all syntax files
         """
 
-        # todo: do not repeat code because of "drop_duplicated"
-        if drop_duplicated is False:
-            syntax_files = []
-            for syntax_file_ext in ST_SYNTAX_FILE_EXTS:
-                syntax_files += sublime.find_resources("*" + syntax_file_ext)
-        else:
+        syntax_files = []
+        for syntax_file_ext in ST_SYNTAX_FILE_EXTS:
+            syntax_files += sublime.find_resources("*" + syntax_file_ext)
+
+        if drop_duplicated:
             # key   = syntax resource path without extension
             # value = the corresponding extension
             # example: { 'Packages/Java/Java': '.sublime-syntax' }
             syntax_griddle = {}
-            for syntax_file_ext in ST_SYNTAX_FILE_EXTS:
-                resources = sublime.find_resources("*" + syntax_file_ext)
-                for resource in resources:
-                    resource_name, resource_ext = os.path.splitext(resource)
-                    if resource_name not in syntax_griddle:
-                        syntax_griddle[resource_name] = resource_ext
+
+            for syntax_file in syntax_files:
+                file_name, file_ext = os.path.splitext(syntax_file)
+
+                # ".sublime-syntax" is always preferred than ".tmLanguage"
+                if file_name not in syntax_griddle or file_ext == ".sublime-syntax":
+                    syntax_griddle[file_name] = file_ext
 
             # combine a name and an extension back into a full path
-            syntax_files = [n + e for n, e in syntax_griddle.items()]
+            syntax_files = [name + ext for name, ext in syntax_griddle.items()]
 
-        return syntax_files
+        if remove_useless:
+            useless_paths = ["/sublime_lib/tests/"]
+
+            syntax_files = filter(
+                lambda syntax_file: all(
+                    useless_path not in syntax_file for useless_path in useless_paths
+                ),
+                syntax_files,
+            )
+
+        return sorted(syntax_files)
 
     def _build_syntax_mappings(self) -> list:
-        return self._build_syntax_mappings_from_user() + self._build_syntax_mappings_from_st()
+        return list(
+            map(
+                self._normalize_syntax_mapping_attrs,
+                # prefer user settings than built-in rules
+                self._build_syntax_mappings_from_user() + self._build_syntax_mappings_from_st(),
+            )
+        )
 
     def _build_syntax_mappings_from_user(self) -> list:
         """ load from user settings """
@@ -84,45 +124,26 @@ class SyntaxMappings:
         syntax_mappings = []
 
         for syntax_file_partial, first_line_matches in mapping_settings:
-            first_line_match_regexes = []
-            for first_line_match in first_line_matches:
-                try:
-                    first_line_match_regexes.append(re.compile(first_line_match))
-                except Exception as e:
-                    self.logger.error(
-                        'Fail to compile regex for syntax "{syntax}" `{regex}` because {reason}'.format(
-                            syntax=syntax_file_partial, regex=first_line_match, reason=e
-                        )
+            # syntax_file_partial could be partial path
+            # we try to get the full path here
+            for syntax_file in self.syntax_files:
+                if syntax_file.find(syntax_file_partial) >= 0:
+                    self.logger.info(
+                        'Match syntax file "{}" with "{}"'.format(syntax_file_partial, syntax_file)
                     )
 
-            if first_line_match_regexes:
-                # syntax_file_partial could be partial path
-                # we try to get the real path here
-                is_syntax_file_found = False
-                for syntax_file in self.syntax_files:
-                    if syntax_file.find(syntax_file_partial) >= 0:
-                        self.logger.info(
-                            'Match syntax file "{0}" with "{1}"'.format(
-                                syntax_file_partial, syntax_file
-                            )
-                        )
-                        is_syntax_file_found = True
+                    attrs = {
+                        "rule_source": "user",
+                        "file_path": syntax_file,
+                        "file_extensions": set(),
+                        "first_line_match": first_line_matches,
+                    }
 
-                        syntax_mappings.append(
-                            {
-                                "file_extensions": None,
-                                "file_path": syntax_file,
-                                "first_line_match": first_line_matches,
-                                "first_line_match_compiled": first_line_match_regexes,
-                            }
-                        )
+                    syntax_mappings.append(attrs)
 
-                        break
-
-                if is_syntax_file_found is False:
-                    self.logger.error(
-                        'Cannot find a syntax file for "{0}"'.format(syntax_file_partial)
-                    )
+                    break
+            else:
+                self.logger.error('Cannot find a syntax file for "{}"'.format(syntax_file_partial))
 
         return syntax_mappings
 
@@ -132,44 +153,67 @@ class SyntaxMappings:
         syntax_mappings = []
 
         for syntax_file in self.syntax_files:
-            syntax_file_content = sublime.load_resource(syntax_file).strip()
+            syntax_file_content = sublime.load_resource(syntax_file)
 
             attrs = self._get_attributes_from_syntax_file_content(
                 syntax_file_content,
                 [
+                    # 'file_types' in YAML is the same with 'file_extensions' in XML
                     "file_extensions",
-                    "file_types",  # i.e., the 'file_extensions' in XML
+                    "file_types",
                     "first_line_match",
                 ],
             )
 
-            if attrs is None:
-                self.logger.error("Fail parsing file: {0}".format(syntax_file))
+            if not attrs:
+                self.logger.error("Failed to parse file: " + syntax_file)
 
                 continue
 
-            # use 'file_extensions' as the formal key
-            if attrs["file_types"] is not None:
-                attrs["file_extensions"] = attrs["file_types"]
-                attrs.pop("file_types")
-
-            attrs.update({"file_path": syntax_file, "first_line_match_compiled": None})
-
-            if attrs["first_line_match"] is not None:
-                try:
-                    attrs["first_line_match_compiled"] = [re.compile(attrs["first_line_match"])]
-                except Exception as e:
-                    self.logger.error(
-                        'Fail to compile "first_line_match" regex in "{syntax}" `{regex}` because {reason}'.format(
-                            syntax=syntax_file, regex=attrs["first_line_match"], reason=e
-                        )
-                    )
-
-                attrs["first_line_match"] = [attrs["first_line_match"]]
+            attrs.update({"rule_source": "ST", "file_path": syntax_file})
 
             syntax_mappings.append(attrs)
 
         return syntax_mappings
+
+    def _normalize_syntax_mapping_attrs(self, attrs: dict) -> dict:
+        attrs = copy.copy(attrs)
+
+        # prevent from None and nonexisting keys
+        if "file_types" not in attrs or not attrs["file_types"]:
+            attrs["file_types"] = []
+        if "file_extensions" not in attrs or not attrs["file_extensions"]:
+            attrs["file_extensions"] = []
+        if "first_line_match" not in attrs or not attrs["first_line_match"]:
+            attrs["first_line_match"] = []
+
+        attrs["file_types"] = set(attrs["file_types"])
+        attrs["file_extensions"] = set(attrs["file_extensions"])
+
+        if not isinstance(attrs["first_line_match"], list):
+            attrs["first_line_match"] = [attrs["first_line_match"]]
+
+        # compile "first_line_match" into "first_line_match_compiled"
+        attrs["first_line_match_compiled"] = []
+        for first_line_match in attrs["first_line_match"]:
+            try:
+                attrs["first_line_match_compiled"].append(re.compile(first_line_match))
+            except Exception as e:
+                # we want to maintain the same index with "first_line_match"
+                # so we apppend a None here
+                attrs["first_line_match_compiled"].append(None)
+                self.logger.error(
+                    'Failed to compile "first_line_match" regex in "{syntax}" `{regex}` because {reason}'.format(
+                        syntax=attrs["file_path"], regex=first_line_match, reason=e
+                    )
+                )
+
+        # use 'file_extensions' as the formal key rather than 'file_types'
+        attrs["file_extensions"] |= attrs["file_types"]
+        # remove the "file_types" key
+        attrs.pop("file_types", None)
+
+        return attrs
 
     def _get_attributes_from_syntax_file_content(self, content: str = "", attrs: list = []) -> dict:
         """ find "first_line_match" or "first_line_match" in syntax file content """
@@ -183,8 +227,6 @@ class SyntaxMappings:
         """ find attributes in .sublime-syntax content """
 
         attrs = map(camel_to_snake, attrs)
-
-        results = {}
 
         try:
             # "contexts:" is usually the last (and largest) part of a syntax deinition.
@@ -200,31 +242,22 @@ class SyntaxMappings:
         except Exception:
             return None
 
-        for attr in attrs:
-            results[attr] = parsed[attr] if attr in parsed else None
-
-        return results
+        return {attr: parsed.get(attr, None) for attr in attrs}
 
     def _get_attributes_from_xml_string(self, content: str = "", attrs: list = []) -> dict:
         """ find attributes in .tmLanguage content """
 
         attrs = map(camel_to_snake, attrs)
 
-        results = {}
-
         try:
             # "<key>patterns</key>" is usually the last (and largest) part of a syntax deinition.
             # to speed up searching, strip everything behinds "<key>patterns</key>"
             cut_pos = content.find("<key>patterns</key>")
             if cut_pos >= 0:
-                content = content[:cut_pos] + r"</dict></plist>"
+                content = content[:cut_pos] + "</dict></plist>"
 
             parsed = plistlib.readPlistFromBytes(content.encode("UTF-8"))
         except Exception:
             return None
 
-        for attr in attrs:
-            attr_camel = snake_to_camel(attr)
-            results[attr] = parsed[attr_camel] if attr_camel in parsed else None
-
-        return results
+        return {attr: parsed.get(snake_to_camel(attr), None) for attr in attrs}

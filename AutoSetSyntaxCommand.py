@@ -1,49 +1,49 @@
 import sublime
 import sublime_plugin
+from .functions import view_assign_syntax
 from .Globals import Globals
 from .settings import get_setting
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
-    def run(self, edit: sublime.Edit) -> None:
+    def run(self, edit: sublime.Edit) -> bool:
         """ match the first line and set the corresponding syntax """
 
-        view = self.view
-
         # make sure the target view is not a panel
-        if view.settings().get("is_widget"):
-            return
+        if self.view.settings().get("is_widget"):
+            return False
 
         first_line = self._get_partial_first_line()
 
         for syntax_mapping in Globals.syntax_mappings:
-            syntax_file = syntax_mapping["file_path"]
-            first_line_match_regexes = syntax_mapping["first_line_match_compiled"]
+            for first_line_match_regex in syntax_mapping["first_line_match_compiled"]:
+                # "first_line_match_regex" may be None if its corresponding regex is not compile-able
+                if not first_line_match_regex:
+                    continue
 
-            if first_line_match_regexes is None:
-                continue
-
-            for first_line_match_regex in first_line_match_regexes:
-                if first_line_match_regex.search(first_line) is not None:
-                    view.assign_syntax(syntax_file)
-                    Globals.logger.info(
-                        'Assign syntax to "{0}" due to: {1}'.format(
-                            syntax_file, first_line_match_regex.pattern
-                        )
+                if first_line_match_regex.search(first_line):
+                    view_assign_syntax(
+                        self.view,
+                        syntax_mapping["file_path"],
+                        '({rule_source}) "first_line_match": {regex}'.format(
+                            rule_source=syntax_mapping["rule_source"],
+                            regex=first_line_match_regex.pattern,
+                        ),
                     )
 
-                    return
+                    return True
+
+        return False
 
     def _get_partial_first_line(self) -> str:
         """ get the (partial) first line """
 
-        view = self.view
-        region = view.line(0)
-        first_line_length_max = get_setting("first_line_length_max")
+        region = self.view.line(0)
+        max_length = get_setting("first_line_length_max")
 
-        if first_line_length_max >= 0:
+        if max_length >= 0:
             # if the first line is longer than the max line length,
             # then we use the max line length
-            region = sublime.Region(0, min(region.end(), first_line_length_max))
+            region = sublime.Region(0, min(region.end(), max_length))
 
-        return view.substr(region)
+        return self.view.substr(region)
