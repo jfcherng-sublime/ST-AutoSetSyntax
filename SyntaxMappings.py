@@ -18,19 +18,19 @@ class SyntaxMappings:
     #     file_path
     #     first_line_match
     #     first_line_match_compiled
-    syntaxMappings = []
+    syntax_mappings = []
 
     # the path of all syntax files
-    syntaxFiles = []
+    syntax_files = []
 
     def __init__(self, settings, logger):
         self.settings = settings
         self.logger = logger
 
-        self.syntaxFiles = self.findSyntaxFilePaths(True)
-        self.syntaxMappings = self._buildSyntaxMappings()
+        self.syntax_files = self._find_syntax_file_paths(True)
+        self.syntax_mappings = self._build_syntax_mappings()
 
-        self.logger.debug("found syntax files: {0}".format(self.syntaxFiles))
+        self.logger.debug("found syntax files: {0}".format(self.syntax_files))
 
     def __iter__(self):
         return iter(self.value())
@@ -40,102 +40,104 @@ class SyntaxMappings:
 
     def value(self, val=None):
         if val is None:
-            return self.syntaxMappings
+            return self.syntax_mappings
         else:
-            self.syntaxMappings = val
+            self.syntax_mappings = val
 
-    def findSyntaxFilePaths(self, dropDuplicated=False):
+    def _find_syntax_file_paths(self, drop_duplicated=False):
         """
         @brief find the path of all syntax files
 
-        @param dropDuplicated if True, for a syntax, only the highest priority resource will be returned
+        @param drop_duplicated if True, for a syntax, only the highest priority resource will be returned
 
         @return list<string> the path of all syntax files
         """
 
-        if dropDuplicated is False:
-            syntaxFiles = []
-            for syntaxFileExt in ST_LANGUAGES:
-                syntaxFiles += sublime.find_resources("*" + syntaxFileExt)
+        if drop_duplicated is False:
+            syntax_files = []
+            for syntax_file_ext in ST_LANGUAGES:
+                syntax_files += sublime.find_resources("*" + syntax_file_ext)
         else:
             # key   = syntax resource path without extension
             # value = the corresponding extension
             # example: { 'Packages/Java/Java': '.sublime-syntax' }
-            syntaxGriddle = {}
-            for syntaxFileExt in ST_LANGUAGES:
-                resources = sublime.find_resources("*" + syntaxFileExt)
+            syntax_griddle = {}
+            for syntax_file_ext in ST_LANGUAGES:
+                resources = sublime.find_resources("*" + syntax_file_ext)
                 for resource in resources:
-                    resourceName, resourceExt = os.path.splitext(resource)
-                    if resourceName not in syntaxGriddle:
-                        syntaxGriddle[resourceName] = resourceExt
+                    resource_name, resource_ext = os.path.splitext(resource)
+                    if resource_name not in syntax_griddle:
+                        syntax_griddle[resource_name] = resource_ext
 
             # combine a name and an extension back into a full path
-            syntaxFiles = [n + e for n, e in syntaxGriddle.items()]
+            syntax_files = [n + e for n, e in syntax_griddle.items()]
 
-        return syntaxFiles
+        return syntax_files
 
-    def _buildSyntaxMappings(self):
-        return self._buildSyntaxMappingsFromUser() + self._buildSyntaxMappingsFromSt()
+    def _build_syntax_mappings(self):
+        return self._build_syntax_mappings_from_user() + self._build_syntax_mappings_from_st()
 
-    def _buildSyntaxMappingsFromUser(self):
+    def _build_syntax_mappings_from_user(self):
         """ load from user settings """
 
-        mappingSettings = self.settings.get("syntax_mapping", {}).items()
-        syntaxMappings = []
+        mapping_settings = self.settings.get("syntax_mapping", {}).items()
+        syntax_mappings = []
 
-        for syntaxFilePartial, firstLineMatches in mappingSettings:
-            firstLineMatchRegexes = []
-            for firstLineMatch in firstLineMatches:
+        for syntax_file_partial, first_line_matches in mapping_settings:
+            first_line_match_regexes = []
+            for first_line_match in first_line_matches:
                 try:
-                    firstLineMatchRegexes.append(re.compile(firstLineMatch))
+                    first_line_match_regexes.append(re.compile(first_line_match))
                 except:
                     self.logger.error(
                         'regex compilation failed in user settings "{0}": {1}'.format(
-                            syntaxFilePartial, firstLineMatch
+                            syntax_file_partial, first_line_match
                         )
                     )
 
-            if firstLineMatchRegexes:
-                # syntaxFilePartial could be partial path
+            if first_line_match_regexes:
+                # syntax_file_partial could be partial path
                 # we try to get the real path here
-                isSyntaxFileFound = False
-                for syntaxFile in self.syntaxFiles:
-                    if syntaxFile.find(syntaxFilePartial) >= 0:
+                is_syntax_file_found = False
+                for syntax_file in self.syntax_files:
+                    if syntax_file.find(syntax_file_partial) >= 0:
                         self.logger.info(
                             'match syntax file "{0}" with "{1}"'.format(
-                                syntaxFilePartial, syntaxFile
+                                syntax_file_partial, syntax_file
                             )
                         )
-                        isSyntaxFileFound = True
+                        is_syntax_file_found = True
 
-                        syntaxMappings.append(
+                        syntax_mappings.append(
                             {
                                 "file_extensions": None,
-                                "file_path": syntaxFile,
-                                "first_line_match": firstLineMatches,
-                                "first_line_match_compiled": firstLineMatchRegexes,
+                                "file_path": syntax_file,
+                                "first_line_match": first_line_matches,
+                                "first_line_match_compiled": first_line_match_regexes,
                             }
                         )
 
                         break
 
-                if isSyntaxFileFound is False:
+                if is_syntax_file_found is False:
                     self.logger.error(
-                        'cannot find a syntax file in user settings "{0}"'.format(syntaxFilePartial)
+                        'cannot find a syntax file in user settings "{0}"'.format(
+                            syntax_file_partial
+                        )
                     )
 
-        return syntaxMappings
+        return syntax_mappings
 
-    def _buildSyntaxMappingsFromSt(self):
+    def _build_syntax_mappings_from_st(self):
         """ load from ST packages (one-time job, unless restart ST) """
 
-        syntaxMappings = []
-        for syntaxFile in self.syntaxFiles:
+        syntax_mappings = []
+        for syntax_file in self.syntax_files:
 
-            syntaxFileContent = sublime.load_resource(syntaxFile).strip()
+            syntax_file_content = sublime.load_resource(syntax_file).strip()
 
-            attrs = self._getAttributesFromSyntaxFileContent(
-                syntaxFileContent,
+            attrs = self._get_attributes_from_syntax_file_content(
+                syntax_file_content,
                 [
                     "file_extensions",
                     "file_types",  # i.e., the 'file_extensions' in XML
@@ -144,7 +146,7 @@ class SyntaxMappings:
             )
 
             if attrs is None:
-                self.logger.error("fail parsing file: {0}".format(syntaxFile))
+                self.logger.error("fail parsing file: {0}".format(syntax_file))
 
                 continue
 
@@ -153,7 +155,7 @@ class SyntaxMappings:
                 attrs["file_extensions"] = attrs["file_types"]
                 attrs.pop("file_types")
 
-            attrs.update({"file_path": syntaxFile, "first_line_match_compiled": None})
+            attrs.update({"file_path": syntax_file, "first_line_match_compiled": None})
 
             if attrs["first_line_match"] is not None:
                 try:
@@ -161,25 +163,25 @@ class SyntaxMappings:
                 except:
                     self.logger.error(
                         'regex compilation failed in "{0}": {1}'.format(
-                            syntaxFile, attrs["first_line_match"]
+                            syntax_file, attrs["first_line_match"]
                         )
                     )
 
                 attrs["first_line_match"] = [attrs["first_line_match"]]
 
-            syntaxMappings.append(attrs)
+            syntax_mappings.append(attrs)
 
-        return syntaxMappings
+        return syntax_mappings
 
-    def _getAttributesFromSyntaxFileContent(self, content="", attrs=[]):
-        """ find "first_line_match" or "firstLineMatch" in syntax file content """
+    def _get_attributes_from_syntax_file_content(self, content="", attrs=[]):
+        """ find "first_line_match" or "first_line_match" in syntax file content """
 
         if content.lstrip().startswith("<"):
-            return self._getAttributesFromXmlSyntaxFileContent(content, attrs)
+            return self._get_attributes_from_xml_syntax_file_content(content, attrs)
         else:
-            return self._getAttributesFromYamlSyntaxFileContent(content, attrs)
+            return self._get_attributes_from_yaml_syntax_file_content(content, attrs)
 
-    def _getAttributesFromYamlSyntaxFileContent(self, content="", attrs=[]):
+    def _get_attributes_from_yaml_syntax_file_content(self, content="", attrs=[]):
         """ find attributes in .sublime-syntax content """
 
         results = {}
@@ -187,9 +189,9 @@ class SyntaxMappings:
         try:
             # "contexts:" is usually the last (and largest) part of a syntax deinition.
             # to speed up searching, strip everything behinds "contexts:"
-            cutPos = content.find("contexts:")
-            if cutPos >= 0:
-                content = content[:cutPos]
+            cut_pos = content.find("contexts:")
+            if cut_pos >= 0:
+                content = content[:cut_pos]
 
             parsed = yaml.safe_load(content)
 
@@ -203,26 +205,26 @@ class SyntaxMappings:
 
         return results
 
-    def _getAttributesFromXmlSyntaxFileContent(self, content="", attrs=[]):
+    def _get_attributes_from_xml_syntax_file_content(self, content="", attrs=[]):
         """ find attributes in .tmLanguage content """
 
-        attrs = [functions.snakeToCamel(attr) for attr in attrs]
+        attrs = [functions.snake_to_camel(attr) for attr in attrs]
 
         results = {}
 
         try:
             # "<key>patterns</key>" is usually the last (and largest) part of a syntax deinition.
             # to speed up searching, strip everything behinds "<key>patterns</key>"
-            cutPos = content.find("<key>patterns</key>")
-            if cutPos >= 0:
-                content = content[:cutPos] + r"</dict></plist>"
+            cut_pos = content.find("<key>patterns</key>")
+            if cut_pos >= 0:
+                content = content[:cut_pos] + r"</dict></plist>"
 
             parsed = plistlib.readPlistFromBytes(content.encode("UTF-8"))
         except:
             return None
 
         for attr in attrs:
-            attr_snake = functions.camelToSnake(attr)
+            attr_snake = functions.camel_to_snake(attr)
             results[attr_snake] = parsed[attr] if attr in parsed else None
 
         return results

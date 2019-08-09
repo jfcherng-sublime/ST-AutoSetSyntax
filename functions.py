@@ -1,7 +1,7 @@
 import re
 
 
-def snakeToCamel(snake, upper_first=False):
+def snake_to_camel(snake: str, upper_first: bool = False) -> str:
     # title-cased words
     words = [word.title() for word in snake.split("_")]
 
@@ -11,7 +11,7 @@ def snakeToCamel(snake, upper_first=False):
     return "".join(words)
 
 
-def camelToSnake(camel):
+def camel_to_snake(camel: str) -> str:
     # first upper-cased camel
     camel = camel[0].upper() + camel[1:]
 
