@@ -5,8 +5,7 @@ import re
 import sublime
 import yaml
 
-ST_SUPPORT_SYNTAX = int(sublime.version()) >= 3084
-ST_LANGUAGES = [".sublime-syntax", ".tmLanguage"] if ST_SUPPORT_SYNTAX else [".tmLanguage"]
+ST_LANGUAGES = [".sublime-syntax", ".tmLanguage"]
 
 
 class SyntaxMappings:
