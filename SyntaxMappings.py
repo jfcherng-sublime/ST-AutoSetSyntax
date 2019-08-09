@@ -43,7 +43,7 @@ class SyntaxMappings:
         else:
             self.syntax_mappings = val
 
-    def _find_syntax_file_paths(self, drop_duplicated=False):
+    def _find_syntax_file_paths(self, drop_duplicated: bool = False) -> list[str]:
         """
         @brief find the path of all syntax files
 
@@ -73,10 +73,10 @@ class SyntaxMappings:
 
         return syntax_files
 
-    def _build_syntax_mappings(self):
+    def _build_syntax_mappings(self) -> list:
         return self._build_syntax_mappings_from_user() + self._build_syntax_mappings_from_st()
 
-    def _build_syntax_mappings_from_user(self):
+    def _build_syntax_mappings_from_user(self) -> list:
         """ load from user settings """
 
         mapping_settings = self.settings.get("syntax_mapping", {}).items()
@@ -127,7 +127,7 @@ class SyntaxMappings:
 
         return syntax_mappings
 
-    def _build_syntax_mappings_from_st(self):
+    def _build_syntax_mappings_from_st(self) -> list:
         """ load from ST packages (one-time job, unless restart ST) """
 
         syntax_mappings = []
@@ -172,7 +172,7 @@ class SyntaxMappings:
 
         return syntax_mappings
 
-    def _get_attributes_from_syntax_file_content(self, content="", attrs=[]):
+    def _get_attributes_from_syntax_file_content(self, content: str = "", attrs: list = []) -> dict:
         """ find "first_line_match" or "first_line_match" in syntax file content """
 
         if content.lstrip().startswith("<"):
@@ -180,7 +180,9 @@ class SyntaxMappings:
         else:
             return self._get_attributes_from_yaml_syntax_file_content(content, attrs)
 
-    def _get_attributes_from_yaml_syntax_file_content(self, content="", attrs=[]):
+    def _get_attributes_from_yaml_syntax_file_content(
+        self, content: str = "", attrs: list = []
+    ) -> dict:
         """ find attributes in .sublime-syntax content """
 
         results = {}
@@ -204,7 +206,9 @@ class SyntaxMappings:
 
         return results
 
-    def _get_attributes_from_xml_syntax_file_content(self, content="", attrs=[]):
+    def _get_attributes_from_xml_syntax_file_content(
+        self, content: str = "", attrs: list = []
+    ) -> dict:
         """ find attributes in .tmLanguage content """
 
         attrs = [functions.snake_to_camel(attr) for attr in attrs]
