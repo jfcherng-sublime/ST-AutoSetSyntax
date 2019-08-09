@@ -43,7 +43,7 @@ class SyntaxMappings:
         else:
             self.syntax_mappings = val
 
-    def _find_syntax_file_paths(self, drop_duplicated: bool = False) -> list[str]:
+    def _find_syntax_file_paths(self, drop_duplicated: bool = False) -> list:
         """
         @brief find the path of all syntax files
 
