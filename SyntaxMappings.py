@@ -88,7 +88,7 @@ class SyntaxMappings:
             for first_line_match in first_line_matches:
                 try:
                     first_line_match_regexes.append(re.compile(first_line_match))
-                except:
+                except Exception:
                     self.logger.error(
                         'regex compilation failed in user settings "{0}": {1}'.format(
                             syntax_file_partial, first_line_match
@@ -160,7 +160,7 @@ class SyntaxMappings:
             if attrs["first_line_match"] is not None:
                 try:
                     attrs["first_line_match_compiled"] = [re.compile(attrs["first_line_match"])]
-                except:
+                except Exception:
                     self.logger.error(
                         'regex compilation failed in "{0}": {1}'.format(
                             syntax_file, attrs["first_line_match"]
@@ -197,7 +197,7 @@ class SyntaxMappings:
 
             if parsed is None:
                 raise Exception("fail parsing YAML content")
-        except:
+        except Exception:
             return None
 
         for attr in attrs:
@@ -220,7 +220,7 @@ class SyntaxMappings:
                 content = content[:cut_pos] + r"</dict></plist>"
 
             parsed = plistlib.readPlistFromBytes(content.encode("UTF-8"))
-        except:
+        except Exception:
             return None
 
         for attr in attrs:
