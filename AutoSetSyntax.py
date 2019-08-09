@@ -52,6 +52,7 @@ def plugin_loaded() -> None:
         logging_stream_handler = logging.StreamHandler()
         logging_stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
         logger = logging.getLogger(get_package_name())
+        logger.propagate = False
         logger.addHandler(logging_stream_handler)
 
         return logger
