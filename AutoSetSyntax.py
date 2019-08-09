@@ -9,7 +9,7 @@ from .SyntaxMappings import SyntaxMappings
 
 
 LOG_LEVEL_DEFAULT = "INFO"
-LOG_FORMAT = "%(name)s: [%(levelname)s] %(message)s"
+LOG_FORMAT = "[%(name)s][%(levelname)s] %(message)s"
 
 
 def plugin_loaded() -> None:
@@ -28,8 +28,10 @@ def plugin_loaded() -> None:
         try:
             # todo: use "triegex" to improve regex
             return re.compile(working_scope)
-        except Exception:
-            error_message = 'Fail to compile regex for "working_scope": ' + working_scope
+        except Exception as e:
+            error_message = 'Fail to compile regex for "working_scope" `{regex} because {reason}`'.format(
+                regex=working_scope, reason=e
+            )
 
             Globals.logger.critical(error_message)
             sublime.error_message(error_message)
@@ -47,17 +49,24 @@ def plugin_loaded() -> None:
                 'Unknown "log_level": {1} (assumed "{2}")'.format(log_level, LOG_LEVEL_DEFAULT)
             )
 
-    def get_default_logger():
+    def get_plugin_logger() -> logging.Logger:
+        def set_logger_hander(logger: logging.Logger) -> None:
+            # remove all log handlers
+            for handler in logger.handlers:
+                logger.removeHandler(handler)
+
+            logging_handler = logging.StreamHandler()
+            logging_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+            logger.addHandler(logging_handler)
+
         logging.addLevelName(101, "NOTHING")
-        logging_stream_handler = logging.StreamHandler()
-        logging_stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
         logger = logging.getLogger(get_package_name())
-        logger.propagate = False
-        logger.addHandler(logging_stream_handler)
+        logger.propagate = False  # prevent appear multiple same log messages
+        set_logger_hander(logger)
 
         return logger
 
-    Globals.logger = get_default_logger()
+    Globals.logger = get_plugin_logger()
 
     # when the user settings is modified...
     get_settings_object().add_on_change(get_settings_file(), plugin_settings_listener)
@@ -206,14 +215,18 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
                 for fileExtension in fileExtensions:
                     if (
-                        file_base_name_stripped.endswith("." + fileExtension)
-                        or file_base_name_stripped == fileExtension
+                        not file_base_name_stripped.endswith("." + fileExtension)
+                        and file_base_name_stripped != fileExtension
                     ):
-                        view.assign_syntax(syntax_file)
-                        Globals.logger.info(
-                            'Assign syntax to "{0}" due to stripped file name: {1}'.format(
-                                syntax_file, file_base_name_stripped
-                            )
-                        )
+                        continue
 
-                        return
+                    view.assign_syntax(syntax_file)
+                    Globals.logger.info(
+                        'Assign syntax to "{syntax}" due to stripped file name: "{old_name}" -> "{new_name}"'.format(
+                            syntax=syntax_file,
+                            old_name=file_base_name,
+                            new_name=file_base_name_stripped,
+                        )
+                    )
+
+                    return

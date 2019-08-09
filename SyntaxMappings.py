@@ -88,10 +88,10 @@ class SyntaxMappings:
             for first_line_match in first_line_matches:
                 try:
                     first_line_match_regexes.append(re.compile(first_line_match))
-                except Exception:
+                except Exception as e:
                     self.logger.error(
-                        'Fail to compile regex "{0}": {1}'.format(
-                            syntax_file_partial, first_line_match
+                        'Fail to compile regex for syntax "{syntax}" `{regex}` because {reason}'.format(
+                            syntax=syntax_file_partial, regex=first_line_match, reason=e
                         )
                     )
 
@@ -158,10 +158,10 @@ class SyntaxMappings:
             if attrs["first_line_match"] is not None:
                 try:
                     attrs["first_line_match_compiled"] = [re.compile(attrs["first_line_match"])]
-                except Exception:
+                except Exception as e:
                     self.logger.error(
-                        'Fail to compile regex in "{0}": {1}'.format(
-                            syntax_file, attrs["first_line_match"]
+                        'Fail to compile "first_line_match" regex in "{syntax}" `{regex}` because {reason}'.format(
+                            syntax=syntax_file, regex=attrs["first_line_match"], reason=e
                         )
                     )
 
