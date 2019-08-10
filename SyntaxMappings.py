@@ -197,7 +197,9 @@ class SyntaxMappings(object):
         attrs["first_line_match_compiled"] = []
         for first_line_match in attrs["first_line_match"]:
             try:
-                attrs["first_line_match_compiled"].append(re.compile(first_line_match))
+                attrs["first_line_match_compiled"].append(
+                    self._st_syntax_regex_compile(first_line_match)
+                )
             except Exception as e:
                 # we want to maintain the same index with "first_line_match"
                 # so we apppend a None here
@@ -214,6 +216,49 @@ class SyntaxMappings(object):
         attrs.pop("file_types", None)
 
         return attrs
+
+    def _st_syntax_regex_compile(self, regex: str):
+        """
+        @brief Compile regex which is from ST's syntax file
+        @details Inline regex flag like "(?x: ... )" is unsupported in Python 3.3 (Python 3.7 is fine).
+
+        @param self  The object
+        @param regex The regular expression
+
+        @return The compiled regex object
+        """
+
+        import sys
+
+        # no atomic group in Python
+        regex = re.sub(r"\(\?>", "(?:", regex)
+
+        if sys.version_info >= (3, 6):
+            return re.compile(regex)
+
+        inline_flags = {
+            "a": re.ASCII,
+            "i": re.IGNORECASE,
+            "L": re.LOCALE,
+            "m": re.MULTILINE,
+            "s": re.DOTALL,
+            "u": re.UNICODE,  # default enabled in Python 3
+            "x": re.VERBOSE,
+        }
+
+        re_pattern = r"\(\?(?P<flags>[{flags}]+):".format(flags="".join(inline_flags.keys()))
+
+        re_flags = 0
+        for m in re.finditer(re_pattern, regex):
+            for flag in m.group("flags"):
+                re_flags |= inline_flags[flag]
+
+        if not (re_flags & re.ASCII):
+            re_flags |= re.UNICODE
+
+        regex = re.sub(re_pattern, "(?:", regex)
+
+        return re.compile(regex, re_flags)
 
     def _get_attributes_from_syntax_file_content(self, content: str = "", attrs: list = []) -> dict:
         """ find "first_line_match" or "first_line_match" in syntax file content """
