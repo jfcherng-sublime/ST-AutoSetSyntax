@@ -16,9 +16,9 @@ def plugin_loaded() -> None:
     def plugin_settings_listener() -> None:
         """ called when the settings file is changed """
 
+        apply_log_level()
         Globals.working_scope_regex_obj = compile_working_scope()
         Globals.syntax_mappings = SyntaxMappings(get_settings_object(), Globals.logger)
-        apply_log_level()
 
     def compile_working_scope():
         """ compile working_scope into regex object to get better speed """
