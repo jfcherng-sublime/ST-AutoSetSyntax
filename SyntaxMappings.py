@@ -280,6 +280,9 @@ class SyntaxMappings(object):
             if cut_pos >= 0:
                 content = content[:cut_pos]
 
+            # prevent from failure because of parsing empty content
+            content += "\n__workaround__: 1"
+
             parsed = yaml.safe_load(content)
 
             if parsed is None:
