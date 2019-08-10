@@ -1,5 +1,5 @@
 {
-    // when should this plugin work?
+    // When should this plugin work?
     "event_listeners": {
         // called when a view gains input focus
         "on_activated_async": true,
@@ -16,26 +16,32 @@
         // called just before a view is saved
         "on_pre_save_async": true,
     },
-    // the max lookup length for the first line
-    // a negative number means no limitation
+    // The max lookup length for the first line.
+    // A negative number means no limitation.
     "first_line_length_max": 80,
-    // how detailed log messages should be?
-    // "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) and "NOTHING" (nothing)
+    // How detailed log messages should be?
+    // Values can be "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) or "NOTHING" (no log)
     "log_level": "INFO",
-    // syntax maaping rules
+    /**
+     * The syntax maaping rules.
+     *
+     * @key The partial (or full) resource path of a syntax file.
+     * @value Regexes to match the first line.
+     */
     "syntax_mapping": {
         // "Packages/PHP/PHP.sublime-syntax": [
         //     "<\\?php",
-        //     "<\\?="
-        // ]
+        //     "<\\?=",
+        // ],
     },
-    // the partial file path of the syntax file used when creating a new file
+    // The partial (or full) resource path of the syntax file used when creating a new file.
+    // Nothing would happen if this is a empty string.
     "new_file_syntax": "",
-    // the scope that this plugin should work (regular expression)
-    // leave it blank to match any scope
-    "working_scope": "^text.plain\\b",
-    // try to remove these file extensions from the file name and set
-    // a corresponding syntax if there is a matching one
+    // The scope that this plugin should work (regex).
+    // Leave it blank will result in matching any scope.
+    "working_scope": "^text\\.plain\\b",
+    // Try to remove these file extensions from the file name and
+    // set a corresponding syntax due to a stripped file name if there is a matching one.
     "try_filename_remove_exts": [
         "-dev",
         "-development",

@@ -59,27 +59,56 @@ User Settings
 
 ```javascript
 {
+    // When should this plugin work?
     "event_listeners": {
+        // called when a view gains input focus
         "on_activated_async": true,
+        // called when a view is cloned from an existing one
         "on_clone_async": true,
+        // called when the file is finished loading
         "on_load_async": true,
+        // called after changes have been made to a view
         "on_modified_async": true,
+        // called when a new buffer is created
         "on_new_async": true,
+        // called after there is a paste operation
         "on_post_paste": true,
+        // called just before a view is saved
         "on_pre_save_async": true,
     },
+    // The max lookup length for the first line.
+    // A negative number means no limitation.
     "first_line_length_max": 80,
+    // How detailed log messages should be?
+    // "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) or "NOTHING" (no log)
     "log_level": "INFO",
+    /**
+     * The syntax maaping rules.
+     *
+     * @key The partial (or full) resource path of a syntax file.
+     * @value Regexes to match the first line.
+     */
     "syntax_mapping": {
-        "PHP/PHP.": [
-            "<\\?php",
-            ...
-        ],
-        ...
+        // "Packages/PHP/PHP.sublime-syntax": [
+        //     "<\\?php",
+        //     "<\\?=",
+        // ],
     },
+    // The partial (or full) resource path of the syntax file used when creating a new file.
+    // Nothing would happen if this is a empty string.
     "new_file_syntax": "",
-    "working_scope": "^text.plain\\b",
+    // The scope that this plugin should work (regex).
+    // Leave it blank will result in matching any scope.
+    "working_scope": "^text\\.plain\\b",
+    // Try to remove these file extensions from the file name
+    // so a syntax may be assigned due to a stripped file name.
     "try_filename_remove_exts": [
+        "-dev",
+        "-development",
+        "-dist",
+        "-prod",
+        "-production",
+        "-test",
         ".backup",
         ".bak",
         ".default",
@@ -89,35 +118,11 @@ User Settings
         ".include",
         ".local",
         ".sample",
+        ".test",
+        ".tpl",
     ],
 }
 ```
-
-- event_listeners
-    - on_activated_async: Called when a view gains input focus.
-    - on_clone_async: Called when a view is cloned from an existing one.
-    - on_load_async: Called when the file is finished loading.
-    - on_modified_async: Called after changes have been made to a view.
-    - on_new_async: Called when a new buffer is created.
-    - on_post_paste: Called after there is a paste operation.
-    - on_pre_save_async: Called just before a view is saved.
-- first_line_length_max
-    - \>= 0: The maximum length to lookup in the first line.
-    - < 0: No limitation.
-- log_level
-    - Determine how detailed log messages are. The value could be
-      "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most detailed) and "NOTHING" (nothing).
-- syntax_mapping
-    - key: The partial path of a syntax file. Of course, you can use a full path like `Packages/PHP/PHP.sublime-syntax`.
-    - value: Regular expressions to match the first line.
-- new_file_syntax
-    - The partial path of a syntax file. This syntax would be applied when creating a new file.
-      Nothing would happen if this is a empty string.
-- working_scope
-    - The scope that this plugin should work (regular expression). Leave it blank to match any scope.
-- try_filename_remove_exts
-    - For `text.plain` scope, try to remove these file extensions from the file name
-      and may set a syntax corresponding syntax by the stripped file name.
 
 </details>
 
@@ -137,9 +142,18 @@ How It Works
 
 When this plugin is loaded:
 
-1. Read all syntax definition files.
-1. Try to find `first_line_match` in `.sublime-syntax`s (if ST >= 3084) and `firstLineMatch` in `.tmLanguage`s.
-1. Merge `syntax_mapping` with results from the previous step.
+1. Construct the syntax mappings.
+
+   1. Read all syntax definition files.
+   1. Try to find following informations.
+
+      - `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
+      - `file_extensions` in `.sublime-syntax`s and `fileTypes` in `.tmLanguage`s.
+
+   1. Merge `syntax_mapping` with results from the previous step.
+
+1. If the scope is `text.plain`, try to remove some extensions from the file name basing on `try_filename_remove_exts`.
+   A syntax may be assigned due to a stripped file name matches.
 
 When an event is triggered:
 
@@ -149,7 +163,8 @@ When an event is triggered:
 
 When command `auto_set_syntax` is called:
 
-1. Match the first line with results we found while loading plugin.
+1. Match extensions with the file name.
+1. Match the first line with file content.
 1. If there is any luck, set the corresponding syntax for the user.
 
 
