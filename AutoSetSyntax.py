@@ -30,7 +30,7 @@ def plugin_loaded() -> None:
             return re.compile(working_scope)
         except Exception as e:
             error_message = (
-                'Failed to compile regex for "working_scope" `{regex} because {reason}`'
+                'Failed to compile regex `{regex}` for "working_scope" because {reason}'
             ).format(regex=working_scope, reason=e)
 
             Globals.logger.critical(error_message)
@@ -193,7 +193,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         file_path = view.file_name()
 
-        # make sure this is not a buffer
+        # make sure this is a real file rather than a buffer
         if not file_path:
             return False
 

@@ -17,7 +17,7 @@ class SyntaxMappings(object):
 
     # items of this list are dicts whose keys are
     #     rule_source: str
-    #     file_extensions: set[str]
+    #     file_extensions: list[str]
     #     file_path: str
     #     first_line_match: list[str]
     #     first_line_match_compiled: list[compiled regex object]
@@ -49,7 +49,6 @@ class SyntaxMappings(object):
         for syntax_mapping in self.syntax_mappings:
             syntax_mapping = copy.copy(syntax_mapping)
 
-            syntax_mapping["file_extensions"] = list(syntax_mapping["file_extensions"])
             syntax_mapping["first_line_match_compiled"] = [
                 regex_object_prestringify(regex_object)
                 for regex_object in syntax_mapping["first_line_match_compiled"]
@@ -99,11 +98,13 @@ class SyntaxMappings(object):
         if remove_useless:
             useless_paths = ["/sublime_lib/tests/"]
 
-            syntax_files = filter(
-                lambda syntax_file: all(
-                    useless_path not in syntax_file for useless_path in useless_paths
-                ),
-                syntax_files,
+            syntax_files = list(
+                filter(
+                    lambda syntax_file: all(
+                        useless_path not in syntax_file for useless_path in useless_paths
+                    ),
+                    syntax_files,
+                )
             )
 
         return sorted(syntax_files)
@@ -127,19 +128,17 @@ class SyntaxMappings(object):
             # syntax_file_partial could be partial path
             # we try to get the full path here
             for syntax_file in self.syntax_files:
-                if syntax_file.find(syntax_file_partial) >= 0:
+                if syntax_file_partial in syntax_file:
                     self.logger.info(
                         'Match syntax file "{}" with "{}"'.format(syntax_file_partial, syntax_file)
                     )
 
-                    attrs = {
+                    syntax_mappings.append({
                         "rule_source": "user",
                         "file_path": syntax_file,
-                        "file_extensions": set(),
+                        "file_extensions": [],
                         "first_line_match": first_line_matches,
-                    }
-
-                    syntax_mappings.append(attrs)
+                    })
 
                     break
             else:
@@ -158,9 +157,10 @@ class SyntaxMappings(object):
             attrs = self._get_attributes_from_syntax_file_content(
                 syntax_file_content,
                 [
-                    # 'file_types' in YAML is the same with 'file_extensions' in XML
+                    # 'file_extensions' in YAML is the same usage with 'fileTypes' in XML
+                    # but we perfer using 'file_extensions' because it's more self-explaining
                     "file_extensions",
-                    "file_types",
+                    "fileTypes",
                     "first_line_match",
                 ],
             )
@@ -187,9 +187,6 @@ class SyntaxMappings(object):
         if "first_line_match" not in attrs or not attrs["first_line_match"]:
             attrs["first_line_match"] = []
 
-        attrs["file_types"] = set(attrs["file_types"])
-        attrs["file_extensions"] = set(attrs["file_extensions"])
-
         if not isinstance(attrs["first_line_match"], list):
             attrs["first_line_match"] = [attrs["first_line_match"]]
 
@@ -205,13 +202,14 @@ class SyntaxMappings(object):
                 # so we apppend a None here
                 attrs["first_line_match_compiled"].append(None)
                 self.logger.error(
-                    'Failed to compile "first_line_match" regex in "{syntax}" `{regex}` because {reason}'.format(
+                    'Failed to compile "first_line_match" regex `{regex}` in "{syntax}" because {reason}'.format(
                         syntax=attrs["file_path"], regex=first_line_match, reason=e
                     )
                 )
 
         # use 'file_extensions' as the formal key rather than 'file_types'
-        attrs["file_extensions"] |= attrs["file_types"]
+        attrs["file_extensions"] += attrs["file_types"]
+        attrs["file_extensions"] = list(set(attrs["file_extensions"]))  # unique
         # remove the "file_types" key
         attrs.pop("file_types", None)
 
@@ -220,7 +218,7 @@ class SyntaxMappings(object):
     def _st_syntax_regex_compile(self, regex: str):
         """
         @brief Compile regex which is from ST's syntax file
-        @details Inline regex flag like "(?x: ... )" is unsupported in Python 3.3 (Python 3.7 is fine).
+        @details Inline regex flag like "(?x: ... )" is unsupported in Python 3.3 (Python 3.6 is fine).
 
         @param self  The object
         @param regex The regular expression
@@ -263,15 +261,15 @@ class SyntaxMappings(object):
     def _get_attributes_from_syntax_file_content(self, content: str = "", attrs: list = []) -> dict:
         """ find "first_line_match" or "first_line_match" in syntax file content """
 
+        attrs = map(camel_to_snake, attrs)
+
         if content.lstrip().startswith("<"):
             return self._get_attributes_from_xml_string(content, attrs)
         else:
             return self._get_attributes_from_yaml_string(content, attrs)
 
     def _get_attributes_from_yaml_string(self, content: str = "", attrs: list = []) -> dict:
-        """ find attributes in .sublime-syntax content """
-
-        attrs = map(camel_to_snake, attrs)
+        """ find attributes in .sublime-syntax content. "attrs" should be snake-cased. """
 
         try:
             # "contexts:" is usually the last (and largest) part of a syntax deinition.
@@ -286,16 +284,14 @@ class SyntaxMappings(object):
             parsed = yaml.safe_load(content)
 
             if parsed is None:
-                raise Exception("fail parsing YAML content")
+                raise Exception("failed to parse YAML content")
         except Exception:
             return None
 
         return {attr: parsed.get(attr, None) for attr in attrs}
 
     def _get_attributes_from_xml_string(self, content: str = "", attrs: list = []) -> dict:
-        """ find attributes in .tmLanguage content """
-
-        attrs = map(camel_to_snake, attrs)
+        """ find attributes in .tmLanguage content. "attrs" should be snake-cased. """
 
         try:
             # "<key>patterns</key>" is usually the last (and largest) part of a syntax deinition.
