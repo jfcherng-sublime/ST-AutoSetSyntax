@@ -1,6 +1,12 @@
 # AutoSetSyntax
 
 
+## 1.10.5
+
+- Add ".orig" to `try_filename_remove_exts`.
+- Fix changing log level won't have effect immediately.
+
+
 ## 1.10.4
 
 - Add "-dist" to `try_filename_remove_exts`.
