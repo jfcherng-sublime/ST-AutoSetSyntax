@@ -57,6 +57,7 @@
         ".inc",
         ".include",
         ".local",
+        ".orig",
         ".sample",
         ".test",
         ".tpl",
