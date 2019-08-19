@@ -1,18 +1,21 @@
-Sublime-AutoSetSyntax
-=====================
+# Sublime-AutoSetSyntax
+
+<a href="https://packagecontrol.io/packages/AutoSetSyntax"><img alt="Package Control" src="https://img.shields.io/packagecontrol/dt/AutoSetSyntax"></a>
+<a href="https://github.com/jfcherng/Sublime-AutoSetSyntax/tags"><img alt="GitHub tag (latest SemVer)" src="https://img.shields.io/github/tag/jfcherng/Sublime-AutoSetSyntax?logo=github"></a>
+<a href="https://github.com/jfcherng/Sublime-AutoSetSyntax/blob/master/LICENSE"><img alt="Project license" src="https://img.shields.io/github/license/jfcherng/Sublime-AutoSetSyntax?logo=github"></a>
+<a href="https://github.com/jfcherng/Sublime-AutoSetSyntax/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/jfcherng/Sublime-AutoSetSyntax?logo=github"></a>
+<a href="https://www.paypal.me/jfcherng/5usd" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-blue.svg?logo=paypal" /></a>
 
 This plugin automatically sets the syntax for your file if possible.
 The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
 
 
-Installation
-============
+## Installation
 
 This package is available on Package Control by the name of [AutoSetSyntax](https://packagecontrol.io/packages/AutoSetSyntax).
 
 
-Examples
-========
+## Examples
 
 <details><summary>Guess the Syntax After Stripping Unimportant File Extensions</summary>
 
@@ -52,8 +55,7 @@ Examples
 Feel free to create an issue or a pull request.
 
 
-User Settings
-=============
+## User Settings
 
 <details><summary>Click to expand</summary>
 
@@ -127,8 +129,7 @@ User Settings
 </details>
 
 
-Commands
-========
+## Commands
 
 You may disable all `event_listeners` in your user settings and add a key binding to set syntax.
 
@@ -137,8 +138,7 @@ You may disable all `event_listeners` in your user settings and add a key bindin
 ```
 
 
-How It Works
-============
+## How It Works
 
 When this plugin is loaded:
 
@@ -168,8 +168,7 @@ When command `auto_set_syntax` is called:
 1. If there is any luck, set the corresponding syntax for the user.
 
 
-Debug
-=====
+## Debug
 
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>\`</kbd>), which looks like
 
@@ -180,13 +179,6 @@ AutoSetSyntax: [INFO] match syntax file "php-grammar/PHP." with "Packages/php-gr
 ```
 
 
-See Also
-========
+## See Also
 
 - [ApplySyntax](https://github.com/facelessuser/ApplySyntax)
-
-
-Supporters <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ATXYY9Y78EQ3Y" target="_blank"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" /></a>
-==========
-
-Thank you guys for sending me some cups of coffee.
