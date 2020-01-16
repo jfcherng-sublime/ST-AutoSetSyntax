@@ -133,12 +133,14 @@ class SyntaxMappings(object):
                         'Match syntax file "{}" with "{}"'.format(syntax_file_partial, syntax_file)
                     )
 
-                    syntax_mappings.append({
-                        "rule_source": "user",
-                        "file_path": syntax_file,
-                        "file_extensions": [],
-                        "first_line_match": first_line_matches,
-                    })
+                    syntax_mappings.append(
+                        {
+                            "rule_source": "user",
+                            "file_path": syntax_file,
+                            "file_extensions": [],
+                            "first_line_match": first_line_matches,
+                        }
+                    )
 
                     break
             else:
