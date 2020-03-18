@@ -1,10 +1,10 @@
 # Sublime-AutoSetSyntax
 
-<a href="https://packagecontrol.io/packages/AutoSetSyntax"><img alt="Package Control" src="https://img.shields.io/packagecontrol/dt/AutoSetSyntax"></a>
-<a href="https://github.com/jfcherng/Sublime-AutoSetSyntax/tags"><img alt="GitHub tag (latest SemVer)" src="https://img.shields.io/github/tag/jfcherng/Sublime-AutoSetSyntax?logo=github"></a>
-<a href="https://github.com/jfcherng/Sublime-AutoSetSyntax/blob/master/LICENSE"><img alt="Project license" src="https://img.shields.io/github/license/jfcherng/Sublime-AutoSetSyntax?logo=github"></a>
-<a href="https://github.com/jfcherng/Sublime-AutoSetSyntax/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/jfcherng/Sublime-AutoSetSyntax?logo=github"></a>
-<a href="https://www.paypal.me/jfcherng/5usd" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-blue.svg?logo=paypal" /></a>
+[![Package Control](https://img.shields.io/packagecontrol/dt/AutoSetSyntax)](https://packagecontrol.io/packages/AutoSetSyntax)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/jfcherng/Sublime-AutoSetSyntax?logo=github)](https://github.com/jfcherng/Sublime-AutoSetSyntax/tags)
+[![Project license](https://img.shields.io/github/license/jfcherng/Sublime-AutoSetSyntax?logo=github)](https://github.com/jfcherng/Sublime-AutoSetSyntax/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/jfcherng/Sublime-AutoSetSyntax?logo=github)](https://github.com/jfcherng/Sublime-AutoSetSyntax/stargazers)
+[![Donate to this project using Paypal](https://img.shields.io/badge/paypal-donate-blue.svg?logo=paypal)](https://www.paypal.me/jfcherng/5usd)
 
 This plugin automatically sets the syntax for your file if possible.
 The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
@@ -19,7 +19,7 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 
 <details><summary>Guess the Syntax After Stripping Unimportant File Extensions</summary>
 
-![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/try-strip-file-exts.gif)
+![try-strip-file-exts](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/try-strip-file-exts.gif)
 
 1. `config_gitlab.yml.example` -> `config_gitlab.yml` -> Ah! `.yml` should use the `YAML` syntax.
 1. See `try_filename_remove_exts` settings for details.
@@ -28,7 +28,7 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 
 <details><summary>PHP Tag</summary>
 
-![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
+![php-tag](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
 
 1. Create a new tab.
 1. Type `<?php`.
@@ -38,7 +38,7 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 
 <details><summary>Colored Git Log</summary>
 
-![](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/git-log.gif)
+![git-log](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/git-log.gif)
 
 1. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://github.com/titoBouzout/SideBarGit).
 1. Set your colored git log command. I personally set `git config --global alias.l "log --graph --date=short --color --pretty=format:'%C(yellow bold)%h%Creset%C(auto)%d%Creset - %s %C(green bold)[%an]%Creset %C(blue bold)(%ad, %cr)%Creset'"`.
@@ -172,7 +172,7 @@ When command `auto_set_syntax` is called:
 
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>\`</kbd>), which looks like
 
-```
+```text
 AutoSetSyntax: [ERROR] regex compilation failed in user settings "working_scope": ^text.plain\b+
 AutoSetSyntax: [WARNING] "event_listeners -> on_pre_save_async" is not set in user settings (assumed true)
 AutoSetSyntax: [INFO] match syntax file "php-grammar/PHP." with "Packages/php-grammar/PHP.sublime-syntax"
