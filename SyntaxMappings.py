@@ -176,6 +176,9 @@ class SyntaxMappings(object):
 
             syntax_mappings.append(attrs)
 
+        # move the plain text to be our last choice
+        syntax_mappings.sort(key=lambda s: s["file_path"].startswith("Packages/Text/"))
+
         return syntax_mappings
 
     def _normalize_syntax_mapping_attrs(self, attrs: dict) -> dict:
