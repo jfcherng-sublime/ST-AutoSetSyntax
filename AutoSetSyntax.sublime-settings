@@ -46,6 +46,7 @@
         "-dev",
         "-development",
         "-dist",
+        "-optional",
         "-prod",
         "-production",
         "-test",
