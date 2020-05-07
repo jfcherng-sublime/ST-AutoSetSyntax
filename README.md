@@ -1,25 +1,25 @@
-# Sublime-AutoSetSyntax
+# ST-AutoSetSyntax
 
-[![Package Control](https://img.shields.io/packagecontrol/dt/AutoSetSyntax)](https://packagecontrol.io/packages/AutoSetSyntax)
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/jfcherng/Sublime-AutoSetSyntax?logo=github)](https://github.com/jfcherng/Sublime-AutoSetSyntax/tags)
-[![Project license](https://img.shields.io/github/license/jfcherng/Sublime-AutoSetSyntax?logo=github)](https://github.com/jfcherng/Sublime-AutoSetSyntax/blob/master/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/jfcherng/Sublime-AutoSetSyntax?logo=github)](https://github.com/jfcherng/Sublime-AutoSetSyntax/stargazers)
-[![Donate to this project using Paypal](https://img.shields.io/badge/paypal-donate-blue.svg?logo=paypal)](https://www.paypal.me/jfcherng/5usd)
+<!-- [![Travis (.org) branch](https://img.shields.io/travis/jfcherng-sublime/ST-AutoSetSyntax/master?style=flat-square)](https://travis-ci.org/jfcherng-sublime/ST-AutoSetSyntax) -->
+
+[![Package Control](https://img.shields.io/packagecontrol/dt/AutoSetSyntax?style=flat-square)](https://packagecontrol.io/packages/AutoSetSyntax)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tags)
+[![Project license](https://img.shields.io/github/license/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/blob/master/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/stargazers)
+[![Donate to this project using Paypal](https://img.shields.io/badge/paypal-donate-blue.svg?style=flat-square&logo=paypal)](https://www.paypal.me/jfcherng/5usd)
 
 This plugin automatically sets the syntax for your file if possible.
 The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
-
 
 ## Installation
 
 This package is available on Package Control by the name of [AutoSetSyntax](https://packagecontrol.io/packages/AutoSetSyntax).
 
-
 ## Examples
 
 <details><summary>Guess the Syntax After Stripping Unimportant File Extensions</summary>
 
-![try-strip-file-exts](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/try-strip-file-exts.gif)
+![try-strip-file-exts](https://raw.githubusercontent.com/jfcherng-sublime/ST-AutoSetSyntax/gh-pages/images/example/try-strip-file-exts.gif)
 
 1. `config_gitlab.yml.example` -> `config_gitlab.yml` -> Ah! `.yml` should use the `YAML` syntax.
 1. See `try_filename_remove_exts` settings for details.
@@ -28,7 +28,7 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 
 <details><summary>PHP Tag</summary>
 
-![php-tag](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
+![php-tag](https://raw.githubusercontent.com/jfcherng-sublime/ST-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
 
 1. Create a new tab.
 1. Type `<?php`.
@@ -38,7 +38,7 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 
 <details><summary>Colored Git Log</summary>
 
-![git-log](https://raw.githubusercontent.com/jfcherng/Sublime-AutoSetSyntax/gh-pages/images/example/git-log.gif)
+![git-log](https://raw.githubusercontent.com/jfcherng-sublime/ST-AutoSetSyntax/gh-pages/images/example/git-log.gif)
 
 1. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://github.com/titoBouzout/SideBarGit).
 1. Set your colored git log command. I personally set `git config --global alias.l "log --graph --date=short --color --pretty=format:'%C(yellow bold)%h%Creset%C(auto)%d%Creset - %s %C(green bold)[%an]%Creset %C(blue bold)(%ad, %cr)%Creset'"`.
@@ -49,11 +49,9 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 
 </details>
 
-
-### More Creative Usages To Share?
+### More Creative Usages To Share
 
 Feel free to create an issue or a pull request.
-
 
 ## User Settings
 
@@ -128,7 +126,6 @@ Feel free to create an issue or a pull request.
 
 </details>
 
-
 ## Commands
 
 You may disable all `event_listeners` in your user settings and add a key binding to set syntax.
@@ -136,7 +133,6 @@ You may disable all `event_listeners` in your user settings and add a key bindin
 ```javascript
 { "keys": ["ctrl+alt+s", "ctrl+alt+s"], "command": "auto_set_syntax" },
 ```
-
 
 ## How It Works
 
@@ -167,7 +163,6 @@ When command `auto_set_syntax` is called:
 1. Match the first line with file content.
 1. If there is any luck, set the corresponding syntax for the user.
 
-
 ## Debug
 
 Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>\`</kbd>), which looks like
@@ -178,7 +173,8 @@ AutoSetSyntax: [WARNING] "event_listeners -> on_pre_save_async" is not set in us
 AutoSetSyntax: [INFO] match syntax file "php-grammar/PHP." with "Packages/php-grammar/PHP.sublime-syntax"
 ```
 
-
 ## See Also
+
+j
 
 - [ApplySyntax](https://github.com/facelessuser/ApplySyntax)
