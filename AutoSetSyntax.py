@@ -220,7 +220,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         return False
 
-    def _file_name_stripped_generator(self, file_name: str) -> 'Iterator[str]':
+    def _file_name_stripped_generator(self, file_name: str) -> "Iterator[str]":
         remove_exts = get_setting("try_filename_remove_exts")
 
         # try to remove the longest matched ext first
