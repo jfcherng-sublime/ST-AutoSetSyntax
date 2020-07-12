@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 1.10.8
+
+- fix: should not activate this plugin on widgets
+
 ## 1.10.7
 
 - revert: Revert "Add .python-version for ST4"
