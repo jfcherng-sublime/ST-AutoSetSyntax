@@ -84,13 +84,21 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_activated_async(self, view: sublime.View) -> None:
         """ called when a view gains input focus """
 
-        if self._is_listener_enabled("on_activated_async") and self._is_on_working_scope(view):
+        if (
+            self._is_listener_enabled("on_activated_async")
+            and self._is_on_working_scope(view)
+            and not self._is_widget(view)
+        ):
             view.run_command("auto_set_syntax")
 
     def on_clone_async(self, view: sublime.View) -> None:
         """ called when a view is cloned from an existing one """
 
-        if self._is_listener_enabled("on_clone_async") and self._is_on_working_scope(view):
+        if (
+            self._is_listener_enabled("on_clone_async")
+            and self._is_on_working_scope(view)
+            and not self._is_widget(view)
+        ):
             view.run_command("auto_set_syntax")
 
     def on_load_async(self, view: sublime.View) -> None:
@@ -98,7 +106,11 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         self._apply_syntax_for_stripped_file_name(view)
 
-        if self._is_listener_enabled("on_load_async") and self._is_on_working_scope(view):
+        if (
+            self._is_listener_enabled("on_load_async")
+            and self._is_on_working_scope(view)
+            and not self._is_widget(view)
+        ):
             view.run_command("auto_set_syntax")
 
     def on_modified_async(self, view: sublime.View) -> None:
@@ -109,13 +121,18 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             and self._is_only_one_cursor(view)
             and self._is_first_cursor_near_beginning(view)
             and self._is_on_working_scope(view)
+            and not self._is_widget(view)
         ):
             view.run_command("auto_set_syntax")
 
     def on_new_async(self, view: sublime.View) -> None:
         """ called when a new buffer is created """
 
-        if self._is_listener_enabled("on_new_async") and self._is_on_working_scope(view):
+        if (
+            self._is_listener_enabled("on_new_async")
+            and self._is_on_working_scope(view)
+            and not self._is_widget(view)
+        ):
             view.run_command("auto_set_syntax")
 
         self._apply_syntax_for_new_file(view)
@@ -125,6 +142,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
 
         if (
             self._is_on_working_scope(view)
+            and not self._is_widget(view)
             and self._is_listener_enabled("on_post_paste")
             and (command_name == "patse" or command_name == "paste_and_indent")
         ):
@@ -166,6 +184,11 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         """ check the scope of the first line is matched by working_scope """
 
         return bool(Globals.working_scope_regex_obj.search(view.scope_name(0)))
+
+    def _is_widget(self, view: sublime.View) -> bool:
+        """ check the view is a widget """
+
+        return bool(view.settings().get("is_widget"))
 
     def _apply_syntax_for_new_file(self, view: sublime.View) -> bool:
         """ may apply a syntax for a new buffer """
