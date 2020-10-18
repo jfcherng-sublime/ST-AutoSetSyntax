@@ -4,7 +4,9 @@ class Globals(object):
     """
 
     # the logger object
-    logger = None
+    logger = None  # type: Optional[logging.Logger]
 
     # the SyntaxMappings object
-    syntax_mappings = None
+    syntax_mappings = None  # type: Optional[SyntaxMappings]
+
+    working_scope_regex_obj = None  # type: Optional[Pattern]

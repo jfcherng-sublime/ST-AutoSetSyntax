@@ -17,13 +17,16 @@ def plugin_loaded() -> None:
         """ called when the settings file is changed """
 
         apply_log_level()
+
         Globals.working_scope_regex_obj = compile_working_scope()
         Globals.syntax_mappings = SyntaxMappings(get_settings_object(), Globals.logger)
+
+        Globals.logger.debug("Syntax mapping built: {}".format(Globals.syntax_mappings))
 
     def compile_working_scope():
         """ compile working_scope into regex object to get better speed """
 
-        working_scope = get_setting("working_scope")
+        working_scope = str(get_setting("working_scope"))
 
         try:
             # todo: use "triegex" to improve regex

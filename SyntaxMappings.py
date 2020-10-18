@@ -42,21 +42,19 @@ class SyntaxMappings(object):
         return len(self.value())
 
     def __str__(self) -> str:
-        def regex_object_prestringify(re_obj):
-            return (re_obj.pattern, re_obj.flags) if re_obj else None
-
         syntax_mappings = []
+
         for syntax_mapping in self.syntax_mappings:
             syntax_mapping = copy.copy(syntax_mapping)
 
             syntax_mapping["first_line_match_compiled"] = [
-                regex_object_prestringify(regex_object)
+                (regex_object.pattern, regex_object.flags) if regex_object else None
                 for regex_object in syntax_mapping["first_line_match_compiled"]
             ]
 
             syntax_mappings.append(syntax_mapping)
 
-        return json.dumps(syntax_mappings)
+        return json.dumps(syntax_mappings, ensure_ascii=False, indent=4)
 
     def value(self, val=...):
         if val is ...:
@@ -121,10 +119,10 @@ class SyntaxMappings(object):
     def _build_syntax_mappings_from_user(self) -> list:
         """ load from user settings """
 
-        mapping_settings = self.settings.get("syntax_mapping", {}).items()
+        mapping_settings = self.settings.get("syntax_mapping", {})  # type: dict
         syntax_mappings = []
 
-        for syntax_file_partial, first_line_matches in mapping_settings:
+        for syntax_file_partial, first_line_matches in mapping_settings.items():
             # syntax_file_partial could be partial path
             # we try to get the full path here
             for syntax_file in self.syntax_files:
@@ -291,7 +289,7 @@ class SyntaxMappings(object):
             if parsed is None:
                 raise Exception("failed to parse YAML content")
         except Exception:
-            return None
+            return {}
 
         return {attr: parsed.get(attr, None) for attr in attrs}
 
@@ -307,6 +305,6 @@ class SyntaxMappings(object):
 
             parsed = plistlib.readPlistFromBytes(content.encode("UTF-8"))
         except Exception:
-            return None
+            return {}
 
         return {attr: parsed.get(snake_to_camel(attr), None) for attr in attrs}
