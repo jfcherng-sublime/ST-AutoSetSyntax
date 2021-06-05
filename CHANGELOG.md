@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 1.10.9
+
+- perf: run time-consuming codes asyncronously
+
 ## 1.10.8
 
 - fix: should not activate this plugin on widgets
