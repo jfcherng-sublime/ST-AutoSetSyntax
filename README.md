@@ -42,7 +42,7 @@ This package is available on Package Control by the name of [AutoSetSyntax](http
 
 1. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://github.com/titoBouzout/SideBarGit).
 1. Set your colored git log command. I personally set `git config --global alias.l "log --graph --date=short --color --pretty=format:'%C(yellow bold)%h%Creset%C(auto)%d%Creset - %s %C(green bold)[%an]%Creset %C(blue bold)(%ad, %cr)%Creset'"`.
-1. Add `"ANSIescape/ANSI.tmLanguage": ["^\\s*\\[SideBarGit@.*\\] git \\b"]` to `syntax_mapping`.
+1. Add `"ANSIescape/ANSI.sublime-syntax": ["^\\s*\\[SideBarGit@.*\\] git \\b"]` to `syntax_mapping`.
 1. Add `source.diff` to `working_scope` like `"working_scope": "(?x)^(text.plain | source.diff)\\b"`.
 1. Execute your customized git log command. In this example, it is `git l` as set in the previous step.
 1. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
