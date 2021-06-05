@@ -1,8 +1,13 @@
 # AutoSetSyntax
 
+## 1.10.10
+
+- refactor: improve the logic to get the first line
+- fix: plugin may be not prepared yet
+
 ## 1.10.9
 
-- perf: run time-consuming codes asyncronously
+- perf: run time-consuming codes asynchronously
 
 ## 1.10.8
 
