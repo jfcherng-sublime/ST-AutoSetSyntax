@@ -7,7 +7,7 @@ from .settings import get_setting
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
     def run(self, edit: sublime.Edit) -> bool:
-        """ match the first line and set the corresponding syntax """
+        """match the first line and set the corresponding syntax"""
 
         # make sure the target view is not a panel
         if self.view.settings().get("is_widget"):
@@ -36,7 +36,7 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
         return False
 
     def _get_partial_first_line(self) -> str:
-        """ get the (partial) first line """
+        """get the (partial) first line"""
 
         region = self.view.line(0)
         max_length = get_setting("first_line_length_max")

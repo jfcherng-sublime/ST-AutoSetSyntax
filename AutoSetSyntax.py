@@ -14,7 +14,7 @@ LOG_FORMAT = "[%(name)s][%(levelname)s] %(message)s"
 
 def plugin_loaded() -> None:
     def plugin_settings_listener() -> None:
-        """ called when the settings file is changed """
+        """called when the settings file is changed"""
 
         apply_log_level()
         # these operation can be time consuming, hence do it async
@@ -22,7 +22,7 @@ def plugin_loaded() -> None:
         sublime.set_timeout_async(generate_syntax_mappings, 0)
 
     def compile_working_scope() -> None:
-        """ compile working_scope into regex object to get better speed """
+        """compile working_scope into regex object to get better speed"""
 
         working_scope = str(get_setting("working_scope"))
 
@@ -42,7 +42,7 @@ def plugin_loaded() -> None:
         Globals.logger.debug("Syntax mapping built: {}".format(Globals.syntax_mappings))
 
     def apply_log_level() -> None:
-        """ apply log_level to this plugin """
+        """apply log_level to this plugin"""
 
         log_level = get_setting("log_level")
 
@@ -87,7 +87,7 @@ def plugin_unloaded() -> None:
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def on_activated_async(self, view: sublime.View) -> None:
-        """ called when a view gains input focus """
+        """called when a view gains input focus"""
 
         if (
             self._is_listener_enabled("on_activated_async")
@@ -97,7 +97,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             view.run_command("auto_set_syntax")
 
     def on_clone_async(self, view: sublime.View) -> None:
-        """ called when a view is cloned from an existing one """
+        """called when a view is cloned from an existing one"""
 
         if (
             self._is_listener_enabled("on_clone_async")
@@ -107,7 +107,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             view.run_command("auto_set_syntax")
 
     def on_load_async(self, view: sublime.View) -> None:
-        """ called when the file is finished loading """
+        """called when the file is finished loading"""
 
         self._apply_syntax_for_stripped_file_name(view)
 
@@ -119,7 +119,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             view.run_command("auto_set_syntax")
 
     def on_modified_async(self, view: sublime.View) -> None:
-        """ called after changes have been made to a view """
+        """called after changes have been made to a view"""
 
         if (
             self._is_listener_enabled("on_modified_async")
@@ -131,7 +131,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             view.run_command("auto_set_syntax")
 
     def on_new_async(self, view: sublime.View) -> None:
-        """ called when a new buffer is created """
+        """called when a new buffer is created"""
 
         if (
             self._is_listener_enabled("on_new_async")
@@ -143,7 +143,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         self._apply_syntax_for_new_file(view)
 
     def on_post_text_command(self, view: sublime.View, command_name: str, args: dict) -> None:
-        """ called after a text command has been executed """
+        """called after a text command has been executed"""
 
         if (
             self._is_on_working_scope(view)
@@ -154,13 +154,13 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
             view.run_command("auto_set_syntax")
 
     def on_pre_save_async(self, view: sublime.View) -> None:
-        """ called just before a view is saved """
+        """called just before a view is saved"""
 
         if self._is_listener_enabled("on_pre_save_async") and self._is_on_working_scope(view):
             view.run_command("auto_set_syntax")
 
     def _is_listener_enabled(self, event: str) -> bool:
-        """ check a event listener is enabled """
+        """check a event listener is enabled"""
 
         try:
             enabled = get_setting("event_listeners", {})[event]
@@ -176,27 +176,27 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         return bool(enabled)
 
     def _is_only_one_cursor(self, view: sublime.View) -> bool:
-        """ check there is only one cursor """
+        """check there is only one cursor"""
 
         return len(view.sel()) == 1
 
     def _is_first_cursor_near_beginning(self, view: sublime.View) -> bool:
-        """ check the cursor is at first few lines """
+        """check the cursor is at first few lines"""
 
         return view.rowcol(view.sel()[0].begin())[0] < 2
 
     def _is_on_working_scope(self, view: sublime.View) -> bool:
-        """ check the scope of the first line is matched by working_scope """
+        """check the scope of the first line is matched by working_scope"""
 
         return bool(Globals.working_scope_regex_obj.search(view.scope_name(0)))
 
     def _is_widget(self, view: sublime.View) -> bool:
-        """ check the view is a widget """
+        """check the view is a widget"""
 
         return bool(view.settings().get("is_widget"))
 
     def _apply_syntax_for_new_file(self, view: sublime.View) -> bool:
-        """ may apply a syntax for a new buffer """
+        """may apply a syntax for a new buffer"""
 
         syntax_file_partial = get_setting("new_file_syntax")
 
@@ -214,7 +214,7 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
         return False
 
     def _apply_syntax_for_stripped_file_name(self, view: sublime.View) -> bool:
-        """ may match the extension and set the corresponding syntax """
+        """may match the extension and set the corresponding syntax"""
 
         if view.scope_name(0).strip() != "text.plain":
             return False

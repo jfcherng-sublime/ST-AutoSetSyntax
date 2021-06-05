@@ -117,7 +117,7 @@ class SyntaxMappings(object):
         )
 
     def _build_syntax_mappings_from_user(self) -> list:
-        """ load from user settings """
+        """load from user settings"""
 
         mapping_settings = self.settings.get("syntax_mapping", {})  # type: dict
         syntax_mappings = []
@@ -147,7 +147,7 @@ class SyntaxMappings(object):
         return syntax_mappings
 
     def _build_syntax_mappings_from_st(self) -> list:
-        """ load from ST packages (one-time job, unless restart ST) """
+        """load from ST packages (one-time job, unless restart ST)"""
 
         syntax_mappings = []
 
@@ -262,7 +262,7 @@ class SyntaxMappings(object):
         return re.compile(regex, re_flags)
 
     def _get_attributes_from_syntax_file_content(self, content: str = "", attrs: list = []) -> dict:
-        """ find "first_line_match" or "first_line_match" in syntax file content """
+        """find "first_line_match" or "first_line_match" in syntax file content"""
 
         attrs = map(camel_to_snake, attrs)
 
@@ -272,7 +272,7 @@ class SyntaxMappings(object):
             return self._get_attributes_from_yaml_string(content, attrs)
 
     def _get_attributes_from_yaml_string(self, content: str = "", attrs: list = []) -> dict:
-        """ find attributes in .sublime-syntax content. "attrs" should be snake-cased. """
+        """find attributes in .sublime-syntax content. "attrs" should be snake-cased."""
 
         try:
             # "contexts:" is usually the last (and largest) part of a syntax deinition.
@@ -294,7 +294,7 @@ class SyntaxMappings(object):
         return {attr: parsed.get(attr, None) for attr in attrs}
 
     def _get_attributes_from_xml_string(self, content: str = "", attrs: list = []) -> dict:
-        """ find attributes in .tmLanguage content. "attrs" should be snake-cased. """
+        """find attributes in .tmLanguage content. "attrs" should be snake-cased."""
 
         try:
             # "<key>patterns</key>" is usually the last (and largest) part of a syntax deinition.
