@@ -43,12 +43,8 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
     def _get_partial_first_line(self) -> str:
         """get the (partial) first line"""
 
-        region = self.view.line(0)
-        max_length = get_setting("first_line_length_max")
-
+        max_length = get_setting("first_line_length_max")  # type: int
         if max_length >= 0:
-            # if the first line is longer than the max line length,
-            # then we use the max line length
-            region = sublime.Region(0, min(region.end(), max_length))
+            return self.view.substr(sublime.Region(0, max_length)).split("\n", 1)[0]
 
-        return self.view.substr(region)
+        return self.view.substr(self.view.line(0))

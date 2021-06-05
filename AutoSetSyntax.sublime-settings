@@ -18,7 +18,7 @@
     },
     // The max lookup length for the first line.
     // A negative number means no limitation.
-    "first_line_length_max": 80,
+    "first_line_length_max": 120,
     // How detailed log messages should be?
     // Values can be "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) or "NOTHING" (no log)
     "log_level": "INFO",
