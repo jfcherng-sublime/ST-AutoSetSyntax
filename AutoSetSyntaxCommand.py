@@ -10,6 +10,11 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
         """match the first line and set the corresponding syntax"""
 
         # make sure the target view is not a panel
+        if not Globals.syntax_mappings:
+            Globals.logger.info('Plugin is not ready yet. Wait a second.')
+            return False
+
+        # make sure the target view is not a panel
         if self.view.settings().get("is_widget"):
             return False
 
