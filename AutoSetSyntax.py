@@ -17,20 +17,18 @@ def plugin_loaded() -> None:
         """ called when the settings file is changed """
 
         apply_log_level()
+        # these operation can be time consuming, hence do it async
+        sublime.set_timeout_async(compile_working_scope, 0)
+        sublime.set_timeout_async(generate_syntax_mappings, 0)
 
-        Globals.working_scope_regex_obj = compile_working_scope()
-        Globals.syntax_mappings = SyntaxMappings(get_settings_object(), Globals.logger)
-
-        Globals.logger.debug("Syntax mapping built: {}".format(Globals.syntax_mappings))
-
-    def compile_working_scope():
+    def compile_working_scope() -> None:
         """ compile working_scope into regex object to get better speed """
 
         working_scope = str(get_setting("working_scope"))
 
         try:
             # todo: use "triegex" to improve regex
-            return re.compile(working_scope)
+            Globals.working_scope_regex_obj = re.compile(working_scope)
         except Exception as e:
             error_message = (
                 'Failed to compile regex `{regex}` for "working_scope" because {reason}'
@@ -38,6 +36,10 @@ def plugin_loaded() -> None:
 
             Globals.logger.critical(error_message)
             sublime.error_message(error_message)
+
+    def generate_syntax_mappings() -> None:
+        Globals.syntax_mappings = SyntaxMappings(get_settings_object(), Globals.logger)
+        Globals.logger.debug("Syntax mapping built: {}".format(Globals.syntax_mappings))
 
     def apply_log_level() -> None:
         """ apply log_level to this plugin """
