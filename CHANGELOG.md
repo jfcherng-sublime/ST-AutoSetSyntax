@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 1.10.11
+
+- fix: plugin may be not prepared yet
+
 ## 1.10.10
 
 - refactor: improve the logic to get the first line
