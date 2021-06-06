@@ -188,6 +188,9 @@ class AutoSetNewFileSyntax(sublime_plugin.EventListener):
     def _is_on_working_scope(self, view: sublime.View) -> bool:
         """check the scope of the first line is matched by working_scope"""
 
+        if not Globals.working_scope_regex_obj:
+            return False
+
         return bool(Globals.working_scope_regex_obj.search(view.scope_name(0)))
 
     def _is_widget(self, view: sublime.View) -> bool:
