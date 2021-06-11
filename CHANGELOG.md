@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 1.10.12
+
+- chore: auto set Package Control messages to Markdown
+
 ## 1.10.11
 
 - fix: plugin may be not prepared yet
