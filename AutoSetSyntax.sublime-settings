@@ -29,6 +29,9 @@
      * @value Regexes to match the first line.
      */
     "syntax_mapping": {
+        "Markdown/Markdown.": [
+            "^Package Control Messages$",
+        ],
         // "Packages/PHP/PHP.sublime-syntax": [
         //     "<\\?php",
         //     "<\\?=",
