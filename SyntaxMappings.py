@@ -1,4 +1,5 @@
-from .functions import snake_to_camel, camel_to_snake
+from .functions import camel_to_snake
+from .functions import snake_to_camel
 import copy
 import json
 import logging

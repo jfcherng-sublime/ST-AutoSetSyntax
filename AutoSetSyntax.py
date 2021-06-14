@@ -1,6 +1,9 @@
 from .functions import view_assign_syntax
 from .Globals import Globals
-from .settings import get_package_name, get_setting, get_settings_object, get_settings_file
+from .settings import get_package_name
+from .settings import get_setting
+from .settings import get_settings_file
+from .settings import get_settings_object
 from .SyntaxMappings import SyntaxMappings
 import logging
 import os
