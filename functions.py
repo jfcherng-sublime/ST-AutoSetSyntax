@@ -20,12 +20,12 @@ def camel_to_snake(camel: str) -> str:
     return "_".join(re.findall(r"[A-Z][^A-Z]*", camel)).lower()
 
 
-def view_assign_syntax(view: sublime.View, syntax_file: str, reason: str = "") -> None:
-    view.assign_syntax(syntax_file)
+def view_assign_syntax(view: sublime.View, syntax: str, reason: str = "") -> None:
+    view.assign_syntax(syntax)
 
     if reason:
         msg = 'Assign syntax to "{syntax}" because {reason}'
     else:
         msg = 'Assign syntax to "{syntax}"'
 
-    Globals.logger.info(msg.format(syntax=syntax_file, reason=reason))
+    Globals.logger.info(msg.format(syntax=syntax, reason=reason))
