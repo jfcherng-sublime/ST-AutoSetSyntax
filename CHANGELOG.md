@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 1.10.13
+
+- fix: logger level names for Python 3.8
+
 ## 1.10.12
 
 - chore: auto set Package Control messages to Markdown
