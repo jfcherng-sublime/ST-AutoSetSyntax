@@ -56,9 +56,9 @@ def plugin_loaded() -> None:
         except Exception:
             Globals.logger.setLevel(nameToLevel[LOG_LEVEL_DEFAULT])
             Globals.logger.warning(
-                'Unknown "log_level": {log_level} '
-                '(assumed "{log_level_default}")'.format(
-                    log_level=log_level, log_level_default=LOG_LEVEL_DEFAULT
+                'Unknown "log_level": {log_level} (assumed "{log_level_default}")'.format(
+                    log_level=log_level,
+                    log_level_default=LOG_LEVEL_DEFAULT,
                 )
             )
 
