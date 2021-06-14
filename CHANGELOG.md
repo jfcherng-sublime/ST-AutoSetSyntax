@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 1.10.14
+
+- refactor: run the whole `plugin_load()` async
+
 ## 1.10.13
 
 - fix: logger level names for Python 3.8

@@ -1,7 +1,6 @@
 AutoSetSyntax has been updated. To see the changelog, visit
 Preferences » Package Settings » AutoSetSyntax » CHANGELOG
 
+## 1.10.14
 
-## 1.10.8
-
-- fix: should not activate this plugin on widgets
+- refactor: run the whole `plugin_load()` async
