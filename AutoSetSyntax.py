@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import sys
 import sublime
 import sublime_plugin
 from .functions import view_assign_syntax
@@ -45,10 +46,15 @@ def plugin_loaded() -> None:
 
         log_level = get_setting("log_level")
 
+        if sys.version_info >= (3, 8):
+            nameToLevel = logging._nameToLevel
+        else:
+            nameToLevel = logging._levelNames
+
         try:
-            Globals.logger.setLevel(logging._levelNames[log_level])
+            Globals.logger.setLevel(nameToLevel[log_level])
         except Exception:
-            Globals.logger.setLevel(logging._levelNames[LOG_LEVEL_DEFAULT])
+            Globals.logger.setLevel(nameToLevel[LOG_LEVEL_DEFAULT])
             Globals.logger.warning(
                 'Unknown "log_level": {log_level} '
                 '(assumed "{log_level_default}")'.format(
