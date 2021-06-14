@@ -1,13 +1,13 @@
-import logging
-import os
-import re
-import sys
-import sublime
-import sublime_plugin
 from .functions import view_assign_syntax
 from .Globals import Globals
 from .settings import get_package_name, get_setting, get_settings_object, get_settings_file
 from .SyntaxMappings import SyntaxMappings
+import logging
+import os
+import re
+import sublime
+import sublime_plugin
+import sys
 
 LOG_LEVEL_DEFAULT = "INFO"
 LOG_FORMAT = "[%(name)s][%(levelname)s] %(message)s"

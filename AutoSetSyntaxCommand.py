@@ -1,8 +1,8 @@
-import sublime
-import sublime_plugin
 from .functions import view_assign_syntax
 from .Globals import Globals
 from .settings import get_setting
+import sublime
+import sublime_plugin
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):

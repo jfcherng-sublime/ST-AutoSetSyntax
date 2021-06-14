@@ -1,3 +1,4 @@
+from .functions import snake_to_camel, camel_to_snake
 import copy
 import json
 import logging
@@ -6,7 +7,6 @@ import plistlib
 import re
 import sublime
 import yaml
-from .functions import snake_to_camel, camel_to_snake
 
 ST_SYNTAX_FILE_EXTS = [".sublime-syntax", ".tmLanguage"]
 

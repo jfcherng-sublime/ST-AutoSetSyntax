@@ -1,6 +1,6 @@
+from .Globals import Globals
 import re
 import sublime
-from .Globals import Globals
 
 
 def snake_to_camel(snake: str, upper_first: bool = False) -> str:
