@@ -17,6 +17,14 @@ LOG_FORMAT = "[%(name)s][%(levelname)s] %(message)s"
 
 
 def plugin_loaded() -> None:
+    sublime.set_timeout_async(_plugin_loaded)
+
+
+def plugin_unloaded() -> None:
+    get_settings_object().clear_on_change(get_settings_file())
+
+
+def _plugin_loaded() -> None:
     def plugin_settings_listener() -> None:
         """called when the settings file is changed"""
 
@@ -86,12 +94,7 @@ def plugin_loaded() -> None:
 
     # when the user settings is modified...
     get_settings_object().add_on_change(get_settings_file(), plugin_settings_listener)
-    # this operation can be time-consuming, hence do it async
-    sublime.set_timeout_async(plugin_settings_listener)
-
-
-def plugin_unloaded() -> None:
-    get_settings_object().clear_on_change(get_settings_file())
+    plugin_settings_listener()
 
 
 class AutoSetNewFileSyntax(sublime_plugin.EventListener):
