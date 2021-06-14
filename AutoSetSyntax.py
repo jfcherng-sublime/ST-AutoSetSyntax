@@ -17,9 +17,8 @@ def plugin_loaded() -> None:
         """called when the settings file is changed"""
 
         apply_log_level()
-        # these operation can be time consuming, hence do it async
-        sublime.set_timeout_async(compile_working_scope, 0)
-        sublime.set_timeout_async(generate_syntax_mappings, 0)
+        compile_working_scope()
+        generate_syntax_mappings()
 
     def compile_working_scope() -> None:
         """compile working_scope into regex object to get better speed"""
@@ -78,7 +77,8 @@ def plugin_loaded() -> None:
 
     # when the user settings is modified...
     get_settings_object().add_on_change(get_settings_file(), plugin_settings_listener)
-    plugin_settings_listener()
+    # this operation can be time-consuming, hence do it async
+    sublime.set_timeout_async(plugin_settings_listener)
 
 
 def plugin_unloaded() -> None:
