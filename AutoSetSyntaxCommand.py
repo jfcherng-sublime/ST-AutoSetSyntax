@@ -11,7 +11,7 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 
         # make sure the target view is not a panel
         if not Globals.syntax_mappings:
-            Globals.logger.info('Plugin is not ready yet. Wait a second.')
+            Globals.logger.info("Plugin is not ready yet. Wait a second.")
             return False
 
         # make sure the target view is not a panel
