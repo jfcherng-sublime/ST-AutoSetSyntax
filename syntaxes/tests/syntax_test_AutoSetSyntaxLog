@@ -1,0 +1,33 @@
+# SYNTAX TEST "AutoSetSyntaxLog.sublime-syntax"
+
+[AutoSetSyntax] 🤠 Howdy! (version: 2.0.0-dev)
+# <- - meta.embedded.python
+#^^^^^^^^^^^^^ support.class
+
+[AutoSetSyntax] ✨ Optimized syntax rule collection: SyntaxRuleCollection(version='2.0.0-dev', rules=(SyntaxRule(assign_syntax=Syntax('Packages/nginx/Syntaxes/nginx.sublime-syntax', 'nginx', False, 'source.nginx'), selector='text.plain | source.apacheconf', on_events=None, root_rule=MatchRule(match="<AutoSetSyntax.plugin.rules.match_impl.AnyMatch object>", match_name='any', args=(), kwargs={}, rules=(ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.PathContainsRegexesConstraint object>", constraint_name='path_contains_regexes', args=('\\b(?i:nginx)\\b.*/conf/.*\\.conf$',), kwargs={}, _is_inverted=False), ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ContainsRegexesConstraint object>", constraint_name='contains_regexes', args=('^\\s*(?:location\\s+(?:[~/a-zA-Z])|(?:fastcgi_param|charset_map)\\s)',), kwargs={}, _is_inverted=False)))), SyntaxRule(assign_syntax=Syntax('Packages/User/my_language/ApacheConf/ApacheConf.sublime-syntax', 'Apache Conf', False, 'source.apacheconf'), selector='text.plain | source.nginx', on_events=None, root_rule=MatchRule(match="<AutoSetSyntax.plugin.rules.match_impl.AnyMatch object>", match_name='any', args=(), kwargs={}, rules=(ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ContainsRegexesConstraint object>", constraint_name='contains_regexes', args=('</(?:VirtualHost|Directory|Macro)>',), kwargs={}, _is_inverted=False),))), SyntaxRule(assign_syntax=Syntax('Packages/Python/Python.sublime-syntax', 'Python', False, 'source.python'), selector='text.plain', on_events=None, root_rule=MatchRule(match="<AutoSetSyntax.plugin.rules.match_impl.AllMatch object>", match_name='all', args=(), kwargs={}, rules=(ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ContainsRegexesConstraint object>", constraint_name='contains_regexes', args=('^(?:def|class)\\s',), kwargs={}, _is_inverted=False), ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ContainsRegexesConstraint object>", constraint_name='contains_regexes', args=('^import(?:$|[\\s(])', '^from\\s+[a-zA-Z.]+\\s+import(?:$|[\\s(])'), kwargs={}, _is_inverted=False)))), SyntaxRule(assign_syntax=Syntax('Packages/Go/Go.sublime-syntax', 'Go', False, 'source.go'), selector='text.plain', on_events=None, root_rule=MatchRule(match="<AutoSetSyntax.plugin.rules.match_impl.AllMatch object>", match_name='all', args=(), kwargs={}, rules=(ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ContainsRegexesConstraint object>", constraint_name='contains_regexes', args=('^(?:package)\\s',), kwargs={}, _is_inverted=False), ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ContainsRegexesConstraint object>", constraint_name='contains_regexes', args=('^(?:import|func|type)\\s',), kwargs={}, _is_inverted=False)))), SyntaxRule(assign_syntax=Syntax('Packages/Matlab/Matlab.sublime-syntax', 'MATLAB', False, 'source.matlab'), selector='text.plain | source.objc', on_events=None, root_rule=MatchRule(match="<AutoSetSyntax.plugin.rules.match_impl.AllMatch object>", match_name='all', args=(), kwargs={}, rules=(ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ExtensionIsConstraint object>", constraint_name='extension_is', args=('.m',), kwargs={}, _is_inverted=False), ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.ContainsRegexesConstraint object>", constraint_name='contains_regexes', args=('^\\s*%',), kwargs={}, _is_inverted=False)))), SyntaxRule(assign_syntax=Syntax('Packages/Markdown/Markdown.sublime-syntax', 'Markdown', False, 'text.html.markdown'), selector='text.plain', on_events=None, root_rule=MatchRule(match="<AutoSetSyntax.plugin.rules.match_impl.AnyMatch object>", match_name='any', args=(), kwargs={}, rules=(ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraint_impl.FirstLineContainsRegexesConstraint object>", constraint_name='first_line_contains_regexes', args=('^Package Control Messages($|\\s)',), kwargs={}, _is_inverted=False),)))))
+# <- - meta.embedded.python
+#^^^^^^^^^^^^^ support.class
+#                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.embedded.python
+
+[AutoSetSyntax] 💀 Dropped rules during optimizing:  ()
+# <- - meta.embedded.python
+#^^^^^^^^^^^^^ support.class
+#                                                   ^^ meta.embedded.python
+
+[AutoSetSyntax] ✔ Change View(23, "C:/README.md") syntax from "Objective-C" to "MATLAB" because {'event': 'load', 'reason': 'plugin rule', 'rule': SyntaxRule(comment='', assign_syntax=Syntax('Packages/Matlab/Matlab.sublime-syntax', 'MATLAB', False, 'source.matlab'), selector='text.plain | source.objc', on_events=None, root_rule=MatchRule(match="<AutoSetSyntax.plugin.rules.matches.all.AllMatch object>", match_name='all', args=(), kwargs={}, rules=(ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraints.extension_is.ExtensionIsConstraint object>", constraint_name='extension_is', args=('.m',), kwargs={}, invert=False), ConstraintRule(constraint="<AutoSetSyntax.plugin.rules.constraints.contains_regex.ContainsRegexConstraint object>", constraint_name='contains_regex', args=('^\\s*%',), kwargs={}, invert=False)))), 'syntax': Syntax('Packages/Matlab/Matlab.sublime-syntax', 'MATLAB', False, 'source.matlab')}
+# <- - meta.embedded.python
+#^^^^^^^^^^^^^ support.class
+#                        ^^^^^^^^^^^^^^^^^^^^^^^^ meta.embedded.python
+#                                                                                       ^^^^^^^ - meta.embedded.python
+#                                                                                               ^^^^^^^^^^^^ meta.embedded.python
+
+[AutoSetSyntax] ❌ Cannot help View(12, "C:/README.md") because {'event': 'init', 'reason': 'no matching rule'}
+# <- - meta.embedded.python
+#^^^^^^^^^^^^^ support.class
+#                             ^^^^^^^^^^^^^^^^^^^^^^^^ meta.embedded.python
+#                                                      ^^^^^^^ - meta.embedded.python
+#                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.embedded.python
+
+# BEGIN ---------- re-compile rules for Window(2) ----------
+# <- punctuation.definition.comment
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ comment.line.number-sign

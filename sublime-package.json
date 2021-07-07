@@ -1,0 +1,334 @@
+{
+  "contributions": {
+    "settings": [
+      //////////////
+      // settings //
+      //////////////
+      {
+        "file_patterns": ["/AutoSetSyntax.sublime-settings"],
+        "schema": {
+          "$id": "sublime://settings/AutoSetSyntax",
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "sublime://settings/AutoSetSyntax#/definitions/root_plugin_settings"
+            }
+          ],
+          "definitions": {
+            "root_plugin_settings": {
+              "properties": {
+                "enable_log": {
+                  "description": "Enables plugin log (in a dedicated panel).",
+                  "type": "boolean",
+                  "default": true
+                },
+                "new_file_syntax": {
+                  "markdownDescription": "The syntax used for a newly created file.\n\n---\n\nCan be one of following formats:\n\n- Syntax top scope: `\"scope:text.html.markdown\"`\n- Partial/full syntax file path: `\"Markdown/Markdown.\"`\n- The name of the syntax: `\"Markdown\"` (which is shown in the bottom-right corner of ST)\n- An empty string, which does nothing",
+                  "type": "string",
+                  "default": ""
+                },
+                "run_on_startup_views": {
+                  "markdownDescription": "Run `auto_set_syntax` command on views which exist before the plugin is loaded?",
+                  "type": "boolean",
+                  "default": false
+                },
+                "trim_file_size": {
+                  "description": "The max lookup size for the file. A negative number means no limit, which may have performance issue on large files.",
+                  "type": "integer",
+                  "default": 5000
+                },
+                "trim_first_line_length": {
+                  "description": "The max lookup length for the first line. A negative number means no limit, which may have performance issue on a long first line.",
+                  "type": "integer",
+                  "default": 180
+                },
+                "default_syntax_rules": {
+                  "description": "(Default Global) Rules which tell AutoSetSyntax how to behvae.",
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
+                },
+                "project_syntax_rules": {
+                  "description": "(Project Only) Rules which tell AutoSetSyntax how to behvae.",
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
+                },
+                "user_syntax_rules": {
+                  "description": "(User Global) Rules which tell AutoSetSyntax how to behvae.",
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
+                },
+                "default_trim_suffixes": {
+                  "description": "(Default Global) Suffixes that will be used to right trim the filename. Thus, the file may be then auto set syntax with a trimmed filename.",
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/trim_suffixes"
+                },
+                "project_trim_suffixes": {
+                  "description": "(Project Only) Suffixes that will be used to right trim the filename. Thus, the file may be then auto set syntax with a trimmed filename.",
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/trim_suffixes"
+                },
+                "user_trim_suffixes": {
+                  "description": "(User Global) Suffixes that will be used to right trim the filename. Thus, the file may be then auto set syntax with a trimmed filename.",
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/trim_suffixes"
+                }
+              }
+            },
+            "trim_suffixes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "-dev",
+                "-development",
+                "-dist",
+                "-optional",
+                "-prod",
+                "-production",
+                "-test",
+                ".backup",
+                ".bak",
+                ".default",
+                ".dist",
+                ".example",
+                ".inc",
+                ".include",
+                ".local",
+                ".orig",
+                ".sample",
+                ".temp",
+                ".test",
+                ".tmp",
+                ".tpl"
+              ]
+            },
+            "syntax_rule_collection": {
+              "type": "array",
+              "items": {
+                "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule"
+              }
+            },
+            "syntax_rule": {
+              "allOf": [
+                {
+                  "properties": {
+                    "comment": {
+                      "description": "A comment to explain this rule.",
+                      "type": "string",
+                      "default": ""
+                    },
+                    "on_events": {
+                      "description": "Limit this rule only to work with specific events.",
+                      "type": "array",
+                      "items": {
+                        "enum": ["command", "init", "load", "modify", "new", "reload", "revert", "save", "untransientize"]
+                      }
+                    },
+                    "selector": {
+                      "description": "Rules work only when the view's top scope matches this selector.",
+                      "type": "string",
+                      "default": "text.plain"
+                    },
+                    "syntaxes": {
+                      "markdownDescription": "A list of syntaxes which will be tried to set the view one by one. For lazyness, if the list has only one item, you don't have to put it in a list.\n\n---\n\nCan be one of following formats:\n\n- Syntax top scope: `\"scope:text.html.markdown\"`\n- Partial/full syntax file path: `\"Markdown/Markdown.\"`\n- The name of the syntax: `\"Markdown\"` (which is shown in the bottom-right corner of ST)\n- An empty string, which does nothing",
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["syntaxes"]
+                },
+                {
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/match_rule"
+                }
+              ]
+            },
+            "match_rule": {
+              "properties": {
+                "match": {
+                  "markdownDescription": "The \"name\" of the `Match` class used for checking the amount of passing `rules`.",
+                  "type": "string",
+                  "enum": ["all", "any", "some", "ratio"],
+                  "default": "any"
+                },
+                "args": {
+                  "markdownDescription": "Positional arguments that used to initialize the `Match` object. For lazyness, if the list has only one item, you don't have to put it in a list.",
+                  "default": []
+                },
+                "kwargs": {
+                  "markdownDescription": "Keyword arguments that used to initialize the `Match` object.",
+                  "type": "object",
+                  "default": {}
+                },
+                "rules": {
+                  "description": "Rules under test.",
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "$ref": "sublime://settings/AutoSetSyntax#/definitions/match_rule"
+                      },
+                      {
+                        "$ref": "sublime://settings/AutoSetSyntax#/definitions/constraint_rule"
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": ["rules"]
+            },
+            "constraint_rule": {
+              "properties": {
+                "constraint": {
+                  "markdownDescription": "The \"name\" of the `Constraint` class used for testing the view. You may prefix it with `NOT_` to invert the result of the constraint like `\"NOT_contains\"`.",
+                  "type": "string",
+                  "enum": [
+                    "contains",
+                    "contains_regex",
+                    "first_line_contains",
+                    "first_line_contains_regex",
+                    "is_extension",
+                    "is_in_git_repo",
+                    "is_interpreter",
+                    "is_name",
+                    "is_rails_file",
+                    "is_size",
+                    "name_contains",
+                    "name_contains_regex",
+                    "path_contains",
+                    "path_contains_regex",
+                    "relative_exists",
+                  ],
+                  "markdownEnumDescriptions": [
+                    "Test whether the file content contains any given strings. The `args` is a list of strings.",
+                    "Test whether the file content contains any given regexes. The `args` is a list of regexes.",
+                    "Test whether the first line of the file contains any given strings. The `args` is a list of strings.",
+                    "Test whether the first line of the file contains any given regexes. The `args` is a list of regexes.",
+                    "Test whether the file name has any given extensions. The `args` is a list of extensions.",
+                    "Test whether the file is in a git repository",
+                    "Test whether the interpreter in the shebang of the file is any given ones. The `args` is a list of interpreters.",
+                    "Test whether the file name is any given strings. The `args` is a list of strings.",
+                    "Test whether the file should use `Ruby on Rails` syntax.",
+                    "Test whether the file size satisfies the given condition. The `args` is in the form of `[operator, size]` like `[\">=\", 30]`.",
+                    "Test whether the file name contains any given strings. The `args` is a list of strings.",
+                    "Test whether the file name contains any given regexes. The `args` is a list of regexes.",
+                    "Test whether the file path contains any given strings. The `args` is a list of strings.",
+                    "Test whether the file path contains any given regexes. The `args` is a list of regexes.",
+                    "Test whether the any of file/direcotry exists relatively to the file. The `args` is a list of relative paths.",
+                  ]
+                },
+                "args": {
+                  "markdownDescription": "Positional arguments that used to initialize the `Constraint` object. For lazyness, if the list has only one item, you don't have to put it in a list.",
+                  "default": []
+                },
+                "kwargs": {
+                  "markdownDescription": "Keyword arguments that used to initialize the `Constraint` object.",
+                  "type": "object",
+                  "default": {}
+                },
+                "invert": {
+                  "description": "Invert the result of the match test. But sometimes, the output may always be truthy or falsy no matter it's inverted or not. For example, if you try to test the file size of a not-on-disk buffer, the output will always be false.",
+                  "type": "boolean",
+                  "default": false
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "constraint": {
+                        "pattern": "^.*_regex$"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "kwargs": {
+                        "type": "object",
+                        "properties": {
+                          "regex_flags": {
+                            "description": "Flags/modifiers for the regular expression.",
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "A",
+                                "ASCII",
+                                "DEBUG",
+                                "I",
+                                "IGNORECASE",
+                                "L",
+                                "LOCALE",
+                                "M",
+                                "MULTILINE",
+                                "S",
+                                "DOTALL",
+                                "X",
+                                "VERBOSE",
+                                "U",
+                                "UNICODE"
+                              ]
+                            },
+                            "default": ["MULTILINE"]
+                          }
+                        },
+                        "default": {}
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "constraint": {
+                        "pattern": "^size_is$"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "args": {
+                        "type": "array",
+                        "items": [
+                          {
+                            "enum": ["<", "<=", ">=", ">", "==", "!="]
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ],
+                        "default": ["<", 20000],
+                        "additionalItems": false
+                      }
+                    }
+                  }
+                }
+              ],
+              "required": ["constraint"]
+            }
+          }
+        }
+      },
+      //////////////////////
+      // project settings //
+      //////////////////////
+      {
+        "file_patterns": ["/*.sublime-project"],
+        "schema": {
+          "properties": {
+            "settings": {
+              "properties": {
+                "AutoSetSyntax": {
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/root_plugin_settings"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

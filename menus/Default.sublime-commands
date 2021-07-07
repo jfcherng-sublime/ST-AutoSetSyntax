@@ -1,4 +1,37 @@
-[{
-    "caption": "AutoSetSyntax: Auto Set Syntax",
-    "command": "auto_set_syntax",
-}]
+[
+    {
+        "caption": "AutoSetSyntax: Auto Set Syntax",
+        "command": "auto_set_syntax",
+    },
+    {
+        "caption": "AutoSetSyntax: Clear Log Panel",
+        "command": "auto_set_syntax_clear_log_panel",
+    },
+    {
+        "caption": "AutoSetSyntax: Create New Constrant",
+        "command": "auto_set_syntax_create_new_constraint",
+    },
+    {
+        "caption": "AutoSetSyntax: Create New Match",
+        "command": "auto_set_syntax_create_new_match",
+    },
+    {
+        "caption": "AutoSetSyntax: Debug Information",
+        "command": "auto_set_syntax_debug_information",
+    },
+    {
+        "caption": "AutoSetSyntax: Documentation (Online)",
+        "command": "open_url",
+        "args": {
+            "url": "https://jfcherng-sublime.github.io/ST-AutoSetSyntax/",
+        },
+    },
+    {
+        "caption": "AutoSetSyntax: Migrate Settings",
+        "command": "auto_set_syntax_migrate_settings",
+    },
+    {
+        "caption": "AutoSetSyntax: Toggle Log Panel",
+        "command": "auto_set_syntax_toggle_log_panel",
+    },
+]

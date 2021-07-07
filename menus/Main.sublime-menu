@@ -1,35 +1,66 @@
-[{
-    "id": "preferences",
-    "children": [{
-        "id": "package-settings",
-        "children": [{
-            "caption": "AutoSetSyntax",
-            "children": [{
-                "caption": "-",
-            }, {
-                "caption": "Settings",
-                "command": "edit_settings",
-                "args": {
-                    "base_file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings",
-                    "default": "{\n\t$0\n}\n",
-                },
-            }, {
-                "caption": "-",
-            }, {
-                "caption": "README",
-                "command": "open_file",
-                "args": {
-                    "file": "${packages}/AutoSetSyntax/README.md",
-                },
-            }, {
-                "caption": "CHANGELOG",
-                "command": "open_file",
-                "args": {
-                    "file": "${packages}/AutoSetSyntax/CHANGELOG.md",
-                },
-            }, {
-                "caption": "-",
-            }]
-        }]
-    }]
-}]
+[
+    {
+        "id": "preferences",
+        "children": [
+            {
+                "id": "package-settings",
+                "children": [
+                    {
+                        "caption": "AutoSetSyntax",
+                        "children": [
+                            {
+                                "caption": "-",
+                            },
+                            {
+                                "caption": "Settings",
+                                "command": "edit_settings",
+                                "args": {
+                                    "base_file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings",
+                                    "default": "{\n\t$0\n}\n",
+                                },
+                            },
+                            {
+                                "caption": "-",
+                            },
+                            {
+                                "caption": "Documentation (Online)",
+                                "command": "open_url",
+                                "args": {
+                                    "url": "https://jfcherng-sublime.github.io/ST-AutoSetSyntax/",
+                                },
+                            },
+                            {
+                                "caption": "README",
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/AutoSetSyntax/README.md",
+                                },
+                            },
+                            {
+                                "caption": "CHANGELOG",
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/AutoSetSyntax/CHANGELOG.md",
+                                },
+                            },
+                            {
+                                "caption": "-",
+                            },
+                            {
+                                "caption": "New Constrant…",
+                                "command": "auto_set_syntax_create_new_constraint",
+                            },
+                            {
+                                "caption": "New Match…",
+                                "command": "auto_set_syntax_create_new_match",
+                            },
+                            {
+                                "caption": "-",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    },
+]

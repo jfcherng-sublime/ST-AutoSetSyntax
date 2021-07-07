@@ -1,0 +1,130 @@
+site_name: AutoSetSyntax Documentation
+site_description: Syntax detector for Sublime Text.
+site_author: Jack Cherng
+site_url: https://github.com/jfcherng-sublime/ST-AutoSetSyntax
+
+repo_name: AutoSetSyntax
+repo_url: https://github.com/jfcherng-sublime/ST-AutoSetSyntax
+# empty to disable the edit button
+edit_uri: edit/st4/docs/src/
+copyright: Copyright &copy; 2017 - 2021 Jack Cherng
+
+docs_dir: src
+site_dir: site
+
+nav:
+  - Introduction: index.md
+  - Use Cases: use-cases.md
+  - Configurations: configurations.md
+  - Commands: commands.md
+  - Debug: debug.md
+  - Migration: migration.md
+  - Advanced Topics:
+    - How plugin works: advanced-topics/how-plugin-works.md
+    - Custom Match: advanced-topics/custom-match.md
+    - Custom Constraint: advanced-topics/custom-constraint.md
+
+###############################################################
+# http://squidfunk.github.io/mkdocs-material/getting-started/ #
+###############################################################
+theme:
+  name: material
+  # custom_dir: theme
+  language: en
+  icon:
+    logo: fontawesome/solid/book
+    repo: fontawesome/brands/github
+  font: false
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.expand
+    # - navigation.instant
+    # - navigation.sections
+    # - navigation.tabs
+    - navigation.top
+    # - toc.integrate
+
+extra:
+  font:
+    code: Roboto Mono
+    text: Roboto
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jfcherng
+    - icon: fontawesome/brands/telegram
+      link: https://t.me/sul4nog_tg
+    - icon: fontawesome/brands/paypal
+      link: https://www.paypal.me/jfcherng
+
+extra_css: []
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - _assets/js/config-mathjax.js
+
+plugins:
+  - search:
+      lang:
+        - en
+      separator: '[:：、,，.。!！?？()（）/／]+'
+      prebuild_index: true
+  - minify:
+      minify_html: true
+  - git-revision-date-localized:
+      type: datetime
+      locale: en
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - codehilite:
+      linenums: false
+      noclasses: false
+      pygments_style: default
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+      slugify: !!python/name:pymdownx.slugs.uslugify
+      # toc_depth: 4
+  #####################################################
+  # pip install -U pymdown-extensions                 #
+  # http://facelessuser.github.io/pymdown-extensions/ #
+  #####################################################
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      base_path: src/_snippets
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+      clickable_checkbox: false
+  - pymdownx.tabbed
+  - pymdownx.tilde

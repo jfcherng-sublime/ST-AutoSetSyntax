@@ -1,180 +1,28 @@
 # ST-AutoSetSyntax
 
-<!-- [![Travis (.org) branch](https://img.shields.io/travis/jfcherng-sublime/ST-AutoSetSyntax/master?style=flat-square)](https://travis-ci.org/jfcherng-sublime/ST-AutoSetSyntax) -->
-
+[![Required ST Build](https://img.shields.io/badge/ST-4105+-orange.svg?style=flat-square&logo=sublime-text)](https://www.sublimetext.com)
+[![GitHub Actions](https://img.shields.io/github/workflow/status/jfcherng-sublime/ST-AutoSetSyntax/Python?style=flat-square)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/actions)
 [![Package Control](https://img.shields.io/packagecontrol/dt/AutoSetSyntax?style=flat-square)](https://packagecontrol.io/packages/AutoSetSyntax)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tags)
-[![Project license](https://img.shields.io/github/license/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/blob/master/LICENSE)
+[![Project license](https://img.shields.io/github/license/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/blob/st4/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/stargazers)
 [![Donate to this project using Paypal](https://img.shields.io/badge/paypal-donate-blue.svg?style=flat-square&logo=paypal)](https://www.paypal.me/jfcherng/5usd)
 
-This plugin automatically sets the syntax for your file if possible.
-The original thought comes from [here](https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629).
+AutoSetSyntax helps you set the syntax for a view automatically in various ways:
+
+- Default syntax for new files.
+- Detecting the syntax when modifying the file.
+- Trimming unimportant suffixes from the filename.
+- Assigning syntax by the first line.
+- User-defined rules.
 
 ## Installation
 
-This package is available on Package Control by the name of [AutoSetSyntax](https://packagecontrol.io/packages/AutoSetSyntax).
+This package is available on [Package Control][package-control] by the name of [AutoSetSyntax][autosetsyntax].
 
-## Examples
+## Documentation
 
-<details><summary>Guess the Syntax After Stripping Unimportant File Extensions</summary>
+https://jfcherng-sublime.github.io/ST-AutoSetSyntax/
 
-![try-strip-file-exts](https://raw.githubusercontent.com/jfcherng-sublime/ST-AutoSetSyntax/gh-pages/images/example/try-strip-file-exts.gif)
-
-1. `config_gitlab.yml.example` -> `config_gitlab.yml` -> Ah! `.yml` should use the `YAML` syntax.
-1. See `try_filename_remove_exts` settings for details.
-
-</details>
-
-<details><summary>PHP Tag</summary>
-
-![php-tag](https://raw.githubusercontent.com/jfcherng-sublime/ST-AutoSetSyntax/gh-pages/images/example/php-tag.gif)
-
-1. Create a new tab.
-1. Type `<?php`.
-1. The syntax will be set to PHP automatically. (triggered by `on_modified_async`)
-
-</details>
-
-<details><summary>Colored Git Log</summary>
-
-![git-log](https://raw.githubusercontent.com/jfcherng-sublime/ST-AutoSetSyntax/gh-pages/images/example/git-log.gif)
-
-1. Prerequisites: [ANSIescape](https://packagecontrol.io/packages/ANSIescape) and [SideBarGit](https://github.com/titoBouzout/SideBarGit).
-1. Set your colored git log command. I personally set `git config --global alias.l "log --graph --date=short --color --pretty=format:'%C(yellow bold)%h%Creset%C(auto)%d%Creset - %s %C(green bold)[%an]%Creset %C(blue bold)(%ad, %cr)%Creset'"`.
-1. Add `"ANSIescape/ANSI.sublime-syntax": ["^\\s*\\[SideBarGit@.*\\] git \\b"]` to `syntax_mapping`.
-1. Add `source.diff` to `working_scope` like `"working_scope": "(?x)^(text.plain | source.diff)\\b"`.
-1. Execute your customized git log command. In this example, it is `git l` as set in the previous step.
-1. The output syntax will be set to ANSI which provides ANSI color rendering. (triggered by `on_modified_async`)
-
-</details>
-
-### More Creative Usages To Share
-
-Feel free to create an issue or a pull request.
-
-## User Settings
-
-<details><summary>Click to expand</summary>
-
-```javascript
-{
-    // When should this plugin work?
-    "event_listeners": {
-        // called when a view gains input focus
-        "on_activated_async": true,
-        // called when a view is cloned from an existing one
-        "on_clone_async": true,
-        // called when the file is finished loading
-        "on_load_async": true,
-        // called after changes have been made to a view
-        "on_modified_async": true,
-        // called when a new buffer is created
-        "on_new_async": true,
-        // called after there is a paste operation
-        "on_post_paste": true,
-        // called just before a view is saved
-        "on_pre_save_async": true,
-    },
-    // The max lookup length for the first line.
-    // A negative number means no limitation.
-    "first_line_length_max": 80,
-    // How detailed log messages should be?
-    // "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) or "NOTHING" (no log)
-    "log_level": "INFO",
-    /**
-     * The syntax maaping rules.
-     *
-     * @key The partial (or full) resource path of a syntax file.
-     * @value Regexes to match the first line.
-     */
-    "syntax_mapping": {
-        // "Packages/PHP/PHP.sublime-syntax": [
-        //     "<\\?php",
-        //     "<\\?=",
-        // ],
-    },
-    // The partial (or full) resource path of the syntax file used when creating a new file.
-    // Nothing would happen if this is a empty string.
-    "new_file_syntax": "",
-    // The scope that this plugin should work (regex).
-    // Leave it blank will result in matching any scope.
-    "working_scope": "^text\\.plain\\b",
-    // Try to remove these file extensions from the file name
-    // so a syntax may be assigned due to a stripped file name.
-    "try_filename_remove_exts": [
-        "-dev",
-        "-development",
-        "-dist",
-        "-prod",
-        "-production",
-        "-test",
-        ".backup",
-        ".bak",
-        ".default",
-        ".dist",
-        ".example",
-        ".inc",
-        ".include",
-        ".local",
-        ".sample",
-        ".test",
-        ".tpl",
-    ],
-}
-```
-
-</details>
-
-## Commands
-
-You may disable all `event_listeners` in your user settings and add a key binding to set syntax.
-
-```javascript
-{ "keys": ["ctrl+alt+s", "ctrl+alt+s"], "command": "auto_set_syntax" },
-```
-
-## How It Works
-
-When this plugin is loaded:
-
-1. Construct the syntax mappings.
-
-   1. Read all syntax definition files.
-   1. Try to find following informations.
-
-      - `first_line_match` in `.sublime-syntax`s and `firstLineMatch` in `.tmLanguage`s.
-      - `file_extensions` in `.sublime-syntax`s and `fileTypes` in `.tmLanguage`s.
-
-   1. Merge `syntax_mapping` with results from the previous step.
-
-1. If the scope is `text.plain`, try to remove some extensions from the file name basing on `try_filename_remove_exts`.
-   A syntax may be assigned due to a stripped file name matches.
-
-When an event is triggered:
-
-1. May check conditions like cursor counts, cursor position and etc...
-1. Make sure `working_scope` matches the scope of the first character.
-1. Call command `auto_set_syntax`.
-
-When command `auto_set_syntax` is called:
-
-1. Match extensions with the file name.
-1. Match the first line with file content.
-1. If there is any luck, set the corresponding syntax for the user.
-
-## Debug
-
-Debug messages are printed to your Sublime Text console (<kbd>Ctrl</kbd>+<kbd>\`</kbd>), which looks like
-
-```text
-AutoSetSyntax: [ERROR] regex compilation failed in user settings "working_scope": ^text.plain\b+
-AutoSetSyntax: [WARNING] "event_listeners -> on_pre_save_async" is not set in user settings (assumed true)
-AutoSetSyntax: [INFO] match syntax file "php-grammar/PHP." with "Packages/php-grammar/PHP.sublime-syntax"
-```
-
-## See Also
-
-j
-
-- [ApplySyntax](https://github.com/facelessuser/ApplySyntax)
+[autosetsyntax]: https://packagecontrol.io/packages/AutoSetSyntax
+[package-control]: https://packagecontrol.io

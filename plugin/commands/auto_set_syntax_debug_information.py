@@ -1,0 +1,72 @@
+from ..constant import PLUGIN_NAME, PY_VERSION
+from ..constant import ST_CHANNEL
+from ..constant import ST_PLATFORM_ARCH
+from ..constant import ST_VERSION
+from ..constant import VERSION
+from ..helper import stringify
+from ..rules.constraint import get_constraints
+from ..rules.match import get_matches
+from ..settings import get_merged_plugin_settings
+from ..shared import G
+from typing import Any, Dict
+import sublime
+import sublime_plugin
+
+TEMPLATE = """
+# === AutoSetSyntax Debug Information === #
+# You may use the following website to format this debug information.
+# @link https://black.vercel.app
+
+###############
+# Environment #
+###############
+
+{env}
+
+###################
+# Plugin settings #
+###################
+
+{plugin_settings}
+
+##########################
+# Syntax rule collection #
+##########################
+
+{syntax_rule_collection}
+
+########################
+# Dropped syntax rules #
+########################
+
+{dropped_rules}
+""".lstrip()
+
+
+def _pythonize(d: Dict[str, Any]) -> Dict[str, Any]:
+    return {k: stringify(v) for k, v in d.items()}
+
+
+class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
+    def description(self) -> str:
+        return f"{PLUGIN_NAME}: Debug Information"
+
+    def run(self) -> None:
+        info: Dict[str, Any] = {}
+
+        info["env"] = {
+            "sublime_text": f"{ST_VERSION} ({ST_PLATFORM_ARCH} {ST_CHANNEL} build) with Python {PY_VERSION}",
+            "plugin": {
+                "version": VERSION,
+                "matches": get_matches(),
+                "constraints": get_constraints(),
+            },
+        }
+        info["plugin_settings"] = get_merged_plugin_settings(self.window)
+        info["syntax_rule_collection"] = G.get_syntax_rule_collection(self.window)
+        info["dropped_rules"] = G.get_dropped_rules(self.window)
+
+        msg = TEMPLATE.format_map(_pythonize(info))
+
+        sublime.set_clipboard(msg)
+        sublime.message_dialog(f"{PLUGIN_NAME} debug information has been copied to the clipboard.")

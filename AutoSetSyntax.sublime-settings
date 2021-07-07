@@ -1,51 +1,271 @@
 {
-    // When should this plugin work?
-    "event_listeners": {
-        // called when a view gains input focus
-        "on_activated_async": true,
-        // called when a view is cloned from an existing one
-        "on_clone_async": true,
-        // called when the file is finished loading
-        "on_load_async": true,
-        // called after changes have been made to a view
-        "on_modified_async": true,
-        // called when a new buffer is created
-        "on_new_async": true,
-        // called after there is a paste operation
-        "on_post_paste": true,
-        // called just before a view is saved
-        "on_pre_save_async": true,
-    },
-    // The max lookup length for the first line.
-    // A negative number means no limitation.
-    "first_line_length_max": 120,
-    // How detailed log messages should be?
-    // Values can be "CRITICAL" (very few), "ERROR", "WARNING", "INFO", "DEBUG" (most tedious) or "NOTHING" (no log)
-    "log_level": "INFO",
-    /**
-     * The syntax maaping rules.
-     *
-     * @key The partial (or full) resource path of a syntax file.
-     * @value Regexes to match the first line.
-     */
-    "syntax_mapping": {
-        "Markdown/Markdown.": [
-            "^Package Control Messages$",
-        ],
-        // "Packages/PHP/PHP.sublime-syntax": [
-        //     "<\\?php",
-        //     "<\\?=",
-        // ],
-    },
-    // The partial (or full) resource path of the syntax file used when creating a new file.
-    // Nothing would happen if this is a empty string.
+    //////////////////////////////////////////////////////////
+    // Online Documentations                                //
+    // https://jfcherng-sublime.github.io/ST-AutoSetSyntax/ //
+    //////////////////////////////////////////////////////////
+
+    ///////////////////
+    // User Settings //
+    ///////////////////
+
+    // Enable plugin log (in a dedicated panel)
+    "enable_log": true,
+    // Set default syntax for new files.
+    // Can be one of following formats:
+    //   - Syntax top scope: "scope:text.html.markdown"
+    //   - Partial/full syntax file path: "Markdown/Markdown."
+    //   - The name of the syntax: "Markdown" (which is shown in the bottom-right corner of ST)
+    //   - An empty string, which does nothing
     "new_file_syntax": "",
-    // The scope that this plugin should work (regex).
-    // Leave it blank will result in matching any scope.
-    "working_scope": "^text\\.plain\\b",
-    // Try to remove these file extensions from the file name and
-    // set a corresponding syntax due to a stripped file name if there is a matching one.
-    "try_filename_remove_exts": [
+    // Run "auto_set_syntax" command on views which exist before the plugin is loaded?
+    "run_on_startup_views": false,
+    // The max lookup size for the file.
+    // A negative number means no limit, which may have performance issue on large files.
+    "trim_file_size": 5000, // about 5KB
+    // The max lookup length for the first line.
+    // A negative number means no limit, which may have performance issue on a long first line.
+    "trim_first_line_length": 180,
+    // Syntax rules that will be checked one by one.
+    // This plugin will assign the syntax in the first satisfied rule to the view.
+    // You may want to see "default_syntax_rules" for some examples.
+    "user_syntax_rules": [],
+    // Suffixes that will be used to right trim the filename.
+    // By doing that, the file may be then auto set syntax with a trimmed filename.
+    "user_trim_suffixes": [],
+
+    //////////////////////
+    // Project Settings //
+    ////////////////////////////////////////////////////////////////////////////
+    // You shouldn't change these settings here but in your project settings. //
+    ////////////////////////////////////////////////////////////////////////////
+
+    // Syntax rules that will be checked one by one.
+    // This plugin will assign the syntax in the first satisfied rule to the view.
+    // You may want to see "default_syntax_rules" for some examples.
+    "project_syntax_rules": [],
+    // Suffixes that will be used to right trim the filename.
+    // By doing that, the file may be then auto set syntax with a trimmed filename.
+    "project_trim_suffixes": [],
+
+    //////////////////////
+    // Default Settings //
+    ////////////////////////////////////////////////////////////////////////////
+    // If you override default rules, they will not be updated in the future. //
+    // If you want to add new rules, add them in user settings.               //
+    ////////////////////////////////////////////////////////////////////////////
+
+    // Syntax rules that will be checked one by one.
+    // This plugin will assign the syntax in the first satisfied rule to the view.
+    "default_syntax_rules": [
+        // syntax rule
+        {
+            "syntaxes": "scope:source.python",
+            "selector": "text.plain",
+            // match rule
+            "match": "all", // "any" by default
+            "rules": [
+                // constraint rule
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^(?:def|class)\\s"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^import(?:$|[\\s(])", "^from\\s+[a-zA-Z.]+\\s+import(?:$|[\\s(])"]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.json",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["^\\.(?:jshint|jscs|csslint|eslint|bower)rc$"]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.shell.bash",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["^profile$", "^.*\\.bash.*$", "^.*\\.z(?:shrc|shenv|profile|login|logout).*$"]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.go",
+            "selector": "text.plain",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^(?:package)\\s"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^(?:import|func|type)\\s"]
+                }
+            ]
+        },
+        {
+            // .m files could be Objective-C or Matlab files
+            // We first use a rather reliable regex from GitHub
+            // https://github.com/github/linguist/blob/master/lib/linguist/heuristics.rb#L69)
+            // to apply syntax for Objective-C files
+            "syntaxes": "scope:source.objc",
+            "selector": "text.plain | source.matlab",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".m"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": [
+                        "^\\s*(?:@(?:interface|class|protocol|property|end|synchronised|selector|implementation)\\b|#import\\s+.+\\.h[\">])"
+                    ]
+                }
+            ]
+        },
+        {
+            // Then use the % regex to detect Matlab files
+            "syntaxes": "scope:source.matlab",
+            "selector": "text.plain | source.objc",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".m"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^\\s*%"]
+                }
+            ]
+        },
+        {
+            "comment": "\"Ruby on Rails\" project",
+            "syntaxes": "scope:source.ruby.rails",
+            "selector": "text.plain | source.ruby",
+            "rules": [
+                {
+                    "constraint": "is_rails_file"
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.ruby",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".thor", ".rake", ".simplecov", ".jbuilder", ".rb", ".podspec", ".rabl"]
+                },
+                {
+                    "constraint": "path_contains_regex",
+                    "args": [
+                        "^.*/(?:Berks|Cap|[Cc]hef|Gem|Guard|Pod|[Rr]ake|Thor)file$",
+                        "^.*/config.ru$",
+                        "^.*/Vagrantfile(?:/..*)?$"
+                    ]
+                },
+                {
+                    "constraint": "is_interpreter",
+                    "args": ["ruby"]
+                }
+            ]
+        },
+        {
+            // Meteor templates follow Handlebars syntax, but must end in .html;
+            // but they also always begin with `<template name=`
+            "syntaxes": "scope:text.html.handlebars",
+            "selector": "text.plain | text.html",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".html"]
+                },
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": ["^<template name="]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.typoscript",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "path_contains_regex",
+                    "args": [
+                        "^.*/ext_conf_template\\.txt$",
+                        "^.*/ext_typoscript_(?:setup|constants)\\.txt$",
+                        "^.*/(?:fileadmin|typo3|TypoScript).*/(?:setup|constants)\\.txt$"
+                    ]
+                }
+            ]
+        },
+        {
+            "comment": "Apache config",
+            "syntaxes": "scope:source.apacheconf",
+            "selector": "text.plain | source.nginx",
+            "rules": [
+                {
+                    "constraint": "path_contains_regex",
+                    "args": ["\\b(?i:apache|httpd)\\b.*/conf/.*\\.conf$"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["<(?:VirtualHost|Directory|Macro)(?:$|\\s)"]
+                }
+            ]
+        },
+        {
+            "comment": "NGINX config",
+            "syntaxes": "scope:source.nginx",
+            "selector": "text.plain | source.apacheconf",
+            "rules": [
+                {
+                    "constraint": "path_contains_regex",
+                    "args": ["\\b(?i:nginx)\\b.*/conf/.*\\.conf$"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^\\s*(?:location\\s+(?:[~=/a-zA-Z])|(?:fastcgi_param|charset_map)\\s)"]
+                }
+            ]
+        },
+        {
+            "comment": "Package installation/update messages from Package Control",
+            "syntaxes": "scope:text.html.markdown",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": ["^Package Control Messages(?:$|\\s)"]
+                }
+            ]
+        },
+        {
+            "comment": "AutoSetSyntax Debug Information",
+            "syntaxes": "scope:source.python",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "first_line_contains",
+                    "args": ["# === AutoSetSyntax Debug Information === #"]
+                }
+            ]
+        }
+    ],
+    // Suffixes that will be used to right trim the filename.
+    // By doing that, the file may be then auto set syntax with a trimmed filename.
+    "default_trim_suffixes": [
         "-dev",
         "-development",
         "-dist",
@@ -56,6 +276,7 @@
         ".backup",
         ".bak",
         ".default",
+        ".dev",
         ".dist",
         ".example",
         ".inc",
@@ -63,7 +284,9 @@
         ".local",
         ".orig",
         ".sample",
+        ".temp",
         ".test",
-        ".tpl",
-    ],
+        ".tmp",
+        ".tpl"
+    ]
 }

@@ -1,6 +1,14 @@
 AutoSetSyntax has been updated. To see the changelog, visit
 Preferences » Package Settings » AutoSetSyntax » CHANGELOG
 
-## 1.10.14
+## 2.0.0
 
-- refactor: run the whole `plugin_load()` async
+If you are a user from v1 with custom syntax rules,
+check the [migration guide](https://jfcherng-sublime.github.io/ST-AutoSetSyntax/migration/).
+
+- refactor: complete rewritten to utilize ST 4 APIs and Python 3.8
+- feat: users can define their `syntax` rule recursively with `match` rules and `constraint` rules
+- feat: plugin logs are moved to a dedicated panel
+- feat: `auto_set_syntax_debug_information` command to help user dump information for debugging
+
+For more details, visit the online documentation: https://jfcherng-sublime.github.io/ST-AutoSetSyntax/

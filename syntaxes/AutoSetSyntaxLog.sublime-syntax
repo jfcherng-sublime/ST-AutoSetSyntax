@@ -1,0 +1,75 @@
+%YAML 1.2
+---
+name: AutoSetSyntex Log
+scope: output.autosetsyntax.log
+version: 2
+hidden: true
+file_extensions:
+  - syntax_test_AutoSetSyntaxLog
+
+contexts:
+  main:
+    - include: comment
+    - include: plugin-header
+    - include: string
+    - include: python-object
+
+  comment:
+    - match: ^(#).*$
+      captures:
+        0: comment.line.number-sign.autosetsyntax.log
+        1: punctuation.definition.comment.autosetsyntax.log
+
+  plugin-header:
+    - match: ^(\[)(AutoSetSyntax)(\])
+      captures:
+        1: punctuation.definition.name.begin.autosetsyntax.log
+        2: support.class.autosetsyntax.log
+        3: punctuation.definition.name.end.autosetsyntax.log
+
+  python-object:
+    - match: (?=SyntaxRuleCollection\()
+      embed: 'scope:source.python'
+      embed_scope: meta.embedded.python.autosetsyntax.log
+      escape: $
+    - match: (?=View\()
+      embed: 'scope:source.python'
+      embed_scope: meta.embedded.python.autosetsyntax.log
+      escape: (")(\))(?=$|\s)
+      escape_captures:
+        0: meta.embedded.python.autosetsyntax.log
+        1: punctuation.definition.string.end.python
+        2: punctuation.section.group.end.python
+    - match: (?=(?:rule|implementation)s?[^:]*:)
+      push:
+        - include: pop-at-end
+        - match: ''
+          embed: 'scope:source.python'
+          embed_scope: meta.embedded.python.autosetsyntax.log
+          escape: $
+    - match: (?i:(?=because\s*\{))
+      push:
+        - include: pop-at-end
+        - match: (?=\{)
+          embed: 'scope:source.python'
+          embed_scope: meta.embedded.python.autosetsyntax.log
+          escape: $
+
+  string:
+    - match: '"'
+      scope: punctuation.definition.string.begin.autosetsyntax.log
+      push:
+        - meta_scope: meta.string.autosetsyntax.log
+        - match: '"'
+          scope: punctuation.definition.string.end.autosetsyntax.log
+          pop: 1
+        - match: '[^"]*'
+          scope: string.quoted.double.autosetsyntax.log
+
+  pop-at-end:
+    - match: (?=$|\n)
+      pop: 1
+
+  pop-2-at-end:
+    - match: (?=$|\n)
+      pop: 2

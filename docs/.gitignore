@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+Desktop.ini
+Thumbs.db
+
+/.venv/
+/venv/
+/site/
+node_modules/
