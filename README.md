@@ -175,6 +175,4 @@ AutoSetSyntax: [INFO] match syntax file "php-grammar/PHP." with "Packages/php-gr
 
 ## See Also
 
-j
-
 - [ApplySyntax](https://github.com/facelessuser/ApplySyntax)
