@@ -97,7 +97,7 @@ class AioSettings(sublime_plugin.EventListener):
         return cls.get_all(window).get(key, default)
 
     @classmethod
-    def get_all(cls, window: sublime.Window) -> Dict[str, Any]:
+    def get_all(cls, window: sublime.Window) -> SettingsDict:
         return cls._merged_plugin_settings.get(window.id()) or {}
 
     # ---------- #
