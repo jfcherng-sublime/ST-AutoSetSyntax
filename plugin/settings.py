@@ -60,6 +60,7 @@ class AioSettings(sublime_plugin.EventListener):
 
     _on_settings_change_callbacks: Dict[str, Callable[[sublime.Window], None]] = {}
     _plugin_settings_object: Optional[sublime.Settings] = None
+    _settings_normalizer: Optional[Callable[[SettingsDict], None]] = None
     _tracked_windows: Set[int] = set()
 
     # application-level
@@ -91,6 +92,10 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def clear_on_change(cls, key: str) -> None:
         cls._on_settings_change_callbacks.pop(key, None)
+
+    @classmethod
+    def set_settings_normalizer(cls, normalizer: Optional[Callable[[SettingsDict], None]]) -> None:
+        cls._settings_normalizer = normalizer
 
     @classmethod
     def get(cls, window: sublime.Window, key: str, default: Optional[Any] = None) -> Any:
@@ -161,12 +166,16 @@ class AioSettings(sublime_plugin.EventListener):
     def _update_plugin_settings(cls) -> None:
         assert cls._plugin_settings_object
         cls._plugin_settings = cls._plugin_settings_object.to_dict()
+        if cls._settings_normalizer:
+            cls._settings_normalizer(cls._plugin_settings)
 
     @classmethod
     def _update_project_plugin_settings(cls, window: sublime.Window) -> None:
         cls._project_plugin_settings[window.id()] = (
             (window.project_data() or {}).get("settings", {}).get(cls.plugin_name, {})
         )
+        if cls._settings_normalizer:
+            cls._settings_normalizer(cls._project_plugin_settings[window.id()])
 
     @classmethod
     def _update_merged_plugin_settings(cls, window: sublime.Window) -> None:
