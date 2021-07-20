@@ -11,17 +11,17 @@ if next(filter(None, VERSION_INFO[3:4]), None):
 
 ################################################################################
 
-ST_ARCH = sublime.arch()
-ST_CHANNEL = sublime.channel()
-ST_PLATFORM = sublime.platform()
-ST_PLATFORM_ARCH = f"{ST_PLATFORM}_{ST_ARCH}"
-ST_VERSION = int(sublime.version())
-PY_VERSION_FULL = sys.version
-PY_VERSION = PY_VERSION_FULL.partition(" ")[0]
+ST_ARCH = sublime.arch()  # like "x64"
+ST_CHANNEL = sublime.channel()  # like "dev"
+ST_PLATFORM = sublime.platform()  # like "windows"
+ST_PLATFORM_ARCH = f"{ST_PLATFORM}_{ST_ARCH}"  # like "windows_x64"
+ST_VERSION = int(sublime.version())  # like 4113
+PY_VERSION_FULL = sys.version  # like "3.8.8 (default, Mar 10 2021, 13:30:47) [MSC v.1915 64 bit (AMD64)]"
+PY_VERSION = PY_VERSION_FULL.partition(" ")[0]  # like "3.8.8"
 
 ################################################################################
 
-PLUGIN_NAME = __package__.partition(".")[0]
+PLUGIN_NAME = __package__.partition(".")[0]  # like "AutoSetSyntax"
 
 PLUGIN_CUSTOM_DIR = Path(sublime.packages_path()) / f"{PLUGIN_NAME}-Custom"
 PLUGIN_CUSTOM_MODULE_PATHS = {
