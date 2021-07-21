@@ -73,7 +73,7 @@ This setting controls how many characters should be used to represent the first 
 
 Syntax rules are the key part of AutoSetSyntax.
 
-??? example "Structure of syntax rules"
+!!! example "Structure of syntax rules"
 
     ```js
     "default_syntax_rules": [
@@ -146,6 +146,7 @@ Syntax rules are the key part of AutoSetSyntax.
                     | `"load"` | This run is triggered because a file gets loaded. |
                     | `"modify"` | This run is triggered because of a buffer modification. |
                     | `"new"` | This run is triggered because of a newly created window. |
+                    | `"reload"` | This run is triggered because a file has been reloaded. |
                     | `"revert"` | This run is triggered because of the `revert` command. |
                     | `"save"` | This run is triggered because of the buffer gets saved. |
                     | `"untransientize"` | This run is triggered because a transient view becomes a normal view. |
