@@ -9,10 +9,10 @@ hide:
 
 ## Log Panel
 
-Debug messages are printed in the dedicated log panel. There are two ways to open the log panel:
+Log messages are printed in the dedicated log panel. There are two ways to open the log panel:
 
 1. Right click on the bottom-left corner of ST and then select `Output: AutoSetSyntax`.
-1. Run `AutoSetSyntax: Show Log Panel` from the command palette[^1].
+   Or, run `AutoSetSyntax: Show Log Panel` from the command palette[^1].
 1. (Re-)save your plugin/project settings.
 1. See whether your rules are in those dropped rules.
    In that case, it's likely that your rules have wrong name or args.

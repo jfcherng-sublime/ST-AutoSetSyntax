@@ -46,7 +46,7 @@ it can find a syntax for `parameters.yml`, and yes, it deserves the `YAML` synta
 
 ## Assigning syntax by the first line
 
-If a file has no extension or it has a shebang, this plugin prefers the syntax set by the first line whenever possible.
+If a file has a characteristic first line, this plugin prefers the syntax set by it whenever possible.
 
 Wait... wouldn't this already be done by ST itself? Yes, but there are some corner cases.
 For example, say you have a file whose name is "[rdm.ts]" but it's actually a `XML` file.
@@ -56,13 +56,8 @@ is in the `file_extensions` of the `TypeScript` syntax.
 !!! info
 
     ST prefers assigning the syntax basing on the file name (extension) than the first line.
-    Because it doesn't have to actually read the file, although the first line may provide more precise information.
-
-    ---
-
-    In ST (or maybe I should say in [TextMate][textmate] since this behavior is inherited from `tmLanguage`),
-    if the file name is in `file_extensions` of a syntax, then ST will use that syntax.
-    This how ST detects files which have no extension like `Makefile`.
+    Probably because it doesn't have to actually read the file,
+    although the first line may provide more precise information.
 
 ## User-defined rules
 

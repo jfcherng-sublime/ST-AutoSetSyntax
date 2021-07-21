@@ -17,7 +17,7 @@ and that snapshot will be used in this whole run to prevent from calling expansi
 
 When `SyntaxRuleCollection.test(...)` runs, syntax rules in it are tested in the order
 as they are defined in settings. If there is a syntax rule matches, the test ends and
-the syntax of the view are set to the one defined in the syntax rule.
+the syntax of the view will be set to the one defined in the syntax rule.
 
 ## Merge Settings
 

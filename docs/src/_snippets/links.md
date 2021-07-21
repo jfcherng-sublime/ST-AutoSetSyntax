@@ -13,7 +13,6 @@
 [python-regex-flags]: https://docs.python.org/3.8/library/re.html#re.A
 [python-regex-inline-flags]: https://docs.python.org/3.8/library/re.html#index-16
 [st-docs-selectors]: https://www.sublimetext.com/docs/selectors.html
-[textmate]: https://github.com/textmate/textmate
 
 <!-- in-docs references -->
 
@@ -21,6 +20,7 @@
 [plugin-builtin-matches-any]: configurations.md#any
 [plugin-builtin-matches]: configurations.md#built-in-matches
 [plugin-configurations]: configurations.md
+[plugin-debug]: debug.md
 [plugin-project-settings]: configurations.md#project-settings
 [plugin-syntax-representations]: configurations.md#syntax-representations
 [plugin-use-cases]: use-cases.md

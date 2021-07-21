@@ -109,3 +109,4 @@
     ```
 
     This command copies information for debugging to the clipboard.
+    Check "[Debug][plugin-debug]" for more details.
