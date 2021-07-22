@@ -121,14 +121,13 @@ class AbstractMatch(metaclass=ABCMeta):
     @staticmethod
     def test_count(view: sublime.View, rules: Tuple[MatchableRule, ...], goal: float) -> bool:
         """Tests whether the amount of passing `rules` is greater than or equal to `goal`."""
-        count = 0
-        total_rules = len(rules)
-        for idx, rule in enumerate(rules):
-            # too few rules left so that it's not possible to pass the test
-            if count + total_rules - idx < goal:
+        tolerance = len(rules) - goal  # how many rules can be failed at most
+        for rule in rules:
+            if tolerance < 0:
                 return False
             if rule.test(view):
-                count += 1
-            if count >= goal:
-                return True
+                if (goal := goal - 1) <= 0:
+                    return True
+            else:
+                tolerance -= 1
         return False
