@@ -250,7 +250,7 @@ When we talk about setting "syntax" in plugin settings, there are three ways you
 
 ### Project Settings
 
-To edit project settings, go to `Project` => `Edit Project`.
+To edit project settings, go to `Project` » `Edit Project`.
 
 !!! example
 

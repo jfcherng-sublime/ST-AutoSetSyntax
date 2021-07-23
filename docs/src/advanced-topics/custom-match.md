@@ -26,8 +26,8 @@ You may create your own custom `Match` implementation by following steps.
 
     Say, if your class name is `MyOwnMatch`, the match name is decided by
 
-    1. Remove `Match` suffix from the class name. (`MyOwnMatch` => `MyOwn`)
-    1. Convert it into snake case. (`MyOwn` => `my_own`)
+    1. Remove `Match` suffix from the class name. (`MyOwnMatch` » `MyOwn`)
+    1. Convert it into snake case. (`MyOwn` » `my_own`)
 
     That is, you can use it via `"match": "my_own"` in a match rule.
 

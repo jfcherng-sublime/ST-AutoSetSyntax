@@ -44,8 +44,8 @@ You may create your own custom `Constraint` implementation by following steps.
 
     Say, if your class name is `MyOwnConstraint`, the constraint name is decided by
 
-    1. Remove `Constraint` suffix from the class name. (`MyOwnConstraint` => `MyOwn`)
-    1. Convert it into snake case. (`MyOwn` => `my_own`)
+    1. Remove `Constraint` suffix from the class name. (`MyOwnConstraint` » `MyOwn`)
+    1. Convert it into snake case. (`MyOwn` » `my_own`)
 
     That is, you can use it via `"constraint": "my_own"` in a constraint rule.
 

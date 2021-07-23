@@ -15,7 +15,7 @@ hide:
 
 Please follow steps below.
 
-1. Go `Preferences` => `Package Settings` => `AutoSetSyntax` => `Settings`.
+1. Go `Preferences` » `Package Settings` » `AutoSetSyntax` » `Settings`.
 1. Open the command palette[^1].
 1. Execute `AutoSetSyntax: Migrate Settings`.
 1. It should convert your v1 settings to v2 version in a new tab.
