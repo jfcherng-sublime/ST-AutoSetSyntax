@@ -1,6 +1,11 @@
 AutoSetSyntax has been updated. To see the changelog, visit
 Preferences » Package Settings » AutoSetSyntax » CHANGELOG
 
+## 2.0.1
+
+- refactor: improve `is_extension` constraint
+- perf: optimize `AbstractMatch.test_count()`
+
 ## 2.0.0
 
 If you are a user from v1 with custom syntax rules,

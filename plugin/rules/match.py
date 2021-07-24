@@ -24,7 +24,7 @@ def get_matches() -> Tuple[Type[AbstractMatch], ...]:
     return tuple(
         sorted(
             get_all_subclasses(AbstractMatch, skip_abstract=True),  # type: ignore
-            key=lambda obj: obj.name(),
+            key=lambda cls: cls.name(),
         )
     )
 
