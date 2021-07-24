@@ -10,9 +10,13 @@ class IsExtensionConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.exts: Tuple[str, ...] = tuple(filter(None, self.args))
-        # ensure extensions are prefixed with a single dot
-        self.exts = tuple(map(lambda ext: f".{ext}" if ext[0].isalpha() else ext, self.exts))
+        self.exts: Tuple[str, ...] = tuple(
+            map(
+                # ensure extensions are prefixed with a single dot
+                lambda ext: f".{ext}" if ext[0].isalpha() else ext,
+                filter(None, self.args),  # remove empty string if any
+            )
+        )
 
     def is_droppable(self) -> bool:
         return not self.exts
