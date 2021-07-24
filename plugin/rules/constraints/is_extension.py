@@ -1,6 +1,7 @@
 from ...helper import generate_trimmed_string
 from ...settings import pref_trim_suffixes
 from ..constraint import AbstractConstraint
+from ..constraint import AlwaysFalsyException
 from typing import Any, Tuple
 import sublime
 
@@ -17,7 +18,8 @@ class IsExtensionConstraint(AbstractConstraint):
         return not self.exts
 
     def test(self, view: sublime.View) -> bool:
-        window: sublime.Window = view.window()  # type: ignore
+        if not (window := view.window()):
+            raise AlwaysFalsyException("view has been closed")
 
         return any(
             filename.endswith(self.exts)
