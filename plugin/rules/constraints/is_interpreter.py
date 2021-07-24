@@ -9,7 +9,7 @@ class IsInterpreterConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.interpretors: Tuple[str, ...] = tuple(filter(None, self.args))
+        self.interpretors: Tuple[str, ...] = self._handled_args()
         interpretor_names_regex = merge_literals_to_regex(self.interpretors)
         self.re_shebang = compile_regex(rf"^#!(?:.+)\b{interpretor_names_regex}\b")
 

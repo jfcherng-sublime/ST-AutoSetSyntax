@@ -16,7 +16,7 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
-from typing import Any, Dict, Generator, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, Union
 import sublime
 
 
@@ -114,8 +114,15 @@ class AbstractConstraint(metaclass=ABCMeta):
         """Tests whether the `view` passes this constraint."""
         ...
 
-    def _setup_regex(self) -> None:
-        self.regex = compile_regex(
+    def _handled_args(self, normalizer: Optional[Callable[[Any], Any]] = None) -> Tuple[Any, ...]:
+        """Filter falsy args and normalize them. Note that `0`, `""` and `None` are falsy."""
+        args: Iterable[Any] = filter(None, self.args)
+        if normalizer:
+            args = map(normalizer, args)
+        return tuple(args)
+
+    def _handled_regex(self) -> Pattern[str]:
+        return compile_regex(
             merge_regexes(self.args),
             parse_regex_flags(self.kwargs.get("regex_flags", ["MULTILINE"])),
         )

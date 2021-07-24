@@ -27,7 +27,7 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 
 
 def _snapshot_view(func: Callable) -> Callable:
-    def wrap(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
+    def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
         run_id = str(uuid.uuid4())
         settings = view.settings()
 
@@ -39,7 +39,7 @@ def _snapshot_view(func: Callable) -> Callable:
 
         return result
 
-    return wrap
+    return wrapped
 
 
 @_snapshot_view
@@ -117,8 +117,10 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optiona
     if not (filepath := view.file_name()) or not (window := view.window()):
         return False
 
-    suffixes = pref_trim_suffixes(window)
-    for trimmed in generate_trimmed_string((original := Path(filepath).name), suffixes):
+    for trimmed in generate_trimmed_string(
+        (original := Path(filepath).name),
+        (suffixes := pref_trim_suffixes(window)),
+    ):
         if (syntax := sublime.find_syntax_for_file(trimmed)) and not is_plaintext_syntax(syntax):
             return assign_syntax_to_view(
                 view,
@@ -152,14 +154,12 @@ def assign_syntax_to_view(
     details = details or {}
     details["sytnax"] = syntax
 
-    views = view.buffer().views() if same_buffer else (view,)
-    for _view in views:
+    _views = view.buffer().views() if same_buffer else (view,)
+    for _view in _views:
         if not (_window := _view.window()):
             continue
 
-        syntax_old = view.syntax() or sublime.Syntax("", "", False, "")
-
-        if syntax == syntax_old:
+        if syntax == (syntax_old := view.syntax() or sublime.Syntax("", "", False, "")):
             details["reason"] = f'[ALREADY] {details["reason"]}'
             Logger.log(
                 _window,

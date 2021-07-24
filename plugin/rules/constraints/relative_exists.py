@@ -9,7 +9,7 @@ class RelativeExistsConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.relatives: Tuple[str, ...] = tuple(filter(None, self.args))
+        self.relatives: Tuple[str, ...] = self._handled_args()
 
     def is_droppable(self) -> bool:
         return not self.relatives

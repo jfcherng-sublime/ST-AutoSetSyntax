@@ -6,17 +6,16 @@ from typing import Any, Tuple
 import sublime
 
 
+def extensionize(ext: str) -> str:
+    """Ensure extensions are prefixed with a dot."""
+    return f".{ext}" if ext[0].isalpha() else ext
+
+
 class IsExtensionConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.exts: Tuple[str, ...] = tuple(
-            map(
-                # ensure extensions are prefixed with a single dot
-                lambda ext: f".{ext}" if ext[0].isalpha() else ext,
-                filter(None, self.args),  # remove empty string if any
-            )
-        )
+        self.exts: Tuple[str, ...] = self._handled_args(extensionize)
 
     def is_droppable(self) -> bool:
         return not self.exts

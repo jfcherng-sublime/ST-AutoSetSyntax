@@ -28,7 +28,11 @@ def camel_to_snake(s: str) -> str:
 
 @clearable_lru_cache()
 def compile_regex(regex: Union[str, Pattern[str]], flags: int = 0) -> Pattern[str]:
-    return regex if isinstance(regex, Pattern) else re.compile(regex, flags)
+    if isinstance(regex, Pattern):
+        if regex.flags == flags:
+            return regex
+        regex = regex.pattern
+    return re.compile(regex, flags)
 
 
 @clearable_lru_cache()
@@ -75,8 +79,8 @@ def get_all_subclasses(
 ) -> Generator[Type[T], None, None]:
     if not skip_self and not (skip_abstract and inspect.isabstract(root)):
         yield root
-    for sub in root.__subclasses__():
-        yield from get_all_subclasses(sub, skip_self=False, skip_abstract=skip_abstract)
+    for leaf in root.__subclasses__():
+        yield from get_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)
 
 
 def get_nth_item(items: Sequence[T], n: int, default: Optional[T] = None) -> Optional[T]:
@@ -104,28 +108,27 @@ def is_transient_view(view: sublime.View) -> bool:
     if not (window := view.window()):
         return True
     # @see https://forum.sublimetext.com/t/is-view-transient-preview-method/3247/2
-    return window.get_view_index(view)[1] == -1
+    return view == window.transient_view_in_group(window.active_group())
 
 
 @clearable_lru_cache()
-def list_sorted_syntaxes(allow_hidden: bool = False) -> Tuple[sublime.Syntax, ...]:
+def list_sorted_syntaxes() -> Tuple[sublime.Syntax, ...]:
     def syntax_cmp(a: sublime.Syntax, b: sublime.Syntax) -> int:
         """
         Order by
 
         - prefer `.sublime-syntax` over `.tmLanguage`
+        - prefer non-hidden
         - prefer shorter path
         """
 
         if (ext_a := Path(a.path).suffix) != Path(b.path).suffix:
             return -1 if ext_a == ".sublime-syntax" else 1
+        if (hidden_a := a.hidden) != b.hidden:
+            return 1 if hidden_a else -1
         return len(a.path) - len(b.path)
 
-    syntaxes: Iterable[sublime.Syntax] = sublime.list_syntaxes()
-    if not allow_hidden:
-        syntaxes = filter(lambda syntax: not syntax.hidden, syntaxes)
-
-    return tuple(sorted(syntaxes, key=cmp_to_key(syntax_cmp)))
+    return tuple(sorted(sublime.list_syntaxes(), key=cmp_to_key(syntax_cmp)))
 
 
 def merge_literals_to_regex(literals: Iterable[str]) -> str:
