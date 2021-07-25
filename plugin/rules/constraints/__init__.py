@@ -5,6 +5,8 @@ __all__ = (
     "first_line_contains_regex",
     "is_extension",
     "is_in_git_repo",
+    "is_in_hg_repo",
+    "is_in_svn_repo",
     "is_interpreter",
     "is_name",
     "is_rails_file",

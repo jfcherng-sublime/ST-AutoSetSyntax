@@ -2,8 +2,8 @@ from ..constraint import AbstractConstraint
 import sublime
 
 
-class IsInGitRepoConstraint(AbstractConstraint):
-    """Check whether this file is in a git repo."""
+class IsInHgRepoConstraint(AbstractConstraint):
+    """Check whether this file is in a Mercurial repo."""
 
     def test(self, view: sublime.View) -> bool:
         view_info = self.get_view_info(view)
@@ -12,5 +12,4 @@ class IsInGitRepoConstraint(AbstractConstraint):
         if not view_info["file_name"]:
             return False
 
-        # `.git/` directory for normal Git repo and `.git` file for Git worktree
-        return self.has_sibling(view_info["file_path"], ".git", use_exists=True)
+        return self.has_sibling(view_info["file_path"], ".hg/")

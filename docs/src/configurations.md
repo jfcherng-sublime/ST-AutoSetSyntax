@@ -455,6 +455,30 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     Test whether the file is in a git repository.
 
+#### `is_in_hg_repo`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_in_hg_repo",
+    }
+    ```
+
+    Test whether the file is in a Mercurial repository.
+
+#### `is_in_svn_repo`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_in_svn_repo",
+    }
+    ```
+
+    Test whether the file is in a SVN repository.
+
 #### `is_interpreter`
 
 !!! example
