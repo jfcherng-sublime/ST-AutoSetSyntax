@@ -1,6 +1,10 @@
 AutoSetSyntax has been updated. To see the changelog, visit
 Preferences » Package Settings » AutoSetSyntax » CHANGELOG
 
+## 2.1.0
+
+- feat: add new constraints: `is_in_hg_repo`, `is_in_svn_repo`
+
 ## 2.0.1
 
 - refactor: improve `is_extension` constraint
