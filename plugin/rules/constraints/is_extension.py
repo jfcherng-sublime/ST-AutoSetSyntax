@@ -1,4 +1,4 @@
-from ...helper import generate_trimmed_string
+from ...helper import generate_trimmed_strings
 from ...settings import pref_trim_suffixes
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
@@ -26,7 +26,7 @@ class IsExtensionConstraint(AbstractConstraint):
 
         return any(
             filename.endswith(self.exts)
-            for filename in generate_trimmed_string(
+            for filename in generate_trimmed_strings(
                 self.get_view_info(view)["file_name"],
                 pref_trim_suffixes(window),
             )

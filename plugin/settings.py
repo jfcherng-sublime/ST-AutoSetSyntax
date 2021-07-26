@@ -171,15 +171,17 @@ class AioSettings(sublime_plugin.EventListener):
 
     @classmethod
     def _update_project_plugin_settings(cls, window: sublime.Window) -> None:
-        cls._project_plugin_settings[window.id()] = (
+        window_id = window.id()
+        cls._project_plugin_settings[window_id] = (
             (window.project_data() or {}).get("settings", {}).get(cls.plugin_name, {})
         )
         if cls._settings_normalizer:
-            cls._settings_normalizer(cls._project_plugin_settings[window.id()])
+            cls._settings_normalizer(cls._project_plugin_settings[window_id])
 
     @classmethod
     def _update_merged_plugin_settings(cls, window: sublime.Window) -> None:
-        cls._merged_plugin_settings[window.id()] = {
+        window_id = window.id()
+        cls._merged_plugin_settings[window_id] = {
             **cls._plugin_settings,
-            **(cls._project_plugin_settings.get(window.id()) or {}),
+            **(cls._project_plugin_settings.get(window_id) or {}),
         }

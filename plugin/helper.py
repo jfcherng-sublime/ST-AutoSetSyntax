@@ -23,11 +23,13 @@ T = TypeVar("T")
 
 
 def camel_to_snake(s: str) -> str:
-    return "".join(f"_{c.lower()}" if c.isupper() else c for c in s).lstrip("_")
+    """Converts "CamelCase" to "snake_case"."""
+    return "".join(f"_{c}" if c.isupper() else c for c in s).strip("_").lower()
 
 
 @clearable_lru_cache()
 def compile_regex(regex: Union[str, Pattern[str]], flags: int = 0) -> Pattern[str]:
+    """Compile the regex string/object into a object with the given flags."""
     if isinstance(regex, Pattern):
         if regex.flags == flags:
             return regex
@@ -41,8 +43,19 @@ def find_syntax_by_syntax_like(
     allow_hidden: bool = False,
     allow_plaintext: bool = True,
 ) -> Optional[sublime.Syntax]:
+    """Find a syntax by a "Syntax object" / "scope" / "name" / "partial path"."""
+    return first(find_syntaxes_by_syntax_like(like, allow_hidden, allow_plaintext))
+
+
+@clearable_lru_cache()
+def find_syntaxes_by_syntax_like(
+    like: Union[str, sublime.Syntax],
+    allow_hidden: bool = False,
+    allow_plaintext: bool = True,
+) -> Tuple[sublime.Syntax, ...]:
+    """Find syntaxes by a "Syntax object" / "scope" / "name" / "partial path"."""
     if not like:
-        return None
+        return tuple()
 
     def find_like(like: str) -> Iterable[sublime.Syntax]:
         # by scope
@@ -54,9 +67,10 @@ def find_syntax_by_syntax_like(
         # by partial path
         return filter(lambda syntax: like in syntax.path, list_sorted_syntaxes())
 
-    return first(
-        (like,) if isinstance(like, sublime.Syntax) else find_like(like),
-        lambda syntax: (allow_hidden or not syntax.hidden) and (allow_plaintext or not is_plaintext_syntax(syntax)),
+    return tuple(
+        syntax
+        for syntax in ((like,) if isinstance(like, sublime.Syntax) else find_like(like))
+        if (allow_hidden or not syntax.hidden) and (allow_plaintext or not is_plaintext_syntax(syntax))
     )
 
 
@@ -77,6 +91,7 @@ def get_all_subclasses(
     skip_abstract: bool = False,
     skip_self: bool = False,
 ) -> Generator[Type[T], None, None]:
+    """Gets all sub-classes of the root class."""
     if not skip_self and not (skip_abstract and inspect.isabstract(root)):
         yield root
     for leaf in root.__subclasses__():
@@ -89,10 +104,12 @@ def get_nth_item(items: Sequence[T], n: int, default: Optional[T] = None) -> Opt
 
 
 def is_plaintext_syntax(syntax: sublime.Syntax) -> bool:
+    """Determinates whether the syntax is plain text."""
     return syntax.name == "Plain Text"
 
 
 def is_syntaxable_view(view: sublime.View, must_plaintext: bool = False) -> bool:
+    """Determinates whether the view is what we want to set a sytnax on."""
     return bool(
         view.is_valid()
         and not view.element()
@@ -103,6 +120,7 @@ def is_syntaxable_view(view: sublime.View, must_plaintext: bool = False) -> bool
 
 
 def is_transient_view(view: sublime.View) -> bool:
+    """Determinates whether the view is a transient one such as a "Goto Anything" preview."""
     # @see https://github.com/sublimehq/sublime_text/issues/4444
     # workaround for a transient view have no window right after it's loaded
     if not (window := view.window()):
@@ -113,15 +131,16 @@ def is_transient_view(view: sublime.View) -> bool:
 
 @clearable_lru_cache()
 def list_sorted_syntaxes() -> Tuple[sublime.Syntax, ...]:
+    """Lists all syntaxes in a tuple, which is sorted by conventions."""
+
     def syntax_cmp(a: sublime.Syntax, b: sublime.Syntax) -> int:
         """
-        Order by
+        Order syntaxes by
 
         - prefer `.sublime-syntax` over `.tmLanguage`
         - prefer non-hidden
         - prefer shorter path
         """
-
         if (ext_a := Path(a.path).suffix) != Path(b.path).suffix:
             return -1 if ext_a == ".sublime-syntax" else 1
         if (hidden_a := a.hidden) != b.hidden:
@@ -154,34 +173,40 @@ def merge_regexes(regexes: Iterable[str]) -> str:
     return f"(?:{merged})"
 
 
-def parse_regex_flags(flags: Sequence[str]) -> int:
+def parse_regex_flags(flags: Iterable[str]) -> int:
     """
+    Parse string regex flags into an int value.
+
     Valid flags are:
     `A`, `ASCII`, `DEBUG`, `I`, `IGNORECASE`, `L`, `LOCALE`, `M`, `MULTILINE`,
     `S`, `DOTALL`, `X`, `VERBOSE`, `U`, `UNICODE`.
+
+    @see https://docs.python.org/3.8/library/re.html#re.A
     """
     if isinstance(flags, str):
         flags = (flags,)
     return sum(getattr(re, flag.upper(), 0) for flag in flags)
 
 
-def removeprefix(s: str, prefix: str) -> str:
+def remove_prefix(s: str, prefix: str) -> str:
+    """Remove the prefix from the string. I.e., str.removeprefix in Python 3.9."""
     return s[len(prefix) :] if s.startswith(prefix) else s
 
 
-def removesuffix(s: str, suffix: str) -> str:
+def remove_suffix(s: str, suffix: str) -> str:
+    """Remove the suffix from the string. I.e., str.removesuffix in Python 3.9."""
     # suffix="" should not call s[:-0]
     return s[: -len(suffix)] if suffix and s.endswith(suffix) else s
 
 
 def snake_to_camel(s: str, upper_first: bool = True) -> str:
+    """Converts "snake_case" to "CamelCase"."""
     first, *others = s.split("_")
     return first.title() if upper_first else first.lower() + "".join(map(str.title, others))
 
 
 def stringify(obj: Any) -> str:
-    """Custom object-to-string converter"""
-
+    """Custom object-to-string converter. Just used for debug messages."""
     if isinstance(obj, sublime.View):
         if filepath := obj.file_name():
             filepath = Path(filepath).as_posix()
@@ -197,17 +222,18 @@ def stringify(obj: Any) -> str:
     return r
 
 
-def generate_trimmed_string(
+def generate_trimmed_strings(
     string: str,
     suffixes: Sequence[str],
     skip_self: bool = False,
 ) -> Generator[str, None, None]:
+    """Generates strings with suffixes trimmed."""
     if not skip_self:
         yield string
 
     for suffix in suffixes:
         if suffix and string.endswith(suffix):
-            yield from generate_trimmed_string(
+            yield from generate_trimmed_strings(
                 string[: -len(suffix)],
                 suffixes,
                 skip_self=False,

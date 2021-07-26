@@ -1,7 +1,7 @@
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
 from .constant import PLUGIN_CUSTOM_MODULE_PATHS
 from .constant import PLUGIN_NAME
-from .helper import removeprefix
+from .helper import remove_prefix
 from .listener import compile_rules
 from .listener import set_up_window
 from .listener import tear_down_window
@@ -57,7 +57,7 @@ def _load_custom_implementations():
     for finder, name, _ in pkgutil.iter_modules(map(str, PLUGIN_CUSTOM_MODULE_PATHS.values())):
         assert isinstance(finder, importlib.machinery.FileFinder)
         # something like "AutoSetSyntax-Custom/matches"
-        module_relative_path = Path(removeprefix(finder.path, sublime.packages_path())).as_posix().strip("/")
+        module_relative_path = Path(remove_prefix(finder.path, sublime.packages_path())).as_posix().strip("/")
         # something like "AutoSetSyntax-Custom.matches"
         module_base = module_relative_path.replace("/", ".")
         module_name = f"{module_base}.{name}"

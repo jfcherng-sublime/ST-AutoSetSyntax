@@ -1,7 +1,7 @@
 from ..constant import PLUGIN_NAME
 from ..constant import VIEW_RUN_ID_SETTINGS_KEY
 from ..helper import find_syntax_by_syntax_like
-from ..helper import generate_trimmed_string
+from ..helper import generate_trimmed_strings
 from ..helper import is_plaintext_syntax
 from ..helper import is_syntaxable_view
 from ..helper import stringify
@@ -46,7 +46,7 @@ def _snapshot_view(func: Callable) -> Callable:
 def run_auto_set_syntax_on_view(
     view: sublime.View,
     event_name: Optional[str] = None,
-    must_plaintext=False,
+    must_plaintext: bool = False,
 ) -> bool:
     if not (window := view.window()) or not is_syntaxable_view(view, must_plaintext):
         return False
@@ -117,7 +117,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optiona
     if not (filepath := view.file_name()) or not (window := view.window()):
         return False
 
-    for trimmed in generate_trimmed_string(
+    for trimmed in generate_trimmed_strings(
         (original := Path(filepath).name),
         (suffixes := pref_trim_suffixes(window)),
     ):

@@ -4,7 +4,7 @@ from __future__ import annotations
 from ..helper import camel_to_snake
 from ..helper import first
 from ..helper import get_all_subclasses
-from ..helper import removesuffix
+from ..helper import remove_suffix
 from ..lru_cache import clearable_lru_cache
 from ..types import Optimizable, ST_MatchRule
 from .constraint import ConstraintRule
@@ -88,6 +88,7 @@ class MatchRule(Optimizable):
         return obj
 
 
+# rules that can be used in a match rule
 MatchableRule = Union[ConstraintRule, MatchRule]
 
 
@@ -98,8 +99,8 @@ class AbstractMatch(metaclass=ABCMeta):
 
     @classmethod
     def name(cls) -> str:
-        """The nickname of this class."""
-        return camel_to_snake(removesuffix(cls.__name__, "Match"))
+        """The nickname of this class. Converts "FooBarMatch" into "foo_bar" by default."""
+        return camel_to_snake(remove_suffix(cls.__name__, "Match"))
 
     @classmethod
     def is_supported(cls, obj: Any) -> bool:
@@ -121,12 +122,16 @@ class AbstractMatch(metaclass=ABCMeta):
     @staticmethod
     def test_count(view: sublime.View, rules: Tuple[MatchableRule, ...], goal: float) -> bool:
         """Tests whether the amount of passing `rules` is greater than or equal to `goal`."""
+        if goal <= 0:
+            return True
+
         tolerance = len(rules) - goal  # how many rules can be failed at most
         for rule in rules:
             if tolerance < 0:
                 return False
             if rule.test(view):
-                if (goal := goal - 1) <= 0:
+                goal -= 1
+                if goal == 0:
                     return True
             else:
                 tolerance -= 1

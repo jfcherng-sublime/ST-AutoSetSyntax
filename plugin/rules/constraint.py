@@ -8,7 +8,7 @@ from ..helper import first
 from ..helper import get_all_subclasses
 from ..helper import merge_regexes
 from ..helper import parse_regex_flags
-from ..helper import removesuffix
+from ..helper import remove_suffix
 from ..lru_cache import clearable_lru_cache
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_ConstraintRule, TD_ViewSnapshot
@@ -94,8 +94,8 @@ class AbstractConstraint(metaclass=ABCMeta):
 
     @classmethod
     def name(cls) -> str:
-        """The nickname of this class."""
-        return camel_to_snake(removesuffix(cls.__name__, "Constraint"))
+        """The nickname of this class. Converts "FooBarConstraint" into "foo_bar" by default."""
+        return camel_to_snake(remove_suffix(cls.__name__, "Constraint"))
 
     @classmethod
     def is_supported(cls, obj: Any) -> bool:

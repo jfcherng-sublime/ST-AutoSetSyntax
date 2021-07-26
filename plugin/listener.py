@@ -17,7 +17,7 @@ from .rules import get_matches
 from .rules import SyntaxRuleCollection
 from .settings import pref_syntax_rules_iterator
 from .shared import G
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Sequence
 import sublime
 import sublime_plugin
 
@@ -70,12 +70,12 @@ def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
 
 
 def _guarantee_primary_view(func: Callable) -> Callable:
-    def wrap(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
+    def wrapped(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
         # view.id() is a workaround for async listener
         if self.buffer and (view := self.buffer.primary_view()) and view.id():
             func(self, view, *args, **kwargs)
 
-    return wrap
+    return wrapped
 
 
 class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
@@ -120,7 +120,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
         run_auto_set_syntax_on_view(view, "reload")
 
 
-def _try_assign_syntax_when_text_changed(view: sublime.View, changes: List[sublime.TextChange]) -> bool:
+def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[sublime.TextChange]) -> bool:
     historic_position = changes[0].b
 
     # don't use `len(changes) <= 1` here because it has a length of 3
