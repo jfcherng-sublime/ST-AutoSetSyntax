@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.1.1
+
+- feat: add `C++` syntax rule
+
 ## 2.1.0
 
 - feat: add new constraints: `is_in_hg_repo`, `is_in_svn_repo`
