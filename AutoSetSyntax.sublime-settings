@@ -96,6 +96,23 @@
             ]
         },
         {
+            // at least, C++ is a super set of C in ST's syntax aspect
+            "syntaxes": "scope:source.c++",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "contains_regex",
+                    "args": [
+                        "(?:^|\\s)#include\\s*[<\"]",
+                        "(?:^|\\s)#pragma\\s+(?:once|pack|(?:pop|push)_macro|warning)\\b",
+                        "(?:^|\\s)template\\s*<\\s*(?:class|typename)(?=$|\\s)",
+                        // some strong characteristics of keywords
+                        "\\b(?:const(?:eval|expr|init)|decltype|nullptr|(?:const|dynamic|reinterpret|static)_cast)\\b"
+                    ]
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.go",
             "selector": "text.plain",
             "match": "all",
