@@ -213,7 +213,8 @@
                 },
                 {
                     "constraint": "contains_regex",
-                    "args": ["^\\s*%"]
+                    "args": ["^\\s*%"],
+                    "kwargs": { "threshold": 2 }
                 }
             ]
         },
