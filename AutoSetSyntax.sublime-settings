@@ -113,6 +113,21 @@
             ]
         },
         {
+            "syntaxes": "scope:source.cs",
+            "selector": "text.plain",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^using\\s"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^namespace\\s"]
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.go",
             "selector": "text.plain",
             "match": "all",
