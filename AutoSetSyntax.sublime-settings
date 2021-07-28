@@ -128,6 +128,31 @@
             ]
         },
         {
+            "syntaxes": "scope:source.diff",
+            "selector": "text.plain",
+            "rules": [
+                // path headers
+                {
+                    "match": "all",
+                    "rules": [
+                        {
+                            "constraint": "contains_regex",
+                            "args": ["^\\+{3} "]
+                        },
+                        {
+                            "constraint": "contains_regex",
+                            "args": ["^-{3} "]
+                        }
+                    ]
+                },
+                // context line numbers
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^@@ -\\d+,\\d+ \\+\\d+,\\d+ @@"]
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.go",
             "selector": "text.plain",
             "match": "all",
@@ -139,6 +164,19 @@
                 {
                     "constraint": "contains_regex",
                     "args": ["^(?:import|func|type)\\s"]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.js",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "contains_regex",
+                    "args": [
+                        "\\bconsole\\.(?:assert|debug|error|info|log|trace|warn)\\s*\\(",
+                        "(?:^|\\s)export\\s+default\\s"
+                    ]
                 }
             ]
         },
