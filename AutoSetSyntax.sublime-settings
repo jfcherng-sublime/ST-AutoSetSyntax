@@ -80,8 +80,8 @@
             "selector": "text.plain",
             "rules": [
                 {
-                    "constraint": "name_contains_regex",
-                    "args": ["^\\.(?:jshint|jscs|csslint|eslint|bower)rc$"]
+                    "constraint": "is_name",
+                    "args": [".jshintrc", ".jscsrc", ".csslintrc", ".eslintrc", ".bowerrc"]
                 }
             ]
         },
@@ -185,8 +185,8 @@
             "selector": "text.plain",
             "rules": [
                 {
-                    "constraint": "is_extension",
-                    "args": ["conkyrc"]
+                    "constraint": "is_name",
+                    "args": [".conkyrc"]
                 },
                 {
                     "constraint": "is_interpreter",
