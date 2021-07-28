@@ -181,9 +181,40 @@
             ]
         },
         {
+            "syntaxes": "scope:source.lua",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": ["conkyrc"]
+                },
+                {
+                    "constraint": "is_interpreter",
+                    "args": ["lua"]
+                }
+            ]
+        },
+        {
+            // use the % regex to detect Matlab files
+            "syntaxes": "scope:source.matlab",
+            "selector": "text.plain | source.objc",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".m"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^\\s*%"],
+                    "kwargs": { "threshold": 2 }
+                }
+            ]
+        },
+        {
             // .m files could be Objective-C or Matlab files
             // We first use a rather reliable regex from GitHub
-            // https://github.com/github/linguist/blob/master/lib/linguist/heuristics.rb#L69)
+            // https://github.com/github/linguist/blob/master/lib/linguist/heuristics.rb#L69
             // to apply syntax for Objective-C files
             "syntaxes": "scope:source.objc",
             "selector": "text.plain | source.matlab",
@@ -198,23 +229,6 @@
                     "args": [
                         "^\\s*(?:@(?:interface|class|protocol|property|end|synchronised|selector|implementation)\\b|#import\\s+.+\\.h[\">])"
                     ]
-                }
-            ]
-        },
-        {
-            // Then use the % regex to detect Matlab files
-            "syntaxes": "scope:source.matlab",
-            "selector": "text.plain | source.objc",
-            "match": "all",
-            "rules": [
-                {
-                    "constraint": "is_extension",
-                    "args": [".m"]
-                },
-                {
-                    "constraint": "contains_regex",
-                    "args": ["^\\s*%"],
-                    "kwargs": { "threshold": 2 }
                 }
             ]
         },
