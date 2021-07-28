@@ -1,5 +1,10 @@
 # AutoSetSyntax
 
+## 2.1.4
+
+- feat: add `lua` syntax rule
+- feat: improve `is_interpreter` to match VIM's syntax line
+
 ## 2.1.3
 
 - feat: add `Diff`, `JavaScript` syntax rules
