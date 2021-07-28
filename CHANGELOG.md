@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.1.2
+
+- feat: add `C#` syntax rule
+
 ## 2.1.1
 
 - feat: add `C++` syntax rule
