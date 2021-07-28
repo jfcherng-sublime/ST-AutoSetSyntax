@@ -1,5 +1,11 @@
 # AutoSetSyntax
 
+## 2.1.3
+
+- feat: add `Diff`, `JavaScript` syntax rules
+- feat: add `threshold` `kwargs` for `contains` and `contains_regex`
+- chore: update `matlab` syntax rule
+
 ## 2.1.2
 
 - feat: add `C#` syntax rule
