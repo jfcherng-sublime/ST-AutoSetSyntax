@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import sublime
 import sys
 
@@ -31,3 +32,5 @@ PLUGIN_CUSTOM_MODULE_PATHS = {
 
 VIEW_RUN_ID_SETTINGS_KEY = f"{PLUGIN_NAME}/run_id"
 VIEW_IS_TRANSIENT_SETTINGS_KEY = f"{PLUGIN_NAME}/is_transient"
+
+RE_VIM_SYNTAX_LINE = re.compile(rf"\bsyntax=(?P<syntax>[^\s]+)")

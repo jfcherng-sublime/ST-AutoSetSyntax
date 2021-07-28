@@ -1,4 +1,5 @@
 from ..constant import PLUGIN_NAME
+from ..constant import RE_VIM_SYNTAX_LINE
 from ..constant import VIEW_RUN_ID_SETTINGS_KEY
 from ..helper import find_syntax_by_syntax_like
 from ..helper import generate_trimmed_strings
@@ -100,9 +101,19 @@ def _assign_syntax_with_plugin_rules(
 
 
 def _assign_syntax_with_first_line(view: sublime.View, event_name: Optional[str] = None) -> bool:
+    # Note that this only works for files under some circumstances.
+    # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
+    # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
     if (
         (view_info := ViewSnapshot.get_by_view(view))
-        and (syntax := sublime.find_syntax_for_file("", view_info["first_line"]))
+        and "." not in view_info["file_name"]
+        and (
+            # shebang
+            (first_line := view_info["first_line"]).startswith("#!")
+            # VIM's syntax line
+            or RE_VIM_SYNTAX_LINE.search(first_line)
+        )
+        and (syntax := sublime.find_syntax_for_file("", first_line))
         and not is_plaintext_syntax(syntax)
     ):
         return assign_syntax_to_view(

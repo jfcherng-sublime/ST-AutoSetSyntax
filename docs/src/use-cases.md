@@ -46,24 +46,29 @@ it can find a syntax for `parameters.yml`, and yes, it deserves the `YAML` synta
 
 ## Assigning syntax by the first line
 
-If a file has a characteristic first line, this plugin prefers the syntax set by it whenever possible.
+If a file whose name has no `.` and its first line satisfies any of following conditions,
 
-Wait... wouldn't this already be done by ST itself? Yes, but there are some corner cases.
-For example, say you have a file whose name is "[rdm.ts]" but it's actually a `XML` file.
-ST will set the syntax to unwanted `TypeScript`, because its extension `ts`
-is in the `file_extensions` of the `TypeScript` syntax.
+- Has a shebang.
+- Has a VIM's syntax line.
+
+this plugin prefers the syntax set by it whenever possible.
+
+This means to fix some corner cases such as a file whose name is `cs` but has a Python shebang.
+It will be set to `C#` by ST due to its filename, but the shebang should be precise.
+
+We don't want to overkill that setting a `.erb` (`HTML (Rails)`) template file
+back to `HTML` syntax due to its first line.
 
 !!! info
 
-    ST prefers assigning the syntax basing on the file name (extension) than the first line.
-    Probably because it doesn't have to actually read the file,
-    although the first line may provide more precise information.
+    - ST prefers assigning the syntax basing on the file name (extension) than the first line.
+    - If the file name is exactly an extension of a syntax, for example, the file name is `js`,
+      ST will use that syntax (which can be wrong). This is how ST detects files who have no extension
+      like `Makefile`.
 
 ## User-defined rules
 
 - For average users, read "[Configurations][plugin-configurations]" for more details to create your own rules.
 - For advanced users, you may read "Advanced Topics" for creating custom `Match` or `Constraint` implementations.
-
-[rdm.ts]: https://github.com/uglide/RedisDesktopManager/blob/783540ab/src/resources/translations/rdm.ts
 
 [^1]: Create a new file: ++ctrl+n++ for Windows/Linux. ++cmd+n++ for macOS.
