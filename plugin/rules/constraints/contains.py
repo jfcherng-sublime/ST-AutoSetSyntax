@@ -8,10 +8,20 @@ class ContainsConstraint(AbstractConstraint):
         super().__init__(*args, **kwargs)
 
         self.needles: Tuple[str, ...] = self._handled_args()
+        self.threshold: int = kwargs.get("threshold", 1)
 
     def is_droppable(self) -> bool:
-        return not self.needles
+        return not (self.needles and isinstance(self.threshold, (int, float)))
 
     def test(self, view: sublime.View) -> bool:
         content = self.get_view_info(view)["content"]
-        return any((needle in content) for needle in self.needles)
+        length = len(content)
+        count = 0
+        for needle in self.needles:
+            cursor = 0
+            while cursor < length and (idx := content.find(needle, cursor)) != -1:
+                count += 1
+                if count >= self.threshold:
+                    return True
+                cursor += idx + len(needle)
+        return False

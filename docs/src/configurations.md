@@ -371,10 +371,12 @@ To edit project settings, go to `Project` » `Edit Project`.
     {
         "constraint": "contains",
         "args": ["string_a", "string_b"],
+        "kwargs": { "threshold": 2 },
     }
     ```
 
     Test whether the file contains string literals `string_a` or `string_b`.
+    At least `2` occurrences should be found.
 
 #### `contains_regex`
 
@@ -384,11 +386,15 @@ To edit project settings, go to `Project` » `Edit Project`.
     {
         "constraint": "contains_regex",
         "args": ["string_[ab]", "^import\\s"],
-        "kwargs": { "regex_flags": ["MULTILINE"] },
+        "kwargs": {
+            "regex_flags": ["MULTILINE"],
+            "threshold": 2,
+        },
     }
     ```
 
     Test whether the file contains regexes `string_[ab]` or `^import\s`.
+    At least `2` occurrences should be found.
 
 #### `first_line_contains`
 

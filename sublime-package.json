@@ -116,7 +116,17 @@
                       "description": "Limit this rule only to work with specific events.",
                       "type": "array",
                       "items": {
-                        "enum": ["command", "init", "load", "modify", "new", "reload", "revert", "save", "untransientize"]
+                        "enum": [
+                          "command",
+                          "init",
+                          "load",
+                          "modify",
+                          "new",
+                          "reload",
+                          "revert",
+                          "save",
+                          "untransientize"
+                        ]
                       }
                     },
                     "selector": {
@@ -202,7 +212,7 @@
                     "name_contains_regex",
                     "path_contains",
                     "path_contains_regex",
-                    "relative_exists",
+                    "relative_exists"
                   ],
                   "markdownEnumDescriptions": [
                     "Test whether the file content contains any given strings. The `args` is a list of strings.",
@@ -221,7 +231,7 @@
                     "Test whether the file name contains any given regexes. The `args` is a list of regexes.",
                     "Test whether the file path contains any given strings. The `args` is a list of strings.",
                     "Test whether the file path contains any given regexes. The `args` is a list of regexes.",
-                    "Test whether the any of file/direcotry exists relatively to the file. The `args` is a list of relative paths.",
+                    "Test whether the any of file/direcotry exists relatively to the file. The `args` is a list of relative paths."
                   ]
                 },
                 "args": {
@@ -305,6 +315,30 @@
                           }
                         ],
                         "default": ["<", 20000],
+                        "additionalItems": false
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "constraint": {
+                        "pattern": "^contains(?:_regex)?$"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "kwargs": {
+                        "type": "object",
+                        "properties": {
+                          "threshold": {
+                            "type": "integer",
+                            "default": 1
+                          }
+                        },
+                        "default": {},
                         "additionalItems": false
                       }
                     }
