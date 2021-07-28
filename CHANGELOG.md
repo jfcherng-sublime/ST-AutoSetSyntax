@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.1.5
+
+- fix: overkill changing `.erb` files back to `HTML` syntax
+
 ## 2.1.4
 
 - feat: add `lua` syntax rule
