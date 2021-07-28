@@ -1,7 +1,8 @@
 from ...helper import compile_regex
 from ...helper import merge_literals_to_regex
+from ...helper import merge_regexes
 from ..constraint import AbstractConstraint
-from typing import Any, Tuple
+from typing import Any, Pattern, Tuple
 import sublime
 
 
@@ -10,11 +11,20 @@ class IsInterpreterConstraint(AbstractConstraint):
         super().__init__(*args, **kwargs)
 
         self.interpretors: Tuple[str, ...] = self._handled_args()
-        interpretor_names_regex = merge_literals_to_regex(self.interpretors)
-        self.re_shebang = compile_regex(rf"^#!(?:.+)\b{interpretor_names_regex}\b")
+        syntax_regex = merge_literals_to_regex(self.interpretors)
+        self.first_line_regex: Pattern[str] = compile_regex(
+            merge_regexes(
+                (
+                    # shebang
+                    rf"^#!(?:.+)\b{syntax_regex}\b",
+                    # VIM's syntax line
+                    rf"\bsyntax={syntax_regex}(?=$|\\s)",
+                )
+            )
+        )
 
     def is_droppable(self) -> bool:
-        return not self.re_shebang
+        return not self.first_line_regex
 
     def test(self, view: sublime.View) -> bool:
-        return bool(self.re_shebang.search(self.get_view_info(view)["first_line"]))
+        return bool(self.first_line_regex.search(self.get_view_info(view)["first_line"]))

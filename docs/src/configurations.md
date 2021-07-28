@@ -496,7 +496,12 @@ To edit project settings, go to `Project` » `Edit Project`.
     }
     ```
 
-    Test whether the interpreter in shebang is `bash` or `zsh`.
+    Test any of the followings
+
+    - the interpreter in shebang
+    - the `syntax` in the VIM's syntax line
+
+    is `bash` or `zsh`.
 
 #### `is_name`
 
