@@ -125,7 +125,12 @@ def _assign_syntax_with_first_line(view: sublime.View, event_name: Optional[str]
 
 
 def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optional[str] = None) -> bool:
-    if not (filepath := view.file_name()) or not (window := view.window()):
+    if not (
+        (filepath := view.file_name())
+        and (window := view.window())
+        and (syntax_old := view.syntax())
+        and is_plaintext_syntax(syntax_old)
+    ):
         return False
 
     for trimmed in generate_trimmed_strings(
