@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.1.6
+
+- fix: auto trimmed filename should only works on plain text
+
 ## 2.1.5
 
 - fix: overkill changing `.erb` files back to `HTML` syntax
