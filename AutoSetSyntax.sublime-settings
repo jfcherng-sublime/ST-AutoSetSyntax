@@ -80,6 +80,10 @@
             "selector": "text.plain",
             "rules": [
                 {
+                    "constraint": "is_extension",
+                    "args": [".css.map", ".js.map"]
+                },
+                {
                     "constraint": "is_name",
                     "args": [".jshintrc", ".jscsrc", ".csslintrc", ".eslintrc", ".bowerrc"]
                 }
