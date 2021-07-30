@@ -1,5 +1,10 @@
 # AutoSetSyntax
 
+## 2.1.7
+
+- fix: set syntax during typing not working
+- chore: use `JSON` for js/css source map
+
 ## 2.1.6
 
 - fix: auto trimmed filename should only works on plain text
