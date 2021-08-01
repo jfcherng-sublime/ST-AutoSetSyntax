@@ -21,7 +21,7 @@ class Optimizable(metaclass=ABCMeta):
 
 
 class ST_ConstraintRule(TypedDict):
-    """typed dict for corresponding ST settings"""
+    """Typed dict for corresponding ST settings"""
 
     constraint: str
     args: Optional[Union[List[Any], Any]]
@@ -30,7 +30,7 @@ class ST_ConstraintRule(TypedDict):
 
 
 class ST_MatchRule(TypedDict):
-    """typed dict for corresponding ST settings"""
+    """Typed dict for corresponding ST settings"""
 
     match: str
     args: Optional[Union[List[Any], Any]]
@@ -39,7 +39,7 @@ class ST_MatchRule(TypedDict):
 
 
 class ST_SyntaxRule(ST_MatchRule):
-    """typed dict for corresponding ST settings"""
+    """Typed dict for corresponding ST settings"""
 
     comment: str
     selector: str

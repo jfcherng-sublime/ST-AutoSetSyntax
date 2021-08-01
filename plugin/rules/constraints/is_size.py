@@ -1,7 +1,6 @@
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
 from typing import Any, Callable, Optional
-import operator
 import sublime
 
 Comparator = Callable[[Any, Any], bool]
@@ -19,19 +18,7 @@ class IsSizeConstraint(AbstractConstraint):
 
         comparator, threshold = self.args
 
-        if comparator == "<":
-            self.comparator = operator.lt
-        elif comparator == "<=":
-            self.comparator = operator.le
-        elif comparator == ">=":
-            self.comparator = operator.ge
-        elif comparator == ">":
-            self.comparator = operator.gt
-        elif comparator in ("=", "==", "==="):
-            self.comparator = operator.eq
-        elif comparator in ("!", "!=", "!==", "<>"):
-            self.comparator = operator.ne
-
+        self.comparator = self._handled_comparator(comparator)
         self.threshold = float(threshold)
 
     def is_droppable(self) -> bool:

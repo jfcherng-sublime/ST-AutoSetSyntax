@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
 from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, Union
+import operator
 import sublime
 
 
@@ -121,10 +122,30 @@ class AbstractConstraint(metaclass=ABCMeta):
             args = map(normalizer, args)
         return tuple(args)
 
-    def _handled_regex(self) -> Pattern[str]:
+    @staticmethod
+    def _handled_comparator(comparator: str) -> Optional[Callable[[Any, Any], bool]]:
+        """Convert the comparator string into a callable."""
+        op: Optional[Callable[[Any, Any], bool]] = None
+        if comparator in ("<", "lt"):
+            op = operator.lt
+        elif comparator in ("<=", "le", "lte"):
+            op = operator.le
+        elif comparator in (">=", "ge", "gte"):
+            op = operator.ge
+        elif comparator in (">", "gt"):
+            op = operator.gt
+        elif comparator in ("=", "==", "===", "eq"):
+            op = operator.eq
+        elif comparator in ("!", "!=", "!==", "<>", "ne", "neq"):
+            op = operator.ne
+        return op
+
+    @staticmethod
+    def _handled_regex(args: Any, kwargs: Any) -> Pattern[str]:
+        """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
         return compile_regex(
-            merge_regexes(self.args),
-            parse_regex_flags(self.kwargs.get("regex_flags", ["MULTILINE"])),
+            merge_regexes(args),
+            parse_regex_flags(kwargs.get("regex_flags", ["MULTILINE"])),
         )
 
     @staticmethod

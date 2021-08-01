@@ -2,8 +2,9 @@ from __future__ import annotations
 
 # __future__ must be the first import
 from .types import ST_SyntaxRule
+from collections import ChainMap
 from itertools import chain
-from typing import Any, Callable, Dict, Iterator, List, Optional, Set
+from typing import Any, Callable, Dict, Iterator, List, Mapping, MutableMapping, Optional, Set
 import sublime
 import sublime_plugin
 
@@ -12,7 +13,7 @@ def get_merged_plugin_setting(window: sublime.Window, key: str, default: Optiona
     return get_merged_plugin_settings(window).get(key, default)
 
 
-def get_merged_plugin_settings(window: sublime.Window) -> Dict[str, Any]:
+def get_merged_plugin_settings(window: sublime.Window) -> MergedSettingsDict:
     return AioSettings.get_all(window)
 
 
@@ -51,7 +52,8 @@ def pref_trim_suffixes(window: sublime.Window) -> List[str]:
     )
 
 
-SettingsDict = Dict[str, Any]
+SettingsDict = MutableMapping[str, Any]
+MergedSettingsDict = Mapping[str, Any]
 WindowId = int
 
 
@@ -68,7 +70,7 @@ class AioSettings(sublime_plugin.EventListener):
 
     # window-level
     _project_plugin_settings: Dict[WindowId, SettingsDict] = {}
-    _merged_plugin_settings: Dict[WindowId, SettingsDict] = {}
+    _merged_plugin_settings: Dict[WindowId, MergedSettingsDict] = {}
 
     # ----------- #
     # public APIs #
@@ -102,7 +104,7 @@ class AioSettings(sublime_plugin.EventListener):
         return cls.get_all(window).get(key, default)
 
     @classmethod
-    def get_all(cls, window: sublime.Window) -> SettingsDict:
+    def get_all(cls, window: sublime.Window) -> MergedSettingsDict:
         return cls._merged_plugin_settings.get(window.id()) or {}
 
     # ---------- #
@@ -181,7 +183,7 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def _update_merged_plugin_settings(cls, window: sublime.Window) -> None:
         window_id = window.id()
-        cls._merged_plugin_settings[window_id] = {
-            **cls._plugin_settings,
-            **(cls._project_plugin_settings.get(window_id) or {}),
-        }
+        cls._merged_plugin_settings[window_id] = ChainMap(
+            cls._project_plugin_settings.get(window_id) or {},
+            cls._plugin_settings,
+        )

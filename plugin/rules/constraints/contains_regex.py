@@ -7,7 +7,7 @@ class ContainsRegexConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.regex = self._handled_regex()
+        self.regex = self._handled_regex(self.args, self.kwargs)
         self.threshold: int = kwargs.get("threshold", 1)
 
     def is_droppable(self) -> bool:

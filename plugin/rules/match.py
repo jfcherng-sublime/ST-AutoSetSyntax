@@ -49,8 +49,8 @@ class MatchRule(Optimizable):
             yield from rule.optimize()
             if rule.is_droppable():
                 yield rule
-            else:
-                rules.append(rule)
+                continue
+            rules.append(rule)
         self.rules = tuple(rules)
 
     def test(self, view: sublime.View) -> bool:
