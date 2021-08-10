@@ -50,7 +50,7 @@ You may create your own custom `Constraint` implementation by following steps.
     That is, you can use it via `"constraint": "my_own"` in a constraint rule.
 
 1.  At least, implement the `test` method.
-1.  Save your implementation in `Packages/AutoSetSyntax-Custom/constraintes/`.
+1.  Save your implementation in `Packages/AutoSetSyntax-Custom/constraints/`.
     Conventionally, the file name used is the constraint name, `my_own.py`.
 
 1.  Restart ST and check whether your implementation is loaded via [Debug Information][plugin-debug-information].
