@@ -15,7 +15,7 @@ from .logger import Logger
 from .rules import get_constraints
 from .rules import get_matches
 from .rules import SyntaxRuleCollection
-from .settings import pref_syntax_rules_iterator
+from .settings import pref_syntax_rules
 from .shared import G
 from typing import Any, Callable, List, Sequence
 import sublime
@@ -52,7 +52,7 @@ def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
     Logger.log(window, f'🔍 Found "Match" implementations: {stringify(get_matches())}')
     Logger.log(window, f'🔍 Found "Constraint" implementations: {stringify(get_constraints())}')
 
-    syntax_rule_collection = SyntaxRuleCollection.make(pref_syntax_rules_iterator(window))
+    syntax_rule_collection = SyntaxRuleCollection.make(pref_syntax_rules(window))
     G.set_syntax_rule_collection(window, syntax_rule_collection)
     Logger.log(window, f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}")
 

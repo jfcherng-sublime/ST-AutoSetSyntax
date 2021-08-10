@@ -4,7 +4,7 @@ from __future__ import annotations
 from .types import ST_SyntaxRule
 from collections import ChainMap
 from itertools import chain
-from typing import Any, Callable, Dict, Iterator, List, Mapping, MutableMapping, Optional, Set
+from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional, Set
 import sublime
 import sublime_plugin
 
@@ -25,18 +25,24 @@ def get_st_settings() -> sublime.Settings:
     return sublime.load_settings("Preferences.sublime-settings")
 
 
-def pref_syntax_rules_iterator(window: sublime.Window) -> Iterator[ST_SyntaxRule]:
-    settings = get_merged_plugin_settings(window)
-    return chain(
-        settings.get("project_syntax_rules", []),
-        settings.get("user_syntax_rules", []),
-        settings.get("default_syntax_rules", []),
-    )
+def pref_syntax_rules(window: sublime.Window) -> List[ST_SyntaxRule]:
+    return get_merged_plugin_setting(window, "syntax_rules", [])
 
 
 def pref_trim_suffixes(window: sublime.Window) -> List[str]:
-    settings = get_merged_plugin_settings(window)
-    return sorted(
+    return get_merged_plugin_setting(window, "trim_suffixes", [])
+
+
+def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:
+    ret: Dict[str, Any] = {}
+
+    ret["syntax_rules"] = (
+        settings.get("project_syntax_rules", [])
+        + settings.get("user_syntax_rules", [])
+        + settings.get("default_syntax_rules", [])
+    )
+
+    ret["trim_suffixes"] = sorted(
         filter(
             None,
             set(
@@ -51,6 +57,8 @@ def pref_trim_suffixes(window: sublime.Window) -> List[str]:
         key=lambda ext: -ext.count("."),
     )
 
+    return ret
+
 
 SettingsDict = MutableMapping[str, Any]
 MergedSettingsDict = Mapping[str, Any]
@@ -63,6 +71,7 @@ class AioSettings(sublime_plugin.EventListener):
     _on_settings_change_callbacks: Dict[str, Callable[[sublime.Window], None]] = {}
     _plugin_settings_object: Optional[sublime.Settings] = None
     _settings_normalizer: Optional[Callable[[SettingsDict], None]] = None
+    _settings_producer: Optional[Callable[[MergedSettingsDict], Dict[str, Any]]] = None
     _tracked_windows: Set[int] = set()
 
     # application-level
@@ -98,6 +107,10 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def set_settings_normalizer(cls, normalizer: Optional[Callable[[SettingsDict], None]]) -> None:
         cls._settings_normalizer = normalizer
+
+    @classmethod
+    def set_settings_producer(cls, producer: Optional[Callable[[MergedSettingsDict], Dict[str, Any]]]) -> None:
+        cls._settings_producer = producer
 
     @classmethod
     def get(cls, window: sublime.Window, key: str, default: Optional[Any] = None) -> Any:
@@ -167,14 +180,16 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def _update_plugin_settings(cls) -> None:
         assert cls._plugin_settings_object
-        cls._plugin_settings = cls._plugin_settings_object.to_dict()
+        cls._plugin_settings = {"_comment": "plugin_settings"}
+        cls._plugin_settings.update(cls._plugin_settings_object.to_dict())
         if cls._settings_normalizer:
             cls._settings_normalizer(cls._plugin_settings)
 
     @classmethod
     def _update_project_plugin_settings(cls, window: sublime.Window) -> None:
         window_id = window.id()
-        cls._project_plugin_settings[window_id] = (
+        cls._project_plugin_settings[window_id] = {"_comment": "project_settings"}
+        cls._project_plugin_settings[window_id].update(
             (window.project_data() or {}).get("settings", {}).get(cls.plugin_name, {})
         )
         if cls._settings_normalizer:
@@ -183,7 +198,14 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def _update_merged_plugin_settings(cls, window: sublime.Window) -> None:
         window_id = window.id()
-        cls._merged_plugin_settings[window_id] = ChainMap(
+
+        merged = ChainMap(
             cls._project_plugin_settings.get(window_id) or {},
             cls._plugin_settings,
         )
+
+        produced = {"_comment": "produced_settings"}
+        if cls._settings_producer:
+            produced.update(cls._settings_producer(merged))
+
+        cls._merged_plugin_settings[window_id] = ChainMap(produced, *(merged.maps))

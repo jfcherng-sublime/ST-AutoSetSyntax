@@ -10,6 +10,7 @@ from .rules import AbstractConstraint
 from .rules import AbstractMatch
 from .rules import MatchableRule
 from .settings import AioSettings
+from .settings import extra_settings_producer
 from .settings import get_merged_plugin_setting
 from .shared import G
 from pathlib import Path
@@ -31,6 +32,7 @@ def set_up() -> None:
     _load_custom_implementations()
 
     AioSettings.plugin_name = PLUGIN_NAME
+    AioSettings.set_settings_producer(extra_settings_producer)
     AioSettings.set_up()
     AioSettings.add_on_change(PLUGIN_NAME, _settings_changed_callback)
 
