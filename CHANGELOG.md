@@ -1,5 +1,10 @@
 # AutoSetSyntax
 
+## 2.1.8
+
+- fix: AutoSetSyntax debug info is not auto set syntax
+- refactor: generate `syntax_rules` and `trim_suffixes` more statically
+
 ## 2.1.7
 
 - fix: set syntax during typing not working
