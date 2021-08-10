@@ -108,10 +108,10 @@
                     "constraint": "contains_regex",
                     "args": [
                         "(?:^|\\s)#include\\s*[<\"]",
-                        "(?:^|\\s)#pragma\\s+(?:once|pack|(?:pop|push)_macro|warning)\\b",
+                        "(?:^|\\s)#pragma\\s+(?:once|pack|(?:pop|push)_macro|warning)(?=$|\\s)",
                         "(?:^|\\s)template\\s*<\\s*(?:class|typename)(?=$|\\s)",
                         // some strong characteristics of keywords
-                        "\\b(?:const(?:eval|expr|init)|decltype|nullptr|(?:const|dynamic|reinterpret|static)_cast)\\b"
+                        "\\b(?:const(?:eval|expr|init)|decltype|nullptr|(?:const|dynamic|reinterpret|static)_cast)(?=$|\\s)"
                     ]
                 }
             ]
