@@ -1,19 +1,47 @@
+from .compatibility import view_clear_undo_stack
 from .constant import PLUGIN_NAME
+from .helper import get_st_window
 from .settings import get_merged_plugin_setting
 from .settings import get_st_setting
-from typing import Dict, Optional, Union
+from contextlib import contextmanager
+from typing import Dict, Generator, Optional, Union
 import math
 import sublime
 import sublime_plugin
 
 
-def _find_log_panel(view_or_window: Union[sublime.View, sublime.Window]) -> Optional[sublime.View]:
-    if isinstance(view_or_window, sublime.View):
-        window = view_or_window.window()
-    else:
-        window = view_or_window
+def _check_log_panel(obj: Union[sublime.View, sublime.Window]) -> bool:
+    window = get_st_window(obj)
+    return bool(window.find_output_panel(PLUGIN_NAME) if window else None)
 
-    return window.find_output_panel(PLUGIN_NAME) if window else None
+
+@contextmanager
+def _find_log_panel(obj: Union[sublime.View, sublime.Window]) -> Generator[Optional[sublime.View], None, None]:
+    window = get_st_window(obj)
+    panel = window.find_output_panel(PLUGIN_NAME) if window else None
+    try:
+        yield panel
+    finally:
+        if panel:
+            view_clear_undo_stack(panel)
+
+
+def _create_log_panel(window: sublime.Window) -> sublime.View:
+    panel = window.create_output_panel(PLUGIN_NAME)
+    panel.assign_syntax("scope:output.autosetsyntax.log")
+    panel.set_scratch(True)
+    panel.settings().update(
+        {
+            "command_mode": True,  # user read-only but plugin API writable
+            "draw_white_space": "none",
+            "gutter": False,
+            "line_numbers": False,
+            "scroll_past_end": False,
+            "spell_check": False,
+            "word_wrap": False,
+        }
+    )
+    return panel
 
 
 class Logger:
@@ -76,23 +104,10 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
         if not (window := self.view.window()):
             return
 
-        if not (panel := _find_log_panel(window)):
-            panel = window.create_output_panel(PLUGIN_NAME)
-            panel.assign_syntax("scope:output.autosetsyntax.log")
-            panel.set_scratch(True)
-            panel.settings().update(
-                {
-                    "command_mode": True,  # user read-only but plugin API writable
-                    "draw_white_space": "none",
-                    "gutter": False,
-                    "line_numbers": False,
-                    "scroll_past_end": False,
-                    "spell_check": False,
-                    "word_wrap": False,
-                }
-            )
-
-        panel.insert(edit, panel.size(), f"{msg}\n")
+        with _find_log_panel(window) as panel:
+            if not panel:
+                panel = _create_log_panel(window)
+            panel.insert(edit, panel.size(), f"{msg}\n")
 
 
 class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
@@ -100,15 +115,16 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
         return f"{PLUGIN_NAME}: Clear Log Panel"
 
     def is_enabled(self) -> bool:
-        return bool(_find_log_panel(self.view))
+        return _check_log_panel(self.view)
 
     def is_visible(self) -> bool:
-        return self.is_enabled()
+        return False
 
     def run(self, edit: sublime.Edit) -> None:
-        panel = _find_log_panel(self.view)
-        assert panel  # guaranteed by is_enabled()
-        panel.erase(edit, sublime.Region(0, panel.size()))
+        with _find_log_panel(self.view) as panel:
+            if panel:
+                panel.erase(edit, sublime.Region(0, panel.size()))
+                view_clear_undo_stack(panel)
 
 
 class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
@@ -116,10 +132,10 @@ class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
         return f"{PLUGIN_NAME}: Toggle Log Panel"
 
     def is_enabled(self) -> bool:
-        return bool(_find_log_panel(self.window))
+        return _check_log_panel(self.window)
 
     def is_visible(self) -> bool:
-        return self.is_enabled()
+        return False
 
     def run(self) -> None:
         self.window.run_command(

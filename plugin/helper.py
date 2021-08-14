@@ -103,6 +103,14 @@ def get_nth_item(items: Sequence[T], n: int, default: Optional[T] = None) -> Opt
     return next(iter(items[n : n + 1]), default)
 
 
+def get_st_window(obj: Union[sublime.View, sublime.Window, sublime.Sheet]) -> Optional[sublime.Window]:
+    if isinstance(obj, sublime.Window):
+        return obj
+    if isinstance(obj, (sublime.View, sublime.Sheet)):
+        return obj.window()
+    raise RuntimeError("`obj` must be one of `sublime.View`, `sublime.Window`, `sublime.Sheet` types.")
+
+
 def is_plaintext_syntax(syntax: sublime.Syntax) -> bool:
     """Determinates whether the syntax is plain text."""
     return syntax.name == "Plain Text"
