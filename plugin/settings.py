@@ -53,8 +53,8 @@ def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:
                 )
             ),
         ),
-        # most dots first
-        key=lambda ext: -ext.count("."),
+        # most dots first and then longest length first
+        key=lambda suffix: (-suffix.count("."), -len(suffix)),
     )
 
     return ret
