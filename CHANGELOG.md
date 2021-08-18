@@ -1,5 +1,10 @@
 # AutoSetSyntax
 
+## 2.1.9
+
+- refactor: make `trim_suffixes` more sorted
+- fix: clear undo stack for the log panel
+
 ## 2.1.8
 
 - fix: AutoSetSyntax debug info is not auto set syntax
