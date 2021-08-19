@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.1.11
+
+- fix: apply a syntax via VIM modeline
+
 ## 2.1.10
 
 - feat: add a rule for Qt's translation files
