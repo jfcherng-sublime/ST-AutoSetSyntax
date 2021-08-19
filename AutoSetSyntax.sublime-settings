@@ -330,6 +330,22 @@
             ]
         },
         {
+            "comment": "Qt's translation file",
+            "syntaxes": "scope:text.xml",
+            "selector": "source.ts",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".ts"]
+                },
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": ["^\\s*<\\?xml(?:$|\\s)"]
+                },
+            ]
+        },
+        {
             "comment": "Package installation/update messages from Package Control",
             "syntaxes": "scope:text.html.markdown",
             "selector": "text.plain",
