@@ -58,14 +58,24 @@ def find_syntaxes_by_syntax_like(
         return tuple()
 
     def find_like(like: str) -> Iterable[sublime.Syntax]:
+        like_lower = like.lower()
+        all_syntaxes: Tuple[sublime.Syntax, ...] = list_sorted_syntaxes()
+        candidates: Iterable[sublime.Syntax]
+
         # by scope
         if like.startswith("scope:"):
             return sublime.find_syntax_by_scope(like[6:])
         # by name
         if candidates := sublime.find_syntax_by_name(like):
             return candidates
+        # by name (case-insensitive)
+        if candidates := tuple(filter(lambda syntax: like_lower == syntax.name.lower(), all_syntaxes)):
+            return candidates
         # by partial path
-        return filter(lambda syntax: like in syntax.path, list_sorted_syntaxes())
+        if candidates := tuple(filter(lambda syntax: like in syntax.path, all_syntaxes)):
+            return candidates
+        # nothing found
+        return tuple()
 
     return tuple(
         syntax

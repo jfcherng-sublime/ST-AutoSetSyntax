@@ -108,23 +108,19 @@ def _assign_syntax_with_first_line(view: sublime.View, event_name: Optional[str]
         (view_info := ViewSnapshot.get_by_view(view))
         and (first_line := view_info["first_line"])
         and (syntax_old := view_info["syntax"])
-        and (
-            # for when modifying the first line in plain text
-            is_plaintext_syntax(syntax_old)
-            # for files already apply a sytnax but we want to change it
-            or (
-                "." not in view_info["file_name"]
-                and (
-                    # shebang
-                    first_line.startswith("#!")
-                    # VIM's syntax line
-                    or RE_VIM_SYNTAX_LINE.search(first_line)
-                )
-            )
-        )
-        and (syntax := sublime.find_syntax_for_file("", first_line))
-        and not is_plaintext_syntax(syntax)
     ):
+        syntax: Optional[sublime.Syntax] = None
+
+        if is_plaintext_syntax(syntax_old) or "." not in view_info["file_name"]:
+            # for when modifying the first line or having a shebang
+            syntax = sublime.find_syntax_for_file("", first_line)
+            # VIM modeline
+            if (not syntax or is_plaintext_syntax(syntax)) and (match := RE_VIM_SYNTAX_LINE.search(first_line)):
+                syntax = find_syntax_by_syntax_like(match.group("syntax"))
+
+        if not syntax or is_plaintext_syntax(syntax):
+            return False
+
         return assign_syntax_to_view(
             view,
             syntax,

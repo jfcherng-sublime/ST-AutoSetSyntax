@@ -33,4 +33,4 @@ PLUGIN_CUSTOM_MODULE_PATHS = {
 VIEW_RUN_ID_SETTINGS_KEY = f"{PLUGIN_NAME}/run_id"
 VIEW_IS_TRANSIENT_SETTINGS_KEY = f"{PLUGIN_NAME}/is_transient"
 
-RE_VIM_SYNTAX_LINE = re.compile(r"\bsyntax=(?P<syntax>[^\s]+)")
+RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|syntax)=(?P<syntax>[^\s:]+):?(?=\s)", re.IGNORECASE)
