@@ -1,5 +1,10 @@
 # AutoSetSyntax
 
+## 2.1.10
+
+- feat: add a rule for Qt's translation files
+- fix: AttributeError: type object 'View' has no attribute 'clear_undo_stack'
+
 ## 2.1.9
 
 - refactor: make `trim_suffixes` more sorted
