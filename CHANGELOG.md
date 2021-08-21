@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.2.0
+
+- fix: `parse_regex_flags()` for duplicate flags
+
 ## 2.1.11
 
 - fix: apply a syntax via VIM modeline
