@@ -1,6 +1,7 @@
 from .lru_cache import clearable_lru_cache
 from .settings import get_st_setting
 from functools import cmp_to_key
+from functools import reduce
 from pathlib import Path
 from typing import (
     Any,
@@ -203,7 +204,10 @@ def parse_regex_flags(flags: Iterable[str]) -> int:
     """
     if isinstance(flags, str):
         flags = (flags,)
-    return sum(getattr(re, flag.upper(), 0) for flag in flags)
+    return reduce(
+        lambda carry, element: carry | element,
+        (int(getattr(re, flag, 0)) for flag in flags),
+    )
 
 
 def remove_prefix(s: str, prefix: str) -> str:
