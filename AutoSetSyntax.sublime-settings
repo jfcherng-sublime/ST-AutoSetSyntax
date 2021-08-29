@@ -330,6 +330,19 @@
             ]
         },
         {
+            // @see https://doc.qt.io/qt-5/qt-conf.html
+            "comment": "Qt's config file",
+            "syntaxes": "scope:source.ini",
+            "selector": "",
+            "rules": [
+                {
+                    "constraint": "is_name",
+                    "args": ["qt.conf"]
+                }
+            ]
+        },
+        {
+            // @see https://doc.qt.io/qtvstools/qtvstools-translation-files.html
             "comment": "Qt's translation file",
             "syntaxes": "scope:text.xml",
             "selector": "source.ts",
@@ -342,7 +355,7 @@
                 {
                     "constraint": "first_line_contains_regex",
                     "args": ["^\\s*<\\?xml(?:$|\\s)"]
-                },
+                }
             ]
         },
         {
