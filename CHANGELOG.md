@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.2.1
+
+- feat: add a rule for `qt.conf`
+
 ## 2.2.0
 
 - fix: `parse_regex_flags()` for duplicate flags
