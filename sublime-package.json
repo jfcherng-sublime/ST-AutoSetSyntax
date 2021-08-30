@@ -298,7 +298,7 @@
                   "if": {
                     "properties": {
                       "constraint": {
-                        "pattern": "^size_is$"
+                        "pattern": "^is_size$"
                       }
                     }
                   },
