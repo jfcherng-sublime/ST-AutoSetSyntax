@@ -38,7 +38,7 @@ class SyntaxRule(Optimizable):
         if event_name and self.on_events is not None and event_name not in self.on_events:
             return False
 
-        if not view.match_selector(0, self.selector):
+        if self.selector and not view.match_selector(0, self.selector):
             return False
 
         assert self.root_rule
