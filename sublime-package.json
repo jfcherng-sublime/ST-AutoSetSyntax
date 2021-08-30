@@ -71,6 +71,7 @@
             "trim_suffixes": {
               "type": "array",
               "items": {
+                "$comment": "Suffixes to be trimmed.",
                 "type": "string"
               },
               "default": [
@@ -116,6 +117,7 @@
                       "description": "Limit this rule only to work with specific events.",
                       "type": "array",
                       "items": {
+                        "$comment": "The targeted event names.",
                         "enum": [
                           "command",
                           "init",
@@ -308,9 +310,11 @@
                         "type": "array",
                         "items": [
                           {
+                            "$comment": "The comparator.",
                             "enum": ["<", "<=", ">=", ">", "==", "!="]
                           },
                           {
+                            "$comment": "The comparing size.",
                             "type": "integer"
                           }
                         ],
