@@ -1,5 +1,13 @@
 # AutoSetSyntax
 
+## 2.2.2
+
+- chore: add some comments for `sublime-package.json`
+- feat: add `case_insensitive` for `is_name` constraint
+- feat: add a rule for `qt.conf`
+- fix: `is_size` constraint has no AC in settings
+- perf: speedup detecting `TypoScript`
+
 ## 2.2.1
 
 - feat: add a rule for `qt.conf`
