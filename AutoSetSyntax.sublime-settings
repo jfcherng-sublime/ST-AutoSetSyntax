@@ -404,18 +404,16 @@
     //////////////////////////////////////////////////////////////////////////////////
 
     "core_syntax_rules": [
-        [
-            {
-                "comment": "AutoSetSyntax Debug Information",
-                "syntaxes": "scope:source.python",
-                "selector": "text.plain",
-                "rules": [
-                    {
-                        "constraint": "first_line_contains_regex",
-                        "args": ["^# === AutoSetSyntax Debug Information === #"]
-                    }
-                ]
-            }
-        ]
+        {
+            "comment": "AutoSetSyntax Debug Information",
+            "syntaxes": "scope:source.python",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": ["^# === AutoSetSyntax Debug Information === #"]
+                }
+            ]
+        }
     ]
 }
