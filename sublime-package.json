@@ -300,6 +300,30 @@
                   "if": {
                     "properties": {
                       "constraint": {
+                        "pattern": "^is_name$"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "kwargs": {
+                        "type": "object",
+                        "properties": {
+                          "case_insensitive": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "default": {},
+                        "additionalItems": false
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "constraint": {
                         "pattern": "^is_size$"
                       }
                     }

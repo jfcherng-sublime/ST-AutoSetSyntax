@@ -511,10 +511,15 @@ To edit project settings, go to `Project` » `Edit Project`.
     {
         "constraint": "is_name",
         "args": ["foo", "bar"],
+        "kwargs": {"case_insensitive": false},
     }
     ```
 
     Test whether the file name is `foo` or `bar`.
+
+    !!! info
+
+        If `case_insensitive` is not provided, it will be `true` on Windows but `false` on other OSes.
 
 #### `is_rails_file`
 
