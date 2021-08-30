@@ -14,6 +14,7 @@ site_dir: site
 
 nav:
   - Introduction: index.md
+  - Changelog: changelog.md
   - Use Cases: use-cases.md
   - Configurations: configurations.md
   - Commands: commands.md

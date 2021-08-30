@@ -214,11 +214,3 @@ For more details, visit the online documentation: https://jfcherng-sublime.githu
 ## 1.8.3
 
 - Correct the usage of `settings.add_on_change()`.
-
-## 1.0.1 ~ 1.8.2
-
-- Lost histories...
-
-## 1.0.0
-
-- Initial release.
