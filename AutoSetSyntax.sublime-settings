@@ -290,12 +290,12 @@
             "selector": "text.plain",
             "rules": [
                 {
+                    "constraint": "is_name",
+                    "args": ["ext_conf_template.txt", "ext_typoscript_constants.txt", "ext_typoscript_setup.txt"]
+                },
+                {
                     "constraint": "path_contains_regex",
-                    "args": [
-                        "^.*/ext_conf_template\\.txt$",
-                        "^.*/ext_typoscript_(?:setup|constants)\\.txt$",
-                        "^.*/(?:fileadmin|typo3|TypoScript).*/(?:setup|constants)\\.txt$"
-                    ]
+                    "args": ["^.*/(?:fileadmin|typo3|TypoScript).*/(?:setup|constants)\\.txt$"]
                 }
             ]
         },
