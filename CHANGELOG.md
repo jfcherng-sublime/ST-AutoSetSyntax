@@ -1,5 +1,9 @@
 # AutoSetSyntax
 
+## 2.2.4
+
+- fix: typo in default settings
+
 ## 2.2.3
 
 - chore: prioritize plugin core syntax rules
