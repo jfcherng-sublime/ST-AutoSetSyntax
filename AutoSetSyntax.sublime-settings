@@ -368,17 +368,6 @@
                     "args": ["^Package Control Messages(?:$|\\s)"]
                 }
             ]
-        },
-        {
-            "comment": "AutoSetSyntax Debug Information",
-            "syntaxes": "scope:source.python",
-            "selector": "text.plain",
-            "rules": [
-                {
-                    "constraint": "first_line_contains",
-                    "args": ["# === AutoSetSyntax Debug Information === #"]
-                }
-            ]
         }
     ],
     // Suffixes that will be used to right trim the filename.
@@ -406,5 +395,27 @@
         ".test",
         ".tmp",
         ".tpl"
+    ],
+
+    ///////////////////
+    // Core Settings //
+    //////////////////////////////////////////////////////////////////////////////////
+    // These settings make this plugin function normally. You shouldn't touch them. //
+    //////////////////////////////////////////////////////////////////////////////////
+
+    "core_syntax_rules": [
+        [
+            {
+                "comment": "AutoSetSyntax Debug Information",
+                "syntaxes": "scope:source.python",
+                "selector": "text.plain",
+                "rules": [
+                    {
+                        "constraint": "first_line_contains_regex",
+                        "args": ["^# === AutoSetSyntax Debug Information === #"]
+                    }
+                ]
+            }
+        ]
     ]
 }

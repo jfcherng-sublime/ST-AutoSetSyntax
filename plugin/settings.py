@@ -37,7 +37,8 @@ def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:
     ret: Dict[str, Any] = {}
 
     ret["syntax_rules"] = (
-        settings.get("project_syntax_rules", [])
+        settings.get("core_syntax_rules", [])
+        + settings.get("project_syntax_rules", [])
         + settings.get("user_syntax_rules", [])
         + settings.get("default_syntax_rules", [])
     )
