@@ -1,5 +1,12 @@
 # AutoSetSyntax
 
+## 2.2.3
+
+- chore: prioritize plugin core syntax rules
+
+  Otherwise, if the user has a bad syntax rule in user settings,
+  that may make debug information always be set with a wrong syntax.
+
 ## 2.2.2
 
 - chore: add some comments for `sublime-package.json`
