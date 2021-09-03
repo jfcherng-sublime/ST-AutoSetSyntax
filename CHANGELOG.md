@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.2.5
+
+- fix: `View.clear_undo_stack` can not be run inside `TextCommand`
+- fix: some panel commands are not shown in comman palette
+- fix: `scope:output.autosetsyntax.log` not found during updating plugin
+
 ## 2.2.4
 
 - fix: typo in default settings
