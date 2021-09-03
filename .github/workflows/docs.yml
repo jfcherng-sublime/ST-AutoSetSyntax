@@ -4,6 +4,8 @@ on:
     paths:
       - '.github/workflows/docs.yml'
       - 'docs/**'
+      # referenced external files
+      - 'CHANGELOG.md'
 jobs:
   job_build:
     name: Build
