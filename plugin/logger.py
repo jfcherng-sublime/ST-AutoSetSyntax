@@ -113,14 +113,13 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
 
 
 class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
+    """Clear the plugin log panel for the current window."""
+
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Clear Log Panel"
 
     def is_enabled(self) -> bool:
         return _check_log_panel(self.view)
-
-    def is_visible(self) -> bool:
-        return False
 
     def run(self, edit: sublime.Edit) -> None:
         with _find_log_panel(self.view) as panel:
@@ -130,14 +129,13 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
 
 
 class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
+    """Toggle the visibility of the plugin log panel for the current window."""
+
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Toggle Log Panel"
 
     def is_enabled(self) -> bool:
         return _check_log_panel(self.window)
-
-    def is_visible(self) -> bool:
-        return False
 
     def run(self) -> None:
         self.window.run_command(
