@@ -28,7 +28,9 @@ def _find_log_panel(obj: Union[sublime.View, sublime.Window]) -> Generator[Optio
 
 def _create_log_panel(window: sublime.Window) -> sublime.View:
     panel = window.create_output_panel(PLUGIN_NAME)
-    panel.assign_syntax("scope:output.autosetsyntax.log")
+    # Somehow there is an error about "scope:output.autosetsyntax.log" not found during updating this plugin.
+    # Thus, I change it to use the syntax path to load the syntax.
+    panel.assign_syntax("Packages/AutoSetSyntax/syntaxes/AutoSetSyntaxLog.sublime-syntax")
     panel.set_scratch(True)
     panel.settings().update(
         {
