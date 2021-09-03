@@ -3,27 +3,15 @@ from .constant import PLUGIN_NAME
 from .helper import get_st_window
 from .settings import get_merged_plugin_setting
 from .settings import get_st_setting
-from contextlib import contextmanager
-from typing import Dict, Generator, Optional, Union
+from typing import Dict, Optional, Union
 import math
 import sublime
 import sublime_plugin
 
 
-def _check_log_panel(obj: Union[sublime.View, sublime.Window]) -> bool:
+def _find_log_panel(obj: Union[sublime.View, sublime.Window]) -> Optional[sublime.View]:
     window = get_st_window(obj)
-    return bool(window.find_output_panel(PLUGIN_NAME) if window else None)
-
-
-@contextmanager
-def _find_log_panel(obj: Union[sublime.View, sublime.Window]) -> Generator[Optional[sublime.View], None, None]:
-    window = get_st_window(obj)
-    panel = window.find_output_panel(PLUGIN_NAME) if window else None
-    try:
-        yield panel
-    finally:
-        if panel:
-            view_clear_undo_stack(panel)
+    return window.find_output_panel(PLUGIN_NAME) if window else None
 
 
 def _create_log_panel(window: sublime.Window) -> sublime.View:
@@ -70,13 +58,15 @@ class Logger:
                 "msg": f"[{PLUGIN_NAME}] {msg}" if show_plugin_name else msg,
             },
         )
-        cls._increment_history_count(window)
+        cls._increase_history_count(window)
+        cls._clear_undo_stack(window)
 
     @classmethod
     def clear(cls, window: Optional[sublime.Window]) -> None:
         if window:
             window.run_command("auto_set_syntax_clear_log_panel")
             cls._set_history_count(window, 0)
+            cls._clear_undo_stack(window)
 
     @classmethod
     def destroy(cls, window: sublime.Window) -> None:
@@ -92,8 +82,13 @@ class Logger:
         cls.history_counts[window.id()] = value
 
     @classmethod
-    def _increment_history_count(cls, window: sublime.Window, step: int = 1) -> None:
-        cls._set_history_count(window, cls._get_history_count(window) + step)
+    def _increase_history_count(cls, window: sublime.Window, amount: int = 1) -> None:
+        cls._set_history_count(window, cls._get_history_count(window) + amount)
+
+    @classmethod
+    def _clear_undo_stack(cls, window: sublime.Window) -> None:
+        if panel := _find_log_panel(window):
+            view_clear_undo_stack(panel)
 
 
 class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
@@ -106,10 +101,10 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
         if not (window := self.view.window()):
             return
 
-        with _find_log_panel(window) as panel:
-            if not panel:
-                panel = _create_log_panel(window)
-            panel.insert(edit, panel.size(), f"{msg}\n")
+        if not (panel := _find_log_panel(window)):
+            panel = _create_log_panel(window)
+
+        panel.insert(edit, panel.size(), f"{msg}\n")
 
 
 class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
@@ -119,13 +114,11 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
         return f"{PLUGIN_NAME}: Clear Log Panel"
 
     def is_enabled(self) -> bool:
-        return _check_log_panel(self.view)
+        return bool(_find_log_panel(self.view))
 
     def run(self, edit: sublime.Edit) -> None:
-        with _find_log_panel(self.view) as panel:
-            if panel:
-                panel.erase(edit, sublime.Region(0, panel.size()))
-                view_clear_undo_stack(panel)
+        if panel := _find_log_panel(self.view):
+            panel.erase(edit, sublime.Region(0, panel.size()))
 
 
 class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
@@ -135,7 +128,7 @@ class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
         return f"{PLUGIN_NAME}: Toggle Log Panel"
 
     def is_enabled(self) -> bool:
-        return _check_log_panel(self.window)
+        return bool(_find_log_panel(self.window))
 
     def run(self) -> None:
         self.window.run_command(
