@@ -1,10 +1,12 @@
-from typing import Callable, Optional
 import sublime
-
-# available as of ST 4114
-_view_clear_undo_stack: Optional[Callable[[sublime.View], None]] = getattr(sublime.View, "clear_undo_stack", None)
 
 
 def view_clear_undo_stack(view: sublime.View) -> None:
-    if _view_clear_undo_stack:
-        _view_clear_undo_stack(view)
+    """
+    Aliased to `view.clear_undo_stack` if possible.
+
+    @version ST(>=4114)
+    """
+    if clear_undo_stack := getattr(view, "clear_undo_stack", None):
+        # this `set_timeout` allows `View.clear_undo_stack` being called in a text command
+        sublime.set_timeout(clear_undo_stack)
