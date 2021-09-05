@@ -22,7 +22,6 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
     panel.set_scratch(True)
     panel.settings().update(
         {
-            "command_mode": True,  # user read-only but plugin API writable
             "draw_white_space": "none",
             "gutter": False,
             "line_numbers": False,
@@ -104,7 +103,9 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
         if not (panel := _find_log_panel(window)):
             panel = _create_log_panel(window)
 
+        panel.set_read_only(False)
         panel.insert(edit, panel.size(), f"{msg}\n")
+        panel.set_read_only(True)
 
 
 class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
@@ -118,7 +119,9 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
 
     def run(self, edit: sublime.Edit) -> None:
         if panel := _find_log_panel(self.view):
+            panel.set_read_only(False)
             panel.erase(edit, sublime.Region(0, panel.size()))
+            panel.set_read_only(True)
 
 
 class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
