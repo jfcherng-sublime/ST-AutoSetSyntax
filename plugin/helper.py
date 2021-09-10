@@ -1,13 +1,16 @@
 from .lru_cache import clearable_lru_cache
 from .settings import get_st_setting
 from functools import cmp_to_key
+from functools import lru_cache
 from functools import reduce
 from pathlib import Path
 from typing import (
     Any,
     Callable,
+    Dict,
     Generator,
     Iterable,
+    List,
     Optional,
     Pattern,
     Sequence,
@@ -19,8 +22,10 @@ from typing import (
 import inspect
 import re
 import sublime
+import tempfile
 
 T = TypeVar("T")
+ExpandableVar = TypeVar("ExpandableVar", None, bool, int, float, str, Dict, List, Tuple)
 
 
 def camel_to_snake(s: str) -> str:
@@ -120,6 +125,35 @@ def get_st_window(obj: Union[sublime.View, sublime.Window, sublime.Sheet]) -> Op
     if isinstance(obj, (sublime.View, sublime.Sheet)):
         return obj.window()
     raise RuntimeError("`obj` must be one of `sublime.View`, `sublime.Window`, `sublime.Sheet` types.")
+
+
+def get_view_by_id(id: int) -> Optional[sublime.View]:
+    for window in sublime.windows():
+        for view in window.views():
+            if view.id() == id:
+                return view
+    return None
+
+
+def head_tail_content(content: str, partial: int) -> str:
+    if partial < 0 or len(content) <= partial * 2:
+        return content
+    return content[:partial] + "\n\n" + content[partial : partial * 2]
+
+
+def head_tail_content_st(view: sublime.View, partial: int) -> str:
+    size = view.size()
+
+    if partial < 0 or partial * 2 >= size:
+        return view.substr(sublime.Region(0, size))
+
+    return (
+        # for large files, most characteristics is in the starting
+        view.substr(sublime.Region(0, partial))
+        + "\n\n"
+        # but some may be in the ending...
+        + view.substr(sublime.Region(size - partial, size))
+    )
 
 
 def is_plaintext_syntax(syntax: sublime.Syntax) -> bool:
@@ -260,3 +294,51 @@ def generate_trimmed_strings(
                 suffixes,
                 skip_self=False,
             )
+
+
+@lru_cache
+def get_expand_variable_map() -> Dict[str, str]:
+    cache_path = Path(sublime.cache_path())
+    packages_path = Path(sublime.packages_path())
+
+    paths = {
+        # from OS
+        "home": Path.home(),
+        "temp_dir": Path(tempfile.gettempdir()),
+        # from ST itself
+        "bin": Path(sublime.executable_path()).parent,
+        "cache": cache_path,
+        "data": packages_path / "..",
+        "index": cache_path / ".." / "Index",
+        "installed_packages": Path(sublime.installed_packages_path()),
+        "lib": packages_path / ".." / "Lib",
+        "local": packages_path / ".." / "Local",
+        "log": packages_path / ".." / "Log",
+        "packages": packages_path,
+        # from LSP
+        "package_storage": cache_path / ".." / "Package Storage",
+    }
+
+    def _find_latest_lsp_utils_node_version(package_storage: Path) -> Optional[Tuple[int, int, int]]:
+        if not (base_dir := package_storage / "lsp_utils/node-runtime").is_dir():
+            return None
+
+        version: Optional[Tuple[int, int, int]] = None
+        for path in base_dir.iterdir():
+            if path.is_dir() and (m := re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", path.name)):
+                version_found = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                if not version or version_found > version:
+                    version = version_found
+        return version
+
+    if node_version := _find_latest_lsp_utils_node_version(paths["package_storage"]):
+        node_version_str = ".".join(map(str, node_version))
+        node_exe = "node.exe" if sublime.platform() == "windows" else "node"
+        paths["lsp_utils_node_dir"] = paths["package_storage"] / f"lsp_utils/node-runtime/{node_version_str}/node"
+        paths["lsp_utils_node_bin"] = paths["lsp_utils_node_dir"] / node_exe
+
+    return {name: str(path.resolve()) for name, path in paths.items()}
+
+
+def expand_variables(value: ExpandableVar, variables: Optional[Dict[str, str]] = None) -> ExpandableVar:
+    return sublime.expand_variables(value, {**get_expand_variable_map(), **(variables or {})})

@@ -1,3 +1,4 @@
+from .guesslang.client import GuesslangClient
 from .rules import SyntaxRuleCollection
 from typing import Any, Dict, Optional, Tuple
 import sublime
@@ -8,6 +9,9 @@ DroppedRules = Tuple[Any, ...]
 
 class G:
     """This class holds "G"lobal variables as its class variables."""
+
+    # the guesslang object, which interacts with the Node.js guesslang server
+    guesslang: Optional[GuesslangClient] = None
 
     # views exist when ST just starts (even before plugin loaded)
     views_on_init: Tuple[sublime.View, ...] = tuple()

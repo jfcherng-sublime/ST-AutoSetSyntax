@@ -34,4 +34,12 @@
         "caption": "AutoSetSyntax: Toggle Log Panel",
         "command": "auto_set_syntax_toggle_log_panel",
     },
+    {
+        "caption": "AutoSetSyntax: Download Guesslang Server",
+        "command": "auto_set_syntax_download_guesslang_server",
+    },
+    {
+        "caption": "AutoSetSyntax: Restart Guesslang Server",
+        "command": "auto_set_syntax_restart_guesslang",
+    },
 ]

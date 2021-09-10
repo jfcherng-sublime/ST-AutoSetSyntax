@@ -21,7 +21,7 @@
     "run_on_startup_views": false,
     // The max lookup size for the file.
     // A negative number means no limit, which may have performance issue on large files.
-    "trim_file_size": 5000, // about 5KB
+    "trim_file_size": 4000, // about 4KB
     // The max lookup length for the first line.
     // A negative number means no limit, which may have performance issue on a long first line.
     "trim_first_line_length": 180,
@@ -430,5 +430,85 @@
                 }
             ]
         }
-    ]
+    ],
+
+    ///////////////////////////////////////
+    // Guesslang settings (experimental) //
+    /////////////////////////////////////////////////////////////////////////
+    // You have to restart ST after modifying any of guesslang's settings. //
+    /////////////////////////////////////////////////////////////////////////
+
+    // The min requirement for Node.js is v14.
+    "guesslang.enabled": false,
+    // You can use "${lsp_utils_node_bin}" if your Node.js is installed by lsp_utils
+    "guesslang.node_bin": "node",
+    "guesslang.port": 15151,
+    "guesslang.confidence_threshold": 0.15,
+    "guesslang.allow_heuristic_guess": true,
+    "guesslang.syntax_map": {
+        "asm": [
+            // no good way to do this?
+            "scope:source.asm.x86_64",
+            "scope:source.asm.arm",
+            "scope:source.rvasm",
+            "scope:source.assembly"
+        ],
+        "bat": ["scope:source.dosbatch"],
+        "c": ["scope:source.c"],
+        "cbl": ["scope:source.cobol"],
+        "clj": ["scope:source.clojure"],
+        "cmake": ["scope:source.cmake"],
+        "coffee": ["scope:source.coffee"],
+        "cpp": ["scope:source.c++"],
+        "cs": ["scope:source.cs"],
+        "css": [
+             // SCSS is a superset and this server can't distinguish SCSS and CSS
+            "scope:source.scss",
+            "scope:source.css"
+        ],
+        "csv": ["scope:text.advanced_csv", "scope:text.csv"],
+        "dart": ["scope:source.dart"],
+        "dm": ["scope:source.dm"],
+        "dockerfile": ["scope:source.dockerfile"],
+        "erl": ["scope:source.erlang"],
+        "ex": ["scope:source.elixir"],
+        "f90": ["scope:source.modern-fortran"],
+        "go": ["scope:source.go"],
+        "groovy": ["scope:source.groovy"],
+        "hs": ["scope:source.haskell"],
+        "html": ["scope:text.html.basic"],
+        "ini": ["scope:source.ini"],
+        "java": ["scope:source.java"],
+        "jl": ["scope:source.julia"],
+        "js": ["scope:source.js"],
+        "json": ["scope:source.json"],
+        "kt": ["scope:source.Kotlin"],
+        "lisp": ["scope:source.lisp"],
+        "lua": ["scope:source.lua"],
+        "makefile": ["scope:source.makefile"],
+        "matlab": ["scope:source.matlab"],
+        "md": ["scope:text.html.markdown"],
+        "ml": [], // what is this?
+        "mm": [], // what is this?
+        "pas": ["scope:source.pascal"],
+        "php": ["scope:embedding.php", "scope:text.html.php"],
+        "pm": [], // what is this?
+        "prolog": ["scope:source.prolog"],
+        "ps1": ["scope:source.powershell"],
+        "py": ["scope:source.python"],
+        "r": ["scope:source.r"],
+        "rb": ["scope:source.ruby"],
+        "rs": ["scope:source.rust"],
+        "scala": ["scope:source.scala"],
+        "sh": ["scope:source.shell.bash"],
+        "sql": ["scope:source.sql"],
+        "swift": ["scope:source.swift"],
+        "tex": ["scope:text.tex.latex"],
+        "toml": ["scope:source.toml"],
+        "ts": ["scope:source.ts"],
+        "v": ["scope:source.verilog"],
+        "vba": ["scope:source.vbs"],
+        "xml": ["scope:text.xml"],
+        "yaml": ["scope:source.yaml"]
+    }
 }

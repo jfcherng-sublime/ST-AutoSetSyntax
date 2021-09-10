@@ -9,6 +9,8 @@ from .constant import ST_PLATFORM_ARCH
 from .constant import ST_VERSION
 from .constant import VERSION
 from .constant import VIEW_IS_TRANSIENT_SETTINGS_KEY
+from .guesslang.server import GuesslangServer
+from .helper import is_syntaxable_view
 from .helper import is_transient_view
 from .helper import stringify
 from .logger import Logger
@@ -72,7 +74,7 @@ def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
 def _guarantee_primary_view(func: Callable) -> Callable:
     def wrapped(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
         # view.id() is a workaround for async listener
-        if self.buffer and (view := self.buffer.primary_view()) and view.id():
+        if self.buffer and (view := self.buffer.primary_view()) and view.id() and is_syntaxable_view(view):
             func(self, view, *args, **kwargs)
 
     return wrapped
@@ -89,6 +91,9 @@ class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
 
 
 class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
+    def on_exit(self) -> None:
+        GuesslangServer.stop()
+
     def on_activated(self, view: sublime.View) -> None:
         _try_assign_syntax_when_view_untransientize(view)
 
@@ -121,11 +126,16 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
 
 
 def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[sublime.TextChange]) -> bool:
-    historic_position = changes[0].b
-
     # don't use `len(changes) <= 1` here because it has a length of 3
     # for `view.run_command('insert', {'characters': 'foo\nbar'})` and that's unwanted
-    if len(view.sel()) <= 1 and (
+    if len(view.sel()) != 1:
+        return False
+
+    if len(changes) == 1 and len(changes[0].str) >= 20:
+        return run_auto_set_syntax_on_view(view, "paste", must_plaintext=True)
+
+    historic_position = changes[0].b
+    if (
         # editing the first line
         historic_position.row == 0
         # editing last few chars

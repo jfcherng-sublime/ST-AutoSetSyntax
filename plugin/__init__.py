@@ -1,6 +1,7 @@
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
 from .constant import PLUGIN_CUSTOM_MODULE_PATHS
 from .constant import PLUGIN_NAME
+from .guesslang.server import GuesslangServer
 from .helper import remove_prefix
 from .listener import compile_rules
 from .listener import set_up_window
@@ -40,6 +41,7 @@ def set_up() -> None:
         set_up_window(window)
 
     _run_on_init_views()
+    sublime.run_command("auto_set_syntax_restart_guesslang")
 
 
 def tear_down() -> None:
@@ -48,6 +50,8 @@ def tear_down() -> None:
 
     for window in sublime.windows():
         tear_down_window(window)
+
+    GuesslangServer.stop()
 
 
 def _settings_changed_callback(window: sublime.Window) -> None:

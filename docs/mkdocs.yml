@@ -17,6 +17,8 @@ nav:
   - Changelog: changelog.md
   - Use Cases: use-cases.md
   - Configurations: configurations.md
+  - Experimental:
+    - ML-based detection: experimental/ml-based-syntax-detection.md
   - Commands: commands.md
   - Debug: debug.md
   - Migration: migration.md

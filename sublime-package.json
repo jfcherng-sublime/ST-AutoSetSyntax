@@ -12,6 +12,9 @@
           "allOf": [
             {
               "$ref": "sublime://settings/AutoSetSyntax#/definitions/root_plugin_settings"
+            },
+            {
+              "$ref": "sublime://settings/AutoSetSyntax#/definitions/guesslang_settings"
             }
           ],
           "definitions": {
@@ -35,7 +38,7 @@
                 "trim_file_size": {
                   "description": "The max lookup size for the file. A negative number means no limit, which may have performance issue on large files.",
                   "type": "integer",
-                  "default": 5000
+                  "default": 4000
                 },
                 "trim_first_line_length": {
                   "description": "The max lookup length for the first line. A negative number means no limit, which may have performance issue on a long first line.",
@@ -374,6 +377,40 @@
                 }
               ],
               "required": ["constraint"]
+            },
+            "guesslang_settings": {
+              "properties": {
+                "guesslang.enabled": {
+                  "description": "Enables the guesslang feature.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "guesslang.node_bin": {
+                  "markdownDescription": "The absolute path of the `node` executable.\n\n- If `node` is in your `PATH` environment variable, you can simply use `\"node\"`.\n- If your `node` comes from `lsp_utils`, you can use `\"${lsp_utils_node_bin}\"`.",
+                  "type": "string",
+                  "default": "node"
+                },
+                "guesslang.port": {
+                  "description": "The port number which should be used by the guesslang server.",
+                  "type": "number",
+                  "default": 15151
+                },
+                "guesslang.confidence_threshold": {
+                  "markdownDescription": "The ML model will give a confidence within a range of `0 ~ 1` for the best gussed syntax. This setting control the min confidence which convinces ST to adopt its prediction.",
+                  "type": "number",
+                  "default": 0.15
+                },
+                "guesslang.allow_heuristic_guess": {
+                  "description": "If all predictions are low-confidence, do you want to guess the syntax by some simple heuristics?",
+                  "type": "boolean",
+                  "default": false
+                },
+                "guesslang.syntax_map": {
+                  "markdownDescription": "The relationship between `languageId`s in VSCode and syntaxes in ST.",
+                  "type": "object",
+                  "default": {}
+                }
+              }
             }
           }
         }

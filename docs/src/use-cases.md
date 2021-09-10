@@ -71,4 +71,9 @@ back to `HTML` syntax due to its first line.
 - For average users, read "[Configurations][plugin-configurations]" for more details to create your own rules.
 - For advanced users, you may read "Advanced Topics" for creating custom `Match` or `Constraint` implementations.
 
+## Machine learning based syntax detection
+
+This can be useful for files which have no extension or irregular extensions, or when pasting codes into a new buffer.
+Check [ML-based Detection][plugin-ml-based-syntax-detection].
+
 [^1]: Create a new file: ++ctrl+n++ for Windows/Linux. ++cmd+n++ for macOS.

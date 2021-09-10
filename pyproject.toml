@@ -8,6 +8,8 @@ exclude = '''
   \.git |
   \.mypy_cache |
   \.?venv |
+  br-* |
+  branch-* |
   plugin/libs |
   tests/files |
   stubs |

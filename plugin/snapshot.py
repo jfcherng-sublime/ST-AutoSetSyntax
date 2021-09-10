@@ -1,4 +1,5 @@
 from .constant import VIEW_RUN_ID_SETTINGS_KEY
+from .helper import head_tail_content_st
 from .settings import get_merged_plugin_setting
 from .types import TD_ViewSnapshot
 from pathlib import Path
@@ -47,18 +48,7 @@ class ViewSnapshot:
 
 
 def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:
-    size = view.size()
-
-    if (length := get_merged_plugin_setting(window, "trim_file_size")) < 0 or length * 2 >= size:
-        return view.substr(sublime.Region(0, size))
-
-    return (
-        # for large files, most characteristics is in the starting
-        view.substr(sublime.Region(0, length))
-        + "\n😉\n"
-        # but some may be in the ending...
-        + view.substr(sublime.Region(size - length, size))
-    )
+    return head_tail_content_st(view, get_merged_plugin_setting(window, "trim_file_size"))
 
 
 def get_view_pseudo_first_line(view: sublime.View, window: sublime.Window) -> str:
