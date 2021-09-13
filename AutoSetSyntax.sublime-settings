@@ -172,6 +172,21 @@
             ]
         },
         {
+            "syntaxes": "scope:source.java",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": ["^\\s*import\\s+java\\."]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["\\bimport\\s+java\\.", "\\bSystem\\.out\\.println\\s*\\("],
+                    "kwargs": { "threshold": 2 }
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.js",
             "selector": "text.plain",
             "rules": [
