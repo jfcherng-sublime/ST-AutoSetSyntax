@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.2.6
+
+- feat: add a rule for `Java`
+- refactor: allow using `view_clear_undo_stack` in text commands
+- refactor: use `set_read_only` to replace `command_mode`
+
 ## 2.2.5
 
 - fix: `View.clear_undo_stack` can not be run inside `TextCommand`
