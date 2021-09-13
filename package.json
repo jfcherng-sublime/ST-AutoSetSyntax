@@ -1,0 +1,8 @@
+{
+  "version": "0.0.1",
+  "type": "module",
+  "dependencies": {
+    "@vscode/vscode-languagedetection": "^1.0.21",
+    "ws": "^8.2.2"
+  }
+}
