@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.3.1
+
+- fix: do not apply guesslang on files having an extension
+
 ## 2.3.0
 
 - feat: predict syntax by a machine learning model
