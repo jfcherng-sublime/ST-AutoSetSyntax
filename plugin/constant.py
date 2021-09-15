@@ -7,7 +7,7 @@ import sys
 
 VERSION_INFO = (2, 3, 0, "stable")
 VERSION = ".".join(map(str, VERSION_INFO[:3]))
-if next(filter(None, VERSION_INFO[3:4]), None):
+if len(VERSION_INFO) > 3:
     VERSION += f"-{VERSION_INFO[3]}"
 
 ################################################################################
