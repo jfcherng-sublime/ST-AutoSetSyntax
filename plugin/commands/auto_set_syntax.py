@@ -273,8 +273,9 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optiona
 def _assign_syntax_with_guesslang_async(view: sublime.View, event_name: Optional[str] = None) -> None:
     if (
         not G.guesslang
-        or not ((original_syntax := view.syntax()) and original_syntax.name == "Plain Text")
         or not (view_info := ViewSnapshot.get_by_view(view))
+        or "." in view_info["file_name"]  # don't apply on those have an extension
+        or not ((original_syntax := view.syntax()) and original_syntax.name == "Plain Text")
     ):
         return None
 
