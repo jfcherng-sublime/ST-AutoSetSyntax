@@ -1,6 +1,6 @@
 # AutoSetSyntax Changelog
 
-## 2.3.0 (not released yet)
+## 2.3.0
 
 - feat: predict syntax by a machine learning model
 

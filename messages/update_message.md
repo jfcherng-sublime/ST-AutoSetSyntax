@@ -1,14 +1,17 @@
 AutoSetSyntax has been updated. To see the changelog, visit
 Preferences » Package Settings » AutoSetSyntax » CHANGELOG
 
-## 2.1.0
+## 2.3.0
 
-- feat: add new constraints: `is_in_hg_repo`, `is_in_svn_repo`
+- feat: predict syntax by a machine learning model
 
-## 2.0.1
+  This experimental feature is disabled by default.
+  It provides the same feature which is introduced in VSCode 1.60.
+  https://code.visualstudio.com/updates/v1_60#_automatic-language-detection
+  If you want to try it, please check the following link.
+  https://jfcherng-sublime.github.io/ST-AutoSetSyntax/experimental/ml-based-syntax-detection/
 
-- refactor: improve `is_extension` constraint
-- perf: optimize `AbstractMatch.test_count()`
+- chore: reduce default `trim_file_size` setting from `5000` to `4000`
 
 ## 2.0.0
 
