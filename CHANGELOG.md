@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.3.2
+
+- fix: do some basic checks for the guesslang-predicted syntax
+
+  The model seems to predict some plain text as `INI` syntax quite frequently...
+
 ## 2.3.1
 
 - fix: do not apply guesslang on files having an extension
