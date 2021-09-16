@@ -5,7 +5,11 @@ import sys
 
 ################################################################################
 
+<<<<<<< Updated upstream
 VERSION_INFO = (2, 3, 2, "stable")
+=======
+VERSION_INFO = (2, 3, 3, "stable")
+>>>>>>> Stashed changes
 VERSION = ".".join(map(str, VERSION_INFO[:3]))
 if len(VERSION_INFO) > 3:
     VERSION += f"-{VERSION_INFO[3]}"
