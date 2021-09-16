@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-# __future__ must be the first import
 from ..constant import GITHUB_TAGS_API
 from ..constant import PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
@@ -15,6 +12,7 @@ import sublime
 import sublime_plugin
 import tarfile
 import threading
+import time
 import urllib.request
 import zipfile
 
@@ -36,10 +34,10 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
             sublime.error_message(f"[{PLUGIN_NAME}] Cannot find a download URL for guesslang server.")
             return
 
-        is_running = GuesslangServer.is_running()
+        if is_running := GuesslangServer.is_running():
+            GuesslangServer.stop()
+            time.sleep(3)  # wait for stopping the server
 
-        # otherwise, the server directory is locked
-        GuesslangServer.stop()
         shutil.rmtree(GuesslangServer.server_dir, ignore_errors=True)
 
         try:
