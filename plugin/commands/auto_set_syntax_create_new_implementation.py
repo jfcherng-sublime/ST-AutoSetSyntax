@@ -2,9 +2,10 @@ from ..constant import PLUGIN_CUSTOM_DIR
 from ..constant import PLUGIN_CUSTOM_MODULE_PATHS
 from ..constant import PLUGIN_NAME
 from ..helper import find_syntax_by_syntax_like
+from ..types import SyntaxLike
 from abc import ABCMeta
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 import sublime
 import sublime_plugin
 
@@ -54,7 +55,7 @@ def _clone_file_as_template(
     view: sublime.View,
     edit: sublime.Edit,
     source_path: str,
-    syntax: Optional[Union[str, sublime.Syntax]] = None,
+    syntax: Optional[SyntaxLike] = None,
 ) -> Optional[sublime.View]:
     if not (window := view.window()):
         return None

@@ -4,10 +4,10 @@ from ..constant import VIEW_RUN_ID_SETTINGS_KEY
 from ..guesslang.client import TransportCallbacks
 from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
 from ..helper import find_syntax_by_syntax_like
-from ..helper import first
+from ..helper import find_syntax_by_syntax_likes
 from ..helper import generate_trimmed_strings
 from ..helper import get_view_by_id
-from ..helper import head_tail_content
+from ..helper import head_tail_content_st
 from ..helper import is_plaintext_syntax
 from ..helper import is_syntaxable_view
 from ..helper import stringify
@@ -19,9 +19,11 @@ from ..settings import get_merged_plugin_settings
 from ..settings import pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
+from ..types import TD_ViewSnapshot
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
+import re
 import sublime
 import sublime_plugin
 import uuid
@@ -36,6 +38,8 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 
 
 class GuesslangClientCallbacks(TransportCallbacks):
+    """This class contains event callbacks for the guesslang server."""
+
     heuristic_starting_map = {
         "{": "json",
         "---\n": "yaml",
@@ -54,30 +58,34 @@ class GuesslangClientCallbacks(TransportCallbacks):
         try:
             response: GuesslangServerResponse = sublime.decode_value(message)
             # shorthands
-            view_id = response["id"]
             predictions = response["data"]
             event_name = response["event_name"]
+            view_id = response["id"]
         except (TypeError, ValueError):
             Logger.log(sublime.active_window(), f"💬 Guesslang server says: {message}")
             return
-
-        if not predictions or not (view := get_view_by_id(view_id)):
+        except KeyError as e:
+            print(f"[{PLUGIN_NAME}] {e}")
             return
 
-        predictions.sort(key=itemgetter("confidence"), reverse=True)
-        syntax, confidence, is_heuristic = self.resolve_guess_predictions(view, predictions)
+        if not predictions or not (view := get_view_by_id(view_id)) or not (window := view.window()):
+            return
 
-        if not syntax:
+        content = head_tail_content_st(view, 2000).lstrip()
+        predictions.sort(key=itemgetter("confidence"), reverse=True)
+        best_syntax, confidence, is_heuristic = self.resolve_guess_predictions(window, content, predictions)
+
+        if not best_syntax or not self.assert_prediction(content, best_syntax):
             return
 
         if is_heuristic:
             details: Dict[str, Any] = {"event": event_name, "reason": "predict (heuristic)"}
-            status_message = f'Predicted as "{syntax.name}" by heuristics'
+            status_message = f'Predicted as "{best_syntax.name}" by heuristics'
         else:
             details = {"event": event_name, "reason": "predict", "predictions": predictions[:3]}
-            status_message = f'Predicted as "{syntax.name}" ({int(confidence * 100)}% confidence)'
+            status_message = f'Predicted as "{best_syntax.name}" ({int(confidence * 100)}% confidence)'
 
-        assign_syntax_to_view(view, syntax, details=details)
+        assign_syntax_to_view(view, best_syntax, details=details)
         sublime.status_message(status_message)
 
     def on_error(self, ws: websocket.WebSocketApp, error: str) -> None:
@@ -87,19 +95,16 @@ class GuesslangClientCallbacks(TransportCallbacks):
         Logger.log(sublime.active_window(), "💔 Guesslang server disconnected...")
         sublime.status_message("Guesslang server disconnected...")
 
-    @staticmethod
-    def resolve_best_syntax_likes(syntax_likes: Sequence[Union[str, sublime.Syntax]]) -> Optional[sublime.Syntax]:
-        return first(find_syntax_by_syntax_like(syntax_like, allow_plaintext=False) for syntax_like in syntax_likes)
-
     @classmethod
     def resolve_guess_predictions(
         cls,
-        view: sublime.View,
+        window: sublime.Window,
+        content: str,
         predictions: List[GuesslangServerPredictionItem],
     ) -> Tuple[Optional[sublime.Syntax], float, bool]:
         failed_ret = (None, 1.0, False)
 
-        if not predictions or not (window := view.window()):
+        if not predictions:
             return failed_ret
 
         settings = get_merged_plugin_settings(window)
@@ -109,7 +114,7 @@ class GuesslangClientCallbacks(TransportCallbacks):
 
         best_prediction = predictions[0]
         if best_prediction["confidence"] < min_confidence:
-            if allow_heuristic_guess and (syntax := cls.heuristic_guess(view, syntax_map)):
+            if allow_heuristic_guess and (syntax := cls.heuristic_guess(content, syntax_map)):
                 return (syntax, 0.0, True)
             return failed_ret
 
@@ -118,22 +123,33 @@ class GuesslangClientCallbacks(TransportCallbacks):
             Logger.log(window, f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}')
             return failed_ret
 
-        if not (syntax := cls.resolve_best_syntax_likes(syntax_likes)):
+        if not (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False)):
             return failed_ret
 
         return (syntax, best_prediction["confidence"], False)
 
     @classmethod
-    def heuristic_guess(cls, view: sublime.View, syntax_map: Dict[str, List[str]]) -> Optional[sublime.Syntax]:
-        code = view.substr(sublime.Region(0, 80)).lstrip()
+    def heuristic_guess(cls, content: str, syntax_map: Dict[str, List[str]]) -> Optional[sublime.Syntax]:
         for start, language_id in cls.heuristic_starting_map.items():
             if (
-                code.startswith(start)
+                content.startswith(start)
                 and (syntax_likes := syntax_map.get(language_id, None))
-                and (syntax := cls.resolve_best_syntax_likes(syntax_likes))
+                and (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False))
             ):
                 return syntax
         return None
+
+    @staticmethod
+    def assert_prediction(content: str, prediction: sublime.Syntax) -> bool:
+        """
+        Sometimes the model gives prediction which is obviously wrong.
+        This function does some simple characteristics check to prevent that.
+        """
+        # the model seems to predict plain text as "INI" syntax quite frequently...
+        if prediction.scope == "source.ini" and not re.search(r"^[^\s=]+\s*=(?=\b|\s|$)", content, re.MULTILINE):
+            return False
+
+        return True
 
 
 def _snapshot_view(func: Callable) -> Callable:
@@ -177,9 +193,9 @@ def run_auto_set_syntax_on_view(
     if event_name == "load" and _assign_syntax_with_trimmed_filename(view, event_name):
         return True
 
-    if event_name in ("command", "load", "paste"):
+    if event_name in ("command", "load", "paste") and (view_info := ViewSnapshot.get_by_view(view)):
         # this is the ultimate fallback and done async
-        _assign_syntax_with_guesslang_async(view, event_name)
+        _assign_syntax_with_guesslang_async(view_info, event_name)
 
     return _sorry_cannot_help(view, event_name)
 
@@ -270,16 +286,15 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optiona
     return False
 
 
-def _assign_syntax_with_guesslang_async(view: sublime.View, event_name: Optional[str] = None) -> None:
+def _assign_syntax_with_guesslang_async(view_info: TD_ViewSnapshot, event_name: Optional[str] = None) -> None:
     if (
         not G.guesslang
-        or not (view_info := ViewSnapshot.get_by_view(view))
         or "." in view_info["file_name"]  # don't apply on those have an extension
-        or not ((original_syntax := view.syntax()) and original_syntax.name == "Plain Text")
+        or not ((syntax := view_info["syntax"]) and syntax.name == "Plain Text")
     ):
         return None
 
-    G.guesslang.request_guess(head_tail_content(view_info["content"], 2000), view.id(), event_name=event_name)
+    G.guesslang.request_guess_snapshot(view_info, event_name=event_name)
 
 
 def _sorry_cannot_help(view: sublime.View, event_name: Optional[str] = None) -> bool:

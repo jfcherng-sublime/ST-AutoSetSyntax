@@ -6,6 +6,9 @@ from typing import Any, Dict, Generator, List, Optional, TypedDict, Union
 import sublime
 
 
+SyntaxLike = Union[str, sublime.Syntax]
+
+
 class Optimizable(metaclass=ABCMeta):
     def is_droppable(self) -> bool:
         """
@@ -48,6 +51,7 @@ class ST_SyntaxRule(ST_MatchRule):
 
 
 class TD_ViewSnapshot(TypedDict):
+    id: int  # view ID
     char_count: int
     content: str  # pseudo file content
     file_name: str  # empty string if not on a disk

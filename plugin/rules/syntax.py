@@ -2,7 +2,7 @@ from __future__ import annotations
 
 # __future__ must be the first import
 from ..constant import VERSION
-from ..helper import find_syntax_by_syntax_like
+from ..helper import find_syntax_by_syntax_likes
 from ..helper import first
 from ..types import Optimizable, ST_SyntaxRule
 from .match import MatchRule
@@ -56,7 +56,7 @@ class SyntaxRule(Optimizable):
         if isinstance(syntaxes, str):
             syntaxes = [syntaxes]
         obj.syntaxes_name = tuple(syntaxes)
-        if target_syntax := first(map(find_syntax_by_syntax_like, syntaxes)):
+        if target_syntax := find_syntax_by_syntax_likes(syntaxes):
             obj.syntax = target_syntax
 
         # note that an empty string selector should match any scope

@@ -5,7 +5,7 @@ from typing import List, Optional, TypedDict
 
 
 class GuesslangServerResponse(TypedDict):
-    id: int  # unique message ID (actually View ID)
+    id: int  # the message ID, which is an ID of a view actually
     data: List[GuesslangServerPredictionItem]
     event_name: Optional[str]
 

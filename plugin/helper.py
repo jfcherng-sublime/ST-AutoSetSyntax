@@ -1,5 +1,6 @@
 from .lru_cache import clearable_lru_cache
 from .settings import get_st_setting
+from .types import SyntaxLike
 from functools import cmp_to_key
 from functools import lru_cache
 from functools import reduce
@@ -45,17 +46,36 @@ def compile_regex(regex: Union[str, Pattern[str]], flags: int = 0) -> Pattern[st
 
 @clearable_lru_cache()
 def find_syntax_by_syntax_like(
-    like: Union[str, sublime.Syntax],
+    like: SyntaxLike,
+    *,
     allow_hidden: bool = False,
     allow_plaintext: bool = True,
 ) -> Optional[sublime.Syntax]:
     """Find a syntax by a "Syntax object" / "scope" / "name" / "partial path"."""
-    return first(find_syntaxes_by_syntax_like(like, allow_hidden, allow_plaintext))
+    return first(find_syntaxes_by_syntax_like(like, allow_hidden=allow_hidden, allow_plaintext=allow_plaintext))
+
+
+def find_syntax_by_syntax_likes(
+    likes: Iterable[SyntaxLike],
+    *,
+    allow_hidden: bool = False,
+    allow_plaintext: bool = True,
+) -> Optional[sublime.Syntax]:
+    """Find a syntax by a Iterable of "Syntax object" / "scope" / "name" / "partial path"."""
+    return first(
+        find_syntax_by_syntax_like(
+            like,
+            allow_hidden=allow_hidden,
+            allow_plaintext=allow_plaintext,
+        )
+        for like in likes
+    )
 
 
 @clearable_lru_cache()
 def find_syntaxes_by_syntax_like(
-    like: Union[str, sublime.Syntax],
+    like: SyntaxLike,
+    *,
     allow_hidden: bool = False,
     allow_plaintext: bool = True,
 ) -> Tuple[sublime.Syntax, ...]:
@@ -136,15 +156,20 @@ def get_view_by_id(id: int) -> Optional[sublime.View]:
 
 
 def head_tail_content(content: str, partial: int) -> str:
-    if partial < 0 or len(content) <= partial * 2:
+    if partial < 0:
+        return ""
+
+    if len(content) <= partial * 2:
         return content
+
     return content[:partial] + "\n\n" + content[partial : partial * 2]
 
 
 def head_tail_content_st(view: sublime.View, partial: int) -> str:
-    size = view.size()
+    if partial < 0:
+        return ""
 
-    if partial < 0 or partial * 2 >= size:
+    if (size := view.size()) <= partial * 2:
         return view.substr(sublime.Region(0, size))
 
     return (

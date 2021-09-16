@@ -25,6 +25,7 @@ class ViewSnapshot:
             filesize = -1
 
         cls.snapshots[cache_id] = {
+            "id": view.id(),
             "char_count": view.size(),
             "content": get_view_pseudo_content(view, window),
             "file_name": filename,

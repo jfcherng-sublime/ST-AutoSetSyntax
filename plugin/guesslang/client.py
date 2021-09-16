@@ -1,4 +1,6 @@
+from ..helper import head_tail_content
 from ..libs import websocket
+from ..types import TD_ViewSnapshot
 from typing import Optional, Protocol
 import sublime
 import threading
@@ -35,14 +37,14 @@ class GuesslangClient:
         self.callback_object = callback_object
 
         self.ws: Optional[websocket.WebSocketApp] = None
-        self._init_client_thread()
+        self._start_client_thread()
 
     def __del__(self) -> None:
         if self.ws:
             self.ws.close()
 
-    def _init_client_thread(self) -> None:
-        def _client_thread(client: GuesslangClient) -> None:
+    def _start_client_thread(self) -> None:
+        def _worker(client: GuesslangClient) -> None:
             client.ws = websocket.WebSocketApp(
                 f"ws://{client.host}:{client.port}",
                 on_open=getattr(self.callback_object, "on_open", None),
@@ -53,14 +55,20 @@ class GuesslangClient:
             client.ws.run_forever()
 
         # websocket.enableTrace(True)
-        self.thread = threading.Thread(target=_client_thread, args=(self,))
+        self.thread = threading.Thread(target=_worker, args=(self,))
         self.thread.start()
 
     @staticmethod
     def is_connected(ws: websocket.WebSocketApp) -> bool:
         return ws.sock is not None
 
-    def request_guess(self, content: str, msg_id: int = None, event_name: Optional[str] = None) -> None:
+    def request_guess_snapshot(self, view_info: TD_ViewSnapshot, event_name: Optional[str] = None) -> None:
         if self.ws and self.is_connected(self.ws):
-            payload = sublime.encode_value({"id": msg_id, "content": content, "event_name": event_name})
+            payload = sublime.encode_value(
+                {
+                    "id": view_info["id"],
+                    "content": head_tail_content(view_info["content"], 2000),
+                    "event_name": event_name,
+                }
+            )
             self.ws.send(payload)
