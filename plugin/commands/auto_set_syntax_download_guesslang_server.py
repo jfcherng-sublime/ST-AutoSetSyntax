@@ -48,6 +48,9 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
             decompress_file(zip_path)
             self._chore(zip_path)
 
+            if not GuesslangServer.server_file.is_file():
+                sublime.error_message(f"[{PLUGIN_NAME}] Cannot find the server: {str(GuesslangServer.server_file)}")
+
             if is_running:
                 sublime.run_command("auto_set_syntax_restart_guesslang")
 
