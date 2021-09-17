@@ -1,12 +1,13 @@
 # AutoSetSyntax Changelog
 
-<<<<<<< Updated upstream
-=======
+## 2.3.4
+
+- fix: `auto_set_syntax_download_guesslang_server` command doesn't create folder recursively
+
 ## 2.3.3
 
 - fix: `auto_set_syntax_download_guesslang_server` command failure because files/directories are locked
 
->>>>>>> Stashed changes
 ## 2.3.2
 
 - fix: do some basic checks for the guesslang-predicted syntax
