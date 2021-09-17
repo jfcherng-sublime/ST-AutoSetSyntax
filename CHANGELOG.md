@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.3.5
+
+- fix: auto restart guesslang server after running install command
+- fix: download guesslang server by chunks
+- refactor: use hardcoded guesslang server download URL
+- chore: also check guesslang server bin existence after downloading
+
 ## 2.3.4
 
 - fix: `auto_set_syntax_download_guesslang_server` command doesn't create folder recursively
