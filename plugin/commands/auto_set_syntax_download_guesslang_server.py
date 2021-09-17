@@ -1,12 +1,12 @@
 from ..constant import GITHUB_TAGS_API
 from ..constant import PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
+from ..helper import first
 from ..types_github import GithubApiTags
 from functools import cmp_to_key
 from pathlib import Path
 from typing import Optional, Union
 import gzip
-import os
 import shutil
 import sublime
 import sublime_plugin
@@ -15,6 +15,8 @@ import threading
 import time
 import urllib.request
 import zipfile
+
+PathLike = Union[Path, str]
 
 
 class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationCommand):
@@ -36,14 +38,14 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
 
         if is_running := GuesslangServer.is_running():
             GuesslangServer.stop()
-            time.sleep(3)  # wait for stopping the server
+            time.sleep(1)  # wait for stopping the server
 
         shutil.rmtree(GuesslangServer.server_dir, ignore_errors=True)
 
         try:
             zip_path = GuesslangServer.server_dir / "source.zip"
             download_file(url, zip_path)
-            decompress_file(str(zip_path))
+            decompress_file(zip_path)
             self._chore(zip_path)
 
             if is_running:
@@ -58,15 +60,12 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
             return int(a.stat().st_mtime - b.stat().st_mtime)
 
         # get the folder, which is just decompressed
-        folder = next(
-            iter(
-                sorted(
-                    (path for path in zip_path.parent.iterdir() if path.is_dir()),
-                    key=cmp_to_key(_sorter),
-                    reverse=True,
-                )
-            ),
-            None,
+        folder = first(
+            sorted(
+                (path for path in zip_path.parent.iterdir() if path.is_dir()),
+                key=cmp_to_key(_sorter),
+                reverse=True,
+            )
         )
 
         if not folder:
@@ -100,34 +99,42 @@ def find_latest_download_url() -> Optional[str]:
     return None
 
 
-def decompress_file(tarball: str, dst_dir: Optional[str] = None) -> None:
+def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bool:
     """
     Decompress the tarball.
 
     :param      tarball:  The tarball
     :param      dst_dir:  The destination directory
+
+    :returns:   Successfully decompressed the tarball or not
     """
 
-    if not dst_dir:
-        dst_dir = os.path.dirname(tarball)
+    tarball = Path(tarball)
+    dst_dir = Path(dst_dir) if dst_dir else tarball.parent
+    filename = tarball.name
 
-    if tarball.endswith(".tar.gz"):
-        with tarfile.open(tarball, "r:gz") as f_1:
-            f_1.extractall(dst_dir)
-        return
+    try:
+        if filename.endswith(".tar.gz"):
+            with tarfile.open(tarball, "r:gz") as f_1:
+                f_1.extractall(dst_dir)
+            return True
 
-    if tarball.endswith(".tar"):
-        with tarfile.open(tarball, "r:") as f_2:
-            f_2.extractall(dst_dir)
-        return
+        if filename.endswith(".tar"):
+            with tarfile.open(tarball, "r:") as f_2:
+                f_2.extractall(dst_dir)
+            return True
 
-    if tarball.endswith(".zip"):
-        with zipfile.ZipFile(tarball) as f_3:
-            f_3.extractall(dst_dir)
-        return
+        if filename.endswith(".zip"):
+            with zipfile.ZipFile(tarball) as f_3:
+                f_3.extractall(dst_dir)
+            return True
+    except Exception:
+        pass
+    finally:
+        return False
 
 
-def download_file(url: str, save_path: Union[Path, str]) -> None:
+def download_file(url: str, save_path: PathLike) -> None:
     """
     Downloads a file.
 
@@ -137,6 +144,6 @@ def download_file(url: str, save_path: Union[Path, str]) -> None:
 
     save_path = Path(save_path)
     save_path.unlink(missing_ok=True)
-    save_path.parent.mkdir(parents=True,  exist_ok=True)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
     with save_path.open("wb") as f:
         f.write(simple_urlopen(url))
