@@ -137,6 +137,6 @@ def download_file(url: str, save_path: Union[Path, str]) -> None:
 
     save_path = Path(save_path)
     save_path.unlink(missing_ok=True)
-    save_path.parent.mkdir(exist_ok=True)
+    save_path.parent.mkdir(parents=True,  exist_ok=True)
     with save_path.open("wb") as f:
         f.write(simple_urlopen(url))
