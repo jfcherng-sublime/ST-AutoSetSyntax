@@ -1,8 +1,7 @@
-from ..constant import GITHUB_TAGS_API
+from ..constant import GUESSLANG_SERVER_URL
 from ..constant import PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
 from ..helper import first
-from ..types_github import GithubApiTags
 from functools import cmp_to_key
 from pathlib import Path
 from typing import Optional, Union
@@ -32,10 +31,6 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
     def _worker(self) -> None:
         sublime.status_message("Begin downloading guesslang server...")
 
-        if not (url := find_latest_download_url()):
-            sublime.error_message(f"[{PLUGIN_NAME}] Cannot find a download URL for guesslang server.")
-            return
-
         if is_running := GuesslangServer.is_running():
             GuesslangServer.stop()
             time.sleep(1)  # wait for stopping the server
@@ -44,7 +39,7 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
 
         try:
             zip_path = GuesslangServer.server_dir / "source.zip"
-            download_file(url, zip_path)
+            download_file(GUESSLANG_SERVER_URL, zip_path)
             decompress_file(zip_path)
             self._chore(zip_path)
 
@@ -76,11 +71,12 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
 
         # move the decompressed folder one level up
         guesslang_server_dir = folder.parent
-        tmp_dir = guesslang_server_dir.parent / "_"
+        tmp_dir = guesslang_server_dir.parent / ".tmp"
         shutil.rmtree(tmp_dir, ignore_errors=True)
         folder.replace(tmp_dir)
         shutil.rmtree(guesslang_server_dir, ignore_errors=True)
         tmp_dir.replace(guesslang_server_dir)
+        # cleanup
         zip_path.unlink(missing_ok=True)
 
 
@@ -90,16 +86,6 @@ def simple_urlopen(url: str) -> bytes:
     if response.info().get("Content-Encoding") == "gzip":
         data = gzip.decompress(data)
     return data
-
-
-def find_latest_download_url() -> Optional[str]:
-    data = simple_urlopen(GITHUB_TAGS_API)
-    tags: GithubApiTags = sublime.decode_value(data.decode("utf-8"))
-    # these tags are ordered by created time DESC
-    for tag in tags:
-        if tag["name"].startswith("server-"):
-            return tag["zipball_url"]
-    return None
 
 
 def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bool:

@@ -36,4 +36,4 @@ VIEW_IS_TRANSIENT_SETTINGS_KEY = f"{PLUGIN_NAME}/is_transient"
 
 RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|syntax)=(?P<syntax>[^\s:]+):?(?=\s)", re.IGNORECASE)
 
-GITHUB_TAGS_API = "https://api.github.com/repos/jfcherng-sublime/ST-AutoSetSyntax/tags"
+GUESSLANG_SERVER_URL = "https://codeload.github.com/jfcherng-sublime/ST-AutoSetSyntax/zip/refs/tags/server-0.0.1"
