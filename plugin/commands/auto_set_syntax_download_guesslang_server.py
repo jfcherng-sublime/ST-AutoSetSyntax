@@ -80,9 +80,11 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         zip_path.unlink(missing_ok=True)
 
 
-def simple_urlopen(url: str) -> bytes:
+def simple_urlopen(url: str, chunk_size: int = 512 * 1024) -> bytes:
     response = urllib.request.urlopen(url)
-    data = response.read()
+    data = b""
+    while chunk := response.read(chunk_size):
+        data += chunk
     if response.info().get("Content-Encoding") == "gzip":
         data = gzip.decompress(data)
     return data
