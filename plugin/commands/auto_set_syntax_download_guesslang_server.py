@@ -2,6 +2,7 @@ from ..constant import GUESSLANG_SERVER_URL
 from ..constant import PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
 from ..helper import first
+from ..settings import get_merged_plugin_setting
 from functools import cmp_to_key
 from pathlib import Path
 from typing import Optional, Union
@@ -31,7 +32,11 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
     def _worker(self) -> None:
         sublime.status_message("Begin downloading guesslang server...")
 
-        if is_running := GuesslangServer.is_running():
+        is_enabled_or_running = bool(
+            get_merged_plugin_setting(sublime.active_window(), "guesslang.enabled") or GuesslangServer.is_running()
+        )
+
+        if is_enabled_or_running:
             GuesslangServer.stop()
             time.sleep(1)  # wait for stopping the server
 
@@ -46,7 +51,7 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
             if not GuesslangServer.server_file.is_file():
                 sublime.error_message(f"[{PLUGIN_NAME}] Cannot find the server: {str(GuesslangServer.server_file)}")
 
-            if is_running:
+            if is_enabled_or_running:
                 sublime.run_command("auto_set_syntax_restart_guesslang")
 
             sublime.message_dialog(f"[{PLUGIN_NAME}] Finish downloading guesslang server!")
