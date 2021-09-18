@@ -85,6 +85,10 @@ class GuesslangClientCallbacks(TransportCallbacks):
             details = {"event": event_name, "reason": "predict", "predictions": predictions[:3]}
             status_message = f'Predicted as "{best_syntax.name}" ({int(confidence * 100)}% confidence)'
 
+        # on_message() callback is async and maybe now the syntax has been set by other things somehow
+        if (current_syntax := view.syntax()) and not is_plaintext_syntax(current_syntax):
+            return
+
         assign_syntax_to_view(view, best_syntax, details=details)
         sublime.status_message(status_message)
 
