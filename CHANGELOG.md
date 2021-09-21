@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.3.6
+
+- fix: recheck view syntax again before setting syntax by guesslang
+
 ## 2.3.5
 
 - fix: auto restart guesslang server after running install command
