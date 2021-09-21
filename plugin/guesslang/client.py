@@ -24,6 +24,13 @@ class TransportCallbacks(Protocol):
         ...
 
 
+class NullTransportCallbacks:
+    on_open = None
+    on_message = None
+    on_error = None
+    on_close = None
+
+
 class GuesslangClient:
     def __init__(
         self,
@@ -34,7 +41,7 @@ class GuesslangClient:
     ) -> None:
         self.host = host
         self.port = port
-        self.callback_object = callback_object
+        self.callback_object = callback_object or NullTransportCallbacks()
 
         self.ws: Optional[websocket.WebSocketApp] = None
         self._start_client_thread()
@@ -47,10 +54,10 @@ class GuesslangClient:
         def _worker(client: GuesslangClient) -> None:
             client.ws = websocket.WebSocketApp(
                 f"ws://{client.host}:{client.port}",
-                on_open=getattr(self.callback_object, "on_open", None),
-                on_message=getattr(self.callback_object, "on_message", None),
-                on_error=getattr(self.callback_object, "on_error", None),
-                on_close=getattr(self.callback_object, "on_close", None),
+                on_open=client.callback_object.on_open,
+                on_message=client.callback_object.on_message,
+                on_error=client.callback_object.on_error,
+                on_close=client.callback_object.on_close,
             )
             client.ws.run_forever()
 

@@ -1,7 +1,6 @@
 from ..constant import PLUGIN_NAME
 from ..constant import RE_VIM_SYNTAX_LINE
 from ..constant import VIEW_RUN_ID_SETTINGS_KEY
-from ..guesslang.client import TransportCallbacks
 from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
 from ..helper import find_syntax_by_syntax_like
 from ..helper import find_syntax_by_syntax_likes
@@ -37,7 +36,7 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
         run_auto_set_syntax_on_view(self.view, event_name)
 
 
-class GuesslangClientCallbacks(TransportCallbacks):
+class GuesslangClientCallbacks:
     """This class contains event callbacks for the guesslang server."""
 
     heuristic_starting_map = {
