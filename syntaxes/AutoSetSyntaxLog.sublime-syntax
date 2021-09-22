@@ -40,10 +40,10 @@ contexts:
         0: meta.embedded.python.autosetsyntax.log
         1: punctuation.definition.string.end.python
         2: punctuation.section.group.end.python
-    - match: (?=(?:rule|implementation)s?[^:]*:)
+    - match: '(?:rule|implementation|prediction)s?[^:]*:'
       push:
         - include: pop-at-end
-        - match: ''
+        - match: (?=\S)
           embed: 'scope:source.python'
           embed_scope: meta.embedded.python.autosetsyntax.log
           escape: $

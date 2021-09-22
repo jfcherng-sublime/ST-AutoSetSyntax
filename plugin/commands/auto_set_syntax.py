@@ -60,6 +60,7 @@ class GuesslangClientCallbacks:
             predictions = response["data"]
             event_name = response["event_name"]
             view_id = response["id"]
+            Logger.log(sublime.active_window(), f"🐛 Guesslang top predictions: {predictions[:3]}")
         except (TypeError, ValueError):
             Logger.log(sublime.active_window(), f"💬 Guesslang server says: {message}")
             return
