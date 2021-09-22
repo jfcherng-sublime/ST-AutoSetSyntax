@@ -42,6 +42,7 @@ class GuesslangClientCallbacks:
     heuristic_starting_map = {
         "{": "json",
         "---\n": "yaml",
+        "-- phpMyAdmin ": "sql",
         "-- ": "lua",
         "[[": "toml",
         "[": "ini",

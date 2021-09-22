@@ -301,6 +301,21 @@
             ]
         },
         {
+            "syntaxes": "scope:source.sql",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "first_line_contains",
+                    "args": ["-- phpMyAdmin SQL Dump"]
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["\\bCREATE\\s+TABLE\\s+IF\\s+NOT\\s+EXISTS\\b"],
+                    "kwargs": { "regex_flags": ["MULTILINE", "IGNORECASE"] }
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.typoscript",
             "selector": "text.plain",
             "rules": [
@@ -462,7 +477,7 @@
         "cpp": ["scope:source.c++"],
         "cs": ["scope:source.cs"],
         "css": [
-             // SCSS is a superset and this server can't distinguish SCSS and CSS
+            // SCSS is a superset and this server can't distinguish SCSS and CSS
             "scope:source.scss",
             "scope:source.css"
         ],
