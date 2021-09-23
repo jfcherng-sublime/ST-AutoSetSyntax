@@ -39,15 +39,18 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 class GuesslangClientCallbacks:
     """This class contains event callbacks for the guesslang server."""
 
-    heuristic_starting_map = {
-        "{": "json",
-        "---\n": "yaml",
-        "-- phpMyAdmin ": "sql",
-        "-- ": "lua",
-        "[[": "toml",
-        "[": "ini",
-        "<?php": "php",
-        "<?xml": "xml",
+    heuristic_head_tail_map: Dict[Tuple[Optional[str], Optional[str]], str] = {
+        # (head, tail): languageId,
+        ("[{", "}]"): "json",
+        ("[[", "]]"): "json",
+        ("{", "}"): "json",
+        ("[", None): "ini",
+        ("---\n", None): "yaml",
+        ("-- phpMyAdmin ", None): "sql",
+        ("-- ", None): "lua",
+        ("<?=", None): "php",
+        ("<?php", None): "php",
+        ("<?xml", None): "xml",
     }
 
     def on_open(self, ws: websocket.WebSocketApp) -> None:
@@ -72,7 +75,7 @@ class GuesslangClientCallbacks:
         if not predictions or not (view := get_view_by_id(view_id)) or not (window := view.window()):
             return
 
-        content = head_tail_content_st(view, 2000).lstrip()
+        content = head_tail_content_st(view, 2000).strip()
         predictions.sort(key=itemgetter("confidence"), reverse=True)
         best_syntax, confidence, is_heuristic = self.resolve_guess_predictions(window, content, predictions)
 
@@ -135,13 +138,18 @@ class GuesslangClientCallbacks:
 
     @classmethod
     def heuristic_guess(cls, content: str, syntax_map: Dict[str, List[str]]) -> Optional[sublime.Syntax]:
-        for start, language_id in cls.heuristic_starting_map.items():
-            if (
-                content.startswith(start)
-                and (syntax_likes := syntax_map.get(language_id, None))
-                and (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False))
-            ):
-                return syntax
+        target_language_id = None
+        for (head, tail), language_id in cls.heuristic_head_tail_map.items():
+            if (head is None or content.startswith(head)) and (tail is None or content.endswith(tail)):
+                target_language_id = language_id
+                break
+
+        if (
+            target_language_id
+            and (syntax_likes := syntax_map.get(target_language_id, None))
+            and (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False))
+        ):
+            return syntax
         return None
 
     @staticmethod
