@@ -203,7 +203,7 @@ def run_auto_set_syntax_on_view(
     if _assign_syntax_with_first_line(view, event_name):
         return True
 
-    if event_name == "load" and _assign_syntax_with_trimmed_filename(view, event_name):
+    if event_name in ("command", "load") and _assign_syntax_with_trimmed_filename(view, event_name):
         return True
 
     if event_name in ("command", "load", "paste") and (view_info := ViewSnapshot.get_by_view(view)):
@@ -319,6 +319,7 @@ def _sorry_cannot_help(view: sublime.View, event_name: Optional[str] = None) -> 
 def assign_syntax_to_view(
     view: sublime.View,
     syntax: sublime.Syntax,
+    *,
     details: Optional[Dict[str, Any]] = None,
     same_buffer: bool = True,
 ) -> bool:
