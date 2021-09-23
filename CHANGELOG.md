@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.3.7
+
+- feat: add a rule for `SQL`
+- fix: `head_tail_content()` wrong tail content
+- chore: add some debug message for guesslang
+
 ## 2.3.6
 
 - fix: recheck view syntax again before setting syntax by guesslang
