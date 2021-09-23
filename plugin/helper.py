@@ -162,7 +162,7 @@ def head_tail_content(content: str, partial: int) -> str:
     if len(content) <= partial * 2:
         return content
 
-    return content[:partial] + "\n\n" + content[partial : partial * 2]
+    return content[:partial] + "\n\n" + content[-partial:]
 
 
 def head_tail_content_st(view: sublime.View, partial: int) -> str:
