@@ -39,18 +39,18 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 class GuesslangClientCallbacks:
     """This class contains event callbacks for the guesslang server."""
 
-    heuristic_head_tail_map: Dict[Tuple[Optional[str], Optional[str]], str] = {
+    heuristic_head_tail_map: Dict[Tuple[str, str], str] = {
         # (head, tail): languageId,
         ("[{", "}]"): "json",
         ("[[", "]]"): "json",
         ("{", "}"): "json",
-        ("[", None): "ini",
-        ("---\n", None): "yaml",
-        ("-- phpMyAdmin ", None): "sql",
-        ("-- ", None): "lua",
-        ("<?=", None): "php",
-        ("<?php", None): "php",
-        ("<?xml", None): "xml",
+        ("[", ""): "ini",
+        ("---\n", ""): "yaml",
+        ("-- phpMyAdmin ", ""): "sql",
+        ("-- ", ""): "lua",
+        ("<?=", ""): "php",
+        ("<?php", ""): "php",
+        ("<?xml", ""): "xml",
     }
 
     def on_open(self, ws: websocket.WebSocketApp) -> None:
@@ -140,7 +140,7 @@ class GuesslangClientCallbacks:
     def heuristic_guess(cls, content: str, syntax_map: Dict[str, List[str]]) -> Optional[sublime.Syntax]:
         target_language_id = None
         for (head, tail), language_id in cls.heuristic_head_tail_map.items():
-            if (head is None or content.startswith(head)) and (tail is None or content.endswith(tail)):
+            if content.startswith(head) and content.endswith(tail):
                 target_language_id = language_id
                 break
 

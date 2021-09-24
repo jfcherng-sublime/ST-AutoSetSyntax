@@ -141,5 +141,4 @@ def download_file(url: str, save_path: PathLike) -> None:
     save_path = Path(save_path)
     save_path.unlink(missing_ok=True)
     save_path.parent.mkdir(parents=True, exist_ok=True)
-    with save_path.open("wb") as f:
-        f.write(simple_urlopen(url))
+    save_path.write_bytes(simple_urlopen(url))

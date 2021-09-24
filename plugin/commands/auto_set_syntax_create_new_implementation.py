@@ -26,8 +26,7 @@ class AbstractCreateNewImplementationCommand(sublime_plugin.TextCommand, metacla
         save_dir = Path(self.save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
 
-        with (Path(PLUGIN_CUSTOM_DIR) / ".python-version").open("w", encoding="utf-8") as f:
-            f.write("3.8\n")
+        (Path(PLUGIN_CUSTOM_DIR) / ".python-version").write_text("3.8\n", encoding="utf-8")
 
         new.settings().update(
             {
