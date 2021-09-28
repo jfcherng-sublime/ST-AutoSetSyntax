@@ -23,6 +23,11 @@ and communicates with it in Sublime Text.
   If the directory of your `node` executable is in the `PATH` environment variable, then you don't have to configure it.
   If your Node runtime is provided by `lsp_utils`, then you can config `"guesslang.node_bin"` to `"${lsp_utils_node_bin}"`.
   If you are none of the above cases, you have to provide the path of your `node` executable in `"guesslang.node_bin"`.
+  
+!!! Tip "For Windows 7 Users"
+
+    Windows 7 can't install Node.js v14 but you can simply download a [portable version](https://nodejs.org/dist/latest-v14.x/)
+    such as `node-v14.17.6-win-x64.zip`, decompress it and set the `guesslang.node_bin` path.
 
 - Install the guesslang server.
 

@@ -470,7 +470,10 @@
     /////////////////////////////////////////////////////////////////////////
 
     // The min requirement for Node.js is v14.
+    // If you are using Windows 7, which can't install Node.js v14,
+    // you can simply download a portable version and set the "guesslang.node_bin" path.
     "guesslang.enabled": false,
+    // The path of the node/node.exe executable.
     // You can use "${lsp_utils_node_bin}" if your Node.js is installed by lsp_utils
     "guesslang.node_bin": "node",
     "guesslang.port": 15151,
