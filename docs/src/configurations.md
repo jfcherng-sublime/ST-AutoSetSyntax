@@ -436,6 +436,23 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     Test whether file `foo` or directory `bar/` exists relatively to the file.
 
+#### `is_arch`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_arch",
+        "args": ["x32", "arm64"],
+    }
+    ```
+
+    Test whether the system arch is `x32` or `arm64`.
+
+    !!! info
+
+        Available platforms are: `x32`, `x64`, and `arm64`.
+
 #### `is_extension`
 
 !!! example
@@ -520,6 +537,41 @@ To edit project settings, go to `Project` » `Edit Project`.
     !!! info
 
         If `case_insensitive` is not provided, it will be `true` on Windows but `false` on other OSes.
+
+#### `is_platform`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_platform",
+        "args": ["linux", "windows"],
+    }
+    ```
+
+    Test whether the system platform is `Linux` or `Windows`.
+
+    !!! info
+
+        Available platforms are: `linux`, `osx`, and `windows`.
+
+#### `is_platform_arch`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_platform_arch",
+        "args": ["linux_x64", "windows_x32", "osx_arm64"],
+    }
+    ```
+
+    Test whether the system platform and arch is `Linux 64-bit`, `Windows 32-bit` or `Apple M1`.
+
+    !!! info
+
+        Available `platform_arch` are combinations of (`linux`, `osx`, `windows`) and (`x32`, `x64`, `arm64`)
+        using a `_` as the delimiter.
 
 #### `is_rails_file`
 
