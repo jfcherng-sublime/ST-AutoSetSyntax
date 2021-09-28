@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.3.8
+
+- chore: fix outdated `sublime-package.json` contents
+- feat: add a rule for ST/SM `changelog.txt`
+- feat: add new constraints `is_arch`, `is_platform` and `is_platform_arch`
+- fix: also try trimmed filename when triggered by a command
+
 ## 2.3.7
 
 - feat: add a rule for `SQL`
