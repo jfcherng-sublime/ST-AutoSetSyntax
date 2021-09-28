@@ -198,7 +198,7 @@
             "constraint_rule": {
               "properties": {
                 "constraint": {
-                  "markdownDescription": "The \"name\" of the `Constraint` class used for testing the view. You may prefix it with `NOT_` to invert the result of the constraint like `\"NOT_contains\"`.",
+                  "markdownDescription": "The \"name\" of the `Constraint` class used for testing the view.",
                   "type": "string",
                   "enum": [
                     "contains",
