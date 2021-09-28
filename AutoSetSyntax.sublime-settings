@@ -389,6 +389,22 @@
             ]
         },
         {
+            "comment": "Sublime Text/Merge changelog",
+            "syntaxes": "scope:text.html.basic",
+            "selector": "text.plain",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_name",
+                    "args": ["changelog.txt"]
+                },
+                {
+                    "constraint": "relative_exists",
+                    "args": ["crash_reporter", "crash_reporter.exe"]
+                }
+            ]
+        },
+        {
             "comment": "Package installation/update messages from Package Control",
             "syntaxes": "scope:text.html.markdown",
             "selector": "text.plain",
