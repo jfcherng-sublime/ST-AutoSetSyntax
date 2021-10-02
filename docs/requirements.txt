@@ -2,7 +2,7 @@
 --index https://pypi.python.org/simple/
 
 # main
-mkdocs-material==7.3.0
+mkdocs-material==7.3.2
 
 # plugins
 mkdocs-git-revision-date-localized-plugin==0.10.0
