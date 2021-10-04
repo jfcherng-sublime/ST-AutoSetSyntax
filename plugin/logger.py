@@ -48,7 +48,8 @@ class Logger:
         if not (enabled and window and get_merged_plugin_setting(window, "enable_log")):
             return
 
-        if cls._get_history_count(window) >= get_st_setting("console_max_history_lines", math.inf):
+        max_lines = get_st_setting("console_max_history_lines", math.inf) / 8
+        if cls._get_history_count(window) >= max_lines:
             cls.clear(window)
 
         window.run_command(

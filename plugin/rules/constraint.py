@@ -16,9 +16,11 @@ from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, Union
+from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, TypeVar, Union
 import operator
 import sublime
+
+T = TypeVar("T")
 
 
 def get_constraint(obj: Any) -> Optional[Type[AbstractConstraint]]:
@@ -115,9 +117,9 @@ class AbstractConstraint(metaclass=ABCMeta):
         """Tests whether the `view` passes this constraint."""
         ...
 
-    def _handled_args(self, normalizer: Optional[Callable[[Any], Any]] = None) -> Tuple[Any, ...]:
+    def _handled_args(self, normalizer: Optional[Callable[[T], T]] = None) -> Tuple[T, ...]:
         """Filter falsy args and normalize them. Note that `0`, `""` and `None` are falsy."""
-        args: Iterable[Any] = filter(None, self.args)
+        args: Iterable[T] = filter(None, self.args)
         if normalizer:
             args = map(normalizer, args)
         return tuple(args)
