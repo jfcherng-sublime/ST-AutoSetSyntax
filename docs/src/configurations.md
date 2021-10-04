@@ -461,10 +461,15 @@ To edit project settings, go to `Project` » `Edit Project`.
     {
         "constraint": "is_extension",
         "args": [".rb", ".rake"],
+        "kwargs": {"case_insensitive": false},
     }
     ```
 
     Test whether the file extension is `.rb` or `.rake`.
+
+    !!! info
+
+        If `case_insensitive` is not provided, it will be `true` on Windows but `false` on other OSes.
 
 #### `is_in_git_repo`
 

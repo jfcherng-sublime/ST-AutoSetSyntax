@@ -309,7 +309,7 @@
                   "if": {
                     "properties": {
                       "constraint": {
-                        "pattern": "^is_name$"
+                        "pattern": "^is_name|is_extension$"
                       }
                     }
                   },
