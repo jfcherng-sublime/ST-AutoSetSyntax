@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.3.9
+
+- feat: add `case_insensitive` for `is_extension` constraint
+- docs: add hinting for Win7 with Node.js v14
+
 ## 2.3.8
 
 - chore: fix outdated `sublime-package.json` contents
