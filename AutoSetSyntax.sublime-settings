@@ -85,7 +85,16 @@
                 },
                 {
                     "constraint": "is_name",
-                    "args": [".jshintrc", ".jscsrc", ".csslintrc", ".eslintrc", ".bowerrc"]
+                    "args": [
+                        ".babelrc",
+                        ".bowerrc",
+                        ".csslintrc",
+                        ".eslintrc",
+                        ".jscsrc",
+                        ".jshintrc",
+                        ".stylelintrc",
+                        "geojson"
+                    ]
                 }
             ]
         },
