@@ -64,7 +64,7 @@ class GuesslangClientCallbacks:
             predictions = response["data"]
             event_name = response["event_name"]
             view_id = response["id"]
-            Logger.log(sublime.active_window(), f"🐛 Guesslang top predictions: {predictions[:3]}")
+            Logger.log(sublime.active_window(), f"🐛 Guesslang top predictions: {predictions[:5]}")
         except (TypeError, ValueError):
             Logger.log(sublime.active_window(), f"💬 Guesslang server says: {message}")
             return
@@ -86,7 +86,7 @@ class GuesslangClientCallbacks:
             details: Dict[str, Any] = {"event": event_name, "reason": "predict (heuristic)"}
             status_message = f'Predicted as "{best_syntax.name}" by heuristics'
         else:
-            details = {"event": event_name, "reason": "predict", "predictions": predictions[:3]}
+            details = {"event": event_name, "reason": "predict", "confidence": confidence}
             status_message = f'Predicted as "{best_syntax.name}" ({int(confidence * 100)}% confidence)'
 
         # on_message() callback is async and maybe now the syntax has been set by other things somehow
