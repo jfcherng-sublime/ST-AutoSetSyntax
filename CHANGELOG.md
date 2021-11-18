@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.3.10
+
+- fix: always prefer shebang over filename
+- chore: improve debug messages
+- chore: update JSON rule as per ApplySytnax's
+
 ## 2.3.9
 
 - feat: add `case_insensitive` for `is_extension` constraint
