@@ -82,7 +82,6 @@ plugins:
       lang:
         - en
       separator: '[:：、,，.。!！?？()（）/／]+'
-      prebuild_index: true
   - minify:
       minify_html: true
   - git-revision-date-localized:
