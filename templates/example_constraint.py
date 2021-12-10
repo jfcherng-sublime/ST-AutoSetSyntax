@@ -14,5 +14,5 @@ class MyOwnConstraint(AbstractConstraint):
         # Your job is to implement this function, at least.
         # This function tests the `view`.
         # There is a @staticmethod which returns cached contexts for using.
-        #     def get_view_info(view: sublime.View) -> TD_ViewCache: ...
+        #     def get_view_info(view: sublime.View) -> TD_ViewSnapshot: ...
         return False
