@@ -348,13 +348,11 @@ def get_expand_variable_map() -> Dict[str, str]:
         if not (base_dir := package_storage / "lsp_utils/node-runtime").is_dir():
             return None
 
-        version: Optional[Tuple[int, int, int]] = None
+        version: Tuple[int, int, int] = (-1, -1, -1)
         for path in base_dir.iterdir():
             if path.is_dir() and (m := re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", path.name)):
-                version_found = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
-                if not version or version_found > version:
-                    version = version_found
-        return version
+                version = max(version, (int(m.group(1)), int(m.group(2)), int(m.group(3))))
+        return version if version[0] != -1 else None
 
     if node_version := _find_latest_lsp_utils_node_version(paths["package_storage"]):
         node_version_str = ".".join(map(str, node_version))
