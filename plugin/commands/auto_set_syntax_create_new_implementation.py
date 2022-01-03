@@ -20,13 +20,19 @@ class AbstractCreateNewImplementationCommand(sublime_plugin.TextCommand, metacla
         return f"{PLUGIN_NAME}: Create New {self.template_type}"
 
     def run(self, edit: sublime.Edit) -> None:
-        if not (new := _clone_file_as_template(self.view, edit, self.template_file, self.template_syntax)):
+        if not (
+            new := _clone_file_as_template(
+                self.view,
+                edit,
+                f"Packages/{PLUGIN_NAME}/templates/{self.template_file}",
+                self.template_syntax,
+            )
+        ):
             return
 
         save_dir = Path(self.save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
-
-        (Path(PLUGIN_CUSTOM_DIR) / ".python-version").write_text("3.8\n", encoding="utf-8")
+        (PLUGIN_CUSTOM_DIR / ".python-version").write_text("3.8\n", encoding="utf-8")
 
         new.settings().update(
             {
@@ -38,14 +44,14 @@ class AbstractCreateNewImplementationCommand(sublime_plugin.TextCommand, metacla
 
 class AutoSetSyntaxCreateNewConstraintCommand(AbstractCreateNewImplementationCommand):
     template_type = "Constraint"
-    template_file = f"Packages/{PLUGIN_NAME}/templates/example_constraint.py"
+    template_file = "example_constraint.py"
     template_syntax = "scope:source.python"
     save_dir = str(PLUGIN_CUSTOM_MODULE_PATHS["constraint"])
 
 
 class AutoSetSyntaxCreateNewMatchCommand(AbstractCreateNewImplementationCommand):
     template_type = "Match"
-    template_file = f"Packages/{PLUGIN_NAME}/templates/example_match.py"
+    template_file = "example_match.py"
     template_syntax = "scope:source.python"
     save_dir = str(PLUGIN_CUSTOM_MODULE_PATHS["match"])
 
