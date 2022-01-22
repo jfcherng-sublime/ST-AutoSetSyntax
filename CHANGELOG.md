@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.3.11
+
+- feat: add `.shared` into trimmed suffixes
+- refactor: simplify codes
+- test: add an PHP as xxx.sh file sample
+
 ## 2.3.10
 
 - fix: always prefer shebang over filename
