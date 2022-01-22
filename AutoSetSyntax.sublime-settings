@@ -446,6 +446,7 @@
         ".local",
         ".orig",
         ".sample",
+        ".shared",
         ".temp",
         ".test",
         ".tmp",
