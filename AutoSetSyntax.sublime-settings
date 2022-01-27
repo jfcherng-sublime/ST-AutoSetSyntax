@@ -325,6 +325,16 @@
             ]
         },
         {
+            "syntaxes": "scope:source.yaml",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "is_name",
+                    "args": [".clang-format", ".clang-tidy", ".clangd"]
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.typoscript",
             "selector": "text.plain",
             "rules": [
