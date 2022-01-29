@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.3.12
+
+- feat: add as YAML file: `.clang-format`, `.clang-tidy`, `.clangd`
+
 ## 2.3.11
 
 - feat: add `.shared` into trimmed suffixes
