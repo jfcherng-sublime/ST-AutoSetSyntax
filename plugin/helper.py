@@ -139,12 +139,16 @@ def get_nth_item(items: Sequence[T], n: int, default: Optional[T] = None) -> Opt
     return next(iter(items[n : n + 1]), default)
 
 
-def get_st_window(obj: Union[sublime.View, sublime.Window, sublime.Sheet]) -> Optional[sublime.Window]:
+def get_st_window(
+    obj: Union[sublime.View, sublime.Sheet, sublime.Window],
+    fallback: bool = False,
+) -> Optional[sublime.Window]:
     if isinstance(obj, sublime.Window):
         return obj
+    window = None
     if isinstance(obj, (sublime.View, sublime.Sheet)):
-        return obj.window()
-    raise RuntimeError("`obj` must be one of `sublime.View`, `sublime.Window`, `sublime.Sheet` types.")
+        window = obj.window()
+    return window or (sublime.active_window() if fallback else None)
 
 
 def get_view_by_id(id: int) -> Optional[sublime.View]:

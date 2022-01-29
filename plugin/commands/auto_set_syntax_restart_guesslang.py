@@ -13,14 +13,14 @@ class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):
         return f"{PLUGIN_NAME}: Restart Guesslang Client And Server"
 
     def is_enabled(self) -> bool:
-        return bool(get_merged_plugin_setting(sublime.active_window(), "guesslang.enabled"))
+        return bool(get_merged_plugin_setting("guesslang.enabled"))
 
     def run(self) -> None:
         sublime.set_timeout_async(self._worker)
 
     def _worker(self) -> None:
         host = "localhost"
-        port: int = get_merged_plugin_setting(sublime.active_window(), "guesslang.port")
+        port: int = get_merged_plugin_setting("guesslang.port")
         GuesslangServer.stop()
         if GuesslangServer.start(host, port):
             G.guesslang = GuesslangClient(host, port, callback_object=GuesslangClientCallbacks())

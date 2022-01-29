@@ -45,7 +45,7 @@ class Logger:
         show_plugin_name: bool = True,
         enabled: bool = True,
     ) -> None:
-        if not (enabled and window and get_merged_plugin_setting(window, "enable_log")):
+        if not (enabled and window and get_merged_plugin_setting("enable_log", window=window)):
             return
 
         max_lines = get_st_setting("console_max_history_lines", math.inf) / 8

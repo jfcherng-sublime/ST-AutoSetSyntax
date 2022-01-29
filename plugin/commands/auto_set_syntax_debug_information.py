@@ -62,7 +62,7 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
                 "constraints": get_constraints(),
             },
         }
-        info["plugin_settings"] = get_merged_plugin_settings(self.window)
+        info["plugin_settings"] = get_merged_plugin_settings(window=self.window)
         info["syntax_rule_collection"] = G.get_syntax_rule_collection(self.window)
         info["dropped_rules"] = G.get_dropped_rules(self.window)
 

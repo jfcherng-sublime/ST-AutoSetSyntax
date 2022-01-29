@@ -9,12 +9,17 @@ import sublime
 import sublime_plugin
 
 
-def get_merged_plugin_setting(window: sublime.Window, key: str, default: Optional[Any] = None) -> Any:
-    return get_merged_plugin_settings(window).get(key, default)
+def get_merged_plugin_setting(
+    key: str,
+    default: Optional[Any] = None,
+    *,
+    window: Optional[sublime.Window] = None,
+) -> Any:
+    return get_merged_plugin_settings(window=window or sublime.active_window()).get(key, default)
 
 
-def get_merged_plugin_settings(window: sublime.Window) -> MergedSettingsDict:
-    return AioSettings.get_all(window)
+def get_merged_plugin_settings(*, window: Optional[sublime.Window] = None) -> MergedSettingsDict:
+    return AioSettings.get_all(window or sublime.active_window())
 
 
 def get_st_setting(key: str, default: Optional[Any] = None) -> Any:
@@ -25,12 +30,12 @@ def get_st_settings() -> sublime.Settings:
     return sublime.load_settings("Preferences.sublime-settings")
 
 
-def pref_syntax_rules(window: sublime.Window) -> List[ST_SyntaxRule]:
-    return get_merged_plugin_setting(window, "syntax_rules", [])
+def pref_syntax_rules(*, window: Optional[sublime.Window] = None) -> List[ST_SyntaxRule]:
+    return get_merged_plugin_setting("syntax_rules", [], window=window)
 
 
-def pref_trim_suffixes(window: sublime.Window) -> List[str]:
-    return get_merged_plugin_setting(window, "trim_suffixes", [])
+def pref_trim_suffixes(*, window: Optional[sublime.Window] = None) -> List[str]:
+    return get_merged_plugin_setting("trim_suffixes", [], window=window)
 
 
 def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:

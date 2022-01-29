@@ -115,7 +115,7 @@ class GuesslangClientCallbacks:
         if not predictions:
             return failed_ret
 
-        settings = get_merged_plugin_settings(window)
+        settings = get_merged_plugin_settings(window=window)
         syntax_map: Dict[str, List[str]] = settings.get("guesslang.syntax_map", {})
         min_confidence: float = settings.get("guesslang.confidence_threshold", 0)
         allow_heuristic_guess: bool = settings.get("guesslang.allow_heuristic_guess", True)
@@ -216,7 +216,7 @@ def run_auto_set_syntax_on_view(
 def _assign_syntax_for_new_view(view: sublime.View, event_name: Optional[str] = None) -> bool:
     if (
         (window := view.window())
-        and (new_file_syntax := get_merged_plugin_setting(window, "new_file_syntax"))
+        and (new_file_syntax := get_merged_plugin_setting("new_file_syntax", window=window))
         and (syntax := find_syntax_by_syntax_like(new_file_syntax, allow_plaintext=False))
     ):
         return assign_syntax_to_view(
@@ -286,7 +286,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optiona
 
     for trimmed in generate_trimmed_strings(
         (original := Path(filepath).name),
-        (suffixes := pref_trim_suffixes(window)),
+        (suffixes := pref_trim_suffixes(window=window)),
     ):
         if (syntax := sublime.find_syntax_for_file(trimmed)) and not is_plaintext_syntax(syntax):
             return assign_syntax_to_view(

@@ -78,7 +78,7 @@ class GuesslangServer:
 
 
 def parse_node_path() -> str:
-    return expand_variables(get_merged_plugin_setting(sublime.active_window(), "guesslang.node_bin"))
+    return expand_variables(get_merged_plugin_setting("guesslang.node_bin"))
 
 
 def is_executable(path: str) -> bool:

@@ -32,9 +32,7 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
     def _worker(self) -> None:
         sublime.status_message("Begin downloading guesslang server...")
 
-        is_enabled_or_running = bool(
-            get_merged_plugin_setting(sublime.active_window(), "guesslang.enabled") or GuesslangServer.is_running()
-        )
+        is_enabled_or_running = bool(get_merged_plugin_setting("guesslang.enabled") or GuesslangServer.is_running())
 
         if is_enabled_or_running:
             GuesslangServer.stop()

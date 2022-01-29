@@ -49,10 +49,10 @@ class ViewSnapshot:
 
 
 def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:
-    return head_tail_content_st(view, get_merged_plugin_setting(window, "trim_file_size"))
+    return head_tail_content_st(view, get_merged_plugin_setting("trim_file_size", window=window))
 
 
 def get_view_pseudo_first_line(view: sublime.View, window: sublime.Window) -> str:
-    if (max_length := get_merged_plugin_setting(window, "trim_first_line_length")) >= 0:
+    if (max_length := get_merged_plugin_setting("trim_first_line_length", window=window)) >= 0:
         return view.substr(sublime.Region(0, max_length)).partition("\n")[0]
     return view.substr(view.line(0))

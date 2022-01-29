@@ -75,6 +75,6 @@ def _load_custom_implementations():
 
 
 def _run_on_init_views() -> None:
-    if get_merged_plugin_setting(sublime.active_window(), "run_on_startup_views"):
+    if get_merged_plugin_setting("run_on_startup_views"):
         for view in G.views_on_init:
             run_auto_set_syntax_on_view(view, "init")
