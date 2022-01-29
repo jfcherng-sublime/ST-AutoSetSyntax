@@ -301,8 +301,9 @@ def stringify(obj: Any) -> str:
         return f'View({obj.id()}, "{filepath}")'
 
     r = repr(obj)
-    r = compile_regex(r"(<class '[^']+'>)").sub(r'"\1"', r)
-    r = compile_regex(r"<([._a-zA-Z]+ [._a-zA-Z]+) at 0x[\dA-F]+>").sub(r'"<\1>"', r)
+    r = compile_regex(r"(<class '[^']+'>)").sub(r'"\1"', r)  # class
+    r = compile_regex(r"<([._a-zA-Z]+): ('[^']+')>").sub(r'"<\1(\2)>"', r)  # enum
+    r = compile_regex(r"<([._a-zA-Z]+ [._a-zA-Z]+) at 0x[\dA-F]+>").sub(r'"<\1>"', r)  # object
 
     return r
 
