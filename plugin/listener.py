@@ -19,6 +19,7 @@ from .rules import get_matches
 from .rules import SyntaxRuleCollection
 from .settings import pref_syntax_rules
 from .shared import G
+from .types import ListenerEvent
 from typing import Any, Callable, List, Sequence
 import sublime
 import sublime_plugin
@@ -83,7 +84,7 @@ def _guarantee_primary_view(func: Callable) -> Callable:
 class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
     @_guarantee_primary_view
     def on_revert(self, view: sublime.View) -> None:
-        run_auto_set_syntax_on_view(view, "revert")
+        run_auto_set_syntax_on_view(view, ListenerEvent.REVERT)
 
     @_guarantee_primary_view
     def on_text_changed_async(self, view: sublime.View, changes: List[sublime.TextChange]) -> None:
@@ -102,7 +103,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
 
     def on_load(self, view: sublime.View) -> None:
         view.settings().set(VIEW_IS_TRANSIENT_SETTINGS_KEY, is_transient_view(view))
-        run_auto_set_syntax_on_view(view, "load")
+        run_auto_set_syntax_on_view(view, ListenerEvent.LOAD)
 
     def on_load_project(self, window: sublime.Window) -> None:
         # how to prevent new project views from triggering on_load()?
@@ -110,19 +111,19 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
         ...
 
     def on_new(self, view: sublime.View) -> None:
-        run_auto_set_syntax_on_view(view, "new")
+        run_auto_set_syntax_on_view(view, ListenerEvent.NEW)
 
     def on_new_window(self, window: sublime.Window) -> None:
         set_up_window(window)
 
     def on_post_save(self, view: sublime.View) -> None:
-        run_auto_set_syntax_on_view(view, "save")
+        run_auto_set_syntax_on_view(view, ListenerEvent.SAVE)
 
     def on_pre_close_window(self, window: sublime.Window) -> None:
         tear_down_window(window)
 
     def on_reload(self, view: sublime.View) -> None:
-        run_auto_set_syntax_on_view(view, "reload")
+        run_auto_set_syntax_on_view(view, ListenerEvent.RELOAD)
 
 
 def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[sublime.TextChange]) -> bool:
@@ -132,7 +133,7 @@ def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[s
         return False
 
     if len(changes) == 1 and len(changes[0].str) >= 20:
-        return run_auto_set_syntax_on_view(view, "paste", must_plaintext=True)
+        return run_auto_set_syntax_on_view(view, ListenerEvent.PASTE, must_plaintext=True)
 
     historic_position = changes[0].b
     if (
@@ -141,12 +142,12 @@ def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[s
         # editing last few chars
         or historic_position.pt >= view.size() - 2
     ):
-        return run_auto_set_syntax_on_view(view, "modify", must_plaintext=True)
+        return run_auto_set_syntax_on_view(view, ListenerEvent.MODIFY, must_plaintext=True)
     return False
 
 
 def _try_assign_syntax_when_view_untransientize(view: sublime.View) -> bool:
     if (settings := view.settings()).get(VIEW_IS_TRANSIENT_SETTINGS_KEY):
         settings.erase(VIEW_IS_TRANSIENT_SETTINGS_KEY)
-        return run_auto_set_syntax_on_view(view, "untransientize")
+        return run_auto_set_syntax_on_view(view, ListenerEvent.UNTRANSIENTIZE)
     return False

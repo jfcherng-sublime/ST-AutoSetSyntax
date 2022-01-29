@@ -18,7 +18,7 @@ from ..settings import get_merged_plugin_settings
 from ..settings import pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
-from ..types import TD_ViewSnapshot
+from ..types import ListenerEvent, TD_ViewSnapshot
 from operator import itemgetter
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -32,8 +32,8 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Auto Set Syntax"
 
-    def run(self, edit: sublime.Edit, event_name: str = "command") -> None:
-        run_auto_set_syntax_on_view(self.view, event_name)
+    def run(self, edit: sublime.Edit) -> None:
+        run_auto_set_syntax_on_view(self.view, ListenerEvent.COMMAND)
 
 
 class GuesslangClientCallbacks:
@@ -62,7 +62,7 @@ class GuesslangClientCallbacks:
             response: GuesslangServerResponse = sublime.decode_value(message)
             # shorthands
             predictions = response["data"]
-            event_name = response["event_name"]
+            event = ListenerEvent.from_value(response["event_name"])
             view_id = response["id"]
             Logger.log(sublime.active_window(), f"🐛 Guesslang top predictions: {predictions[:5]}")
         except (TypeError, ValueError):
@@ -83,10 +83,10 @@ class GuesslangClientCallbacks:
             return
 
         if is_heuristic:
-            details: Dict[str, Any] = {"event": event_name, "reason": "predict (heuristic)"}
+            details: Dict[str, Any] = {"event": event, "reason": "predict (heuristic)"}
             status_message = f'Predicted as "{best_syntax.name}" by heuristics'
         else:
-            details = {"event": event_name, "reason": "predict", "confidence": confidence}
+            details = {"event": event, "reason": "predict", "confidence": confidence}
             status_message = f'Predicted as "{best_syntax.name}" ({int(confidence * 100)}% confidence)'
 
         # on_message() callback is async and maybe now the syntax has been set by other things somehow
@@ -184,7 +184,7 @@ def _snapshot_view(func: Callable) -> Callable:
 @_snapshot_view
 def run_auto_set_syntax_on_view(
     view: sublime.View,
-    event_name: Optional[str] = None,
+    event: Optional[ListenerEvent] = None,
     must_plaintext: bool = False,
 ) -> bool:
     if not (window := view.window()) or not is_syntaxable_view(view, must_plaintext):
@@ -194,26 +194,28 @@ def run_auto_set_syntax_on_view(
         Logger.log(window, "⏳ Calm down! Plugin is not ready yet.")
         return False
 
-    if event_name == "new":
-        return _assign_syntax_for_new_view(view, event_name)
+    if event == ListenerEvent.NEW:
+        return _assign_syntax_for_new_view(view, event)
 
-    if _assign_syntax_with_plugin_rules(view, syntax_rule_collection, event_name):
+    if _assign_syntax_with_plugin_rules(view, syntax_rule_collection, event):
         return True
 
-    if _assign_syntax_with_first_line(view, event_name):
+    if _assign_syntax_with_first_line(view, event):
         return True
 
-    if event_name in ("command", "load") and _assign_syntax_with_trimmed_filename(view, event_name):
+    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD) and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
-    if event_name in ("command", "load", "paste") and (view_info := ViewSnapshot.get_by_view(view)):
+    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD, ListenerEvent.PASTE) and (
+        view_info := ViewSnapshot.get_by_view(view)
+    ):
         # this is the ultimate fallback and done async
-        _assign_syntax_with_guesslang_async(view_info, event_name)
+        _assign_syntax_with_guesslang_async(view_info, event)
 
-    return _sorry_cannot_help(view, event_name)
+    return _sorry_cannot_help(view, event)
 
 
-def _assign_syntax_for_new_view(view: sublime.View, event_name: Optional[str] = None) -> bool:
+def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
     if (
         (window := view.window())
         and (new_file_syntax := get_merged_plugin_setting("new_file_syntax", window=window))
@@ -222,7 +224,7 @@ def _assign_syntax_for_new_view(view: sublime.View, event_name: Optional[str] = 
         return assign_syntax_to_view(
             view,
             syntax,
-            details={"event": event_name, "reason": "new file", "new_file_syntax": new_file_syntax},
+            details={"event": event, "reason": "new file", "new_file_syntax": new_file_syntax},
         )
     return False
 
@@ -230,19 +232,19 @@ def _assign_syntax_for_new_view(view: sublime.View, event_name: Optional[str] = 
 def _assign_syntax_with_plugin_rules(
     view: sublime.View,
     syntax_rule_collection: SyntaxRuleCollection,
-    event_name: Optional[str] = None,
+    event: Optional[ListenerEvent] = None,
 ) -> bool:
-    if syntax_rule := syntax_rule_collection.test(view, event_name):
+    if syntax_rule := syntax_rule_collection.test(view, event):
         assert syntax_rule.syntax  # otherwise it should be dropped during optimizing
         return assign_syntax_to_view(
             view,
             syntax_rule.syntax,
-            details={"event": event_name, "reason": "plugin rule", "rule": syntax_rule},
+            details={"event": event, "reason": "plugin rule", "rule": syntax_rule},
         )
     return False
 
 
-def _assign_syntax_with_first_line(view: sublime.View, event_name: Optional[str] = None) -> bool:
+def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
     # Note that this only works for files under some circumstances.
     # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
@@ -270,12 +272,12 @@ def _assign_syntax_with_first_line(view: sublime.View, event_name: Optional[str]
         return assign_syntax_to_view(
             view,
             syntax,
-            details={"event": event_name, "reason": 'syntax "first_line_match"'},
+            details={"event": event, "reason": 'syntax "first_line_match"'},
         )
     return False
 
 
-def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optional[str] = None) -> bool:
+def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
     if not (
         (filepath := view.file_name())
         and (window := view.window())
@@ -293,7 +295,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optiona
                 view,
                 syntax,
                 details={
-                    "event": event_name,
+                    "event": event,
                     "reason": "trimmed filename",
                     "filename_original": original,
                     "filename_trimmed": trimmed,
@@ -303,7 +305,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event_name: Optiona
     return False
 
 
-def _assign_syntax_with_guesslang_async(view_info: TD_ViewSnapshot, event_name: Optional[str] = None) -> None:
+def _assign_syntax_with_guesslang_async(view_info: TD_ViewSnapshot, event: Optional[ListenerEvent] = None) -> None:
     if (
         not G.guesslang
         or "." in view_info["file_name"]  # don't apply on those have an extension
@@ -311,11 +313,11 @@ def _assign_syntax_with_guesslang_async(view_info: TD_ViewSnapshot, event_name: 
     ):
         return None
 
-    G.guesslang.request_guess_snapshot(view_info, event_name=event_name)
+    G.guesslang.request_guess_snapshot(view_info, event=event)
 
 
-def _sorry_cannot_help(view: sublime.View, event_name: Optional[str] = None) -> bool:
-    details = {"event": event_name, "reason": "no matching rule"}
+def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+    details = {"event": event, "reason": "no matching rule"}
     Logger.log(view.window(), f"❌ Cannot help {stringify(view)} because {stringify(details)}")
     return False
 

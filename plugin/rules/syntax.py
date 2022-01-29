@@ -4,7 +4,7 @@ from __future__ import annotations
 from ..constant import VERSION
 from ..helper import find_syntax_by_syntax_likes
 from ..helper import first
-from ..types import Optimizable, ST_SyntaxRule
+from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
 from .match import MatchRule
 from dataclasses import dataclass
 from typing import Any, Generator, Iterable, List, Optional, Set, Tuple
@@ -17,7 +17,7 @@ class SyntaxRule(Optimizable):
     syntax: Optional[sublime.Syntax] = None
     syntaxes_name: Optional[Tuple[str, ...]] = tuple()
     selector: str = "text.plain"
-    on_events: Optional[Set[str]] = None
+    on_events: Optional[Set[ListenerEvent]] = None
     root_rule: Optional[MatchRule] = None
 
     def is_droppable(self) -> bool:
@@ -34,8 +34,8 @@ class SyntaxRule(Optimizable):
                     yield self.root_rule
                     self.root_rule = None
 
-    def test(self, view: sublime.View, event_name: Optional[str] = None) -> bool:
-        if event_name and self.on_events is not None and event_name not in self.on_events:
+    def test(self, view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+        if event and self.on_events is not None and event not in self.on_events:
             return False
 
         if self.selector and not view.match_selector(0, self.selector):
@@ -66,7 +66,7 @@ class SyntaxRule(Optimizable):
         if (on_events := syntax_rule.get("on_events")) is not None:
             if isinstance(on_events, str):
                 on_events = [on_events]
-            obj.on_events = set(on_events)
+            obj.on_events = set(filter(None, map(ListenerEvent.from_value, on_events)))
 
         if match_rule_compiled := MatchRule.make(syntax_rule):
             obj.root_rule = match_rule_compiled
@@ -92,8 +92,8 @@ class SyntaxRuleCollection(Optimizable):
             rules.append(rule)
         self.rules = tuple(rules)
 
-    def test(self, view: sublime.View, event_name: Optional[str] = None) -> Optional[SyntaxRule]:
-        return first(self.rules, lambda rule: rule.test(view, event_name))
+    def test(self, view: sublime.View, event: Optional[ListenerEvent] = None) -> Optional[SyntaxRule]:
+        return first(self.rules, lambda rule: rule.test(view, event))
 
     @classmethod
     def make(cls, syntax_rules: Iterable[ST_SyntaxRule]) -> SyntaxRuleCollection:

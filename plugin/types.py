@@ -2,11 +2,39 @@ from __future__ import annotations
 
 # __future__ must be the first import
 from abc import ABCMeta, abstractmethod
+from enum import Enum
 from typing import Any, Dict, Generator, List, Optional, TypedDict, Union
 import sublime
 
 
 SyntaxLike = Union[str, sublime.Syntax]
+
+
+class ListenerEvent(Enum):
+    """
+    Events used in AutoSetSyntax.
+    """
+
+    COMMAND = "command"
+    INIT = "init"
+    LOAD = "load"
+    MODIFY = "modify"
+    NEW = "new"
+    PASTE = "paste"
+    RELOAD = "reload"
+    REVERT = "revert"
+    SAVE = "save"
+    UNTRANSIENTIZE = "untransientize"
+
+    def __str__(self) -> str:
+        return str(self._value_)
+
+    @classmethod
+    def from_value(cls, value: Any) -> Optional[ListenerEvent]:
+        try:
+            return cls(value)
+        except ValueError:
+            return None
 
 
 class Optimizable(metaclass=ABCMeta):

@@ -14,6 +14,7 @@ from .settings import AioSettings
 from .settings import extra_settings_producer
 from .settings import get_merged_plugin_setting
 from .shared import G
+from .types import ListenerEvent
 from pathlib import Path
 import importlib
 import importlib.machinery
@@ -77,4 +78,4 @@ def _load_custom_implementations():
 def _run_on_init_views() -> None:
     if get_merged_plugin_setting("run_on_startup_views"):
         for view in G.views_on_init:
-            run_auto_set_syntax_on_view(view, "init")
+            run_auto_set_syntax_on_view(view, ListenerEvent.INIT)
