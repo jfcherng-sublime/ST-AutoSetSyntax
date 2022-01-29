@@ -21,11 +21,13 @@ from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent, TD_ViewSnapshot
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
 import re
 import sublime
 import sublime_plugin
 import uuid
+
+AnyCallable = TypeVar("AnyCallable", bound=Callable[..., Any])
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
@@ -165,7 +167,7 @@ class GuesslangClientCallbacks:
         return True
 
 
-def _snapshot_view(func: Callable) -> Callable:
+def _snapshot_view(func: AnyCallable) -> AnyCallable:
     def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
         run_id = str(uuid.uuid4())
         settings = view.settings()
@@ -178,7 +180,7 @@ def _snapshot_view(func: Callable) -> Callable:
 
         return result
 
-    return wrapped
+    return cast(AnyCallable, wrapped)
 
 
 @_snapshot_view

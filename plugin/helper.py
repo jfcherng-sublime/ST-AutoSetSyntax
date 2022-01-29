@@ -131,7 +131,7 @@ def get_all_subclasses(
     if not skip_self and not (skip_abstract and inspect.isabstract(root)):
         yield root
     for leaf in root.__subclasses__():
-        yield from get_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)
+        yield from get_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)  # type: ignore
 
 
 def get_nth_item(items: Sequence[T], n: int, default: Optional[T] = None) -> Optional[T]:
