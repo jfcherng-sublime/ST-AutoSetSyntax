@@ -26,7 +26,7 @@ import sublime
 import tempfile
 
 T = TypeVar("T")
-ExpandableVar = TypeVar("ExpandableVar", None, bool, int, float, str, Dict, List, Tuple)
+ExpandableVar = TypeVar("ExpandableVar", bound=Union[None, bool, int, float, str, Dict, List, Tuple])
 
 
 def camel_to_snake(s: str) -> str:
