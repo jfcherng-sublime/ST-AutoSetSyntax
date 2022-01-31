@@ -214,6 +214,11 @@ def is_transient_view(view: sublime.View) -> bool:
     return view == window.transient_view_in_group(window.active_group())
 
 
+@lru_cache
+def is_using_case_insensitive_os_os() -> bool:
+    return ST_PLATFORM in ("windows", "osx")
+
+
 @clearable_lru_cache()
 def list_sorted_syntaxes() -> Tuple[sublime.Syntax, ...]:
     """Lists all syntaxes in a tuple, which is sorted by conventions."""
@@ -308,11 +313,6 @@ def stringify(obj: Any) -> str:
     r = compile_regex(r"<([._a-zA-Z]+ [._a-zA-Z]+) at 0x[\dA-F]+>").sub(r'"<\1>"', r)  # object
 
     return r
-
-
-@lru_cache
-def using_case_insensitive_os() -> bool:
-    return ST_PLATFORM in ("windows", "osx")
 
 
 @lru_cache
