@@ -1,4 +1,5 @@
 from .constant import ST_PLATFORM
+from .libs.trie import TrieNode
 from .lru_cache import clearable_lru_cache
 from .settings import get_st_setting
 from .types import SyntaxLike
@@ -314,25 +315,33 @@ def using_case_insensitive_os() -> bool:
     return ST_PLATFORM in ("windows", "osx")
 
 
+@lru_cache
+def build_reversed_trie(words: Tuple[str]) -> TrieNode:
+    trie = TrieNode()
+    for word in words:
+        trie.insert(word[::-1])
+    return trie
+
+
 def generate_trimmed_strings(
     string: str,
-    suffixes: Sequence[str],
+    suffixes: Tuple[str],
     skip_self: bool = False,
 ) -> Generator[str, None, None]:
     """Generates strings with suffixes trimmed."""
+    trie = build_reversed_trie(suffixes)
 
-    def dfs(string: str, suffixes: Sequence[str], skip_self: bool = False) -> Generator[str, None, None]:
+    def dfs(string_rev: str, skip_self: bool = False) -> Generator[str, None, None]:
         if not skip_self:
-            yield string
-        for suffix in suffixes:
-            if suffix and string.endswith(suffix):
-                yield from dfs(string[: -len(suffix)], suffixes, skip_self=False)
+            yield string_rev
+        for prefix in trie.find_prefixes(string_rev):
+            yield from dfs(string_rev[len(prefix) :], skip_self=False)
 
     results: Set[str] = set()
-    for trimmed in dfs(string, suffixes, skip_self):
+    for trimmed in dfs(string[::-1], skip_self):
         if trimmed not in results:
             results.add(trimmed)
-            yield trimmed
+            yield trimmed[::-1]
 
 
 @lru_cache

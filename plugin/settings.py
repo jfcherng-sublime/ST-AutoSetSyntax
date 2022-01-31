@@ -4,7 +4,7 @@ from __future__ import annotations
 from .types import ST_SyntaxRule
 from collections import ChainMap
 from itertools import chain
-from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional, Set
+from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional, Set, Tuple
 import sublime
 import sublime_plugin
 
@@ -34,7 +34,7 @@ def pref_syntax_rules(*, window: Optional[sublime.Window] = None) -> List[ST_Syn
     return get_merged_plugin_setting("syntax_rules", [], window=window)
 
 
-def pref_trim_suffixes(*, window: Optional[sublime.Window] = None) -> List[str]:
+def pref_trim_suffixes(*, window: Optional[sublime.Window] = None) -> Tuple[str]:
     return get_merged_plugin_setting("trim_suffixes", [], window=window)
 
 
@@ -48,7 +48,9 @@ def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:
         + settings.get("default_syntax_rules", [])
     )
 
-    ret["trim_suffixes"] = sorted(
+    # use tuple to freeze setting for better performance (cache)
+    ret["trim_suffixes"] = tuple(
+        # remove empty string, which causes an infinite loop
         filter(
             None,
             set(
@@ -59,8 +61,6 @@ def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:
                 )
             ),
         ),
-        # most dots first and then longest length first
-        key=lambda suffix: (-suffix.count("."), -len(suffix)),
     )
 
     return ret

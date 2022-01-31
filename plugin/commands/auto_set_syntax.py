@@ -291,6 +291,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
     for trimmed in generate_trimmed_strings(
         (original := Path(filepath).name),
         (suffixes := pref_trim_suffixes(window=window)),
+        skip_self=True,
     ):
         if (syntax := sublime.find_syntax_for_file(trimmed)) and not is_plaintext_syntax(syntax):
             return assign_syntax_to_view(
