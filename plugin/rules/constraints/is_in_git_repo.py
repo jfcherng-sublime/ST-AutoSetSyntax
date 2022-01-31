@@ -1,4 +1,5 @@
 from ..constraint import AbstractConstraint
+from ..constraint import AlwaysFalsyException
 import sublime
 
 
@@ -10,7 +11,7 @@ class IsInGitRepoConstraint(AbstractConstraint):
 
         # early return so that we may save some IO operations
         if not view_info["file_name"]:
-            return False
+            raise AlwaysFalsyException("file not on disk")
 
         # `.git/` directory for normal Git repo and `.git` file for Git worktree
         return self.has_sibling(view_info["file_path"], ".git", use_exists=True)

@@ -18,4 +18,4 @@ class IsPlatformConstraint(AbstractConstraint):
         return not self.names
 
     def test(self, view: sublime.View) -> bool:
-        return not self.result
+        return self.result

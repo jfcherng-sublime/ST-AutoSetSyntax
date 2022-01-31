@@ -1,4 +1,5 @@
 from ..constraint import AbstractConstraint
+from ..constraint import AlwaysFalsyException
 import sublime
 
 
@@ -10,6 +11,6 @@ class IsInHgRepoConstraint(AbstractConstraint):
 
         # early return so that we may save some IO operations
         if not view_info["file_name"]:
-            return False
+            raise AlwaysFalsyException("file not on disk")
 
         return self.has_sibling(view_info["file_path"], ".hg/")
