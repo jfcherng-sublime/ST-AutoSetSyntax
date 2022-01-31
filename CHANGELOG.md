@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.3.13
+
+- fix: correct type annotation for `ExpandableVar`
+- fix: various constraints give wrong results
+- pref: refactor `generate_trimmed_strings()` with trie
+- refactor: make `event_name` into `Enum`
+
 ## 2.3.12
 
 - feat: add as YAML file: `.clang-format`, `.clang-tidy`, `.clangd`
