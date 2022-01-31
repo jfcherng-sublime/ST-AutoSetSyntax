@@ -1,5 +1,5 @@
-from ...constant import ST_PLATFORM
 from ...helper import generate_trimmed_strings
+from ...helper import using_case_insensitive_os
 from ...settings import pref_trim_suffixes
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
@@ -16,7 +16,7 @@ class IsExtensionConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.case_insensitive: bool = bool(kwargs.get("case_insensitive", ST_PLATFORM == "windows"))
+        self.case_insensitive = bool(kwargs.get("case_insensitive", using_case_insensitive_os()))
         self.exts: Tuple[str, ...] = self._handled_args(extensionize)
         self.exts = tuple(map(self.fix_case, self.exts))
 

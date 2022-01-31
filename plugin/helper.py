@@ -1,3 +1,4 @@
+from .constant import ST_PLATFORM
 from .lru_cache import clearable_lru_cache
 from .settings import get_st_setting
 from .types import SyntaxLike
@@ -306,6 +307,11 @@ def stringify(obj: Any) -> str:
     r = compile_regex(r"<([._a-zA-Z]+ [._a-zA-Z]+) at 0x[\dA-F]+>").sub(r'"<\1>"', r)  # object
 
     return r
+
+
+@lru_cache
+def using_case_insensitive_os() -> bool:
+    return ST_PLATFORM in ("windows", "osx")
 
 
 def generate_trimmed_strings(

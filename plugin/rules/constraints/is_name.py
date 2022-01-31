@@ -1,3 +1,4 @@
+from ...helper import using_case_insensitive_os
 from ..constraint import AbstractConstraint
 from typing import Any, Tuple
 import sublime
@@ -7,11 +8,10 @@ class IsNameConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.names: Tuple[str, ...] = self._handled_args()
-        self.case_insensitive: bool = bool(kwargs.get("case_insensitive", sublime.platform() == "windows"))
+        names: Tuple[str, ...] = self._handled_args()
 
-        if self.case_insensitive:
-            self.names = tuple(name.lower() for name in self.names)
+        self.case_insensitive = bool(kwargs.get("case_insensitive", using_case_insensitive_os()))
+        self.names = set(map(str.lower, names) if self.case_insensitive else names)
 
     def is_droppable(self) -> bool:
         return not self.names
