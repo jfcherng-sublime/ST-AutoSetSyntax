@@ -16,6 +16,7 @@ from typing import (
     Optional,
     Pattern,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -320,16 +321,19 @@ def generate_trimmed_strings(
     skip_self: bool = False,
 ) -> Generator[str, None, None]:
     """Generates strings with suffixes trimmed."""
-    if not skip_self:
-        yield string
 
-    for suffix in suffixes:
-        if suffix and string.endswith(suffix):
-            yield from generate_trimmed_strings(
-                string[: -len(suffix)],
-                suffixes,
-                skip_self=False,
-            )
+    def dfs(string: str, suffixes: Sequence[str], skip_self: bool = False) -> Generator[str, None, None]:
+        if not skip_self:
+            yield string
+        for suffix in suffixes:
+            if suffix and string.endswith(suffix):
+                yield from dfs(string[: -len(suffix)], suffixes, skip_self=False)
+
+    results: Set[str] = set()
+    for trimmed in dfs(string, suffixes, skip_self):
+        if trimmed not in results:
+            results.add(trimmed)
+            yield trimmed
 
 
 @lru_cache
