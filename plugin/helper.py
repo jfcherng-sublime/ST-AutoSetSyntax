@@ -97,10 +97,10 @@ def find_syntaxes_by_syntax_like(
         if candidates := sublime.find_syntax_by_name(like):
             return candidates
         # by name (case-insensitive)
-        if candidates := tuple(filter(lambda syntax: like_lower == syntax.name.lower(), all_syntaxes)):
+        if candidates := filter(lambda syntax: like_lower == syntax.name.lower(), all_syntaxes):
             return candidates
         # by partial path
-        if candidates := tuple(filter(lambda syntax: like in syntax.path, all_syntaxes)):
+        if candidates := filter(lambda syntax: like in syntax.path, all_syntaxes):
             return candidates
         # nothing found
         return tuple()
@@ -238,14 +238,13 @@ def merge_literals_to_regex(literals: Iterable[str]) -> str:
     """Merge (non-regex) literal strings into an optimized regex string."""
     from .libs.triegex import Triegex
 
-    regex = (
+    # this regex is enclosed by "(?:)"
+    return (
         Triegex(*map(re.escape, literals))  # type: ignore
         .to_regex()
         .replace(r"\b", "")  # type: ignore
         .replace(r"|~^(?#match nothing)", "")
     )
-
-    return regex  # this regex is enclosed by "(?:)"
 
 
 def merge_regexes(regexes: Iterable[str]) -> str:
