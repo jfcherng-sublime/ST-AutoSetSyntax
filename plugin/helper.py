@@ -317,6 +317,7 @@ def stringify(obj: Any) -> str:
 
 @lru_cache
 def build_reversed_trie(words: Tuple[str]) -> TrieNode:
+    """Returns a trie with all words reversed. It can be used to match suffixes with reversed input string."""
     trie = TrieNode()
     for word in words:
         trie.insert(word[::-1])
@@ -331,14 +332,16 @@ def generate_trimmed_strings(
     """Generates strings with suffixes trimmed."""
     trie = build_reversed_trie(suffixes)
 
-    def dfs(string_rev: str, skip_self: bool = False) -> Generator[str, None, None]:
-        if not skip_self:
-            yield string_rev
+    def dfs(string_rev: str) -> Generator[str, None, None]:
         for prefix in trie.find_prefixes(string_rev):
-            yield from dfs(string_rev[len(prefix) :], skip_self=False)
+            yield (trimmed := string_rev[len(prefix) :])
+            yield from dfs(trimmed)
+
+    if not skip_self:
+        yield string
 
     results: Set[str] = set()
-    for trimmed in dfs(string[::-1], skip_self):
+    for trimmed in dfs(string[::-1]):
         if trimmed not in results:
             results.add(trimmed)
             yield trimmed[::-1]
@@ -379,7 +382,7 @@ def get_expand_variable_map() -> Dict[str, str]:
 
     if node_version := _find_latest_lsp_utils_node_version(paths["package_storage"]):
         node_version_str = ".".join(map(str, node_version))
-        node_exe = "node.exe" if sublime.platform() == "windows" else "node"
+        node_exe = "node.exe" if ST_PLATFORM == "windows" else "node"
         paths["lsp_utils_node_dir"] = paths["package_storage"] / f"lsp_utils/node-runtime/{node_version_str}/node"
         paths["lsp_utils_node_bin"] = paths["lsp_utils_node_dir"] / node_exe
 

@@ -48,17 +48,17 @@ def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:
         + settings.get("default_syntax_rules", [])
     )
 
-    # use tuple to freeze setting for better performance (cache)
+    # use tuple to freeze setting for better performance (cache-able)
     ret["trim_suffixes"] = tuple(
-        # remove empty string, which causes an infinite loop
-        filter(
-            None,
-            set(
+        set(
+            # remove empty string, which causes an infinite loop
+            filter(
+                None,
                 chain(
                     settings.get("project_trim_suffixes", []),
                     settings.get("user_trim_suffixes", []),
                     settings.get("default_trim_suffixes", []),
-                )
+                ),
             ),
         ),
     )

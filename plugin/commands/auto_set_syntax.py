@@ -18,7 +18,7 @@ from ..settings import get_merged_plugin_settings
 from ..settings import pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
-from ..types import ListenerEvent, TD_ViewSnapshot
+from ..types import ListenerEvent
 from operator import itemgetter
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
@@ -56,8 +56,7 @@ class GuesslangClientCallbacks:
     }
 
     def on_open(self, ws: websocket.WebSocketApp) -> None:
-        Logger.log(sublime.active_window(), "🤝 Connected to the guesslang server!")
-        sublime.status_message("Connected to the guesslang server!")
+        self._status_msg_and_log("Connected to the guesslang server!", "🤝")
 
     def on_message(self, ws: websocket.WebSocketApp, message: str) -> None:
         try:
@@ -99,11 +98,10 @@ class GuesslangClientCallbacks:
         sublime.status_message(status_message)
 
     def on_error(self, ws: websocket.WebSocketApp, error: str) -> None:
-        pass
+        self._status_msg_and_log(f"Guesslang server went wrong: {error}", "❌")
 
     def on_close(self, ws: websocket.WebSocketApp, close_status_code: int, close_msg: str) -> None:
-        Logger.log(sublime.active_window(), "💔 Guesslang server disconnected...")
-        sublime.status_message("Guesslang server disconnected...")
+        self._status_msg_and_log("Guesslang server disconnected...", "💔")
 
     @classmethod
     def resolve_guess_predictions(
@@ -166,6 +164,11 @@ class GuesslangClientCallbacks:
 
         return True
 
+    @staticmethod
+    def _status_msg_and_log(msg: str, icon: str, window: Optional[sublime.Window] = None) -> None:
+        Logger.log(window or sublime.active_window(), f"{icon} {msg}")
+        sublime.status_message(msg)
+
 
 def _snapshot_view(func: AnyCallable) -> AnyCallable:
     def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
@@ -189,7 +192,7 @@ def run_auto_set_syntax_on_view(
     event: Optional[ListenerEvent] = None,
     must_plaintext: bool = False,
 ) -> bool:
-    if not (window := view.window()) or not is_syntaxable_view(view, must_plaintext):
+    if not ((window := view.window()) and is_syntaxable_view(view, must_plaintext)):
         return False
 
     if (syntax_rule_collection := G.get_syntax_rule_collection(window)) is None:
@@ -208,11 +211,9 @@ def run_auto_set_syntax_on_view(
     if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD) and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
-    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD, ListenerEvent.PASTE) and (
-        view_info := ViewSnapshot.get_by_view(view)
-    ):
+    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD, ListenerEvent.PASTE):
         # this is the ultimate fallback and done async
-        _assign_syntax_with_guesslang_async(view_info, event)
+        _assign_syntax_with_guesslang_async(view, event)
 
     return _sorry_cannot_help(view, event)
 
@@ -308,11 +309,12 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
     return False
 
 
-def _assign_syntax_with_guesslang_async(view_info: TD_ViewSnapshot, event: Optional[ListenerEvent] = None) -> None:
-    if (
-        not G.guesslang
-        or "." in view_info["file_name"]  # don't apply on those have an extension
-        or not ((syntax := view_info["syntax"]) and syntax.name == "Plain Text")
+def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[ListenerEvent] = None) -> None:
+    if not (
+        G.guesslang
+        and (view_info := ViewSnapshot.get_by_view(view))
+        and "." not in view_info["file_name"]  # don't apply on those have an extension
+        and ((syntax := view_info["syntax"]) and syntax.name == "Plain Text")
     ):
         return None
 

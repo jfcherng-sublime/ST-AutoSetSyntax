@@ -71,11 +71,12 @@ class GuesslangClient:
 
     def request_guess_snapshot(self, view_info: TD_ViewSnapshot, event: Optional[ListenerEvent] = None) -> None:
         if self.ws and self.is_connected(self.ws):
-            payload = sublime.encode_value(
-                {
-                    "id": view_info["id"],
-                    "content": head_tail_content(view_info["content"], 2000),
-                    "event_name": event.value if event else None,
-                }
+            self.ws.send(
+                sublime.encode_value(
+                    {
+                        "id": view_info["id"],
+                        "content": head_tail_content(view_info["content"], 2000),
+                        "event_name": event.value if event else None,
+                    }
+                )
             )
-            self.ws.send(payload)

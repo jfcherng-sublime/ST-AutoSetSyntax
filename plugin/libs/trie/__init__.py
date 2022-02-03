@@ -52,9 +52,9 @@ class TrieNode:
 
     def find_prefixes(self, word: str) -> Generator[str, None, None]:
         """
-        Tries to find word in a Trie
-        :param word: word to look for
-        :return: Returns True if word is found, False otherwise
+        Tries to find all prefixes in a Trie for the word
+        :param word: word to be matched
+        :return: Yield a matched prefix
         """
         prefix = ""
         curr = self
