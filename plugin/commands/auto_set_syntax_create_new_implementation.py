@@ -10,7 +10,7 @@ import sublime
 import sublime_plugin
 
 
-class AbstractCreateNewImplementationCommand(sublime_plugin.TextCommand, metaclass=ABCMeta):
+class AbstractCreateNewImplementationCommand(sublime_plugin.WindowCommand, metaclass=ABCMeta):
     template_type = ""
     template_file = ""
     template_syntax: Optional[str] = None
@@ -19,27 +19,18 @@ class AbstractCreateNewImplementationCommand(sublime_plugin.TextCommand, metacla
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Create New {self.template_type}"
 
-    def run(self, edit: sublime.Edit) -> None:
-        if not (
-            new := _clone_file_as_template(
-                self.view,
-                edit,
-                f"Packages/{PLUGIN_NAME}/templates/{self.template_file}",
-                self.template_syntax,
-            )
+    def run(self) -> None:
+        if not _clone_file_as_template(
+            self.window,
+            f"Packages/{PLUGIN_NAME}/templates/{self.template_file}",
+            self.save_dir,
+            self.template_syntax,
         ):
             return
 
         save_dir = Path(self.save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
         (PLUGIN_CUSTOM_DIR / ".python-version").write_text("3.8\n", encoding="utf-8")
-
-        new.settings().update(
-            {
-                "default_dir": str(save_dir),
-                "is_auto_set_syntax_template_buffer": True,
-            }
-        )
 
 
 class AutoSetSyntaxCreateNewConstraintCommand(AbstractCreateNewImplementationCommand):
@@ -57,14 +48,11 @@ class AutoSetSyntaxCreateNewMatchCommand(AbstractCreateNewImplementationCommand)
 
 
 def _clone_file_as_template(
-    view: sublime.View,
-    edit: sublime.Edit,
+    window: sublime.Window,
     source_path: str,
+    save_dir: str,
     syntax: Optional[SyntaxLike] = None,
 ) -> Optional[sublime.View]:
-    if not (window := view.window()):
-        return None
-
     try:
         template = sublime.load_resource(source_path)
     except FileNotFoundError as e:
@@ -72,14 +60,15 @@ def _clone_file_as_template(
         return None
 
     new = window.new_file()
-    new.insert(edit, 0, template)
-    new.show(0)
+    new.run_command("append", {"contents": template})
+    new.settings().update(
+        {
+            "default_dir": save_dir,
+            "is_auto_set_syntax_template_buffer": True,
+        }
+    )
 
     if syntax and (syntax := find_syntax_by_syntax_like(syntax)):
         new.assign_syntax(syntax)
-
-    sel = new.sel()
-    sel.clear()
-    sel.add(0)
 
     return new
