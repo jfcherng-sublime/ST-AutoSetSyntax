@@ -20,7 +20,7 @@ from .rules import SyntaxRuleCollection
 from .settings import pref_syntax_rules
 from .shared import G
 from .types import ListenerEvent
-from typing import Any, Callable, List, Sequence
+from typing import Any, Callable, Dict, List, Sequence
 import sublime
 import sublime_plugin
 
@@ -124,6 +124,10 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
 
     def on_reload(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.RELOAD)
+
+    def on_post_window_command(self, window: sublime.Window, command_name: str, args: Dict[str, Any]) -> None:
+        if command_name in ("build", "exec") and (view := window.find_output_panel("exec")):
+            run_auto_set_syntax_on_view(view, ListenerEvent.EXEC)
 
 
 def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[sublime.TextChange]) -> bool:

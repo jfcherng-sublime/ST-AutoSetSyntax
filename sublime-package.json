@@ -25,6 +25,11 @@
                   "type": "boolean",
                   "default": true
                 },
+                "exec_file_syntax": {
+                  "markdownDescription": "The syntax used for a build (exec) output.\n\n---\n\nCan be one of following formats:\n\n- Syntax top scope: `\"scope:text.html.markdown\"`\n- Partial/full syntax file path: `\"Markdown/Markdown.\"`\n- The name of the syntax: `\"Markdown\"` (which is shown in the bottom-right corner of ST)\n- An empty string, which does nothing",
+                  "type": "string",
+                  "default": "Packages/AutoSetSyntax/syntaxes/ExecOutput.sublime-syntax"
+                },
                 "new_file_syntax": {
                   "markdownDescription": "The syntax used for a newly created file.\n\n---\n\nCan be one of following formats:\n\n- Syntax top scope: `\"scope:text.html.markdown\"`\n- Partial/full syntax file path: `\"Markdown/Markdown.\"`\n- The name of the syntax: `\"Markdown\"` (which is shown in the bottom-right corner of ST)\n- An empty string, which does nothing",
                   "type": "string",

@@ -18,7 +18,7 @@
 
 AutoSetSyntax helps you set the syntax for a view automatically in various ways:
 
-- Default syntax for new files.
+- Default syntax for new files and build outputs.
 - Detecting the syntax when modifying the file.
 - Trimming unimportant suffixes from the filename.
 - Assigning syntax by the first line.

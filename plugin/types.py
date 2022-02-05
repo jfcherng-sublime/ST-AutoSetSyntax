@@ -16,6 +16,7 @@ class ListenerEvent(Enum):
     """
 
     COMMAND = "command"
+    EXEC = "exec"
     INIT = "init"
     LOAD = "load"
     MODIFY = "modify"

@@ -1,0 +1,11 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+name: Exec Output (AutoSetSyntax)
+version: 2
+hidden: true
+scope: text.exec-output
+contexts:
+  main:
+    - match: \[(?:Cancelled|Finished|Output Truncated)(?:\s+in [^\]]+)?\]$
+      scope: comment.status.exec-output

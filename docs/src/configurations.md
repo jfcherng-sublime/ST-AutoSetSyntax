@@ -21,13 +21,24 @@ Sometimes, a good way to learn about settings is reading an existing one.
 This setting control whether this plugin creates a dedicated log message panel.
 Since the panel won't affect other plugins, the default value is `true`.
 
+### `exec_file_syntax`
+
+| Type     | Default                                                       |
+| -------- | ------------------------------------------------------------- |
+| `string` | `"Packages/AutoSetSyntax/syntaxes/ExecOutput.sublime-syntax"` |
+
+This setting controls what syntax a build output should use. The value can be any of the followings:
+
+- An empty string, which does nothing.
+- A [syntax representation][plugin-syntax-representations].
+
 ### `new_file_syntax`
 
 | Type     | Default |
 | -------- | ------- |
 | `string` | `""`    |
 
-This setting controls what syntax the new file should use. The value can be any of the followings:
+This setting controls what syntax a new file should use. The value can be any of the followings:
 
 - An empty string, which does nothing.
 - A [syntax representation][plugin-syntax-representations].

@@ -174,12 +174,11 @@ def _snapshot_view(func: AnyCallable) -> AnyCallable:
     def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
         if not (
             view.is_valid()
-            and not view.element()
             and (window := view.window())
             # empty merge settings = plugin not ready yet
             and get_merged_plugin_settings(window=window)
         ):
-            print(f"[{PLUGIN_NAME}] ⏳ Calm down! Plugin is not ready yet.")
+            print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
             return False
 
         run_id = str(uuid.uuid4())
@@ -202,6 +201,9 @@ def run_auto_set_syntax_on_view(
     event: Optional[ListenerEvent] = None,
     must_plaintext: bool = False,
 ) -> bool:
+    if event == ListenerEvent.EXEC:
+        return _assign_syntax_for_exec_output(view, event)
+
     if not (
         (window := view.window())
         and is_syntaxable_view(view, must_plaintext)
@@ -226,6 +228,21 @@ def run_auto_set_syntax_on_view(
         _assign_syntax_with_guesslang_async(view, event)
 
     return _sorry_cannot_help(view, event)
+
+
+def _assign_syntax_for_exec_output(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+    if (
+        (window := view.window())
+        and (not (syntax_old := view.syntax()) or syntax_old.scope == "text.plain")
+        and (exec_file_syntax := get_merged_plugin_setting("exec_file_syntax", window=window))
+        and (syntax := find_syntax_by_syntax_like(exec_file_syntax, allow_hidden=True))
+    ):
+        return assign_syntax_to_view(
+            view,
+            syntax,
+            details={"event": event, "reason": "exec output", "exec_file_syntax": exec_file_syntax},
+        )
+    return False
 
 
 def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
