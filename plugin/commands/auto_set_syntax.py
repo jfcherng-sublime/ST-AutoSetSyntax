@@ -170,32 +170,35 @@ class GuesslangClientCallbacks:
         sublime.status_message(msg)
 
 
-def _snapshot_view(func: AnyCallable) -> AnyCallable:
-    def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
-        if not (
-            view.is_valid()
-            and (window := view.window())
-            # empty merge settings = plugin not ready yet
-            and get_merged_plugin_settings(window=window)
-        ):
-            print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
-            return False
+def _snapshot_view(failed_ret: Optional[Any] = None) -> Callable[[AnyCallable], AnyCallable]:
+    def decorator(func: AnyCallable) -> AnyCallable:
+        def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
+            if not (
+                view.is_valid()
+                and (window := view.window())
+                # empty merge settings = plugin not ready yet
+                and get_merged_plugin_settings(window=window)
+            ):
+                print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
+                return failed_ret
 
-        run_id = str(uuid.uuid4())
-        settings = view.settings()
+            run_id = str(uuid.uuid4())
+            settings = view.settings()
 
-        settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
-        ViewSnapshot.add(run_id, view)
-        result = func(view, *args, **kwargs)
-        ViewSnapshot.remove(run_id)
-        settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
+            settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
+            ViewSnapshot.add(run_id, view)
+            result = func(view, *args, **kwargs)
+            ViewSnapshot.remove(run_id)
+            settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
 
-        return result
+            return result
 
-    return cast(AnyCallable, wrapped)
+        return cast(AnyCallable, wrapped)
+
+    return decorator
 
 
-@_snapshot_view
+@_snapshot_view(failed_ret=False)
 def run_auto_set_syntax_on_view(
     view: sublime.View,
     event: Optional[ListenerEvent] = None,
