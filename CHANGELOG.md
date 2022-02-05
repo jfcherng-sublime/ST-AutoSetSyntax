@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.3.14
+
+- fix: plugin is triggered before settings are ready
+- refactor: make checking `guesslang` server started more clearly
+- refactor: simply command `auto_set_syntax_create_new_implementation`
+
 ## 2.3.13
 
 - fix: correct type annotation for `ExpandableVar`
