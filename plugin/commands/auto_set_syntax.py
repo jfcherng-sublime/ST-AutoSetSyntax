@@ -172,6 +172,16 @@ class GuesslangClientCallbacks:
 
 def _snapshot_view(func: AnyCallable) -> AnyCallable:
     def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
+        if not (
+            view.is_valid()
+            and not view.element()
+            and (window := view.window())
+            # empty merge settings = plugin not ready yet
+            and get_merged_plugin_settings(window=window)
+        ):
+            print(f"[{PLUGIN_NAME}] ⏳ Calm down! Plugin is not ready yet.")
+            return False
+
         run_id = str(uuid.uuid4())
         settings = view.settings()
 
@@ -192,11 +202,11 @@ def run_auto_set_syntax_on_view(
     event: Optional[ListenerEvent] = None,
     must_plaintext: bool = False,
 ) -> bool:
-    if not ((window := view.window()) and is_syntaxable_view(view, must_plaintext)):
-        return False
-
-    if (syntax_rule_collection := G.get_syntax_rule_collection(window)) is None:
-        Logger.log(window, "⏳ Calm down! Plugin is not ready yet.")
+    if not (
+        (window := view.window())
+        and is_syntaxable_view(view, must_plaintext)
+        and (syntax_rule_collection := G.get_syntax_rule_collection(window)) is not None
+    ):
         return False
 
     if event == ListenerEvent.NEW:
