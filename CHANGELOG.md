@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.4.0
+
+- feat: set default syntax for build output panel
+- fix: partial path syntax representation not working
+
 ## 2.3.14
 
 - fix: plugin is triggered before settings are ready
