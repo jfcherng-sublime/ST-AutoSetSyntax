@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.4.1
+
+- refactor: refine scope for `ExecOutput.sublime-syntax`
+
 ## 2.4.0
 
 - feat: set default syntax for build output panel
