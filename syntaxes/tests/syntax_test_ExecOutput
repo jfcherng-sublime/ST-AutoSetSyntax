@@ -1,0 +1,17 @@
+# SYNTAX TEST "ExecOutput.sublime-syntax"
+
+  some text [Cancelled]
+# ^^^^^^^^^ - comment
+#           ^^^^^^^^^^^ comment
+
+  some text [Finished]
+# ^^^^^^^^^ - comment
+#           ^^^^^^^^^ comment
+
+  some text [Finished in 256ms]
+# ^^^^^^^^^ - comment
+#           ^^^^^^^^^^^^^^^^^^ comment
+
+  some text [Output Truncated]
+# ^^^^^^^^^ - comment
+#           ^^^^^^^^^^^^^^^^^ comment

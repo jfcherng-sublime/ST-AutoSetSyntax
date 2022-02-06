@@ -2,10 +2,14 @@
 ---
 # http://www.sublimetext.com/docs/syntax.html
 name: Exec Output (AutoSetSyntax)
+scope: output.autosetsyntax.exec
 version: 2
 hidden: true
-scope: text.exec-output
+file_extensions:
+  - syntax_test_ExecOutput
+
 contexts:
   main:
+    # from "Packages/Default/exec.py"
     - match: \[(?:Cancelled|Finished|Output Truncated)(?:\s+in [^\]]+)?\]$
-      scope: comment.status.exec-output
+      scope: comment.status.autosetsyntax.exec
