@@ -76,4 +76,15 @@ back to `HTML` syntax due to its first line.
 This can be useful for files which have no extension or irregular extensions, or when pasting codes into a new buffer.
 Check [ML-based Detection][plugin-ml-based-syntax-detection].
 
+## Dim out build status from the build output panel
+
+![screenshot](_assets/images/dim-out-exec-output.png)
+
+There is a bundled [syntax][plugin-configurations-exec_file_syntax], which dims out unimportant information
+such as `[Finished in 89ms]`. When AutoSetSyntax detects there is a build running, it sets the syntax of the
+output panel to the bundled one unless the output panel has its own syntax already. Hopefully, this makes
+the output less distractive.
+
+If you want to customize the color of unimportant information, their scopes are `comment.status.autosetsyntax.exec`.
+
 [^1]: Create a new file: ++ctrl+n++ for Windows/Linux. ++cmd+n++ for macOS.

@@ -19,6 +19,7 @@
 [plugin-builtin-constraints]: configurations.md#built-in-constraints
 [plugin-builtin-matches-any]: configurations.md#any
 [plugin-builtin-matches]: configurations.md#built-in-matches
+[plugin-configurations-exec_file_syntax]: configurations.md#exec_file_syntax
 [plugin-configurations]: configurations.md
 [plugin-debug]: debug.md
 [plugin-ml-based-syntax-detection]: experimental/ml-based-syntax-detection.md
