@@ -70,7 +70,3 @@ contexts:
   pop-at-end:
     - match: (?=$|\n)
       pop: 1
-
-  pop-2-at-end:
-    - match: (?=$|\n)
-      pop: 2

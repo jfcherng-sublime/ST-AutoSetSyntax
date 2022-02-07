@@ -10,6 +10,9 @@ file_extensions:
 
 contexts:
   main:
+    - include: build-status
+
+  build-status:
     # from "Packages/Default/exec.py"
     - match: \[(?:Cancelled|Finished|Output Truncated)(?:\s+in [^\]]+)?\]$
       scope: comment.status.autosetsyntax.exec
