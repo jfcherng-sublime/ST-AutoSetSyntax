@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.4.2
+
+- docs: add use case for dim out build status from the build output panel
+- fix: `guesslang` server connection failed on Linux
+- refactor: bundled syntaxes
+
 ## 2.4.1
 
 - refactor: refine scope for `ExecOutput.sublime-syntax`
