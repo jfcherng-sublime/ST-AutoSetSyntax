@@ -4,8 +4,9 @@ from ..guesslang.server import GuesslangServer
 from ..settings import get_merged_plugin_setting
 from ..shared import G
 from .auto_set_syntax import GuesslangClientCallbacks
-import sublime
 import sublime_plugin
+import threading
+import time
 
 
 class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):
@@ -16,11 +17,13 @@ class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):
         return bool(get_merged_plugin_setting("guesslang.enabled"))
 
     def run(self) -> None:
-        sublime.set_timeout_async(self._worker)
+        t = threading.Thread(target=self._worker)
+        t.start()
 
     def _worker(self) -> None:
         host = "localhost"
         port: int = get_merged_plugin_setting("guesslang.port")
         GuesslangServer.stop()
         if GuesslangServer.start(host, port):
+            time.sleep(1)  # wait for server initialization
             G.guesslang = GuesslangClient(host, port, callback_object=GuesslangClientCallbacks())
