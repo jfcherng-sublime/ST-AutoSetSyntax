@@ -24,6 +24,7 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
         {
             "draw_white_space": "none",
             "gutter": False,
+            "is_widget": True,  # ST 3 convention for a non-normal view
             "line_numbers": False,
             "scroll_past_end": False,
             "spell_check": False,
