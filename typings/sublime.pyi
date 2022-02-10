@@ -1,5 +1,5 @@
 # This file is maintained on https://github.com/jfcherng-sublime/ST-API-stubs
-# ST version: 4123
+# ST version: 4127
 
 from __future__ import annotations
 
@@ -1428,6 +1428,22 @@ class HtmlSheet(Sheet):
         ...
 
 
+class ContextStackFrame:
+    """
+    @version ST(>=4127)
+    """
+
+    context_name: str
+    source_file: str
+    source_location: Tuple[int, int]
+
+    def __init__(self, context_name: str, source_file: str, source_location: Tuple[int, int]) -> None:
+        ...
+
+    def __repr__(self) -> str:
+        ...
+
+
 class View:
     """
     Represents a view into a text buffer. Note that multiple views may refer to
@@ -1752,7 +1768,7 @@ class View:
         """Returns the syntax scope name assigned to the character at the given point"""
         ...
 
-    def context_backtrace(self, pt: Point) -> List[str]:
+    def context_backtrace(self, pt: Point) -> List[ContextStackFrame]:
         """
         Returns a list of the contexts on the stack at the specified point.
 
@@ -2492,10 +2508,10 @@ class Phantom:
     - `LAYOUT_BELOW`: Display the phantom in space below the current line,
                     left-aligned with the region.
     - `LAYOUT_BLOCK`: Display the phantom in space below the current line,
-    left-aligned with the beginning of the line.
+       left-aligned with the beginning of the line.
 
     * `on_navigate` is an optional callback that should accept a single string
-    parameter, that is the `href` attribute of the link clicked.
+       parameter, that is the `href` attribute of the link clicked.
     """
 
     region: Region
@@ -2559,7 +2575,7 @@ class PhantomSet:
 
     def update(self, new_phantoms: Sequence[Phantom]) -> None:
         """
-        phantoms should be a list of phantoms.
+        phantoms should be a sequence of phantoms.
 
         The `region` attribute of each existing phantom in the set will be updated.
         New phantoms will be added to the view and phantoms not in phantoms list will be deleted.
@@ -2589,7 +2605,7 @@ class CompletionList:
     completions: List[Completion]
     flags: int
 
-    def __init__(self, completions: Sequence[Completion] = None, flags: int = 0) -> None:
+    def __init__(self, completions: Optional[Sequence[Completion]] = None, flags: int = 0) -> None:
         """
         ---
 
