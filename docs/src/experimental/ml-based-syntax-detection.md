@@ -20,22 +20,22 @@ and communicates with it in Sublime Text.
 
 - Node.js >= 14
 
-  If the directory of your `node` executable is in the `PATH` environment variable, then you don't have to configure it.
-  If your Node runtime is provided by `lsp_utils`, then you can config `"guesslang.node_bin"` to `"${lsp_utils_node_bin}"`.
-  If you are none of the above cases, you have to provide the path of your `node` executable in `"guesslang.node_bin"`.
+    If the directory of your `node` executable is in the `PATH` environment variable, then you don't have to configure it.
+    If your Node runtime is provided by `lsp_utils`, then you can config `"guesslang.node_bin"` to `"${lsp_utils_node_bin}"`.
+    If you are none of the above cases, you have to provide the path of your `node` executable in `"guesslang.node_bin"`.
   
-!!! Tip "For Windows 7 Users"
+    !!! Tip "For Windows 7 Users"
 
-    Windows 7 can't install Node.js v14 but you can simply download a [portable version](https://nodejs.org/dist/latest-v14.x/)
-    such as `node-v14.17.6-win-x64.zip`, decompress it and set the `guesslang.node_bin` path.
+        Windows 7 can't install Node.js v14 but you can simply download a [portable version](https://nodejs.org/dist/latest-v14.x/)
+        such as `node-v14.17.6-win-x64.zip`, decompress it and set the `guesslang.node_bin` path.
 
 - Install the guesslang server.
 
-  Run `AutoSetSyntax: Download Guesslang Server` from the command palette. It will popup a dialogue when it's done.
+    Run `AutoSetSyntax: Download Guesslang Server` from the command palette. It will popup a dialogue when it's done.
 
 - Enable the feature.
 
-  Set `"guesslang.enabled"` to `true` in AutoSetSyntax's settings.
+    Set `"guesslang.enabled"` to `true` in AutoSetSyntax's settings.
 
 After you've done all steps above and then restart ST, it should work after a few seconds.
 
