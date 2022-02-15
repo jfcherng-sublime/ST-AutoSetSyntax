@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.4.3
+
+- fix: set `is_widget` for the log panel
+
 ## 2.4.2
 
 - docs: add use case for dim out build status from the build output panel
