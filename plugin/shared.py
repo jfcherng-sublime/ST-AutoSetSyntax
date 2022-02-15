@@ -1,5 +1,6 @@
 from .guesslang.client import GuesslangClient
 from .rules import SyntaxRuleCollection
+from .settings import get_merged_plugin_settings
 from typing import Any, Dict, Optional, Tuple
 import sublime
 
@@ -21,6 +22,10 @@ class G:
 
     # per window, those rules which are dropped after doing optimizations
     windows_dropped_rules: Dict[WindowId, DroppedRules] = {}
+
+    @classmethod
+    def is_plugin_ready(cls, window: sublime.Window) -> bool:
+        return bool(get_merged_plugin_settings(window=window) and cls.get_syntax_rule_collection(window))
 
     @classmethod
     def set_syntax_rule_collection(cls, window: sublime.Window, value: SyntaxRuleCollection) -> None:

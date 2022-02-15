@@ -23,7 +23,7 @@ import sublime
 T = TypeVar("T")
 
 
-def get_constraint(obj: Any) -> Optional[Type[AbstractConstraint]]:
+def find_constraint(obj: Any) -> Optional[Type[AbstractConstraint]]:
     return first(get_constraints(), lambda t: t.is_supported(obj))
 
 
@@ -48,7 +48,7 @@ class ConstraintRule(Optimizable):
     def is_droppable(self) -> bool:
         return not (self.constraint and not self.constraint.is_droppable())
 
-    def optimize(self) -> Generator[Any, None, None]:
+    def optimize(self) -> Generator[Optimizable, None, None]:
         return
         yield
 
@@ -84,7 +84,7 @@ class ConstraintRule(Optimizable):
 
         if constraint := constraint_rule.get("constraint"):
             obj.constraint_name = constraint
-            if constraint_class := get_constraint(constraint):
+            if constraint_class := find_constraint(constraint):
                 obj.constraint = constraint_class(*obj.args, **obj.kwargs)
 
         return obj
@@ -128,17 +128,17 @@ class AbstractConstraint(metaclass=ABCMeta):
     def _handled_comparator(comparator: str) -> Optional[Callable[[Any, Any], bool]]:
         """Convert the comparator string into a callable."""
         op: Optional[Callable[[Any, Any], bool]] = None
-        if comparator in ("<", "lt"):
+        if comparator in {"<", "lt"}:
             op = operator.lt
-        elif comparator in ("<=", "le", "lte"):
+        elif comparator in {"<=", "le", "lte"}:
             op = operator.le
-        elif comparator in (">=", "ge", "gte"):
+        elif comparator in {">=", "ge", "gte"}:
             op = operator.ge
-        elif comparator in (">", "gt"):
+        elif comparator in {">", "gt"}:
             op = operator.gt
-        elif comparator in ("=", "==", "===", "eq"):
+        elif comparator in {"=", "==", "===", "eq"}:
             op = operator.eq
-        elif comparator in ("!", "!=", "!==", "<>", "ne", "neq"):
+        elif comparator in {"!", "!=", "!==", "<>", "ne", "neq"}:
             op = operator.ne
         return op
 

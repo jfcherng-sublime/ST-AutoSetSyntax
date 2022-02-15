@@ -15,7 +15,7 @@ from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
 import sublime
 
 
-def get_match(obj: Any) -> Optional[Type[AbstractMatch]]:
+def find_match(obj: Any) -> Optional[Type[AbstractMatch]]:
     return first(get_matches(), lambda t: t.is_supported(obj))
 
 
@@ -31,6 +31,8 @@ def get_matches() -> Tuple[Type[AbstractMatch], ...]:
 
 @dataclass
 class MatchRule(Optimizable):
+    DEFAULT_MATCH_NAME = "any"
+
     match: Optional[AbstractMatch] = None
     match_name: str = ""
     args: Tuple[Any, ...] = tuple()
@@ -40,7 +42,7 @@ class MatchRule(Optimizable):
     def is_droppable(self) -> bool:
         return not (self.rules and self.match and not self.match.is_droppable(self.rules))
 
-    def optimize(self) -> Generator[Any, None, None]:
+    def optimize(self) -> Generator[Optimizable, None, None]:
         rules: List[MatchableRule] = []
         for rule in self.rules:
             if rule.is_droppable():
@@ -69,8 +71,8 @@ class MatchRule(Optimizable):
         if kwargs := match_rule.get("kwargs"):
             obj.kwargs = kwargs
 
-        match = match_rule.get("match", "any")
-        if match_class := get_match(match):
+        match = match_rule.get("match", cls.DEFAULT_MATCH_NAME)
+        if match_class := find_match(match):
             obj.match_name = match
             obj.match = match_class(*obj.args, **obj.kwargs)
 

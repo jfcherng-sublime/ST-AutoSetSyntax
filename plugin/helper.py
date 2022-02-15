@@ -200,7 +200,7 @@ def is_syntaxable_view(view: sublime.View, must_plaintext: bool = False) -> bool
         and not view.element()
         and not is_transient_view(view)
         and (not must_plaintext or ((syntax := view.syntax()) and is_plaintext_syntax(syntax)))
-        and (not (size_max := get_st_setting("syntax_detection_size_limit", 0)) or size_max >= view.size())
+        and ((size_max := get_st_setting("syntax_detection_size_limit", 0)) == 0 or size_max >= view.size())
     )
 
 
@@ -215,7 +215,7 @@ def is_transient_view(view: sublime.View) -> bool:
 
 
 @lru_cache
-def is_using_case_insensitive_os_os() -> bool:
+def is_using_case_insensitive_os() -> bool:
     return ST_PLATFORM in ("windows", "osx")
 
 
@@ -274,10 +274,7 @@ def parse_regex_flags(flags: Iterable[str]) -> int:
     """
     if isinstance(flags, str):
         flags = (flags,)
-    return reduce(
-        lambda carry, element: carry | element,
-        (int(getattr(re, flag, 0)) for flag in flags),
-    )
+    return reduce(lambda c, el: c | el, (getattr(re, flag, 0) for flag in flags), 0)
 
 
 def remove_prefix(s: str, prefix: str) -> str:
@@ -315,7 +312,7 @@ def stringify(obj: Any) -> str:
     return r
 
 
-@lru_cache
+@clearable_lru_cache()
 def build_reversed_trie(words: Tuple[str]) -> TrieNode:
     """Returns a trie with all words reversed. It can be used to match suffixes with reversed input string."""
     trie = TrieNode()
@@ -359,31 +356,34 @@ def get_expand_variable_map() -> Dict[str, str]:
         # from ST itself
         "bin": Path(sublime.executable_path()).parent,
         "cache": cache_path,
-        "data": packages_path / "..",
-        "index": cache_path / ".." / "Index",
+        "data": packages_path.parent,
+        "index": cache_path.parent / "Index",
         "installed_packages": Path(sublime.installed_packages_path()),
-        "lib": packages_path / ".." / "Lib",
-        "local": packages_path / ".." / "Local",
-        "log": packages_path / ".." / "Log",
+        "lib": packages_path.parent / "Lib",
+        "local": packages_path.parent / "Local",
+        "log": packages_path.parent / "Log",
         "packages": packages_path,
         # from LSP
-        "package_storage": cache_path / ".." / "Package Storage",
+        "package_storage": cache_path.parent / "Package Storage",
     }
 
-    def _find_latest_lsp_utils_node_version(package_storage: Path) -> Optional[Tuple[int, int, int]]:
-        if not (base_dir := package_storage / "lsp_utils/node-runtime").is_dir():
+    def _find_latest_lsp_utils_node(package_storage: Path) -> Optional[Tuple[Path, Tuple[int, int, int]]]:
+        if not (base_dir := package_storage / "lsp_utils" / "node-runtime").is_dir():
             return None
 
         version: Tuple[int, int, int] = (-1, -1, -1)
         for path in base_dir.iterdir():
             if path.is_dir() and (m := re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", path.name)):
                 version = max(version, (int(m.group(1)), int(m.group(2)), int(m.group(3))))
-        return version if version[0] != -1 else None
 
-    if node_version := _find_latest_lsp_utils_node_version(paths["package_storage"]):
-        node_version_str = ".".join(map(str, node_version))
+        if version[0] == -1:
+            return None
+
+        return (base_dir / ".".join(map(str, version)) / "node", version)
+
+    if node_info := _find_latest_lsp_utils_node(paths["package_storage"]):
         node_exe = "node.exe" if ST_PLATFORM == "windows" else "node"
-        paths["lsp_utils_node_dir"] = paths["package_storage"] / f"lsp_utils/node-runtime/{node_version_str}/node"
+        paths["lsp_utils_node_dir"] = node_info[0]
         paths["lsp_utils_node_bin"] = paths["lsp_utils_node_dir"] / node_exe
 
     return {name: str(path.resolve()) for name, path in paths.items()}

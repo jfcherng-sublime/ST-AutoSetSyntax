@@ -1,9 +1,9 @@
 from .constraint import AbstractConstraint
 from .constraint import ConstraintRule
-from .constraint import get_constraint
+from .constraint import find_constraint
 from .constraint import get_constraints
 from .match import AbstractMatch
-from .match import get_match
+from .match import find_match
 from .match import get_matches
 from .match import MatchableRule
 from .match import MatchRule
@@ -18,9 +18,9 @@ __all__ = (
     "AbstractConstraint",
     "AbstractMatch",
     "ConstraintRule",
-    "get_constraint",
+    "find_constraint",
+    "find_match",
     "get_constraints",
-    "get_match",
     "get_matches",
     "MatchableRule",
     "MatchRule",

@@ -56,7 +56,7 @@ class GuesslangClientCallbacks:
     }
 
     def on_open(self, ws: websocket.WebSocketApp) -> None:
-        self._status_msg_and_log("Connected to the guesslang server!", "🤝")
+        self._status_msg_and_log("🤝 Connected to the guesslang server!")
 
     def on_message(self, ws: websocket.WebSocketApp, message: str) -> None:
         try:
@@ -98,10 +98,10 @@ class GuesslangClientCallbacks:
         sublime.status_message(status_message)
 
     def on_error(self, ws: websocket.WebSocketApp, error: str) -> None:
-        self._status_msg_and_log(f"Guesslang server went wrong: {error}", "❌")
+        self._status_msg_and_log(f"❌ Guesslang server went wrong: {error}")
 
     def on_close(self, ws: websocket.WebSocketApp, close_status_code: int, close_msg: str) -> None:
-        self._status_msg_and_log("Guesslang server disconnected...", "💔")
+        self._status_msg_and_log("💔 Guesslang server disconnected...")
 
     @classmethod
     def resolve_guess_predictions(
@@ -165,20 +165,15 @@ class GuesslangClientCallbacks:
         return True
 
     @staticmethod
-    def _status_msg_and_log(msg: str, icon: str, window: Optional[sublime.Window] = None) -> None:
-        Logger.log(window or sublime.active_window(), f"{icon} {msg}")
+    def _status_msg_and_log(msg: str, window: Optional[sublime.Window] = None) -> None:
+        Logger.log(window or sublime.active_window(), msg)
         sublime.status_message(msg)
 
 
 def _snapshot_view(failed_ret: Optional[Any] = None) -> Callable[[AnyCallable], AnyCallable]:
     def decorator(func: AnyCallable) -> AnyCallable:
         def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
-            if not (
-                view.is_valid()
-                and (window := view.window())
-                # empty merge settings = plugin not ready yet
-                and get_merged_plugin_settings(window=window)
-            ):
+            if not (view.is_valid() and (window := view.window()) and G.is_plugin_ready(window)):
                 print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
                 return failed_ret
 

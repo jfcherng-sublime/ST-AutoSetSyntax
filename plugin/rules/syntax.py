@@ -7,7 +7,7 @@ from ..helper import first
 from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
 from .match import MatchRule
 from dataclasses import dataclass
-from typing import Any, Generator, Iterable, List, Optional, Set, Tuple
+from typing import Generator, Iterable, List, Optional, Set, Tuple
 import sublime
 
 
@@ -79,7 +79,7 @@ class SyntaxRuleCollection(Optimizable):
     version: str = VERSION
     rules: Tuple[SyntaxRule, ...] = tuple()
 
-    def optimize(self) -> Generator[Any, None, None]:
+    def optimize(self) -> Generator[Optimizable, None, None]:
         rules: List[SyntaxRule] = []
         for rule in self.rules:
             if rule.is_droppable():
