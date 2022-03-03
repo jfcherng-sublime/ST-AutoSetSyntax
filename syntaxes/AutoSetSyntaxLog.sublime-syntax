@@ -11,7 +11,6 @@ file_extensions:
 contexts:
   main:
     - include: comment
-    - include: plugin-header
     - include: string
     - include: python-object
 
@@ -20,13 +19,6 @@ contexts:
       captures:
         0: comment.line.number-sign.autosetsyntax.log
         1: punctuation.definition.comment.autosetsyntax.log
-
-  plugin-header:
-    - match: ^(\[)(AutoSetSyntax)(\])
-      captures:
-        1: punctuation.definition.name.begin.autosetsyntax.log
-        2: support.class.autosetsyntax.log
-        3: punctuation.definition.name.end.autosetsyntax.log
 
   python-object:
     - match: (?=SyntaxRuleCollection\()

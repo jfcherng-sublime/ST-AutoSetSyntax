@@ -39,13 +39,7 @@ class Logger:
     history_counts: Dict[int, int] = {}
 
     @classmethod
-    def log(
-        cls,
-        window: Optional[sublime.Window],
-        msg: str,
-        show_plugin_name: bool = True,
-        enabled: bool = True,
-    ) -> None:
+    def log(cls, window: Optional[sublime.Window], msg: str, enabled: bool = True) -> None:
         if not (enabled and window and get_merged_plugin_setting("enable_log", window=window)):
             return
 
@@ -53,12 +47,7 @@ class Logger:
         if cls._get_history_count(window) >= max_lines:
             cls.clear(window)
 
-        window.run_command(
-            "auto_set_syntax_append_log",
-            {
-                "msg": f"[{PLUGIN_NAME}] {msg}" if show_plugin_name else msg,
-            },
-        )
+        window.run_command("auto_set_syntax_append_log", {"msg": msg})
         cls._increase_history_count(window)
         cls._clear_undo_stack(window)
 

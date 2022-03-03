@@ -48,7 +48,6 @@ def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
     Logger.log(
         window,
         f"# {delimiter} re-compile rules for {window} {delimiter} BEGIN",
-        show_plugin_name=False,
         enabled=is_update,
     )
 
@@ -67,7 +66,6 @@ def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
     Logger.log(
         window,
         f"# {delimiter} re-compile rules for {window} {delimiter} END",
-        show_plugin_name=False,
         enabled=is_update,
     )
 
