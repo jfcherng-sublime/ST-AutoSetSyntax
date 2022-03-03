@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.4.4
+
+- chore: revise menu wording
+- dosc: update missing 2.4.3 changelog
+- refactor: remove leading plugin name from log panel
+- refactor: tidy codes
+
 ## 2.4.3
 
 - fix: set `is_widget` for the log panel
