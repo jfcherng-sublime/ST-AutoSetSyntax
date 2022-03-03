@@ -200,7 +200,13 @@
         {
             "syntaxes": "scope:source.js",
             "selector": "text.plain",
+            "match": "all",
             "rules": [
+                // the guesslang server does a better job at guessing JavaScript vs TypeScript
+                {
+                    "constraint": "is_guesslang_enabled",
+                    "inverted": true
+                },
                 {
                     "constraint": "contains_regex",
                     "args": [
