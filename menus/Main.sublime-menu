@@ -23,7 +23,7 @@
                                 "caption": "-",
                             },
                             {
-                                "caption": "Documentation (Online)",
+                                "caption": "Document (Online)",
                                 "command": "open_url",
                                 "args": {
                                     "url": "https://jfcherng-sublime.github.io/ST-AutoSetSyntax/",

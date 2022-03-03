@@ -20,7 +20,7 @@
         "command": "auto_set_syntax_debug_information",
     },
     {
-        "caption": "AutoSetSyntax: Documentation (Online)",
+        "caption": "AutoSetSyntax: Document (Online)",
         "command": "open_url",
         "args": {
             "url": "https://jfcherng-sublime.github.io/ST-AutoSetSyntax/",
