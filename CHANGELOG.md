@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.5.0
+
+- refactor: let `guesslang` server guess JS vs TS if possible
+- feat: add new constraint: `is_guesslang_enabled`
+- fix: "invert" typo in `sublime-package.json`
+
 ## 2.4.4
 
 - chore: revise menu wording
