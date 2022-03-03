@@ -259,7 +259,7 @@
                   "type": "object",
                   "default": {}
                 },
-                "invert": {
+                "inverted": {
                   "description": "Invert the result of the match test. But sometimes, the output may always be truthy or falsy no matter it's inverted or not. For example, if you try to test the file size of a not-on-disk buffer, the output will always be false.",
                   "type": "boolean",
                   "default": false
