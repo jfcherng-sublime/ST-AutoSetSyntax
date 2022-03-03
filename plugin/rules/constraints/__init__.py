@@ -5,6 +5,7 @@ __all__ = (
     "first_line_contains_regex",
     "is_arch",
     "is_extension",
+    "is_guesslang_enabled",
     "is_in_git_repo",
     "is_in_hg_repo",
     "is_in_svn_repo",
