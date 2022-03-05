@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.6.0
+
+- feat: introduce a new AI model (`vscode-regexp-languagedetection`) which comes from VSCode 1.65.0
+
+  It will be used by default for small buffer if `guesslang.enabled` is `true`.
+  To use it, you have to run `AutoSetSyntax: Download Guesslang Server` from the command palette again.
+
 ## 2.5.0
 
 - refactor: let `guesslang` server guess JS vs TS if possible
