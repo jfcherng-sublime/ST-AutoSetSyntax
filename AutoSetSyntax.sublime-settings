@@ -23,7 +23,7 @@
     "run_on_startup_views": false,
     // The max lookup size for the file.
     // A negative number means no limit, which may have performance issue on large files.
-    "trim_file_size": 4000, // about 4KB
+    "trim_file_size": 5000, // about 5KB
     // The max lookup length for the first line.
     // A negative number means no limit, which may have performance issue on a long first line.
     "trim_first_line_length": 180,
@@ -506,7 +506,6 @@
     "guesslang.node_bin": "node",
     "guesslang.port": 15151,
     "guesslang.confidence_threshold": 0.15,
-    "guesslang.allow_heuristic_guess": true,
     "guesslang.syntax_map": {
         "asm": [
             // no good way to do this?
@@ -551,9 +550,10 @@
         "matlab": ["scope:source.matlab"],
         "md": ["scope:text.html.markdown"],
         "ml": [], // what is this?
-        "mm": [], // what is this?
+        "mm": ["objective-c"],
         "pas": ["scope:source.pascal"],
         "php": ["scope:embedding.php", "scope:text.html.php"],
+        "pl": ["scope:source.perl"],
         "pm": [], // what is this?
         "prolog": ["scope:source.prolog"],
         "ps1": ["scope:source.powershell"],
@@ -571,6 +571,19 @@
         "v": ["scope:source.verilog"],
         "vba": ["scope:source.vbs"],
         "xml": ["scope:text.xml"],
-        "yaml": ["scope:source.yaml"]
+        "yaml": ["scope:source.yaml"],
+        // extra from vscode-regexp-languagedetection
+        "coffeescript": ["=coffee"],
+        "csharp": ["=cs"],
+        "haskell": ["=hs"],
+        "javascript": ["=js"],
+        "markdown": ["=md"],
+        "objective-c": ["=mm"],
+        "perl": ["=pl"],
+        "powershell": ["=ps1"],
+        "python": ["=py"],
+        "ruby": ["=rb"],
+        "rust": ["=rs"],
+        "typescript": ["=ts"]
     }
 }

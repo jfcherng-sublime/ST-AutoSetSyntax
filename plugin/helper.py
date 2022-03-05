@@ -163,28 +163,28 @@ def get_view_by_id(id: int) -> Optional[sublime.View]:
 
 
 def head_tail_content(content: str, partial: int) -> str:
-    if partial < 0:
+    if (half := partial // 2) <= 0:
         return ""
 
-    if len(content) <= partial * 2:
+    if len(content) <= partial:
         return content
 
-    return content[:partial] + "\n\n" + content[-partial:]
+    return content[:half] + "\n\n" + content[-half:]
 
 
 def head_tail_content_st(view: sublime.View, partial: int) -> str:
-    if partial < 0:
+    if (half := partial // 2) <= 0:
         return ""
 
-    if (size := view.size()) <= partial * 2:
+    if (size := view.size()) <= partial:
         return view.substr(sublime.Region(0, size))
 
     return (
         # for large files, most characteristics is in the starting
-        view.substr(sublime.Region(0, partial))
+        view.substr(sublime.Region(0, half))
         + "\n\n"
         # but some may be in the ending...
-        + view.substr(sublime.Region(size - partial, size))
+        + view.substr(sublime.Region(size - half, size))
     )
 
 

@@ -1,4 +1,3 @@
-from ..helper import head_tail_content
 from ..libs import websocket
 from ..types import TD_ViewSnapshot, ListenerEvent
 from typing import Optional, Protocol
@@ -69,13 +68,20 @@ class GuesslangClient:
     def is_connected(ws: websocket.WebSocketApp) -> bool:
         return ws.sock is not None
 
-    def request_guess_snapshot(self, view_info: TD_ViewSnapshot, event: Optional[ListenerEvent] = None) -> None:
+    def request_guess_snapshot(
+        self,
+        view_info: TD_ViewSnapshot,
+        *,
+        model: str = "",
+        event: Optional[ListenerEvent] = None,
+    ) -> None:
         if self.ws and self.is_connected(self.ws):
             self.ws.send(
                 sublime.encode_value(
                     {
                         "id": view_info["id"],
-                        "content": head_tail_content(view_info["content"], 2000),
+                        "model": model,
+                        "content": view_info["content"],
                         "event_name": event.value if event else None,
                     }
                 )

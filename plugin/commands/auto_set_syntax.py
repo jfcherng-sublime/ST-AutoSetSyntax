@@ -6,7 +6,6 @@ from ..helper import find_syntax_by_syntax_like
 from ..helper import find_syntax_by_syntax_likes
 from ..helper import generate_trimmed_strings
 from ..helper import get_view_by_id
-from ..helper import head_tail_content_st
 from ..helper import is_plaintext_syntax
 from ..helper import is_syntaxable_view
 from ..helper import stringify
@@ -21,8 +20,7 @@ from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, cast
-import re
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 import sublime
 import sublime_plugin
 import uuid
@@ -40,20 +38,6 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 
 class GuesslangClientCallbacks:
     """This class contains event callbacks for the guesslang server."""
-
-    heuristic_head_tail_map: Dict[Tuple[str, str], str] = {
-        # (head, tail): languageId,
-        ("[{", "}]"): "json",
-        ("[[", "]]"): "json",
-        ("{", "}"): "json",
-        ("[", ""): "ini",
-        ("---\n", ""): "yaml",
-        ("-- phpMyAdmin ", ""): "sql",
-        ("-- ", ""): "lua",
-        ("<?=", ""): "php",
-        ("<?php", ""): "php",
-        ("<?xml", ""): "xml",
-    }
 
     def on_open(self, ws: websocket.WebSocketApp) -> None:
         self._status_msg_and_log("🤝 Connected to the guesslang server!")
@@ -76,23 +60,20 @@ class GuesslangClientCallbacks:
         if not predictions or not (view := get_view_by_id(view_id)) or not (window := view.window()):
             return
 
-        content = head_tail_content_st(view, 2000).strip()
         predictions.sort(key=itemgetter("confidence"), reverse=True)
-        best_syntax, confidence, is_heuristic = self.resolve_guess_predictions(window, content, predictions)
+        best_syntax, confidence = self.resolve_guess_predictions(window, predictions)
 
-        if not best_syntax or not self.assert_prediction(content, best_syntax):
+        if not best_syntax:
             return
-
-        if is_heuristic:
-            details: Dict[str, Any] = {"event": event, "reason": "predict (heuristic)"}
-            status_message = f'Predicted as "{best_syntax.name}" by heuristics'
-        else:
-            details = {"event": event, "reason": "predict", "confidence": confidence}
-            status_message = f'Predicted as "{best_syntax.name}" ({int(confidence * 100)}% confidence)'
 
         # on_message() callback is async and maybe now the syntax has been set by other things somehow
         if (current_syntax := view.syntax()) and not is_plaintext_syntax(current_syntax):
             return
+
+        details = {"event": event, "reason": "predict", "confidence": confidence}
+        status_message = f'Predicted as "{best_syntax.name}"'
+        if confidence >= 0:
+            status_message += f" ({int(confidence * 100)}% confidence)"
 
         assign_syntax_to_view(view, best_syntax, details=details)
         sublime.status_message(status_message)
@@ -107,10 +88,9 @@ class GuesslangClientCallbacks:
     def resolve_guess_predictions(
         cls,
         window: sublime.Window,
-        content: str,
         predictions: List[GuesslangServerPredictionItem],
-    ) -> Tuple[Optional[sublime.Syntax], float, bool]:
-        failed_ret = (None, 1.0, False)
+    ) -> Tuple[Optional[sublime.Syntax], float]:
+        failed_ret = (None, 1.0)
 
         if not predictions:
             return failed_ret
@@ -118,51 +98,42 @@ class GuesslangClientCallbacks:
         settings = get_merged_plugin_settings(window=window)
         syntax_map: Dict[str, List[str]] = settings.get("guesslang.syntax_map", {})
         min_confidence: float = settings.get("guesslang.confidence_threshold", 0)
-        allow_heuristic_guess: bool = settings.get("guesslang.allow_heuristic_guess", True)
 
         best_prediction = predictions[0]
-        if best_prediction["confidence"] < min_confidence:
-            if allow_heuristic_guess and (syntax := cls.heuristic_guess(content, syntax_map)):
-                return (syntax, 0.0, True)
+        # confidence < 0 means unknown confidence
+        if 0 <= best_prediction["confidence"] < min_confidence:
+            Logger.log(window, f'👎 Prediction confidence too low: {best_prediction["confidence"]}')
             return failed_ret
 
-        syntax_likes = syntax_map.get(best_prediction["languageId"], None)
+        syntax_likes = cls.resolve_language_id(syntax_map, best_prediction["languageId"])
         if not syntax_likes:
             Logger.log(window, f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}')
             return failed_ret
 
         if not (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False)):
+            Logger.log(window, f"😢 Failed finding syntax from guesslang: {syntax_likes}")
             return failed_ret
 
-        return (syntax, best_prediction["confidence"], False)
+        return (syntax, best_prediction["confidence"])
 
     @classmethod
-    def heuristic_guess(cls, content: str, syntax_map: Dict[str, List[str]]) -> Optional[sublime.Syntax]:
-        target_language_id = None
-        for (head, tail), language_id in cls.heuristic_head_tail_map.items():
-            if content.startswith(head) and content.endswith(tail):
-                target_language_id = language_id
-                break
-
-        if (
-            target_language_id
-            and (syntax_likes := syntax_map.get(target_language_id, None))
-            and (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False))
-        ):
-            return syntax
-        return None
-
-    @staticmethod
-    def assert_prediction(content: str, prediction: sublime.Syntax) -> bool:
-        """
-        Sometimes the model gives prediction which is obviously wrong.
-        This function does some simple characteristics check to prevent that.
-        """
-        # the model seems to predict plain text as "INI" syntax quite frequently...
-        if prediction.scope == "source.ini" and not re.search(r"^[^\s=]+\s*=(?=\b|\s|$)", content, re.MULTILINE):
-            return False
-
-        return True
+    def resolve_language_id(
+        cls,
+        syntax_map: Dict[str, List[str]],
+        language_id: str,
+        *,
+        referred: Optional[Set[str]] = None,
+    ) -> List[str]:
+        res: List[str] = []
+        referred = referred or set()
+        for syntax_like in syntax_map.get(language_id, []):
+            if syntax_like.startswith("="):
+                if (language_id := syntax_like.lstrip("=")) not in referred:
+                    referred.add(language_id)
+                    res.extend(cls.resolve_language_id(syntax_map, language_id, referred=referred))
+            else:
+                res.append(syntax_like)
+        return res
 
     @staticmethod
     def _status_msg_and_log(msg: str, window: Optional[sublime.Window] = None) -> None:
@@ -202,6 +173,7 @@ def run_auto_set_syntax_on_view(
     if event == ListenerEvent.EXEC:
         return _assign_syntax_for_exec_output(view, event)
 
+    # prerequsites
     if not (
         (window := view.window())
         and is_syntaxable_view(view, must_plaintext)
@@ -221,7 +193,7 @@ def run_auto_set_syntax_on_view(
     if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD) and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
-    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD, ListenerEvent.PASTE):
+    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD, ListenerEvent.MODIFY, ListenerEvent.PASTE):
         # this is the ultimate fallback and done async
         _assign_syntax_with_guesslang_async(view, event)
 
@@ -340,10 +312,14 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
         and (view_info := ViewSnapshot.get_by_view(view))
         and "." not in view_info["file_name"]  # don't apply on those have an extension
         and ((syntax := view_info["syntax"]) and syntax.name == "Plain Text")
+        # we don't want to use AI model during typing when there is only one line
+        # that may result in unwanted behavior such as a new buffer may be assigned to Python
+        # right after "import" is typed but it could be JavaScript or TypeScript as well
+        and (event != ListenerEvent.MODIFY or "\n" in view_info["content"])
     ):
         return None
 
-    G.guesslang.request_guess_snapshot(view_info, event=event)
+    G.guesslang.request_guess_snapshot(view_info, model="vscode-regexp-languagedetection", event=event)
 
 
 def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:

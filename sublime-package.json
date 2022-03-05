@@ -43,7 +43,7 @@
                 "trim_file_size": {
                   "description": "The max lookup size for the file. A negative number means no limit, which may have performance issue on large files.",
                   "type": "integer",
-                  "default": 4000
+                  "default": 5000
                 },
                 "trim_first_line_length": {
                   "description": "The max lookup length for the first line. A negative number means no limit, which may have performance issue on a long first line.",
@@ -412,11 +412,6 @@
                   "markdownDescription": "The ML model will give a confidence within a range of `0 ~ 1` for the best gussed syntax. This setting control the min confidence which convinces ST to adopt its prediction.",
                   "type": "number",
                   "default": 0.15
-                },
-                "guesslang.allow_heuristic_guess": {
-                  "description": "If all predictions are low-confidence, do you want to guess the syntax by some simple heuristics?",
-                  "type": "boolean",
-                  "default": false
                 },
                 "guesslang.syntax_map": {
                   "markdownDescription": "The relationship between `languageId`s in VSCode and syntaxes in ST.",

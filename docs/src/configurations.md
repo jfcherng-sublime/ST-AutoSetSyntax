@@ -66,7 +66,7 @@ necessary to set syntax for the just opened file.
 
 | Type      | Default            |
 | --------- | ------------------ |
-| `integer` | `4000` (about 4KB) |
+| `integer` | `5000` (about 5KB) |
 
 Detecting the syntax for the whole file can be resource-consuming if the file is large.
 This setting approximately controls how many bytes should be used to represent a file.

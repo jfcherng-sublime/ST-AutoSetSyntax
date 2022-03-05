@@ -134,13 +134,16 @@ def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[s
     if len(view.sel()) != 1:
         return False
 
-    if len(changes) == 1 and len(changes[0].str) >= 20:
+    # paste = added change is too large
+    if len(changes) == 1 and len(changes[0].str) >= 5:
         return run_auto_set_syntax_on_view(view, ListenerEvent.PASTE, must_plaintext=True)
 
     historic_position = changes[0].b
     if (
+        # content is short
+        view.size() <= 300
         # editing the first line
-        historic_position.row == 0
+        or historic_position.row == 0
         # editing last few chars
         or historic_position.pt >= view.size() - 2
     ):
