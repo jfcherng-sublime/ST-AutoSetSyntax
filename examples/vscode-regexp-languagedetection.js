@@ -1,6 +1,6 @@
-import vscode_regexp_languagedetection from 'vscode-regexp-languagedetection';
+import vscode_regexp_languagedetection from '../vendor/vscode-regexp-languagedetection/dist/index.js';
 
-let o = {}; // what's this? extract weighting?
+let bias = {}; // how do we use this?
 let result = vscode_regexp_languagedetection.detect(`
 function makeThing(): Thing {
     let size = 0;
@@ -19,6 +19,6 @@ function makeThing(): Thing {
         },
     };
 }
-`, o) ?? null;
+`, bias) ?? null;
 
 console.log(result);

@@ -1,9 +1,5 @@
 import { WebSocketServer } from 'ws';
-import vscode_languagedetection from '@vscode/vscode-languagedetection';
-import vscode_regexp_languagedetection from './vendor/vscode-regexp-languagedetection/dist/index.js';
-
-const { ModelOperations } = vscode_languagedetection;
-const model_operations = new ModelOperations();
+import { run_vscode_languagedetection, run_vscode_regexp_languagedetection } from './helpers.js';
 
 const host = process.env.HOST ?? 'localhost';
 const port = parseInt(process.env.PORT ?? 15151, 10);
@@ -41,7 +37,19 @@ wss.on('connection', function (ws) {
 
     try {
       const { content, ...others } = JSON.parse(message);
-      const predictions = await model_operations.runModel(content);
+      const model = others['model'] ?? null;
+
+      let predictions = [];
+      switch (model) {
+        default:
+        case 'vscode-languagedetection':
+          predictions.push(...(await run_vscode_languagedetection(content)));
+          break;
+        case 'vscode-regexp-languagedetection':
+          const bias = others['bias'] ?? {}; // how do we construct this?
+          predictions.push(...(await run_vscode_regexp_languagedetection(content, bias)));
+          break;
+      }
       ws.send(JSON.stringify({ data: predictions, ...others }));
     } catch (e) {
       ws.send(JSON.stringify({ error: `${e}` }));
