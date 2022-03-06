@@ -1,33 +1,12 @@
 AutoSetSyntax has been updated. To see the changelog, visit
 Preferences » Package Settings » AutoSetSyntax » CHANGELOG
 
-## 2.3.8
+## 2.6.1
 
-- chore: fix outdated `sublime-package.json` contents
-- feat: add a rule for ST/SM `changelog.txt`
-- feat: add new constraints `is_arch`, `is_platform` and `is_platform_arch`
-- fix: also try trimmed filename when triggered by a command
+- feat: introduce a new AI model (`vscode-regexp-languagedetection`) which comes from VSCode 1.65.0
 
-## 2.3.0
+  It will be used by default for small buffer if `guesslang.enabled` is `true`.
+  To use it, you have to run `AutoSetSyntax: Download Guesslang Server` from the command palette again.
 
-- feat: predict syntax by a machine learning model
-
-  This experimental feature is disabled by default.
-  It provides the same feature which is introduced in VSCode 1.60.
-  https://code.visualstudio.com/updates/v1_60#_automatic-language-detection
-  If you want to try it, please check the following link.
-  https://jfcherng-sublime.github.io/ST-AutoSetSyntax/experimental/ml-based-syntax-detection/
-
-- chore: reduce default `trim_file_size` setting from `5000` to `4000`
-
-## 2.0.0
-
-If you are a user from v1 with custom syntax rules,
-check the [migration guide](https://jfcherng-sublime.github.io/ST-AutoSetSyntax/migration/).
-
-- refactor: complete rewritten to utilize ST 4 APIs and Python 3.8
-- feat: users can define their `syntax` rule recursively with `match` rules and `constraint` rules
-- feat: plugin logs are moved to a dedicated panel
-- feat: `auto_set_syntax_debug_information` command to help user dump information for debugging
-
-For more details, visit the online documentation: https://jfcherng-sublime.github.io/ST-AutoSetSyntax/
+- fix: internal states for running `ClearLogPanel` from command palette
+- refactor: squash log messages if they are duplicate

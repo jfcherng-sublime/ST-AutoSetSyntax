@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.6.1
+
+- fix: internal states for running `ClearLogPanel` from command palette
+- fix: modules should be reloaded when update plugin
+- refactor: squash log messages if they are duplicate
+
 ## 2.6.0
 
 - feat: introduce a new AI model (`vscode-regexp-languagedetection`) which comes from VSCode 1.65.0
