@@ -61,15 +61,15 @@ class GuesslangClientCallbacks:
             return
 
         predictions.sort(key=itemgetter("confidence"), reverse=True)
-        best_syntax, confidence = self.resolve_guess_predictions(window, predictions)
 
-        if not best_syntax:
+        if not (resolved_prediction := self.resolve_guess_predictions(window, predictions)):
             return
 
         # on_message() callback is async and maybe now the syntax has been set by other things somehow
         if (current_syntax := view.syntax()) and not is_plaintext_syntax(current_syntax):
             return
 
+        best_syntax, confidence = resolved_prediction
         details = {"event": event, "reason": "predict", "confidence": confidence}
         status_message = f'Predicted as "{best_syntax.name}"'
         if confidence >= 0:
@@ -89,11 +89,9 @@ class GuesslangClientCallbacks:
         cls,
         window: sublime.Window,
         predictions: List[GuesslangServerPredictionItem],
-    ) -> Tuple[Optional[sublime.Syntax], float]:
-        failed_ret = (None, 1.0)
-
+    ) -> Optional[Tuple[sublime.Syntax, float]]:
         if not predictions:
-            return failed_ret
+            return None
 
         settings = get_merged_plugin_settings(window=window)
         syntax_map: Dict[str, List[str]] = settings.get("guesslang.syntax_map", {})
@@ -103,16 +101,16 @@ class GuesslangClientCallbacks:
         # confidence < 0 means unknown confidence
         if 0 <= best_prediction["confidence"] < min_confidence:
             Logger.log(window, f'👎 Prediction confidence too low: {best_prediction["confidence"]}')
-            return failed_ret
+            return None
 
         syntax_likes = cls.resolve_language_id(syntax_map, best_prediction["languageId"])
         if not syntax_likes:
             Logger.log(window, f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}')
-            return failed_ret
+            return None
 
         if not (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False)):
             Logger.log(window, f"😢 Failed finding syntax from guesslang: {syntax_likes}")
-            return failed_ret
+            return None
 
         return (syntax, best_prediction["confidence"])
 
