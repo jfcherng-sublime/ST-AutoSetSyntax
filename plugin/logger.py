@@ -3,10 +3,22 @@ from .constant import PLUGIN_NAME
 from .helper import get_st_window
 from .settings import get_merged_plugin_setting
 from .settings import get_st_setting
-from typing import Dict, Optional, Union
+from contextlib import contextmanager
+from typing import Dict, Generator, Optional, Union
 import math
+import re
 import sublime
 import sublime_plugin
+
+
+@contextmanager
+def editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
+    is_read_only = view.is_read_only()
+    view.set_read_only(False)
+    try:
+        yield view
+    finally:
+        view.set_read_only(is_read_only)
 
 
 def _find_log_panel(obj: Union[sublime.View, sublime.Window]) -> Optional[sublime.View]:
@@ -19,6 +31,7 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
     # Somehow there is an error about "scope:output.autosetsyntax.log" not found during updating this plugin.
     # Thus, I change it to use the syntax path to load the syntax.
     panel.assign_syntax("Packages/AutoSetSyntax/syntaxes/AutoSetSyntaxLog.sublime-syntax")
+    panel.set_read_only(True)
     panel.set_scratch(True)
     panel.settings().update(
         {
@@ -87,16 +100,26 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
     def is_visible(self) -> bool:
         return False
 
-    def run(self, edit: sublime.Edit, msg: str) -> None:
+    def run(self, edit: sublime.Edit, msg: str, squash_history: bool = True) -> None:
         if not (window := self.view.window()):
             return
 
         if not (panel := _find_log_panel(window)):
             panel = _create_log_panel(window)
 
-        panel.set_read_only(False)
-        panel.insert(edit, panel.size(), f"{msg}\n")
-        panel.set_read_only(True)
+        if (
+            squash_history
+            and (last_line_region := panel.full_line(panel.size() - 1))
+            and (last_line := panel.substr(last_line_region).rstrip()).startswith(msg)
+            and (m := re.match(r"(?: +\(x(\d+)\))?", last_line[len(msg) :]))
+        ):
+            msg = f"{msg} (x{int(m.group(1) or 1) + 1})"
+            replace_region = last_line_region
+        else:
+            replace_region = sublime.Region(panel.size())  # EOF
+
+        with editable_view(panel) as panel:
+            panel.replace(edit, replace_region, f"{msg}\n")
 
 
 class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
@@ -110,9 +133,8 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
 
     def run(self, edit: sublime.Edit) -> None:
         if panel := _find_log_panel(self.view):
-            panel.set_read_only(False)
-            panel.erase(edit, sublime.Region(0, panel.size()))
-            panel.set_read_only(True)
+            with editable_view(panel) as panel:
+                panel.erase(edit, sublime.Region(0, panel.size()))
 
 
 class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
