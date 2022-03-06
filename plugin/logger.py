@@ -65,11 +65,10 @@ class Logger:
         cls._clear_undo_stack(window)
 
     @classmethod
-    def clear(cls, window: Optional[sublime.Window]) -> None:
-        if window:
-            window.run_command("auto_set_syntax_clear_log_panel")
-            cls._set_history_count(window, 0)
-            cls._clear_undo_stack(window)
+    def clear(cls, window: sublime.Window) -> None:
+        window.run_command("auto_set_syntax_clear_log_panel", {"from_logger": True})
+        cls._set_history_count(window, 0)
+        cls._clear_undo_stack(window)
 
     @classmethod
     def destroy(cls, window: sublime.Window) -> None:
@@ -131,8 +130,16 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
     def is_enabled(self) -> bool:
         return bool(_find_log_panel(self.view))
 
-    def run(self, edit: sublime.Edit) -> None:
-        if panel := _find_log_panel(self.view):
+    def run(self, edit: sublime.Edit, from_logger: bool = False) -> None:
+        if not (window := self.view.window()):
+            return
+
+        # ensure command is triggered by the logger so that we can maintain internal states
+        if not from_logger:
+            Logger.clear(window)
+            return
+
+        if panel := _find_log_panel(window):
             with editable_view(panel) as panel:
                 panel.erase(edit, sublime.Region(0, panel.size()))
 
