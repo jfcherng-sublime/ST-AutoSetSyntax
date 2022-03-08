@@ -60,7 +60,7 @@ def _clone_file_as_template(
         return None
 
     new = window.new_file()
-    new.run_command("append", {"contents": template})
+    new.run_command("append", {"characters": template})
     new.settings().update(
         {
             "default_dir": save_dir,
