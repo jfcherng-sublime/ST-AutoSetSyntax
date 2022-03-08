@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.6.2
+
+- fix: `auto_set_syntax_create_new_xxx` commands not working
+- fix: command name CamelCase
+- refactor: simplify `boot.py`
+
 ## 2.6.1
 
 - fix: internal states for running `ClearLogPanel` from command palette
