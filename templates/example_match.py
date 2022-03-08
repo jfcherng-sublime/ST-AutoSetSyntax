@@ -1,9 +1,10 @@
 from AutoSetSyntax.plugin import AbstractMatch
 from AutoSetSyntax.plugin import MatchableRule
-from typing import Tuple
+from typing import Tuple, final
 import sublime
 
 
+@final
 class MyOwnMatch(AbstractMatch):
     """Your custom `Match` must inherit `AbstractMatch` and implement the `test` method."""
 

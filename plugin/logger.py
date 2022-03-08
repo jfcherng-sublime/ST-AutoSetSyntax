@@ -12,7 +12,7 @@ import sublime_plugin
 
 
 @contextmanager
-def editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
+def _editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
     is_read_only = view.is_read_only()
     view.set_read_only(False)
     try:
@@ -22,8 +22,7 @@ def editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
 
 
 def _find_log_panel(obj: Union[sublime.View, sublime.Window]) -> Optional[sublime.View]:
-    window = get_st_window(obj)
-    return window.find_output_panel(PLUGIN_NAME) if window else None
+    return window.find_output_panel(PLUGIN_NAME) if (window := get_st_window(obj)) else None
 
 
 def _create_log_panel(window: sublime.Window) -> sublime.View:
@@ -117,7 +116,7 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
         else:
             replace_region = sublime.Region(panel.size())  # EOF
 
-        with editable_view(panel) as panel:
+        with _editable_view(panel) as panel:
             panel.replace(edit, replace_region, f"{msg}\n")
 
 
@@ -140,7 +139,7 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
             return
 
         if panel := _find_log_panel(window):
-            with editable_view(panel) as panel:
+            with _editable_view(panel) as panel:
                 panel.erase(edit, sublime.Region(0, panel.size()))
 
 

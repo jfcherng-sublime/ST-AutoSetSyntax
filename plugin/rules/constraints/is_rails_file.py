@@ -1,11 +1,13 @@
 # modified from https://github.com/facelessuser/ApplySyntax/blob/master/as_plugins/is_rails_file.py
 
 from ..constraint import AbstractConstraint
+from typing import final
 import sublime
 
 RUBY_EXTENSIONS = (".rb", ".rake")
 
 
+@final
 class IsRailsFileConstraint(AbstractConstraint):
     """Check file location and name to determine if a Rails file."""
 

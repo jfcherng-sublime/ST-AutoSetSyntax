@@ -1,7 +1,9 @@
 from AutoSetSyntax.plugin import AbstractConstraint
+from typing import final
 import sublime
 
 
+@final
 class MyOwnConstraint(AbstractConstraint):
     """Your custom `Constraint` must inherit `AbstractConstraint` and implement the `test` method."""
 

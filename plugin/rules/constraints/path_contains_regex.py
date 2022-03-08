@@ -1,8 +1,9 @@
 from ..constraint import AbstractConstraint
-from typing import Any
+from typing import Any, final
 import sublime
 
 
+@final
 class PathContainsRegexConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

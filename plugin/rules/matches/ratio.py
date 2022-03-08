@@ -1,10 +1,11 @@
 from ...helper import get_nth_item
 from ..match import AbstractMatch
 from ..match import MatchableRule
-from typing import Any, Tuple
+from typing import Any, Tuple, final
 import sublime
 
 
+@final
 class RatioMatch(AbstractMatch):
     """Matches ratio like `(2, 3)`, which means at least two thirds of rules should be matched."""
 

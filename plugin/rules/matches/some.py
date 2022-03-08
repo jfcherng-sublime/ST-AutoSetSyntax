@@ -1,10 +1,11 @@
 from ...helper import get_nth_item
 from ..match import AbstractMatch
 from ..match import MatchableRule
-from typing import Any, Tuple
+from typing import Any, Tuple, final
 import sublime
 
 
+@final
 class SomeMatch(AbstractMatch):
     """Matches some like `(5,)`, which means at least 5 rules should be matched."""
 

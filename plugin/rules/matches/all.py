@@ -1,9 +1,10 @@
 from ..match import AbstractMatch
 from ..match import MatchableRule
-from typing import Tuple
+from typing import Tuple, final
 import sublime
 
 
+@final
 class AllMatch(AbstractMatch):
     """Matches when all rules are matched."""
 

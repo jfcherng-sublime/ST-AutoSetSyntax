@@ -1,11 +1,12 @@
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, final
 import sublime
 
 Comparator = Callable[[Any, Any], bool]
 
 
+@final
 class IsSizeConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

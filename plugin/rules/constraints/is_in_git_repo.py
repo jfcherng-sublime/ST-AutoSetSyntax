@@ -1,8 +1,10 @@
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
+from typing import final
 import sublime
 
 
+@final
 class IsInGitRepoConstraint(AbstractConstraint):
     """Check whether this file is in a git repo."""
 

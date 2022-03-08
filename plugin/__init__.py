@@ -10,7 +10,6 @@ from .lru_cache import clear_all_cached_functions
 from .rules import AbstractConstraint
 from .rules import AbstractMatch
 from .rules import MatchableRule
-from .settings import AioSettings
 from .settings import extra_settings_producer
 from .settings import get_merged_plugin_setting
 from .shared import G
@@ -21,16 +20,52 @@ import importlib.machinery
 import pkgutil
 import sublime
 
+# import all listeners and commands
+from .commands.auto_set_syntax import AutoSetSyntaxCommand
+from .commands.auto_set_syntax_create_new_implementation import AutoSetSyntaxCreateNewConstraintCommand
+from .commands.auto_set_syntax_create_new_implementation import AutoSetSyntaxCreateNewMatchCommand
+from .commands.auto_set_syntax_debug_information import AutoSetSyntaxDebugInformationCommand
+from .commands.auto_set_syntax_download_guesslang_server import AutoSetSyntaxDownloadGuesslangServerCommand
+from .commands.auto_set_syntax_migrate_settings import AutoSetSyntaxMigrateSettingsCommand
+from .commands.auto_set_syntax_restart_guesslang import AutoSetSyntaxRestartGuesslangCommand
+from .listener import AutoSetSyntaxEventListener
+from .listener import AutoSetSyntaxTextChangeListener
+from .logger import AutoSetSyntaxAppendLogCommand
+from .logger import AutoSetSyntaxClearLogPanelCommand
+from .logger import AutoSetSyntaxToggleLogPanelCommand
+from .settings import AioSettings
+
 __all__ = (
+    # ST: core
+    "plugin_loaded",
+    "plugin_unloaded",
+    # ST: commands
+    "AutoSetSyntaxAppendLogCommand",
+    "AutoSetSyntaxClearLogPanelCommand",
+    "AutoSetSyntaxCommand",
+    "AutoSetSyntaxCreateNewConstraintCommand",
+    "AutoSetSyntaxCreateNewMatchCommand",
+    "AutoSetSyntaxDebugInformationCommand",
+    "AutoSetSyntaxDownloadGuesslangServerCommand",
+    "AutoSetSyntaxMigrateSettingsCommand",
+    "AutoSetSyntaxRestartGuesslangCommand",
+    "AutoSetSyntaxToggleLogPanelCommand",
+    # ST: listeners
+    "AioSettings",
+    "AutoSetSyntaxEventListener",
+    "AutoSetSyntaxTextChangeListener",
+    # public interfaces
     "AbstractConstraint",
     "AbstractMatch",
     "MatchableRule",
-    "set_up",
-    "tear_down",
 )
 
 
-def set_up() -> None:
+def plugin_loaded() -> None:
+    sublime.set_timeout_async(plugin_loaded_real)
+
+
+def plugin_loaded_real() -> None:
     _load_custom_implementations()
 
     AioSettings.plugin_name = PLUGIN_NAME
@@ -45,7 +80,7 @@ def set_up() -> None:
     sublime.run_command("auto_set_syntax_restart_guesslang")
 
 
-def tear_down() -> None:
+def plugin_unloaded() -> None:
     AioSettings.clear_on_change(PLUGIN_NAME)
     AioSettings.tear_down()
 

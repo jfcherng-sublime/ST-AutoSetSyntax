@@ -1,9 +1,10 @@
 from ...constant import ST_PLATFORM
 from ..constraint import AbstractConstraint
-from typing import Any, Tuple
+from typing import Any, Tuple, final
 import sublime
 
 
+@final
 class IsPlatformConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
