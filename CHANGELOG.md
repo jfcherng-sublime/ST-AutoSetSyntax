@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.6.3
+
+- refactor: allow manually run AI model on plain text file
+
 ## 2.6.2
 
 - fix: `auto_set_syntax_create_new_xxx` commands not working
