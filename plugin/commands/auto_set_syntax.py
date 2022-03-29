@@ -33,7 +33,7 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
         return f"{PLUGIN_NAME}: Auto Set Syntax"
 
     def run(self, edit: sublime.Edit) -> None:
-        run_auto_set_syntax_on_view(self.view, ListenerEvent.COMMAND)
+        run_auto_set_syntax_on_view(self.view, ListenerEvent.COMMAND, must_plaintext=False)
 
 
 class GuesslangClientCallbacks:
@@ -166,6 +166,7 @@ def _snapshot_view(failed_ret: Optional[Any] = None) -> Callable[[AnyCallable], 
 def run_auto_set_syntax_on_view(
     view: sublime.View,
     event: Optional[ListenerEvent] = None,
+    *,
     must_plaintext: bool = False,
 ) -> bool:
     if event == ListenerEvent.EXEC:
@@ -308,7 +309,9 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
     if not (
         G.guesslang
         and (view_info := ViewSnapshot.get_by_view(view))
-        and "." not in view_info["file_name"]  # don't apply on those have an extension
+        # don't apply on those have an extension
+        and (event == ListenerEvent.COMMAND or "." not in view_info["file_name"])
+        # only apply on plain text syntax
         and ((syntax := view_info["syntax"]) and syntax.name == "Plain Text")
         # we don't want to use AI model during typing when there is only one line
         # that may result in unwanted behavior such as a new buffer may be assigned to Python
