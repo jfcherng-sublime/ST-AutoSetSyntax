@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.6.4
+
+- chore: update language detection model
+
 ## 2.6.3
 
 - refactor: allow manually run AI model on plain text file
