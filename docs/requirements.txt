@@ -2,8 +2,8 @@
 --index https://pypi.python.org/simple/
 
 # main
-mkdocs-material==8.2.8
+mkdocs-material==8.2.9
 
 # plugins
-mkdocs-git-revision-date-localized-plugin==1.0.0
+mkdocs-git-revision-date-localized-plugin==1.0.1
 mkdocs-minify-plugin==0.5.0
