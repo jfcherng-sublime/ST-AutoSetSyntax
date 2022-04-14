@@ -28,7 +28,6 @@ class GuesslangServer:
 
         if is_port_in_use(port):
             Logger.log(sublime.active_window(), f"⚠ Port {port} is in use.")
-            return False
 
         try:
             process = cls._start_process(
