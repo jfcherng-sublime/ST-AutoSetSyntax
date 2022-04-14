@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.6.5
+
+- refactor: assume guesslang server starts if port is already in use
+
 ## 2.6.4
 
 - chore: update language detection model
