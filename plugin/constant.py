@@ -24,17 +24,23 @@ PY_VERSION = PY_VERSION_FULL.partition(" ")[0]  # like "3.8.8"
 
 PLUGIN_NAME = __package__.partition(".")[0]  # like "AutoSetSyntax"
 
-PLUGIN_STORAGE_DIR = Path(sublime.cache_path()) / f"../Package Storage/{PLUGIN_NAME}"
+PLUGIN_STORAGE_DIR = Path(sublime.cache_path()).parent / f"Package Storage/{PLUGIN_NAME}"
 PLUGIN_CUSTOM_DIR = Path(sublime.packages_path()) / f"{PLUGIN_NAME}-Custom"
 PLUGIN_CUSTOM_MODULE_PATHS = {
     "constraint": PLUGIN_CUSTOM_DIR / "constraints",
     "match": PLUGIN_CUSTOM_DIR / "matches",
 }
 
+################################################################################
+
 VIEW_RUN_ID_SETTINGS_KEY = f"{PLUGIN_NAME}/run_id"
 VIEW_IS_TRANSIENT_SETTINGS_KEY = f"{PLUGIN_NAME}/is_transient"
 
+################################################################################
+
 RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|syntax)=(?P<syntax>[^\s:]+):?(?=\s)", re.IGNORECASE)
+
+################################################################################
 
 GUESSLANG_SERVER_TAG = "server-0.1.1"
 GUESSLANG_SERVER_URL = (
