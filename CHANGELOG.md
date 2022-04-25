@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.6.6
+
+- fix: nested MatchRules without "match" doesn't work (#11)
+- refactor: get rid of ".." from path
+
 ## 2.6.5
 
 - refactor: assume guesslang server starts if port is already in use
