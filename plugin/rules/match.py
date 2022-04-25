@@ -81,7 +81,7 @@ class MatchRule(Optimizable):
             rule_class: Optional[Type[MatchableRule]] = None
             if "constraint" in rule:
                 rule_class = ConstraintRule
-            elif "match" in rule:
+            elif "rules" in rule:  # nested MatchRule
                 rule_class = MatchRule
             if rule_class and (rule_compiled := rule_class.make(rule)):  # type: ignore
                 rules_compiled.append(rule_compiled)
