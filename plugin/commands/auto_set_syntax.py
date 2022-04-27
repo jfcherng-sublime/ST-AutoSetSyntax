@@ -254,16 +254,14 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
     ):
         syntax: Optional[sublime.Syntax] = None
 
-        if (
-            is_plaintext_syntax(syntax_old)
-            or "." not in view_info["file_name"]
-            or view_info["first_line"].startswith("#!")
-        ):
+        if is_plaintext_syntax(syntax_old) or "." not in view_info["file_name"] or first_line.startswith("#!"):
             # for when modifying the first line or having a shebang
             syntax = sublime.find_syntax_for_file("", first_line)
             # VIM modeline
-            if (not syntax or is_plaintext_syntax(syntax)) and (match := RE_VIM_SYNTAX_LINE.search(first_line)):
-                syntax = find_syntax_by_syntax_like(match.group("syntax"))
+            if not syntax or is_plaintext_syntax(syntax):
+                for match in RE_VIM_SYNTAX_LINE.finditer(view_info["content"]):
+                    if syntax := find_syntax_by_syntax_like(match.group("syntax")):
+                        break
 
         if not syntax or is_plaintext_syntax(syntax):
             return False
