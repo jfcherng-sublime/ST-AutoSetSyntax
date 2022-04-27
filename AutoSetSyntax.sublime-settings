@@ -73,7 +73,7 @@
                 },
                 {
                     "constraint": "contains_regex",
-                    "args": ["^import(?:$|[\\s(])", "^from\\s+[a-zA-Z.]+\\s+import(?:$|[\\s(])"]
+                    "args": ["^import(?!\\s+groovy)(?:$|[\\s(])", "^from\\s+[a-zA-Z.]+\\s+import(?:$|[\\s(])"]
                 }
             ]
         },
@@ -179,6 +179,16 @@
                 {
                     "constraint": "contains_regex",
                     "args": ["^(?:import|func|type)\\s"]
+                }
+            ]
+        },
+        {
+            "syntaxes": ["Jenkinsfile", "scope:source.groovy"],
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["^Jenkinsfile(?=\\b|_)"]
                 }
             ]
         },
