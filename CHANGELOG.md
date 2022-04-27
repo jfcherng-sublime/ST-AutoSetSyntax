@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.6.7
+
+- fix: `Jenkinsfile` is detected as Python
+- fix: detect VIM syntax settings not only at the first line
+
 ## 2.6.6
 
 - fix: nested MatchRules without "match" doesn't work (#11)
