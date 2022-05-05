@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.6.8
+
+- chore: update guesslang server
+
 ## 2.6.7
 
 - fix: `Jenkinsfile` is detected as Python
