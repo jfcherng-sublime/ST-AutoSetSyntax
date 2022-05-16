@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.6.9
+
+- feat: treat files started with `Makefile.` as Makefile
+
+  Such as `Makefile.build`, `Makefile.debug`, etc...
+
 ## 2.6.8
 
 - chore: update guesslang server
