@@ -3,7 +3,7 @@ def reload_plugin() -> None:
 
     # Remove all previously loaded plugin modules.
     prefix = f"{__package__}."
-    for module_name in filter(lambda m: m.startswith(prefix) and m != __name__, sys.modules):
+    for module_name in tuple(filter(lambda m: m.startswith(prefix) and m != __name__, sys.modules)):
         del sys.modules[module_name]
 
 
