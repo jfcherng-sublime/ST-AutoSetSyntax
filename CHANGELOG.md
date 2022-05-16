@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.6.10
+
+- fix: RuntimeError: dictionary changed size during iteration
+
 ## 2.6.9
 
 - feat: treat files started with `Makefile.` as Makefile
