@@ -241,6 +241,18 @@
             ]
         },
         {
+            "comment": "Makefile",
+            "syntaxes": ["scope:source.makefile"],
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["^Makefile\\."],
+                    "kwargs": { "regex_flags": ["IGNORECASE"] }
+                }
+            ]
+        },
+        {
             // use the % regex to detect Matlab files
             "syntaxes": "scope:source.matlab",
             "selector": "text.plain | source.objc",
