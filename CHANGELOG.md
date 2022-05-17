@@ -1,5 +1,17 @@
 # AutoSetSyntax Changelog
 
+## 2.7.0
+
+- feat: add new setting `trim_suffixes_auto`
+
+  Apart from `trim_suffixes`, also try to remove every sub-extensions when finding a syntax match.
+  For example, for the file `foo.json.ext1.ext2.ext3`, this setting enables trying the following file names as well.
+
+  - `foo.json.ext1.ext2` (no matching syntax)
+  - `foo.json.ext1` (no matching syntax)
+  - `foo.json` (matches `JSON` syntax)
+  - If there is no `JSON` syntax, then `foo` will be tried.
+
 ## 2.6.10
 
 - fix: RuntimeError: dictionary changed size during iteration
