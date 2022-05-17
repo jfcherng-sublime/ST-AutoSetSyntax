@@ -50,6 +50,11 @@
                   "type": "integer",
                   "default": 180
                 },
+                "trim_suffixes_auto": {
+                  "markdownDescription": "Apart from `trim_suffixes`, also try to remove every sub-extensions when finding a syntax match.",
+                  "type": "boolean",
+                  "default": false
+                },
                 "default_syntax_rules": {
                   "description": "(Default Global) Rules which tell AutoSetSyntax how to behvae.",
                   "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"

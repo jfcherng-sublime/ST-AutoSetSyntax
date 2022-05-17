@@ -4,6 +4,7 @@ from ..constant import VIEW_RUN_ID_SETTINGS_KEY
 from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
 from ..helper import find_syntax_by_syntax_like
 from ..helper import find_syntax_by_syntax_likes
+from ..helper import generate_trimmed_filenames
 from ..helper import generate_trimmed_strings
 from ..helper import get_view_by_id
 from ..helper import is_plaintext_syntax
@@ -18,6 +19,7 @@ from ..settings import pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent
+from itertools import chain
 from operator import itemgetter
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
@@ -283,12 +285,17 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
     ):
         return False
 
-    for trimmed in generate_trimmed_strings(
-        (original := Path(filepath).name),
-        (suffixes := pref_trim_suffixes(window=window)),
-        skip_self=True,
-    ):
-        if (syntax := sublime.find_syntax_for_file(trimmed)) and not is_plaintext_syntax(syntax):
+    original = Path(filepath).name
+    trim_suffixes = pref_trim_suffixes(window=window)
+    trim_suffixes_auto = get_merged_plugin_setting("trim_suffixes_auto", window=window)
+
+    filenames = chain(
+        generate_trimmed_strings(original, trim_suffixes, skip_self=True),
+        generate_trimmed_filenames(original, skip_self=True) if trim_suffixes_auto else tuple(),
+    )
+
+    for filename in filenames:
+        if (syntax := sublime.find_syntax_for_file(filename)) and not is_plaintext_syntax(syntax):
             return assign_syntax_to_view(
                 view,
                 syntax,
@@ -296,8 +303,9 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
                     "event": event,
                     "reason": "trimmed filename",
                     "filename_original": original,
-                    "filename_trimmed": trimmed,
-                    "trim_suffixes": suffixes,
+                    "filename_trimmed": filename,
+                    "trim_suffixes": trim_suffixes,
+                    "trim_suffixes_auto": trim_suffixes_auto,
                 },
             )
     return False

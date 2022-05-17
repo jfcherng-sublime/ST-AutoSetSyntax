@@ -80,6 +80,20 @@ This setting approximately controls how many bytes should be used to represent a
 Detecting the syntax for the whole first line can be resource-consuming if it's a super long one-line file.
 This setting controls how many characters should be used to represent the first line.
 
+### `trim_suffixes_auto`
+
+| Type      | Default |
+| --------- | ------- |
+| `boolean` | `false` |
+
+Apart from `trim_suffixes`, also try to remove every sub-extensions when finding a syntax match.
+For example, for the file `foo.json.ext1.ext2.ext3`, this setting enables trying the following file names as well.
+
+1. `foo.json.ext1.ext2` (no matching syntax)
+1. `foo.json.ext1` (no matching syntax)
+1. `foo.json` (matches `JSON` syntax)
+1. If there is no `JSON` syntax, then `foo` will be tried.
+
 ### `default_syntax_rules`
 
 Syntax rules are the key part of AutoSetSyntax.

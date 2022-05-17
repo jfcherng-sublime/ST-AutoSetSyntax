@@ -321,11 +321,17 @@ def build_reversed_trie(words: Tuple[str]) -> TrieNode:
     return trie
 
 
-def generate_trimmed_strings(
-    string: str,
-    suffixes: Tuple[str],
-    skip_self: bool = False,
-) -> Generator[str, None, None]:
+def generate_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[str, None, None]:
+    """Generates trimmed filenames."""
+    parts = filename.split(".")
+    if skip_self:
+        parts.pop()
+    while parts:
+        yield ".".join(parts)
+        parts.pop()
+
+
+def generate_trimmed_strings(string: str, suffixes: Tuple[str], skip_self: bool = False) -> Generator[str, None, None]:
     """Generates strings with suffixes trimmed."""
     trie = build_reversed_trie(suffixes)
 

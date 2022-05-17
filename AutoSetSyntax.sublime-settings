@@ -27,6 +27,8 @@
     // The max lookup length for the first line.
     // A negative number means no limit, which may have performance issue on a long first line.
     "trim_first_line_length": 180,
+    // Apart from "trim_suffixes", also try to remove every sub-extensions when finding a syntax match.
+    "trim_suffixes_auto": false,
     // Syntax rules that will be checked one by one.
     // This plugin will assign the syntax in the first satisfied rule to the view.
     // You may want to see "default_syntax_rules" for some examples.
