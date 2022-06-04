@@ -72,7 +72,14 @@ WindowId = int
 
 
 class AioSettings(sublime_plugin.EventListener):
+    """
+    All-in-one settings for the plugin.
+
+    This class provides merged settings of plugin settings and project settings.
+    """
+
     plugin_name: str = ""
+    """The plugin name. This should be set before using this plugin."""
 
     _on_settings_change_callbacks: Dict[str, Callable[[sublime.Window], None]] = {}
     _plugin_settings_object: Optional[sublime.Settings] = None
