@@ -323,12 +323,12 @@ def build_reversed_trie(words: Tuple[str]) -> TrieNode:
 
 def generate_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[str, None, None]:
     """Generates trimmed filenames."""
-    parts = filename.split(".")
+    end = len(filename)
     if skip_self:
-        parts.pop()
-    while parts:
-        yield ".".join(parts)
-        parts.pop()
+        end = filename.rfind(".", 0, end)
+    while end > 0:
+        yield filename[:end]
+        end = filename.rfind(".", 0, end)
 
 
 def generate_trimmed_strings(string: str, suffixes: Tuple[str], skip_self: bool = False) -> Generator[str, None, None]:
