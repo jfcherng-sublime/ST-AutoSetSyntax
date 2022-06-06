@@ -29,6 +29,7 @@ class ViewSnapshot:
             "char_count": view.size(),
             "content": get_view_pseudo_content(view, window),
             "file_name": filename,
+            "file_name_unhidden": filename[1:] if filename.startswith(".") else filename,
             "file_path": filepath,
             "file_size": filesize,
             "first_line": get_view_pseudo_first_line(view, window),

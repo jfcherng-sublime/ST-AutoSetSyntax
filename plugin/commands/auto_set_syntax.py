@@ -351,9 +351,9 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
         G.guesslang
         and (view_info := ViewSnapshot.get_by_view(view))
         # don't apply on those have an extension
-        and (event == ListenerEvent.COMMAND or "." not in view_info["file_name"])
+        and (event == ListenerEvent.COMMAND or "." not in view_info["file_name_unhidden"])
         # only apply on plain text syntax
-        and ((syntax := view_info["syntax"]) and syntax.name == "Plain Text")
+        and ((syntax := view_info["syntax"]) and is_plaintext_syntax(syntax))
         # we don't want to use AI model during typing when there is only one line
         # that may result in unwanted behavior such as a new buffer may be assigned to Python
         # right after "import" is typed but it could be JavaScript or TypeScript as well

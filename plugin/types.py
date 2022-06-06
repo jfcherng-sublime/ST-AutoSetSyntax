@@ -80,11 +80,21 @@ class ST_SyntaxRule(ST_MatchRule):
 
 
 class TD_ViewSnapshot(TypedDict):
-    id: int  # view ID
+    id: int
+    """View ID"""
     char_count: int
-    content: str  # pseudo file content
-    file_name: str  # empty string if not on a disk
-    file_path: str  # empty string if not on a disk
-    file_size: int  # in bytes, -1 if file not on a disk
-    first_line: str  # pseudo first line
-    syntax: Optional[sublime.Syntax]  # note that the value is as-is when it's cached
+    """Character count"""
+    content: str
+    """Pseudo file content"""
+    file_name: str
+    """The file name. Empty string if not on a disk."""
+    file_name_unhidden: str
+    """The file name without prefixed dots. Empty string if not on a disk."""
+    file_path: str
+    """Empty string if not on a disk"""
+    file_size: int
+    """In bytes, -1 if file not on a disk"""
+    first_line: str
+    """Pseudo first line"""
+    syntax: Optional[sublime.Syntax]
+    """Note that the value is as-is when it's cached"""
