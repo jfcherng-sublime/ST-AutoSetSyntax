@@ -5,8 +5,6 @@ name: AutoSetSyntex Log
 scope: output.autosetsyntax.log
 version: 2
 hidden: true
-file_extensions:
-  - syntax_test_AutoSetSyntaxLog
 
 contexts:
   main:

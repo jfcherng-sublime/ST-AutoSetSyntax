@@ -5,8 +5,6 @@ name: Exec Output (AutoSetSyntax)
 scope: output.autosetsyntax.exec
 version: 2
 hidden: true
-file_extensions:
-  - syntax_test_ExecOutput
 
 contexts:
   main:
