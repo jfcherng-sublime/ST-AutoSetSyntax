@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.8.0
+
+- fix: guesslang on hidden file without an extension
+- feat: auto set syntax for ST syntax test files
+
+  This should be useful for those who have no file extension.
+
 ## 2.7.0
 
 - feat: add new setting `trim_suffixes_auto`
