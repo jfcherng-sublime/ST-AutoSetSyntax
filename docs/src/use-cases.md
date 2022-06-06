@@ -44,6 +44,12 @@ it can find a syntax for `parameters.yml`, and yes, it deserves the `YAML` synta
 
     Check `default_trim_suffixes`, `user_trim_suffixes` and `project_trim_suffixes` plugin settings.
 
+## Assigning syntax for Sublime Text syntax test files
+
+Sometimes, the syntax test file just has no file extension so a syntax won't be assigned by Sublime Text.
+For example, for the built-in `Git Config.sublime-syntax`, its test file is named as `syntax_test_git_config`.
+When you open it, AutoSetSyntax sets the syntax basing on its first line: `# SYNTAX TEST "Git Config.sublime-syntax"`.
+
 ## Assigning syntax by the first line
 
 If a file whose name has no `.` and its first line satisfies any of following conditions,
