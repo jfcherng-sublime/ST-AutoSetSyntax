@@ -235,20 +235,19 @@ def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEven
 
 
 def _assign_syntax_for_st_syntax_test(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
-    if not (
+    if (
         (view_info := ViewSnapshot.get_by_view(view))
         and (not view_info["syntax"] or is_plaintext_syntax(view_info["syntax"]))
         and (m := RE_ST_SYNTAX_TEST_LINE.search(view_info["first_line"]))
         and (new_syntax := m.group("syntax")).endswith(".sublime-syntax")
         and (syntax := find_syntax_by_syntax_like(new_syntax, allow_hidden=True, allow_plaintext=True))
     ):
-        return False
-
-    return assign_syntax_to_view(
-        view,
-        syntax,
-        details={"event": event, "reason": "Sublime Test syntax test file"},
-    )
+        return assign_syntax_to_view(
+            view,
+            syntax,
+            details={"event": event, "reason": "Sublime Test syntax test file"},
+        )
+    return False
 
 
 def _assign_syntax_with_plugin_rules(
@@ -277,7 +276,7 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
         if (
             (
                 (not view_info["syntax"] or is_plaintext_syntax(view_info["syntax"]))
-                or "." not in view_info["file_name"]
+                or "." not in view_info["file_name_unhidden"]
                 or view_info["first_line"].startswith("#!")
             )
             and (syntax := sublime.find_syntax_for_file("", view_info["first_line"]))
