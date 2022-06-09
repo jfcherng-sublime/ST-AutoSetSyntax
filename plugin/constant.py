@@ -43,7 +43,7 @@ RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|syntax)=(?P<syntax>[^\s:]+):?(?=
 
 ################################################################################
 
-GUESSLANG_SERVER_TAG = "server-0.1.2"
+GUESSLANG_SERVER_TAG = "server-0.1.3"
 GUESSLANG_SERVER_URL = (
     f"https://github.com/jfcherng-sublime/ST-AutoSetSyntax/archive/refs/tags/{GUESSLANG_SERVER_TAG}.zip"
 )
