@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.8.1
+
+- chore: update guesslang server
+
 ## 2.8.0
 
 - fix: guesslang on hidden file without an extension
