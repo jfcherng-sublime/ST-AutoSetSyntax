@@ -24,12 +24,13 @@ from typing import (
     Union,
 )
 import inspect
+import operator
 import re
 import sublime
 import tempfile
 
 T = TypeVar("T")
-ExpandableVar = TypeVar("ExpandableVar", bound=Union[None, bool, int, float, str, Dict, List, Tuple])
+T_ExpandableVar = TypeVar("T_ExpandableVar", bound=Union[None, bool, int, float, str, Dict, List, Tuple])
 
 
 def camel_to_snake(s: str) -> str:
@@ -87,9 +88,9 @@ def find_syntaxes_by_syntax_like(
         return tuple()
 
     def find_like(like: str) -> Sequence[sublime.Syntax]:
-        like_lower = like.lower()
+        like_cf = like.casefold()
         all_syntaxes: Tuple[sublime.Syntax, ...] = list_sorted_syntaxes()
-        candidates: Iterable[sublime.Syntax]
+        candidates: Sequence[sublime.Syntax]
 
         # by scope
         if like.startswith("scope:"):
@@ -98,7 +99,7 @@ def find_syntaxes_by_syntax_like(
         if candidates := sublime.find_syntax_by_name(like):
             return candidates
         # by name (case-insensitive)
-        if candidates := tuple(filter(lambda syntax: like_lower == syntax.name.lower(), all_syntaxes)):
+        if candidates := tuple(filter(lambda syntax: like_cf == syntax.name.casefold(), all_syntaxes)):
             return candidates
         # by partial path
         if candidates := tuple(filter(lambda syntax: like in syntax.path, all_syntaxes)):
@@ -214,11 +215,6 @@ def is_transient_view(view: sublime.View) -> bool:
     return view == window.transient_view_in_group(window.active_group())
 
 
-@lru_cache
-def is_using_case_insensitive_os() -> bool:
-    return ST_PLATFORM in ("windows", "osx")
-
-
 @clearable_lru_cache()
 def list_sorted_syntaxes() -> Tuple[sublime.Syntax, ...]:
     """Lists all syntaxes in a tuple, which is sorted by conventions."""
@@ -274,7 +270,7 @@ def parse_regex_flags(flags: Iterable[str]) -> int:
     """
     if isinstance(flags, str):
         flags = (flags,)
-    return reduce(lambda c, el: c | el, (getattr(re, flag, 0) for flag in flags), 0)
+    return reduce(operator.ior, (getattr(re, flag, 0) for flag in flags), 0)
 
 
 def remove_prefix(s: str, prefix: str) -> str:
@@ -388,12 +384,11 @@ def get_expand_variable_map() -> Dict[str, str]:
         return (base_dir / ".".join(map(str, version)) / "node", version)
 
     if node_info := _find_latest_lsp_utils_node(paths["package_storage"]):
-        node_exe = "node.exe" if ST_PLATFORM == "windows" else "node"
         paths["lsp_utils_node_dir"] = node_info[0]
-        paths["lsp_utils_node_bin"] = paths["lsp_utils_node_dir"] / node_exe
+        paths["lsp_utils_node_bin"] = node_info[0] / ("node.exe" if ST_PLATFORM == "windows" else "node")
 
     return {name: str(path.resolve()) for name, path in paths.items()}
 
 
-def expand_variables(value: ExpandableVar, variables: Optional[Dict[str, str]] = None) -> ExpandableVar:
+def expand_variables(value: T_ExpandableVar, variables: Optional[Dict[str, str]] = None) -> T_ExpandableVar:
     return sublime.expand_variables(value, {**get_expand_variable_map(), **(variables or {})})

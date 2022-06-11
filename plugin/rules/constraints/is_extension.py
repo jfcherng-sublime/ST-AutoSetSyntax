@@ -1,5 +1,4 @@
 from ...helper import generate_trimmed_strings
-from ...helper import is_using_case_insensitive_os
 from ...settings import pref_trim_suffixes
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
@@ -17,7 +16,7 @@ class IsExtensionConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.case_insensitive = bool(kwargs.get("case_insensitive", is_using_case_insensitive_os()))
+        self.case_insensitive = self._handled_case_insensitive(args, kwargs)
         self.exts: Tuple[str, ...] = self._handled_args(_extensionize)
         self.exts = tuple(map(self.fix_case, self.exts))
 

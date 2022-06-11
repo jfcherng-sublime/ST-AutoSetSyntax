@@ -2,7 +2,11 @@ from ..constant import PLUGIN_NAME
 from ..constant import RE_ST_SYNTAX_TEST_LINE
 from ..constant import RE_VIM_SYNTAX_LINE
 from ..constant import VIEW_RUN_ID_SETTINGS_KEY
-from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
+from ..guesslang.types import (
+    GuesslangServerPredictionItem,
+    GuesslangServerResponse,
+    MODEL_VSCODE_REGEXP_LANGUAGEDETECTION,
+)
 from ..helper import find_syntax_by_syntax_like
 from ..helper import find_syntax_by_syntax_likes
 from ..helper import generate_trimmed_filenames
@@ -28,7 +32,7 @@ import sublime
 import sublime_plugin
 import uuid
 
-AnyCallable = TypeVar("AnyCallable", bound=Callable[..., Any])
+T_AnyCallable = TypeVar("T_AnyCallable", bound=Callable[..., Any])
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
@@ -129,7 +133,7 @@ class GuesslangClientCallbacks:
         referred = referred or set()
         for syntax_like in syntax_map.get(language_id, []):
             if syntax_like.startswith("="):
-                if (language_id := syntax_like.lstrip("=")) not in referred:
+                if (language_id := syntax_like[1:]) not in referred:
                     referred.add(language_id)
                     res.extend(cls.resolve_language_id(syntax_map, language_id, referred=referred))
             else:
@@ -142,8 +146,8 @@ class GuesslangClientCallbacks:
         sublime.status_message(msg)
 
 
-def _snapshot_view(failed_ret: Optional[Any] = None) -> Callable[[AnyCallable], AnyCallable]:
-    def decorator(func: AnyCallable) -> AnyCallable:
+def _snapshot_view(failed_ret: Optional[Any] = None) -> Callable[[T_AnyCallable], T_AnyCallable]:
+    def decorator(func: T_AnyCallable) -> T_AnyCallable:
         def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
             if not (view.is_valid() and (window := view.window()) and G.is_plugin_ready(window)):
                 print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
@@ -160,7 +164,7 @@ def _snapshot_view(failed_ret: Optional[Any] = None) -> Callable[[AnyCallable], 
 
             return result
 
-        return cast(AnyCallable, wrapped)
+        return cast(T_AnyCallable, wrapped)
 
     return decorator
 
@@ -360,7 +364,7 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
     ):
         return None
 
-    G.guesslang.request_guess_snapshot(view_info, model="vscode-regexp-languagedetection", event=event)
+    G.guesslang.request_guess_snapshot(view_info, model=MODEL_VSCODE_REGEXP_LANGUAGEDETECTION, event=event)
 
 
 def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:

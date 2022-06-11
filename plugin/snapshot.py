@@ -8,7 +8,7 @@ import sublime
 
 
 class ViewSnapshot:
-    snapshots: Dict[str, TD_ViewSnapshot] = {}
+    _snapshots: Dict[str, TD_ViewSnapshot] = {}
 
     @classmethod
     def add(cls, cache_id: str, view: sublime.View) -> None:
@@ -24,7 +24,7 @@ class ViewSnapshot:
             filepath = ""
             filesize = -1
 
-        cls.snapshots[cache_id] = {
+        cls._snapshots[cache_id] = {
             "id": view.id(),
             "char_count": view.size(),
             "content": get_view_pseudo_content(view, window),
@@ -42,11 +42,11 @@ class ViewSnapshot:
 
     @classmethod
     def get(cls, cache_id: str) -> Optional[TD_ViewSnapshot]:
-        return cls.snapshots.get(cache_id, None)
+        return cls._snapshots.get(cache_id, None)
 
     @classmethod
     def remove(cls, cache_id: str) -> Optional[TD_ViewSnapshot]:
-        return cls.snapshots.pop(cache_id, None)
+        return cls._snapshots.pop(cache_id, None)
 
 
 def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # __future__ must be the first import
 from ..constant import PLUGIN_NAME
+from ..constant import ST_PLATFORM
 from ..helper import camel_to_snake
 from ..helper import compile_regex
 from ..helper import first
@@ -143,12 +144,17 @@ class AbstractConstraint(metaclass=ABCMeta):
         return op
 
     @staticmethod
-    def _handled_regex(args: Any, kwargs: Any) -> Pattern[str]:
+    def _handled_regex(args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Pattern[str]:
         """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
         return compile_regex(
             merge_regexes(args),
             parse_regex_flags(kwargs.get("regex_flags", ["MULTILINE"])),
         )
+
+    @staticmethod
+    def _handled_case_insensitive(args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> bool:
+        """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
+        return bool(kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}))
 
     @staticmethod
     def get_view_info(view: sublime.View) -> TD_ViewSnapshot:

@@ -11,9 +11,7 @@ SyntaxLike = Union[str, sublime.Syntax]
 
 
 class ListenerEvent(Enum):
-    """
-    Events used in AutoSetSyntax.
-    """
+    """Events used in AutoSetSyntax."""
 
     COMMAND = "command"
     EXEC = "exec"
@@ -53,7 +51,7 @@ class Optimizable(metaclass=ABCMeta):
 
 
 class ST_ConstraintRule(TypedDict):
-    """Typed dict for corresponding ST settings"""
+    """Typed dict for corresponding ST settings."""
 
     constraint: str
     args: Optional[Union[List[Any], Any]]
@@ -62,7 +60,7 @@ class ST_ConstraintRule(TypedDict):
 
 
 class ST_MatchRule(TypedDict):
-    """Typed dict for corresponding ST settings"""
+    """Typed dict for corresponding ST settings."""
 
     match: str
     args: Optional[Union[List[Any], Any]]
@@ -71,7 +69,7 @@ class ST_MatchRule(TypedDict):
 
 
 class ST_SyntaxRule(ST_MatchRule):
-    """Typed dict for corresponding ST settings"""
+    """Typed dict for corresponding ST settings."""
 
     comment: str
     selector: str
@@ -81,20 +79,20 @@ class ST_SyntaxRule(ST_MatchRule):
 
 class TD_ViewSnapshot(TypedDict):
     id: int
-    """View ID"""
+    """View ID."""
     char_count: int
-    """Character count"""
+    """Character count."""
     content: str
-    """Pseudo file content"""
+    """Pseudo file content."""
     file_name: str
     """The file name. Empty string if not on a disk."""
     file_name_unhidden: str
     """The file name without prefixed dots. Empty string if not on a disk."""
     file_path: str
-    """Empty string if not on a disk"""
+    """Empty string if not on a disk."""
     file_size: int
-    """In bytes, -1 if file not on a disk"""
+    """In bytes, -1 if file not on a disk."""
     first_line: str
-    """Pseudo first line"""
+    """Pseudo first line."""
     syntax: Optional[sublime.Syntax]
-    """Note that the value is as-is when it's cached"""
+    """Note that the value is as-is when it's cached."""
