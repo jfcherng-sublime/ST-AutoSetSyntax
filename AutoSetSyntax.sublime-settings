@@ -483,6 +483,7 @@
         ".dev",
         ".dist",
         ".example",
+        ".in",
         ".inc",
         ".include",
         ".local",
