@@ -13,7 +13,7 @@ from ..helper import remove_suffix
 from ..lru_cache import clearable_lru_cache
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_ConstraintRule, TD_ViewSnapshot
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from pathlib import Path
@@ -91,7 +91,7 @@ class ConstraintRule(Optimizable):
         return obj
 
 
-class AbstractConstraint(metaclass=ABCMeta):
+class AbstractConstraint(ABC):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.args = args
         self.kwargs = kwargs

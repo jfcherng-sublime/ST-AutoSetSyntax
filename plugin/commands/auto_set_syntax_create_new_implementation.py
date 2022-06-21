@@ -3,14 +3,14 @@ from ..constant import PLUGIN_CUSTOM_MODULE_PATHS
 from ..constant import PLUGIN_NAME
 from ..helper import find_syntax_by_syntax_like
 from ..types import SyntaxLike
-from abc import ABCMeta
+from abc import ABC
 from pathlib import Path
 from typing import Optional
 import sublime
 import sublime_plugin
 
 
-class AbstractCreateNewImplementationCommand(sublime_plugin.WindowCommand, metaclass=ABCMeta):
+class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
     template_type = ""
     template_file = ""
     template_syntax: Optional[str] = None

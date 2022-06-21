@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 # __future__ must be the first import
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Dict, Generator, List, Optional, TypedDict, Union
 import sublime
@@ -36,7 +36,7 @@ class ListenerEvent(Enum):
             return None
 
 
-class Optimizable(metaclass=ABCMeta):
+class Optimizable(ABC):
     def is_droppable(self) -> bool:
         """
         Determines whether this object is droppable.

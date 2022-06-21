@@ -8,7 +8,7 @@ from ..helper import remove_suffix
 from ..lru_cache import clearable_lru_cache
 from ..types import Optimizable, ST_MatchRule
 from .constraint import ConstraintRule
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
@@ -94,7 +94,7 @@ class MatchRule(Optimizable):
 MatchableRule = Union[ConstraintRule, MatchRule]
 
 
-class AbstractMatch(metaclass=ABCMeta):
+class AbstractMatch(ABC):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.args = args
         self.kwargs = kwargs
