@@ -522,9 +522,8 @@
     // You have to restart ST after modifying any of guesslang's settings. //
     /////////////////////////////////////////////////////////////////////////
 
-    // The min requirement for Node.js is v14.
-    // If you are using Windows 7, which can't install Node.js v14,
-    // you can simply download a portable version and set the "guesslang.node_bin" path.
+    // To use this feature, you have to install the server.
+    // @see https://jfcherng-sublime.github.io/ST-AutoSetSyntax/experimental/ml-based-syntax-detection/#prerequisites
     "guesslang.enabled": false,
     // The path of the node/node.exe executable.
     // You can use "${lsp_utils_node_bin}" if your Node.js is installed by lsp_utils
