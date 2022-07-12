@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.8.2
+
+- chore: update guesslang server
+- chore: add `.in` into `default_trim_suffixes`
+
 ## 2.8.1
 
 - chore: update guesslang server
