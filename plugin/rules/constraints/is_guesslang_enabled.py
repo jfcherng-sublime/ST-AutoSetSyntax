@@ -1,7 +1,9 @@
+from typing import final
+
+import sublime
+
 from ...settings import get_merged_plugin_setting
 from ..constraint import AbstractConstraint
-from typing import final
-import sublime
 
 
 @final

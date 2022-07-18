@@ -1,12 +1,14 @@
+import threading
+import time
+
+import sublime_plugin
+
 from ..constant import PLUGIN_NAME
 from ..guesslang.client import GuesslangClient
 from ..guesslang.server import GuesslangServer
 from ..settings import get_merged_plugin_setting
 from ..shared import G
 from .auto_set_syntax import GuesslangClientCallbacks
-import sublime_plugin
-import threading
-import time
 
 
 class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):

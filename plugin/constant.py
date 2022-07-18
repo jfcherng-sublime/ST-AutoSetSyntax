@@ -1,7 +1,8 @@
-from pathlib import Path
 import re
-import sublime
 import sys
+from pathlib import Path
+
+import sublime
 
 ################################################################################
 

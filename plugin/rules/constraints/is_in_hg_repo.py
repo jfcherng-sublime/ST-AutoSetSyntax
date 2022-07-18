@@ -1,7 +1,8 @@
-from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 from typing import final
+
 import sublime
+
+from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
 @final

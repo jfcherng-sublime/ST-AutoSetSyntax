@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-# __future__ must be the first import
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Dict, Generator, List, Optional, TypedDict, Union
-import sublime
 
+import sublime
 
 SyntaxLike = Union[str, sublime.Syntax]
 

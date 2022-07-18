@@ -1,9 +1,10 @@
+from typing import Any, Tuple, final
+
+import sublime
+
 from ...helper import generate_trimmed_strings
 from ...settings import pref_trim_suffixes
-from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
-from typing import Any, Tuple, final
-import sublime
+from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
 def _extensionize(ext: str) -> str:

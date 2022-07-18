@@ -1,7 +1,9 @@
+from typing import Any, Tuple, final
+
+import sublime
+
 from ...constant import ST_PLATFORM
 from ..constraint import AbstractConstraint
-from typing import Any, Tuple, final
-import sublime
 
 
 @final

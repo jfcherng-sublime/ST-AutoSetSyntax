@@ -1,36 +1,35 @@
-from ..constant import PLUGIN_NAME
-from ..constant import RE_ST_SYNTAX_TEST_LINE
-from ..constant import RE_VIM_SYNTAX_LINE
-from ..constant import VIEW_RUN_ID_SETTINGS_KEY
-from ..guesslang.types import (
-    GuesslangServerPredictionItem,
-    GuesslangServerResponse,
-    MODEL_VSCODE_REGEXP_LANGUAGEDETECTION,
-)
-from ..helper import find_syntax_by_syntax_like
-from ..helper import find_syntax_by_syntax_likes
-from ..helper import generate_trimmed_filenames
-from ..helper import generate_trimmed_strings
-from ..helper import get_view_by_id
-from ..helper import is_plaintext_syntax
-from ..helper import is_syntaxable_view
-from ..helper import stringify
-from ..libs import websocket
-from ..logger import Logger
-from ..rules import SyntaxRuleCollection
-from ..settings import get_merged_plugin_setting
-from ..settings import get_merged_plugin_settings
-from ..settings import pref_trim_suffixes
-from ..shared import G
-from ..snapshot import ViewSnapshot
-from ..types import ListenerEvent, TD_ViewSnapshot
+import uuid
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
+
 import sublime
 import sublime_plugin
-import uuid
+
+from ..constant import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_RUN_ID_SETTINGS_KEY
+from ..guesslang.types import (
+    MODEL_VSCODE_REGEXP_LANGUAGEDETECTION,
+    GuesslangServerPredictionItem,
+    GuesslangServerResponse,
+)
+from ..helper import (
+    find_syntax_by_syntax_like,
+    find_syntax_by_syntax_likes,
+    generate_trimmed_filenames,
+    generate_trimmed_strings,
+    get_view_by_id,
+    is_plaintext_syntax,
+    is_syntaxable_view,
+    stringify,
+)
+from ..libs import websocket
+from ..logger import Logger
+from ..rules import SyntaxRuleCollection
+from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
+from ..shared import G
+from ..snapshot import ViewSnapshot
+from ..types import ListenerEvent, TD_ViewSnapshot
 
 T_AnyCallable = TypeVar("T_AnyCallable", bound=Callable[..., Any])
 

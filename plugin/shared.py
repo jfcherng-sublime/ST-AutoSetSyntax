@@ -1,8 +1,10 @@
+from typing import Any, Dict, Optional, Tuple
+
+import sublime
+
 from .guesslang.client import GuesslangClient
 from .rules import SyntaxRuleCollection
 from .settings import get_merged_plugin_settings
-from typing import Any, Dict, Optional, Tuple
-import sublime
 
 WindowId = int
 DroppedRules = Tuple[Any, ...]

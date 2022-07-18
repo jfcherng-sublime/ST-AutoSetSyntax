@@ -1,8 +1,10 @@
 # modified from https://github.com/facelessuser/ApplySyntax/blob/master/as_plugins/is_rails_file.py
 
-from ..constraint import AbstractConstraint
 from typing import final
+
 import sublime
+
+from ..constraint import AbstractConstraint
 
 RUBY_EXTENSIONS = (".rb", ".rake")
 

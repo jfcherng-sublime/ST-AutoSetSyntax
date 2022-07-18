@@ -1,15 +1,16 @@
-from ..constant import PLUGIN_NAME
-from ..constant import PLUGIN_STORAGE_DIR
-from ..helper import expand_variables
-from ..logger import Logger
-from ..settings import get_merged_plugin_setting
-from pathlib import Path
-from typing import Dict, Optional, Set, Sequence, Union
 import os
 import shutil
 import socket
-import sublime
 import subprocess
+from pathlib import Path
+from typing import Dict, Optional, Sequence, Set, Union
+
+import sublime
+
+from ..constant import PLUGIN_NAME, PLUGIN_STORAGE_DIR
+from ..helper import expand_variables
+from ..logger import Logger
+from ..settings import get_merged_plugin_setting
 
 
 class GuesslangServer:

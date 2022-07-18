@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-# __future__ must be the first import
-from ..helper import camel_to_snake
-from ..helper import first
-from ..helper import get_all_subclasses
-from ..helper import remove_suffix
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
+
+import sublime
+
+from ..helper import camel_to_snake, first, get_all_subclasses, remove_suffix
 from ..lru_cache import clearable_lru_cache
 from ..types import Optimizable, ST_MatchRule
 from .constraint import ConstraintRule
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from dataclasses import field
-from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
-import sublime
 
 
 def find_match(obj: Any) -> Optional[Type[AbstractMatch]]:

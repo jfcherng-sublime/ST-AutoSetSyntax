@@ -1,20 +1,21 @@
-from ..constant import GUESSLANG_SERVER_URL
-from ..constant import PLUGIN_NAME
-from ..guesslang.server import GuesslangServer
-from ..helper import first
-from ..settings import get_merged_plugin_setting
-from functools import cmp_to_key
-from pathlib import Path
-from typing import Optional, Union
 import gzip
 import shutil
-import sublime
-import sublime_plugin
 import tarfile
 import threading
 import time
 import urllib.request
 import zipfile
+from functools import cmp_to_key
+from pathlib import Path
+from typing import Optional, Union
+
+import sublime
+import sublime_plugin
+
+from ..constant import GUESSLANG_SERVER_URL, PLUGIN_NAME
+from ..guesslang.server import GuesslangServer
+from ..helper import first
+from ..settings import get_merged_plugin_setting
 
 PathLike = Union[Path, str]
 

@@ -1,7 +1,7 @@
-from AutoSetSyntax.plugin import AbstractMatch
-from AutoSetSyntax.plugin import MatchableRule
 from typing import Tuple, final
+
 import sublime
+from AutoSetSyntax.plugin import AbstractMatch, MatchableRule
 
 
 @final

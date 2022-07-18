@@ -1,8 +1,9 @@
-from ...helper import get_nth_item
-from ..match import AbstractMatch
-from ..match import MatchableRule
 from typing import Any, Tuple, final
+
 import sublime
+
+from ...helper import get_nth_item
+from ..match import AbstractMatch, MatchableRule
 
 
 @final

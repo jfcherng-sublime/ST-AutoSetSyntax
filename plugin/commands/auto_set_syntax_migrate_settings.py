@@ -1,7 +1,9 @@
-from ..constant import PLUGIN_NAME
 from typing import Any, Dict, List, Union
+
 import sublime
 import sublime_plugin
+
+from ..constant import PLUGIN_NAME
 
 
 class AutoSetSyntaxMigrateSettingsCommand(sublime_plugin.TextCommand):

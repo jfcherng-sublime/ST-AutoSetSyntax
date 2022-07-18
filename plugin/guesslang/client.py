@@ -1,8 +1,10 @@
-from ..libs import websocket
-from ..types import TD_ViewSnapshot, ListenerEvent
-from typing import Optional, Protocol
-import sublime
 import threading
+from typing import Optional, Protocol
+
+import sublime
+
+from ..libs import websocket
+from ..types import ListenerEvent, TD_ViewSnapshot
 
 
 class TransportCallbacks(Protocol):

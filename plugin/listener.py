@@ -1,28 +1,27 @@
 from __future__ import annotations
 
-# __future__ must be the first import
+from typing import Any, Callable, Dict, List, Sequence
+
+import sublime
+import sublime_plugin
+
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
-from .constant import PLUGIN_NAME
-from .constant import PY_VERSION
-from .constant import ST_CHANNEL
-from .constant import ST_PLATFORM_ARCH
-from .constant import ST_VERSION
-from .constant import VERSION
-from .constant import VIEW_IS_TRANSIENT_SETTINGS_KEY
+from .constant import (
+    PLUGIN_NAME,
+    PY_VERSION,
+    ST_CHANNEL,
+    ST_PLATFORM_ARCH,
+    ST_VERSION,
+    VERSION,
+    VIEW_IS_TRANSIENT_SETTINGS_KEY,
+)
 from .guesslang.server import GuesslangServer
-from .helper import is_syntaxable_view
-from .helper import is_transient_view
-from .helper import stringify
+from .helper import is_syntaxable_view, is_transient_view, stringify
 from .logger import Logger
-from .rules import get_constraints
-from .rules import get_matches
-from .rules import SyntaxRuleCollection
+from .rules import SyntaxRuleCollection, get_constraints, get_matches
 from .settings import pref_syntax_rules
 from .shared import G
 from .types import ListenerEvent
-from typing import Any, Callable, Dict, List, Sequence
-import sublime
-import sublime_plugin
 
 
 def set_up_window(window: sublime.Window) -> None:

@@ -1,11 +1,8 @@
-from .constant import ST_PLATFORM
-from .libs.trie import TrieNode
-from .lru_cache import clearable_lru_cache
-from .settings import get_st_setting
-from .types import SyntaxLike
-from functools import cmp_to_key
-from functools import lru_cache
-from functools import reduce
+import inspect
+import operator
+import re
+import tempfile
+from functools import cmp_to_key, lru_cache, reduce
 from pathlib import Path
 from typing import (
     Any,
@@ -23,11 +20,14 @@ from typing import (
     TypeVar,
     Union,
 )
-import inspect
-import operator
-import re
+
 import sublime
-import tempfile
+
+from .constant import ST_PLATFORM
+from .libs.trie import TrieNode
+from .lru_cache import clearable_lru_cache
+from .settings import get_st_setting
+from .types import SyntaxLike
 
 T = TypeVar("T")
 T_ExpandableVar = TypeVar("T_ExpandableVar", bound=Union[None, bool, int, float, str, Dict, List, Tuple])

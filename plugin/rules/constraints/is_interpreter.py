@@ -1,9 +1,9 @@
-from ...helper import compile_regex
-from ...helper import merge_literals_to_regex
-from ...helper import merge_regexes
-from ..constraint import AbstractConstraint
 from typing import Any, Pattern, Tuple, final
+
 import sublime
+
+from ...helper import compile_regex, merge_literals_to_regex, merge_regexes
+from ..constraint import AbstractConstraint
 
 
 @final

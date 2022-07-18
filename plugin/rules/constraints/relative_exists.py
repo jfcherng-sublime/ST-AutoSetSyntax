@@ -1,8 +1,9 @@
-from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 from pathlib import Path
 from typing import Any, Tuple, final
+
 import sublime
+
+from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
 @final

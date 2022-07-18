@@ -1,18 +1,10 @@
-from .constraint import AbstractConstraint
-from .constraint import ConstraintRule
-from .constraint import find_constraint
-from .constraint import get_constraints
-from .match import AbstractMatch
-from .match import find_match
-from .match import get_matches
-from .match import MatchableRule
-from .match import MatchRule
-from .syntax import SyntaxRule
-from .syntax import SyntaxRuleCollection
+from .constraint import AbstractConstraint, ConstraintRule, find_constraint, get_constraints
 
 # import all implementations
 from .constraints import *  # noqa: F401, F403
+from .match import AbstractMatch, MatchableRule, MatchRule, find_match, get_matches
 from .matches import *  # noqa: F401, F403
+from .syntax import SyntaxRule, SyntaxRuleCollection
 
 __all__ = (
     "AbstractConstraint",

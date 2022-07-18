@@ -1,25 +1,26 @@
 from __future__ import annotations
 
-# __future__ must be the first import
-from ..constant import PLUGIN_NAME
-from ..constant import ST_PLATFORM
-from ..helper import camel_to_snake
-from ..helper import compile_regex
-from ..helper import first
-from ..helper import get_all_subclasses
-from ..helper import merge_regexes
-from ..helper import parse_regex_flags
-from ..helper import remove_suffix
+import operator
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, TypeVar, Union
+
+import sublime
+
+from ..constant import PLUGIN_NAME, ST_PLATFORM
+from ..helper import (
+    camel_to_snake,
+    compile_regex,
+    first,
+    get_all_subclasses,
+    merge_regexes,
+    parse_regex_flags,
+    remove_suffix,
+)
 from ..lru_cache import clearable_lru_cache
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_ConstraintRule, TD_ViewSnapshot
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from dataclasses import field
-from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, TypeVar, Union
-import operator
-import sublime
 
 T = TypeVar("T")
 

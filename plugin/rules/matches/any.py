@@ -1,7 +1,8 @@
-from ..match import AbstractMatch
-from ..match import MatchableRule
 from typing import Tuple, final
+
 import sublime
+
+from ..match import AbstractMatch, MatchableRule
 
 
 @final

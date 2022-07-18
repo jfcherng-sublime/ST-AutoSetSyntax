@@ -1,6 +1,8 @@
-from ..constraint import AbstractConstraint
 from typing import Any, Tuple, final
+
 import sublime
+
+from ..constraint import AbstractConstraint
 
 
 @final

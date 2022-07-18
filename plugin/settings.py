@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-# __future__ must be the first import
-from .types import ST_SyntaxRule
 from collections import ChainMap
 from itertools import chain
 from typing import Any, Callable, Dict, List, Mapping, MutableMapping, Optional, Set, Tuple
+
 import sublime
 import sublime_plugin
+
+from .types import ST_SyntaxRule
 
 
 def get_merged_plugin_setting(

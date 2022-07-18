@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-# __future__ must be the first import
-from ..constant import VERSION
-from ..helper import find_syntax_by_syntax_likes
-from ..helper import first
-from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
-from .match import MatchRule
 from dataclasses import dataclass
 from typing import Generator, Iterable, List, Optional, Set, Tuple
+
 import sublime
+
+from ..constant import VERSION
+from ..helper import find_syntax_by_syntax_likes, first
+from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
+from .match import MatchRule
 
 
 @dataclass

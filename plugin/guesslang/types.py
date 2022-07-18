@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-# __future__ must be the first import
 from typing import List, Optional, TypedDict
 
 MODEL_VSCODE_LANGUAGEDETECTION = "vscode-languagedetection"

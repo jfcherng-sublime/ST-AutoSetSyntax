@@ -1,6 +1,7 @@
-from AutoSetSyntax.plugin import AbstractConstraint
 from typing import final
+
 import sublime
+from AutoSetSyntax.plugin import AbstractConstraint
 
 
 @final

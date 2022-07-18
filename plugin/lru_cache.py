@@ -1,5 +1,4 @@
-from functools import _lru_cache_wrapper
-from functools import lru_cache
+from functools import _lru_cache_wrapper, lru_cache
 from typing import Any, Callable, Set, TypeVar, cast
 
 T_AnyCallable = TypeVar("T_AnyCallable", bound=Callable[..., Any])

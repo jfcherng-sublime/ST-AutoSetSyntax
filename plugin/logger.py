@@ -1,14 +1,15 @@
+import math
+import re
+from contextlib import contextmanager
+from typing import Dict, Generator, Optional, Union
+
+import sublime
+import sublime_plugin
+
 from .compatibility import view_clear_undo_stack
 from .constant import PLUGIN_NAME
 from .helper import get_st_window
-from .settings import get_merged_plugin_setting
-from .settings import get_st_setting
-from contextlib import contextmanager
-from typing import Dict, Generator, Optional, Union
-import math
-import re
-import sublime
-import sublime_plugin
+from .settings import get_merged_plugin_setting, get_st_setting
 
 
 @contextmanager

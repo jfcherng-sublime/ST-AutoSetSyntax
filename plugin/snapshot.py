@@ -1,10 +1,12 @@
+from pathlib import Path
+from typing import Dict, Optional
+
+import sublime
+
 from .constant import VIEW_RUN_ID_SETTINGS_KEY
 from .helper import head_tail_content_st
 from .settings import get_merged_plugin_setting
 from .types import TD_ViewSnapshot
-from pathlib import Path
-from typing import Dict, Optional
-import sublime
 
 
 class ViewSnapshot:
