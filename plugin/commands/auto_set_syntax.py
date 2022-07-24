@@ -1,4 +1,5 @@
 import uuid
+from functools import wraps
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
@@ -8,11 +9,7 @@ import sublime
 import sublime_plugin
 
 from ..constant import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_RUN_ID_SETTINGS_KEY
-from ..guesslang.types import (
-    MODEL_VSCODE_REGEXP_LANGUAGEDETECTION,
-    GuesslangServerPredictionItem,
-    GuesslangServerResponse,
-)
+from ..guesslang.types import DetectorModel, GuesslangServerPredictionItem, GuesslangServerResponse
 from ..helper import (
     find_syntax_by_syntax_like,
     find_syntax_by_syntax_likes,
@@ -145,8 +142,9 @@ class GuesslangClientCallbacks:
         sublime.status_message(msg)
 
 
-def _snapshot_view(failed_ret: Optional[Any] = None) -> Callable[[T_AnyCallable], T_AnyCallable]:
+def _snapshot_view(failed_ret: Any = None) -> Callable[[T_AnyCallable], T_AnyCallable]:
     def decorator(func: T_AnyCallable) -> T_AnyCallable:
+        @wraps(func)
         def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
             if not (view.is_valid() and (window := view.window()) and G.is_plugin_ready(window)):
                 print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
@@ -239,7 +237,7 @@ def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEven
 
 def _assign_syntax_for_st_syntax_test(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
     if (
-        (view_info := ViewSnapshot.get_by_view(view))
+        (view_info := ViewSnapshot.from_view(view))
         and (not view_info["syntax"] or is_plaintext_syntax(view_info["syntax"]))
         and (m := RE_ST_SYNTAX_TEST_LINE.search(view_info["first_line"]))
         and (new_syntax := m.group("syntax")).endswith(".sublime-syntax")
@@ -269,7 +267,7 @@ def _assign_syntax_with_plugin_rules(
 
 
 def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
-    if not (view_info := ViewSnapshot.get_by_view(view)):
+    if not (view_info := ViewSnapshot.from_view(view)):
         return False
 
     # Note that this only works for files under some circumstances.
@@ -351,7 +349,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
 def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[ListenerEvent] = None) -> None:
     if not (
         G.guesslang
-        and (view_info := ViewSnapshot.get_by_view(view))
+        and (view_info := ViewSnapshot.from_view(view))
         # don't apply on those have an extension
         and (event == ListenerEvent.COMMAND or "." not in view_info["file_name_unhidden"])
         # only apply on plain text syntax
@@ -363,7 +361,11 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
     ):
         return None
 
-    G.guesslang.request_guess_snapshot(view_info, model=MODEL_VSCODE_REGEXP_LANGUAGEDETECTION, event=event)
+    G.guesslang.request_guess_snapshot(
+        view_info,
+        model=DetectorModel.VSCODE_REGEXP_LANGUAGEDETECTION,
+        event=event,
+    )
 
 
 def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:

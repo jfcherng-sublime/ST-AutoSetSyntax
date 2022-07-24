@@ -39,7 +39,7 @@ class ViewSnapshot:
         }
 
     @classmethod
-    def get_by_view(cls, view: sublime.View) -> Optional[TD_ViewSnapshot]:
+    def from_view(cls, view: sublime.View) -> Optional[TD_ViewSnapshot]:
         return cls.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
 
     @classmethod

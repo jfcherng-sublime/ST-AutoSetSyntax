@@ -160,7 +160,7 @@ class AbstractConstraint(ABC):
     @staticmethod
     def get_view_info(view: sublime.View) -> TD_ViewSnapshot:
         """Gets the cached information for the `view`."""
-        snapshot = ViewSnapshot.get_by_view(view)
+        snapshot = ViewSnapshot.from_view(view)
         assert snapshot  # our workflow guarantees this won't be None
         return snapshot
 

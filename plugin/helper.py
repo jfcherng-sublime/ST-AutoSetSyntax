@@ -206,13 +206,7 @@ def is_syntaxable_view(view: sublime.View, must_plaintext: bool = False) -> bool
 
 
 def is_transient_view(view: sublime.View) -> bool:
-    """Determinates whether the view is a transient one such as a "Goto Anything" preview."""
-    # @see https://github.com/sublimehq/sublime_text/issues/4444
-    # workaround for a transient view have no window right after it's loaded
-    if not (window := view.window()):
-        return True
-    # @see https://forum.sublimetext.com/t/is-view-transient-preview-method/3247/2
-    return view == window.transient_view_in_group(window.active_group())
+    return sheet.is_transient() if (view.is_valid() and (sheet := view.sheet())) else False
 
 
 @clearable_lru_cache()
