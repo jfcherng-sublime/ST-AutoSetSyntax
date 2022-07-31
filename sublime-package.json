@@ -43,12 +43,12 @@
                 "trim_file_size": {
                   "description": "The max lookup size for the file. A negative number means no limit, which may have performance issue on large files.",
                   "type": "integer",
-                  "default": 5000
+                  "default": 20000
                 },
                 "trim_first_line_length": {
                   "description": "The max lookup length for the first line. A negative number means no limit, which may have performance issue on a long first line.",
                   "type": "integer",
-                  "default": 180
+                  "default": 500
                 },
                 "trim_suffixes_auto": {
                   "markdownDescription": "Apart from `trim_suffixes`, also try to remove every sub-extensions when finding a syntax match.",

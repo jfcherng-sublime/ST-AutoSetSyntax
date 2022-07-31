@@ -64,9 +64,9 @@ necessary to set syntax for the just opened file.
 
 ### `trim_file_size`
 
-| Type      | Default            |
-| --------- | ------------------ |
-| `integer` | `5000` (about 5KB) |
+| Type      | Default              |
+| --------- | -------------------- |
+| `integer` | `20000` (about 20KB) |
 
 Detecting the syntax for the whole file can be resource-consuming if the file is large.
 This setting approximately controls how many bytes should be used to represent a file.
@@ -75,7 +75,7 @@ This setting approximately controls how many bytes should be used to represent a
 
 | Type      | Default |
 | --------- | ------- |
-| `integer` | `180`   |
+| `integer` | `500`   |
 
 Detecting the syntax for the whole first line can be resource-consuming if it's a super long one-line file.
 This setting controls how many characters should be used to represent the first line.

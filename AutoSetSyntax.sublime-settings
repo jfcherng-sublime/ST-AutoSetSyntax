@@ -23,10 +23,10 @@
     "run_on_startup_views": false,
     // The max lookup size for the file.
     // A negative number means no limit, which may have performance issue on large files.
-    "trim_file_size": 5000, // about 5KB
+    "trim_file_size": 20000, // about 20KB
     // The max lookup length for the first line.
     // A negative number means no limit, which may have performance issue on a long first line.
-    "trim_first_line_length": 180,
+    "trim_first_line_length": 500,
     // Apart from "trim_suffixes", also try to remove every sub-extensions when finding a syntax match.
     "trim_suffixes_auto": false,
     // Syntax rules that will be checked one by one.
