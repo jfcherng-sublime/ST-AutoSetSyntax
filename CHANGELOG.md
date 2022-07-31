@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.8.3
+
+- chore: change default `trim_file_size` to `20000` (about 20KB)
+- chore: change default `trim_first_line_length` to `500`
+- feat: debounce detection when text changes
+- perf: fire `on_text_changed_async` only when syntax is plain text
+
 ## 2.8.2
 
 - chore: update guesslang server
