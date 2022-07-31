@@ -2,7 +2,8 @@ import inspect
 import operator
 import re
 import tempfile
-from functools import cmp_to_key, lru_cache, reduce
+import threading
+from functools import cmp_to_key, lru_cache, reduce, wraps
 from pathlib import Path
 from typing import (
     Any,
@@ -19,6 +20,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 import sublime
@@ -27,9 +29,8 @@ from .constant import ST_PLATFORM
 from .libs.trie import TrieNode
 from .lru_cache import clearable_lru_cache
 from .settings import get_st_setting
-from .types import SyntaxLike
+from .types import SyntaxLike, T, T_Callable
 
-T = TypeVar("T")
 T_ExpandableVar = TypeVar("T_ExpandableVar", bound=Union[None, bool, int, float, str, Dict, List, Tuple])
 
 

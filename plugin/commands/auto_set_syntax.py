@@ -3,7 +3,7 @@ from functools import wraps
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, cast
 
 import sublime
 import sublime_plugin
@@ -26,9 +26,7 @@ from ..rules import SyntaxRuleCollection
 from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
-from ..types import ListenerEvent, TD_ViewSnapshot
-
-T_AnyCallable = TypeVar("T_AnyCallable", bound=Callable[..., Any])
+from ..types import ListenerEvent, T_Callable, TD_ViewSnapshot
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
@@ -142,8 +140,8 @@ class GuesslangClientCallbacks:
         sublime.status_message(msg)
 
 
-def _snapshot_view(failed_ret: Any = None) -> Callable[[T_AnyCallable], T_AnyCallable]:
-    def decorator(func: T_AnyCallable) -> T_AnyCallable:
+def _snapshot_view(failed_ret: Any = None) -> Callable[[T_Callable], T_Callable]:
+    def decorator(func: T_Callable) -> T_Callable:
         @wraps(func)
         def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
             if not (view.is_valid() and (window := view.window()) and G.is_plugin_ready(window)):
@@ -161,7 +159,7 @@ def _snapshot_view(failed_ret: Any = None) -> Callable[[T_AnyCallable], T_AnyCal
 
             return result
 
-        return cast(T_AnyCallable, wrapped)
+        return cast(T_Callable, wrapped)
 
     return decorator
 
