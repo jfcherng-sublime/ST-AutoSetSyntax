@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Sequence
+from functools import wraps
+from typing import Any, Callable, Dict, List, Sequence, cast
 
 import sublime
 import sublime_plugin
@@ -21,7 +22,7 @@ from .logger import Logger
 from .rules import SyntaxRuleCollection, get_constraints, get_matches
 from .settings import pref_syntax_rules
 from .shared import G
-from .types import ListenerEvent
+from .types import ListenerEvent, T_Callable
 
 
 def set_up_window(window: sublime.Window) -> None:
@@ -69,21 +70,30 @@ def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
     )
 
 
-def _guarantee_primary_view(func: Callable) -> Callable:
-    def wrapped(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
-        # view.id() is a workaround for async listener
-        if self.buffer and (view := self.buffer.primary_view()) and view.id() and is_syntaxable_view(view):
-            func(self, view, *args, **kwargs)
+def _guarantee_primary_view(*, must_plaintext: bool = False) -> Callable[[T_Callable], T_Callable]:
+    def decorator(func: T_Callable) -> T_Callable:
+        @wraps(func)
+        def wrapped(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
+            # view.id() is a workaround for async listener
+            if (
+                self.buffer
+                and (view := self.buffer.primary_view())
+                and view.id()
+                and is_syntaxable_view(view, must_plaintext=must_plaintext)
+            ):
+                func(self, view, *args, **kwargs)
 
-    return wrapped
+        return cast(T_Callable, wrapped)
+
+    return decorator
 
 
 class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
-    @_guarantee_primary_view
+    @_guarantee_primary_view()
     def on_revert(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.REVERT)
 
-    @_guarantee_primary_view
+    @_guarantee_primary_view(must_plaintext=True)
     def on_text_changed_async(self, view: sublime.View, changes: List[sublime.TextChange]) -> None:
         _try_assign_syntax_when_text_changed(view, changes)
 
