@@ -16,7 +16,7 @@ from .constant import (
     VIEW_IS_TRANSIENT_SETTINGS_KEY,
 )
 from .guesslang.server import GuesslangServer
-from .helper import is_syntaxable_view, is_transient_view, stringify
+from .helper import debounce, is_syntaxable_view, is_transient_view, stringify
 from .logger import Logger
 from .rules import SyntaxRuleCollection, get_constraints, get_matches
 from .settings import pref_syntax_rules
@@ -127,6 +127,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
             run_auto_set_syntax_on_view(view, ListenerEvent.EXEC)
 
 
+@debounce()
 def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[sublime.TextChange]) -> bool:
     # don't use `len(changes) <= 1` here because it has a length of 3
     # for `view.run_command('insert', {'characters': 'foo\nbar'})` and that's unwanted

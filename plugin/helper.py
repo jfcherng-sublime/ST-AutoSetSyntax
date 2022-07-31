@@ -49,6 +49,35 @@ def compile_regex(regex: Union[str, Pattern[str]], flags: int = 0) -> Pattern[st
     return re.compile(regex, flags)
 
 
+def debounce(time_s: float = 0.3) -> Callable[[T_Callable], T_Callable]:
+    """
+    Debounce a function so that it's called after `time_s` seconds.
+    If it's called multiple times in the time frame, it will only run the last call.
+
+    Taken and modified from https://github.com/salesforce/decorator-operations
+    """
+
+    def decorator(func: T_Callable) -> T_Callable:
+        @wraps(func)
+        def debounced(*args: Any, **kwargs: Any) -> None:
+            def call_function() -> Any:
+                delattr(debounced, "_timer")
+                return func(*args, **kwargs)
+
+            timer = getattr(debounced, "_timer", None)  # type: Optional[threading.Timer]
+            if timer is not None:
+                timer.cancel()
+
+            timer = threading.Timer(time_s, call_function)
+            timer.start()
+            setattr(debounced, "_timer", timer)
+
+        setattr(debounced, "_timer", None)
+        return cast(T_Callable, debounced)
+
+    return decorator
+
+
 @clearable_lru_cache()
 def find_syntax_by_syntax_like(
     like: SyntaxLike,
