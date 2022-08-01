@@ -117,25 +117,19 @@ def find_syntaxes_by_syntax_like(
     if not like:
         return tuple()
 
-    def find_like(like: str) -> Sequence[sublime.Syntax]:
+    def find_like(like: str) -> Generator[sublime.Syntax, None, None]:
         like_cf = like.casefold()
         all_syntaxes: Tuple[sublime.Syntax, ...] = list_sorted_syntaxes()
-        candidates: Sequence[sublime.Syntax]
 
         # by scope
         if like.startswith("scope:"):
-            return sublime.find_syntax_by_scope(like[6:])
+            yield from sublime.find_syntax_by_scope(like[6:])
         # by name
-        if candidates := sublime.find_syntax_by_name(like):
-            return candidates
+        yield from sublime.find_syntax_by_name(like)
         # by name (case-insensitive)
-        if candidates := tuple(filter(lambda syntax: like_cf == syntax.name.casefold(), all_syntaxes)):
-            return candidates
+        yield from filter(lambda syntax: like_cf == syntax.name.casefold(), all_syntaxes)
         # by partial path
-        if candidates := tuple(filter(lambda syntax: like in syntax.path, all_syntaxes)):
-            return candidates
-        # nothing found
-        return tuple()
+        yield from filter(lambda syntax: like in syntax.path, all_syntaxes)
 
     return tuple(
         syntax
