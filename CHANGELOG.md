@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.8.6
+
+No change. Just to tackle with messed up versions.
+
 ## 2.8.5
 
 - fix: syntax highlighting for log panel
