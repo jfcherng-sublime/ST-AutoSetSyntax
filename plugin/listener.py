@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Any, Callable, Dict, List, Sequence, cast
+from operator import methodcaller
+from typing import Any, Callable, Dict, Iterable, List, Sequence, Tuple, cast
 
 import sublime
 import sublime_plugin
@@ -43,16 +44,17 @@ def tear_down_window(window: sublime.Window) -> None:
 
 
 def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
-    delimiter = "-" * 10
+    def names_as_str(items: Iterable[Any]) -> str:
+        return ", ".join(map(methodcaller("name"), items))
 
     Logger.log(
         window,
-        f"# {delimiter} re-compile rules for {window} {delimiter} BEGIN",
+        f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} BEGIN",
         enabled=is_update,
     )
 
-    Logger.log(window, f'🔍 Found "Match" implementations: {stringify(get_matches())}')
-    Logger.log(window, f'🔍 Found "Constraint" implementations: {stringify(get_constraints())}')
+    Logger.log(window, f'🔍 Found "Match" implementations: {names_as_str(get_matches())}')
+    Logger.log(window, f'🔍 Found "Constraint" implementations: {names_as_str(get_constraints())}')
 
     syntax_rule_collection = SyntaxRuleCollection.make(pref_syntax_rules(window=window))
     G.set_syntax_rule_collection(window, syntax_rule_collection)
@@ -65,7 +67,7 @@ def compile_rules(window: sublime.Window, is_update: bool = False) -> None:
 
     Logger.log(
         window,
-        f"# {delimiter} re-compile rules for {window} {delimiter} END",
+        f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} END",
         enabled=is_update,
     )
 
@@ -74,11 +76,10 @@ def _guarantee_primary_view(*, must_plaintext: bool = False) -> Callable[[T_Call
     def decorator(func: T_Callable) -> T_Callable:
         @wraps(func)
         def wrapped(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
-            # view.id() is a workaround for async listener
             if (
                 self.buffer
                 and (view := self.buffer.primary_view())
-                and view.id()
+                and view.id()  # workaround for async listener
                 and is_syntaxable_view(view, must_plaintext=must_plaintext)
             ):
                 func(self, view, *args, **kwargs)

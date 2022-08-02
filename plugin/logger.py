@@ -48,8 +48,10 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
 
 
 class Logger:
-    # per-window, WindowId => history count
+    DELIMITER = "-" * 10
+
     history_counts: Dict[int, int] = {}
+    """per-window, WindowId => history count"""
 
     @classmethod
     def log(cls, window: Optional[sublime.Window], msg: str, enabled: bool = True) -> None:
