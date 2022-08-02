@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.8.4
+
+- chore: tidy debug messages
+- fix: empty "on_events" doesn't work as expected
+
 ## 2.8.3
 
 - chore: change default `trim_file_size` to `20000` (about 20KB)
