@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.8.5
+
+- fix: syntax highlighting for log panel
+
 ## 2.8.4
 
 - chore: tidy debug messages
