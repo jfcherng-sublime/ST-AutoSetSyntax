@@ -6,6 +6,10 @@ scope: output.autosetsyntax.log
 version: 2
 hidden: true
 
+variables:
+  identifier: '{{identifier_start}}[[:alnum:]_]*'
+  identifier_start: '[[:alpha:]_]'
+
 contexts:
   main:
     - include: comment
@@ -31,7 +35,14 @@ contexts:
         0: meta.embedded.python.autosetsyntax.log
         1: punctuation.definition.string.end.python
         2: punctuation.section.group.end.python
-    - match: '(?:rule|implementation|prediction)s?[^:]*:'
+    - match: 'implementations:'
+      push:
+        - include: pop-at-end
+        - match: ','
+          scope: punctuation.separator.autosetsyntax.log
+        - match: '{{identifier}}'
+          scope: support.class.autosetsyntax.log
+    - match: '(?:rule|prediction)s?[^:]*:'
       push:
         - include: pop-at-end
         - match: (?=\S)
