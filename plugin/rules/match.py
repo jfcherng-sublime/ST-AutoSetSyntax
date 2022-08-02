@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union, final
 
 import sublime
 
@@ -96,11 +96,13 @@ class AbstractMatch(ABC):
         self.args = args
         self.kwargs = kwargs
 
+    @final
     @classmethod
     def name(cls) -> str:
         """The nickname of this class. Converts "FooBarMatch" into "foo_bar" by default."""
         return camel_to_snake(remove_suffix(cls.__name__, "Match"))
 
+    @final
     @classmethod
     def is_supported(cls, obj: Any) -> bool:
         """Determines whether this class supports `obj`."""
@@ -118,6 +120,7 @@ class AbstractMatch(ABC):
         """Tests whether the `view` passes this `match` with those `rules`."""
         ...
 
+    @final
     @staticmethod
     def test_count(view: sublime.View, rules: Tuple[MatchableRule, ...], goal: float) -> bool:
         """Tests whether the amount of passing `rules` is greater than or equal to `goal`."""

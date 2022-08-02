@@ -4,7 +4,7 @@ import operator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, TypeVar, Union, final
 
 import sublime
 
@@ -97,11 +97,13 @@ class AbstractConstraint(ABC):
         self.args = args
         self.kwargs = kwargs
 
+    @final
     @classmethod
     def name(cls) -> str:
         """The nickname of this class. Converts "FooBarConstraint" into "foo_bar" by default."""
         return camel_to_snake(remove_suffix(cls.__name__, "Constraint"))
 
+    @final
     @classmethod
     def is_supported(cls, obj: Any) -> bool:
         """Determines whether this class supports `obj`."""
@@ -119,6 +121,7 @@ class AbstractConstraint(ABC):
         """Tests whether the `view` passes this constraint."""
         ...
 
+    @final
     def _handled_args(self, normalizer: Optional[Callable[[T], T]] = None) -> Tuple[T, ...]:
         """Filter falsy args and normalize them. Note that `0`, `""` and `None` are falsy."""
         args: Iterable[T] = filter(None, self.args)
@@ -126,6 +129,7 @@ class AbstractConstraint(ABC):
             args = map(normalizer, args)
         return tuple(args)
 
+    @final
     @staticmethod
     def _handled_comparator(comparator: str) -> Optional[Callable[[Any, Any], bool]]:
         """Convert the comparator string into a callable."""
@@ -144,6 +148,7 @@ class AbstractConstraint(ABC):
             op = operator.ne
         return op
 
+    @final
     @staticmethod
     def _handled_regex(args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Pattern[str]:
         """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
@@ -152,11 +157,13 @@ class AbstractConstraint(ABC):
             parse_regex_flags(kwargs.get("regex_flags", ["MULTILINE"])),
         )
 
+    @final
     @staticmethod
     def _handled_case_insensitive(args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> bool:
-        """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
+        """Returns `case_insensitive` in `kwars`. Defaulted to platform's specification."""
         return bool(kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}))
 
+    @final
     @staticmethod
     def get_view_info(view: sublime.View) -> TD_ViewSnapshot:
         """Gets the cached information for the `view`."""
@@ -164,6 +171,7 @@ class AbstractConstraint(ABC):
         assert snapshot  # our workflow guarantees this won't be None
         return snapshot
 
+    @final
     @staticmethod
     def has_sibling(me: Union[str, Path], sibling: str, use_exists: bool = False) -> bool:
         if use_exists:
