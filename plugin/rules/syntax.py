@@ -18,10 +18,11 @@ class SyntaxRule(Optimizable):
     syntaxes_name: Optional[Tuple[str, ...]] = tuple()
     selector: str = "text.plain"
     on_events: Optional[Set[ListenerEvent]] = None
+    """`None` = no restriction, empty = no event = never triggered."""
     root_rule: Optional[MatchRule] = None
 
     def is_droppable(self) -> bool:
-        return not (self.syntax and self.on_events != [] and self.root_rule)
+        return not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule)
 
     def optimize(self) -> Generator[Optimizable, None, None]:
         if self.root_rule:
