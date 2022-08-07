@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 from operator import methodcaller
-from typing import Any, Callable, Dict, Iterable, List, Sequence, Tuple, cast
+from typing import Any, Callable, Dict, Iterable, List, Sequence, cast
 
 import sublime
 import sublime_plugin
