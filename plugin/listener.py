@@ -116,7 +116,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
     def on_load_project(self, window: sublime.Window) -> None:
         # how to prevent new project views from triggering on_load()?
         # the `window` at this moment has no view in it
-        ...
+        pass
 
     def on_new(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.NEW)

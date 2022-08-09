@@ -634,7 +634,7 @@ To edit project settings, go to `Project` » `Edit Project`.
     ```js
     {
         "constraint": "is_size",
-        "args": [">", "5000"],
+        "args": [">", 5000],
     }
     ```
 

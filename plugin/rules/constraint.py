@@ -119,7 +119,7 @@ class AbstractConstraint(ABC):
     @abstractmethod
     def test(self, view: sublime.View) -> bool:
         """Tests whether the `view` passes this constraint."""
-        ...
+        pass
 
     @final
     def _handled_args(self, normalizer: Optional[Callable[[T], T]] = None) -> Tuple[T, ...]:
@@ -142,9 +142,9 @@ class AbstractConstraint(ABC):
             op = operator.ge
         elif comparator in {">", "gt"}:
             op = operator.gt
-        elif comparator in {"=", "==", "===", "eq"}:
+        elif comparator in {"=", "==", "===", "eq", "is"}:
             op = operator.eq
-        elif comparator in {"!", "!=", "!==", "<>", "ne", "neq"}:
+        elif comparator in {"!", "!=", "!==", "<>", "ne", "neq", "not"}:
             op = operator.ne
         return op
 
@@ -190,10 +190,10 @@ class AbstractConstraint(ABC):
 class AlwaysTruthyException(Exception):
     """Used to indicate that the constraint returns `True` no matter it's inverted or not."""
 
-    ...
+    pass
 
 
 class AlwaysFalsyException(Exception):
     """Used to indicate that the constraint returns `False` no matter it's inverted or not."""
 
-    ...
+    pass

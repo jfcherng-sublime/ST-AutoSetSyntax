@@ -11,19 +11,19 @@ from .types import DetectorModel
 class TransportCallbacks(Protocol):
     def on_open(self, ws: websocket.WebSocketApp) -> None:
         """Called when connected to the websocket."""
-        ...
+        pass
 
     def on_message(self, ws: websocket.WebSocketApp, message: str) -> None:
         """Called when received a message from the websocket."""
-        ...
+        pass
 
     def on_error(self, ws: websocket.WebSocketApp, error: str) -> None:
         """Called when there is an exception occurred in the websocket."""
-        ...
+        pass
 
     def on_close(self, ws: websocket.WebSocketApp, close_status_code: int, close_msg: str) -> None:
         """Called when disconnected from the websocket."""
-        ...
+        pass
 
 
 class NullTransportCallbacks:
