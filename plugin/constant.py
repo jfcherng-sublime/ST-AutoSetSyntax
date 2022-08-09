@@ -6,7 +6,7 @@ import sublime
 
 ################################################################################
 
-VERSION_INFO = (2, 8, 6, "stable")
+VERSION_INFO = (2, 8, 7, "stable")
 VERSION = ".".join(map(str, VERSION_INFO[:3]))
 if len(VERSION_INFO) > 3:
     VERSION += f"-{VERSION_INFO[3]}"

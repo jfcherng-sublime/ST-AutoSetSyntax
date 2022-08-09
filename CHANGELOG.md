@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.9.0
+
+- chore: update guesslang server
+- feat: new constraint: `is_line_count`
+- refactor: bump min ST version to 4114
+
 ## 2.8.6
 
 No change. Just to tackle with messed up versions.
