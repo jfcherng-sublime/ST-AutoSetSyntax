@@ -1,6 +1,6 @@
 # ST-AutoSetSyntax
 
-[![Required ST Build](https://img.shields.io/badge/ST-4105+-orange.svg?style=flat-square&logo=sublime-text)](https://www.sublimetext.com)
+[![Required ST Build](https://img.shields.io/badge/ST-4114+-orange.svg?style=flat-square&logo=sublime-text)](https://www.sublimetext.com)
 [![GitHub Actions](https://img.shields.io/github/workflow/status/jfcherng-sublime/ST-AutoSetSyntax/Python?style=flat-square)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/actions)
 [![Package Control](https://img.shields.io/packagecontrol/dt/AutoSetSyntax?style=flat-square)](https://packagecontrol.io/packages/AutoSetSyntax)
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/jfcherng-sublime/ST-AutoSetSyntax?style=flat-square&logo=github)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tags)
