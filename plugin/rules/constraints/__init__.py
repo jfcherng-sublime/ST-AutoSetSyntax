@@ -9,6 +9,7 @@ from .is_in_git_repo import IsInGitRepoConstraint
 from .is_in_hg_repo import IsInHgRepoConstraint
 from .is_in_svn_repo import IsInSvnRepoConstraint
 from .is_interpreter import IsInterpreterConstraint
+from .is_line_count import IsLineCountConstraint
 from .is_name import IsNameConstraint
 from .is_platform import IsPlatformConstraint
 from .is_platform_arch import IsPlatformArchConstraint
@@ -32,9 +33,10 @@ __all__ = (
     "IsInHgRepoConstraint",
     "IsInSvnRepoConstraint",
     "IsInterpreterConstraint",
+    "IsLineCountConstraint",
     "IsNameConstraint",
-    "IsPlatformConstraint",
     "IsPlatformArchConstraint",
+    "IsPlatformConstraint",
     "IsRailsFileConstraint",
     "IsSizeConstraint",
     "NameContainsConstraint",

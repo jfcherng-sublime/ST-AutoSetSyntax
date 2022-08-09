@@ -35,6 +35,7 @@ class ViewSnapshot:
             "file_path": filepath,
             "file_size": filesize,
             "first_line": get_view_pseudo_first_line(view, window),
+            "line_count": view.rowcol(view.size())[0] + 1,
             "syntax": view.syntax(),
         }
 

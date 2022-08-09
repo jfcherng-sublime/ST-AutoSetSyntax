@@ -562,6 +562,23 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     is `bash` or `zsh`.
 
+#### `is_line_count`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_line_count",
+        "args": [">", 500],
+    }
+    ```
+
+    Test whether the file has more than 500 lines.
+
+    !!! info
+
+        Available comparators are: `<`, `<=`, `==`, `>=`, `>` and `!=`.
+
 #### `is_name`
 
 !!! example

@@ -96,5 +96,7 @@ class TD_ViewSnapshot(TypedDict):
     """In bytes, -1 if file not on a disk."""
     first_line: str
     """Pseudo first line."""
+    line_count: int
+    """Number of lines in the original content."""
     syntax: Optional[sublime.Syntax]
     """Note that the value is as-is when it's cached."""
