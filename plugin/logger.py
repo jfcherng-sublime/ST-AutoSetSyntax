@@ -6,7 +6,6 @@ from typing import Dict, Generator, Optional, Union
 import sublime
 import sublime_plugin
 
-from .compatibility import view_clear_undo_stack
 from .constant import PLUGIN_NAME
 from .helper import get_st_window
 from .settings import get_merged_plugin_setting, get_st_setting
@@ -92,7 +91,7 @@ class Logger:
     @classmethod
     def _clear_undo_stack(cls, window: sublime.Window) -> None:
         if panel := _find_log_panel(window):
-            view_clear_undo_stack(panel)
+            sublime.set_timeout_async(panel.clear_undo_stack)
 
 
 class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
