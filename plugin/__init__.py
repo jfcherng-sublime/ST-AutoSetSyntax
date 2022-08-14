@@ -36,9 +36,11 @@ __all__ = (
     # ST: core
     "plugin_loaded",
     "plugin_unloaded",
-    # ST: commands
+    # ST: commands (logging)
     "AutoSetSyntaxAppendLogCommand",
     "AutoSetSyntaxClearLogPanelCommand",
+    "AutoSetSyntaxToggleLogPanelCommand",
+    # ST: commands
     "AutoSetSyntaxCommand",
     "AutoSetSyntaxCreateNewConstraintCommand",
     "AutoSetSyntaxCreateNewMatchCommand",
@@ -46,7 +48,6 @@ __all__ = (
     "AutoSetSyntaxDownloadGuesslangServerCommand",
     "AutoSetSyntaxMigrateSettingsCommand",
     "AutoSetSyntaxRestartGuesslangCommand",
-    "AutoSetSyntaxToggleLogPanelCommand",
     # ST: listeners
     "AioSettings",
     "AutoSetSyntaxEventListener",
