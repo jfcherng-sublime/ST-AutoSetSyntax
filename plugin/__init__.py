@@ -60,10 +60,6 @@ __all__ = (
 
 
 def plugin_loaded() -> None:
-    sublime.set_timeout_async(plugin_loaded_real)
-
-
-def plugin_loaded_real() -> None:
     _load_custom_implementations()
 
     AioSettings.plugin_name = PLUGIN_NAME
