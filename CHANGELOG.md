@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.9.1
+
+- chore: load plugin synchronously
+
 ## 2.9.0
 
 - chore: update guesslang server
