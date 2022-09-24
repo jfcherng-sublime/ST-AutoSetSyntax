@@ -3,6 +3,7 @@
 [applysyntax-v1-idea]: https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629
 [autosetsyntax-new-issue]: https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/new
 [black-formatter-online]: https://black.vercel.app
+[node.js]: https://nodejs.org
 [package-control]: https://packagecontrol.io
 [pc-applysyntax]: https://packagecontrol.io/packages/ApplySyntax
 [pc-autosetsyntax]: https://packagecontrol.io/packages/AutoSetSyntax
