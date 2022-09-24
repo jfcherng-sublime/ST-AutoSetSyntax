@@ -51,22 +51,6 @@
 
     This command creates a template for a new `Match` implementation.
 
-## Migration
-
-### `auto_set_syntax_migrate_settings`
-
-!!! example
-
-    ```js
-    {
-        "caption": "AutoSetSyntax: Migrate Settings",
-        "command": "auto_set_syntax_migrate_settings",
-    },
-    ```
-
-    At this moment, this command only works if the current view content is AutoSetSyntax v1 settings.
-    It will convert it into a v2 settings and put the result in a new view.
-
 ## Logging
 
 ### `auto_set_syntax_toogle_log_panel`

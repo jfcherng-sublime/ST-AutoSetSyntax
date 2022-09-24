@@ -23,7 +23,6 @@ nav:
     - ML-based detection: experimental/ml-based-syntax-detection.md
   - Commands: commands.md
   - Debug: debug.md
-  - Migration: migration.md
   - Advanced Topics:
     - How plugin works: advanced-topics/how-plugin-works.md
     - Custom Match: advanced-topics/custom-match.md

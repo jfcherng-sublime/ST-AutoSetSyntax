@@ -27,10 +27,6 @@
         },
     },
     {
-        "caption": "AutoSetSyntax: Migrate Settings",
-        "command": "auto_set_syntax_migrate_settings",
-    },
-    {
         "caption": "AutoSetSyntax: Toggle Log Panel",
         "command": "auto_set_syntax_toggle_log_panel",
     },
