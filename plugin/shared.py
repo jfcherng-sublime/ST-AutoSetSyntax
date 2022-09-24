@@ -1,29 +1,35 @@
-from typing import Any, Dict, Optional, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Tuple
 
 import sublime
 
-from .guesslang.client import GuesslangClient
-from .rules import SyntaxRuleCollection
 from .settings import get_merged_plugin_settings
+from .types import Optimizable
+
+if TYPE_CHECKING:
+    from .guesslang.client import GuesslangClient
+    from .rules import SyntaxRuleCollection
 
 WindowId = int
-DroppedRules = Tuple[Any, ...]
+DroppedRules = Tuple[Optimizable, ...]
+DroppedRulesArg = Iterable[Optimizable]
 
 
 class G:
     """This class holds "G"lobal variables as its class variables."""
 
-    # the guesslang object, which interacts with the Node.js guesslang server
     guesslang: Optional[GuesslangClient] = None
+    """The guesslang object, which interacts with the Node.js guesslang server."""
 
-    # views exist when ST just starts (even before plugin loaded)
     views_on_init: Tuple[sublime.View, ...] = tuple()
+    """Views exist when ST just starts (even before plugin loaded)."""
 
-    # per window, the compiled top-level plugin rules
     windows_syntax_rule_collection: Dict[WindowId, SyntaxRuleCollection] = {}
+    """Per window, the compiled top-level plugin rules."""
 
-    # per window, those rules which are dropped after doing optimizations
     windows_dropped_rules: Dict[WindowId, DroppedRules] = {}
+    """Per window, those rules which are dropped after doing optimizations."""
 
     @classmethod
     def is_plugin_ready(cls, window: sublime.Window) -> bool:
@@ -38,17 +44,17 @@ class G:
         return cls.windows_syntax_rule_collection.get(window.id())
 
     @classmethod
-    def remove_syntax_rule_collection(cls, window: sublime.Window) -> Optional[SyntaxRuleCollection]:
+    def clear_syntax_rule_collection(cls, window: sublime.Window) -> Optional[SyntaxRuleCollection]:
         return cls.windows_syntax_rule_collection.pop(window.id(), None)
 
     @classmethod
-    def set_dropped_rules(cls, window: sublime.Window, value: DroppedRules) -> None:
-        cls.windows_dropped_rules[window.id()] = value
+    def set_dropped_rules(cls, window: sublime.Window, value: DroppedRulesArg) -> None:
+        cls.windows_dropped_rules[window.id()] = tuple(value)
 
     @classmethod
     def get_dropped_rules(cls, window: sublime.Window) -> DroppedRules:
         return cls.windows_dropped_rules.get(window.id()) or tuple()
 
     @classmethod
-    def remove_dropped_rules(cls, window: sublime.Window) -> Optional[DroppedRules]:
+    def clear_dropped_rules(cls, window: sublime.Window) -> Optional[DroppedRules]:
         return cls.windows_dropped_rules.pop(window.id(), None)

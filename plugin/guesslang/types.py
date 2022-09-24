@@ -13,7 +13,8 @@ class DetectorModel(Enum):
 
 
 class GuesslangServerResponse(TypedDict):
-    id: int  # the message ID, which is an ID of a view actually
+    id: int
+    """The message ID, which is an ID of a view actually."""
     data: List[GuesslangServerPredictionItem]
     event_name: Optional[str]
 

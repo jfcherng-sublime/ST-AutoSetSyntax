@@ -91,7 +91,7 @@ class TD_ViewSnapshot(TypedDict):
     file_name_unhidden: str
     """The file name without prefixed dots. Empty string if not on a disk."""
     file_path: str
-    """Empty string if not on a disk."""
+    """The full file path with `/` as the directory separator. Empty string if not on a disk."""
     file_size: int
     """In bytes, -1 if file not on a disk."""
     first_line: str
@@ -99,4 +99,4 @@ class TD_ViewSnapshot(TypedDict):
     line_count: int
     """Number of lines in the original content."""
     syntax: Optional[sublime.Syntax]
-    """Note that the value is as-is when it's cached."""
+    """The syntax object. Note that the value is as-is when it's cached."""

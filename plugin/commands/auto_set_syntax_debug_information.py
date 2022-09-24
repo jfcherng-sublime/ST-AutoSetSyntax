@@ -41,7 +41,7 @@ TEMPLATE = """
 """.lstrip()
 
 
-def _pythonize(d: Dict[str, Any]) -> Dict[str, Any]:
+def _pythonize(d: Dict[str, Any]) -> Dict[str, str]:
     return {k: stringify(v) for k, v in d.items()}
 
 

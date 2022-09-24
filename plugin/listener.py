@@ -37,8 +37,8 @@ def set_up_window(window: sublime.Window) -> None:
 
 
 def tear_down_window(window: sublime.Window) -> None:
-    G.remove_syntax_rule_collection(window)
-    G.remove_dropped_rules(window)
+    G.clear_syntax_rule_collection(window)
+    G.clear_dropped_rules(window)
     Logger.log(window, "👋 Bye!")
     Logger.destroy(window)
 
