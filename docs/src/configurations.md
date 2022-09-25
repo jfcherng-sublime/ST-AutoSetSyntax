@@ -544,6 +544,18 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     Test whether the file is in a (Python) Django project.
 
+#### `is_in_ruby_on_rails_project`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_in_ruby_on_rails_project",
+    }
+    ```
+
+    Test whether the file is in a Ruby on Rails project.
+
 #### `is_in_svn_repo`
 
 !!! example

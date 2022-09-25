@@ -8,13 +8,13 @@ from .is_guesslang_enabled import IsGuesslangEnabledConstraint
 from .is_in_git_repo import IsInGitRepoConstraint
 from .is_in_hg_repo import IsInHgRepoConstraint
 from .is_in_python_django_project import IsInPythonDjangoProjectConstraint
+from .is_in_ruby_on_rails_project import IsInRubyOnRailsProjectConstraint
 from .is_in_svn_repo import IsInSvnRepoConstraint
 from .is_interpreter import IsInterpreterConstraint
 from .is_line_count import IsLineCountConstraint
 from .is_name import IsNameConstraint
 from .is_platform import IsPlatformConstraint
 from .is_platform_arch import IsPlatformArchConstraint
-from .is_rails_file import IsRailsFileConstraint
 from .is_size import IsSizeConstraint
 from .name_contains import NameContainsConstraint
 from .name_contains_regex import NameContainsRegexConstraint
@@ -33,13 +33,13 @@ __all__ = (
     "IsInGitRepoConstraint",
     "IsInHgRepoConstraint",
     "IsInPythonDjangoProjectConstraint",
+    "IsInRubyOnRailsProjectConstraint",
     "IsInSvnRepoConstraint",
     "IsInterpreterConstraint",
     "IsLineCountConstraint",
     "IsNameConstraint",
     "IsPlatformArchConstraint",
     "IsPlatformConstraint",
-    "IsRailsFileConstraint",
     "IsSizeConstraint",
     "NameContainsConstraint",
     "NameContainsRegexConstraint",

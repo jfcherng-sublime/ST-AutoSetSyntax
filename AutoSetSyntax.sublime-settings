@@ -295,10 +295,15 @@
         {
             "comment": "\"Ruby on Rails\" project",
             "syntaxes": "scope:source.ruby.rails",
-            "selector": "text.plain | source.ruby",
+            "selector": "source.ruby",
+            "match": "all",
             "rules": [
                 {
-                    "constraint": "is_rails_file"
+                    "constraint": "is_extension",
+                    "args": [".rb", ".rake"]
+                },
+                {
+                    "constraint": "is_in_ruby_on_rails_project"
                 }
             ]
         },
