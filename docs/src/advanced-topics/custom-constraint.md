@@ -31,13 +31,16 @@ You may create your own custom `Constraint` implementation by following steps.
 
             ```py
             class TD_ViewSnapshot(TypedDict):
-                char_count: int
-                content: str  # pseudo file content
-                file_name: str  # empty string if not on a disk
-                file_path: str  # empty string if not on a disk
-                file_size: int  # in bytes, -1 if file not on a disk
-                first_line: str  # pseudo first line
-                syntax: Optional[sublime.Syntax]  # note that the value is as-is when it's cached
+                id: int  # View ID
+                char_count: int  # Character count
+                content: str  # Pseudo file content
+                file_name: str  # The file name. Empty string if not on a disk
+                file_name_unhidden: str  # The file name without prefixed dots. Empty string if not on a disk
+                file_path: str  # Empty string if not on a disk
+                file_size: int  # In bytes, -1 if file not on a disk
+                first_line: str  # Pseudo first line
+                line_count: int  # Number of lines in the original content
+                syntax: Optional[sublime.Syntax]  # Note that the value is as-is when it's cached
             ```
 
 1.  Decide the constraint name of your `Constraint`.
