@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.9.3
+
+- feat: add `Jinja2` rules for HTML files
+- refactor: remove "Migration" things
+
 ## 2.9.2
 
 - chore: update guesslang server
