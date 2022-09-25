@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.9.4
+
+- feat: new constraint: `is_in_python_django_project`
+- refactor: replace `is_rails_file` with `is_in_ruby_on_rails_project`
+- chore: improve Django template files detection
+
 ## 2.9.3
 
 - feat: add `Jinja2` rules for HTML files
