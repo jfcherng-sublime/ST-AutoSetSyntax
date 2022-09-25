@@ -342,8 +342,23 @@
             ]
         },
         {
+            "comment": "Django templates",
+            "syntaxes": ["scope:text.jinja", "scope:text.html.jinja"],
+            "selector": "text.html.basic",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "path_contains",
+                    "args": ["/templates/"]
+                },
+                {
+                    "constraint": "is_in_python_django_project"
+                }
+            ]
+        },
+        {
             "comment": "Jinja2/Twig HTML files",
-            "syntaxes": ["scope:text.jinja", "scope:text.html.twig"],
+            "syntaxes": ["scope:text.jinja", "scope:text.html.jinja", "scope:text.html.twig"],
             "selector": "text.html.basic",
             "rules": [
                 {
