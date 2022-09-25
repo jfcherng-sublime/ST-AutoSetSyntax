@@ -532,6 +532,18 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     Test whether the file is in a Mercurial repository.
 
+#### `is_in_python_django_project`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_in_python_django_project",
+    }
+    ```
+
+    Test whether the file is in a (Python) Django project.
+
 #### `is_in_svn_repo`
 
 !!! example

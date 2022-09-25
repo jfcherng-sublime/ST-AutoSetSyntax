@@ -7,6 +7,7 @@ from .is_extension import IsExtensionConstraint
 from .is_guesslang_enabled import IsGuesslangEnabledConstraint
 from .is_in_git_repo import IsInGitRepoConstraint
 from .is_in_hg_repo import IsInHgRepoConstraint
+from .is_in_python_django_project import IsInPythonDjangoProjectConstraint
 from .is_in_svn_repo import IsInSvnRepoConstraint
 from .is_interpreter import IsInterpreterConstraint
 from .is_line_count import IsLineCountConstraint
@@ -31,6 +32,7 @@ __all__ = (
     "IsGuesslangEnabledConstraint",
     "IsInGitRepoConstraint",
     "IsInHgRepoConstraint",
+    "IsInPythonDjangoProjectConstraint",
     "IsInSvnRepoConstraint",
     "IsInterpreterConstraint",
     "IsLineCountConstraint",
