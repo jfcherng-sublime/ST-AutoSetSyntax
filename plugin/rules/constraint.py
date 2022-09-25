@@ -173,18 +173,19 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def has_sibling(me: Union[str, Path], sibling: str, *, use_exists: bool = False) -> bool:
+    def has_sibling(me: Union[str, Path], sibling: str, *, use_exists: bool = False, till_root: bool = False) -> bool:
+        me = Path(me).resolve()
+
         if use_exists:
             checker = Path.exists
         else:
             checker = Path.is_dir if sibling.endswith(("\\", "/")) else Path.is_file
 
-        folder_prev, folder = None, Path(me).resolve().parent
-        while folder != folder_prev:
-            if checker(folder / sibling):
-                return True
-            folder_prev, folder = folder, folder.parent
-        return False
+        candidates = me.parents
+        if not till_root:
+            candidates = (candidates[0],)
+
+        return any(checker(candidate / sibling) for candidate in candidates)
 
 
 class AlwaysTruthyException(Exception):

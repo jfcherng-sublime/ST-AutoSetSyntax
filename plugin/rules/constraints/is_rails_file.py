@@ -24,4 +24,4 @@ class IsRailsFileConstraint(AbstractConstraint):
         # but it does work. The idea here is to work up the tree, checking at each level for
         # the existence of "config/routes.rb". If it's found, the assumption is made that it's
         # a Rails app.
-        return self.has_sibling(view_info["file_path"], "config/routes.rb")
+        return self.has_sibling(view_info["file_path"], "config/routes.rb", till_root=True)
