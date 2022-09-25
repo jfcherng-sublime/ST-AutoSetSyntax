@@ -342,6 +342,22 @@
             ]
         },
         {
+            "comment": "Jinja2/Twig HTML files",
+            "syntaxes": ["scope:text.jinja", "scope:text.html.twig"],
+            "selector": "text.html.basic",
+            "rules": [
+                {
+                    "constraint": "contains_regex",
+                    "args": [
+                        "{{",
+                        // https://jinja.palletsprojects.com/en/latest/templates/
+                        "{%\\s*(?:autoescape|call|elif|else|extends|filter|for|from|if|import|include|macro|set|trans|with)\\b"
+                    ],
+                    "kwargs": { "threshold": 4 }
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.sql",
             "selector": "text.plain",
             "rules": [
