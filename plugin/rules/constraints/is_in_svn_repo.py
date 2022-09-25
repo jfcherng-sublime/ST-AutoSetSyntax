@@ -16,4 +16,4 @@ class IsInSvnRepoConstraint(AbstractConstraint):
         if not view_info["file_name"]:
             raise AlwaysFalsyException("file not on disk")
 
-        return bool(self.find_parent_has_sibling(view_info["file_path"], ".svn/"))
+        return bool(self.find_parent_with_sibling(view_info["file_path"], ".svn/"))

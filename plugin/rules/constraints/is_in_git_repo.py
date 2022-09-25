@@ -17,4 +17,4 @@ class IsInGitRepoConstraint(AbstractConstraint):
             raise AlwaysFalsyException("file not on disk")
 
         # `.git/` directory for normal Git repo and `.git` file for Git worktree
-        return bool(self.find_parent_has_sibling(view_info["file_path"], ".git", use_exists=True))
+        return bool(self.find_parent_with_sibling(view_info["file_path"], ".git", use_exists=True))

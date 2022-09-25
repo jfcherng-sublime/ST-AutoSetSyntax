@@ -173,7 +173,7 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def find_parent_has_sibling(me: Union[str, Path], sibling: str, *, use_exists: bool = False) -> Optional[Path]:
+    def find_parent_with_sibling(me: Union[str, Path], sibling: str, *, use_exists: bool = False) -> Optional[Path]:
         me = Path(me).resolve()
 
         if use_exists:
