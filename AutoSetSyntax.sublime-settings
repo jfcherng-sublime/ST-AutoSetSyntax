@@ -313,15 +313,25 @@
             "rules": [
                 {
                     "constraint": "is_extension",
-                    "args": [".thor", ".rake", ".simplecov", ".jbuilder", ".rb", ".podspec", ".rabl"]
+                    "args": [".simplecov"]
                 },
                 {
-                    "constraint": "path_contains_regex",
+                    "constraint": "is_name",
                     "args": [
-                        "^.*/(?:Berks|Cap|[Cc]hef|Gem|Guard|Pod|[Rr]ake|Thor)file$",
-                        "^.*/config.ru$",
-                        "^.*/Vagrantfile(?:/..*)?$"
-                    ]
+                        "Berksfile",
+                        "Cartfile",
+                        "Cartfile.private",
+                        "Cartfile.resolved",
+                        "Cheffile",
+                        "config.ru",
+                        "Gemfile",
+                        "Guardfile",
+                        "Podfile",
+                        "Rakefile",
+                        "Thorfile",
+                        "Vagrantfile"
+                    ],
+                    "kwargs": { "case_insensitive": true }
                 },
                 {
                     "constraint": "is_interpreter",
