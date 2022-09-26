@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.9.5
+
+- feat: add `match` kwarg to `relative_exists` constraint
+- feat: tidy/add some new rules
+
 ## 2.9.4
 
 - feat: new constraint: `is_in_python_django_project`
