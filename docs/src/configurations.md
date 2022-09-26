@@ -456,10 +456,11 @@ To edit project settings, go to `Project` » `Edit Project`.
     {
         "constraint": "relative_exists",
         "args": ["foo", "bar/"],
+        "kwargs": {"match": "all"},
     }
     ```
 
-    Test whether file `foo` or directory `bar/` exists relatively to the file.
+    Test whether both file `foo` and directory `bar/` exist relatively to the file.
 
 #### `is_arch`
 

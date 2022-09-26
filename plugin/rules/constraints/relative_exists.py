@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Tuple, final
+from typing import Any, Literal, Tuple, final
 
 import sublime
 
@@ -12,6 +12,8 @@ class RelativeExistsConstraint(AbstractConstraint):
         super().__init__(*args, **kwargs)
 
         self.relatives: Tuple[str, ...] = self._handled_args()
+        self.match: Literal["all", "any"] = kwargs.get("match", "any")
+        self.matcher = self.match == "all" and all or any
 
     def is_droppable(self) -> bool:
         return not self.relatives
@@ -22,7 +24,7 @@ class RelativeExistsConstraint(AbstractConstraint):
             raise AlwaysFalsyException("no filename")
 
         folder = Path(filepath).parent
-        return any(
+        return self.matcher(
             (Path.is_dir if relative.endswith(("\\", "/")) else Path.is_file)(folder / relative)
             for relative in self.relatives
         )

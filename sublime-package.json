@@ -396,6 +396,35 @@
                       }
                     }
                   }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "constraint": {
+                        "pattern": "^relative_exists$"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "kwargs": {
+                        "type": "object",
+                        "properties": {
+                          "match": {
+                            "type": "string",
+                            "enum": ["any", "all"],
+                            "enumDescriptions": [
+                              "Match if `any` of the given paths exists.",
+                              "Match if `all` of the given paths exists."
+                            ],
+                            "default": "any"
+                          }
+                        },
+                        "default": {},
+                        "additionalItems": false
+                      }
+                    }
+                  }
                 }
               ],
               "required": ["constraint"]
