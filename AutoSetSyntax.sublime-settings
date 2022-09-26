@@ -80,12 +80,24 @@
             ]
         },
         {
+            "comment": "Basic INI files",
+            "syntaxes": "scope:source.ini",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "is_name",
+                    "args": [".minttyrc", ".wslconfig"]
+                }
+            ]
+        },
+        {
+            "comment": "Basic JSON files",
             "syntaxes": "scope:source.json",
             "selector": "text.plain",
             "rules": [
                 {
                     "constraint": "is_extension",
-                    "args": [".css.map", ".js.map"]
+                    "args": [".css.map", ".geojson", ".js.map", ".jsonc", ".webmanifest"]
                 },
                 {
                     "constraint": "is_name",
@@ -96,9 +108,20 @@
                         ".eslintrc",
                         ".jscsrc",
                         ".jshintrc",
-                        ".stylelintrc",
-                        "geojson"
+                        ".markdownlintrc",
+                        ".stylelintrc"
                     ]
+                }
+            ]
+        },
+        {
+            "comment": "Basic YAML files",
+            "syntaxes": "scope:source.yaml",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "is_name",
+                    "args": [".clang-format", ".clang-tidy", ".clangd"]
                 }
             ]
         },
@@ -109,6 +132,16 @@
                 {
                     "constraint": "name_contains_regex",
                     "args": ["^profile$", "^.*\\.bash.*$", "^.*\\.z(?:shrc|shenv|profile|login|logout).*$"]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:text.git.config",
+            "selector": "- text.git.config",
+            "rules": [
+                {
+                    "constraint": "path_contains_regex",
+                    "args": ["^.*/.git/config$"]
                 }
             ]
         },
@@ -403,16 +436,6 @@
             ]
         },
         {
-            "syntaxes": "scope:source.yaml",
-            "selector": "text.plain",
-            "rules": [
-                {
-                    "constraint": "is_name",
-                    "args": [".clang-format", ".clang-tidy", ".clangd"]
-                }
-            ]
-        },
-        {
             "syntaxes": "scope:source.typoscript",
             "selector": "text.plain",
             "rules": [
@@ -460,7 +483,7 @@
             // @see https://doc.qt.io/qt-5/qt-conf.html
             "comment": "Qt's config file",
             "syntaxes": "scope:source.ini",
-            "selector": "",
+            "selector": "- source.ini",
             "rules": [
                 {
                     "constraint": "is_name",
@@ -497,12 +520,12 @@
                 },
                 {
                     "constraint": "relative_exists",
-                    "args": ["crash_reporter", "crash_reporter.exe"]
+                    "args": ["sublime_text", "sublime_text.exe", "sublime_merge", "sublime_merge.exe"]
                 }
             ]
         },
         {
-            "comment": "Package installation/update messages from Package Control",
+            "comment": "Package Control: Package installation/update messages",
             "syntaxes": "scope:text.html.markdown",
             "selector": "text.plain",
             "rules": [
@@ -534,6 +557,7 @@
         ".include",
         ".local",
         ".orig",
+        ".out",
         ".sample",
         ".shared",
         ".temp",
