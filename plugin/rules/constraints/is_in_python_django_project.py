@@ -3,27 +3,26 @@ from typing import Set, final
 
 import sublime
 
-from ..constraint import AbstractConstraint
+from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
 @final
 class IsInPythonDjangoProjectConstraint(AbstractConstraint):
     """Check whether this file is in a (Python) Django project."""
 
-    _project_roots: Set[Path] = set()
-    """Cached project root directories."""
+    _success_dirs: Set[Path] = set()
+    """Cached directories which make the result `True`."""
 
     def test(self, view: sublime.View) -> bool:
         cls = self.__class__
-        view_info = self.get_view_info(view)
 
-        if not view_info["file_path"]:
-            return False
-
-        file_path = Path(view_info["file_path"])
+        # file not on disk, maybe just a buffer
+        if not (_file_path := self.get_view_info(view)["file_path"]):
+            raise AlwaysFalsyException("no filename")
+        file_path = Path(_file_path)
 
         # fast check from the cache
-        if any((parent in cls._project_roots) for parent in file_path.parents):
+        if any((parent in cls._success_dirs) for parent in file_path.parents):
             return True
 
         # [projectname]/         <- project root
@@ -39,7 +38,7 @@ class IsInPythonDjangoProjectConstraint(AbstractConstraint):
                 continue
             for sub_dir in filter(Path.is_dir, parent.glob("*")):
                 if all((sub_dir / file).is_file() for file in ("settings.py", "urls.py", "wsgi.py")):
-                    cls._project_roots.add(parent)
+                    cls._success_dirs.add(parent)
                     return True
 
         return False

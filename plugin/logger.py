@@ -1,7 +1,7 @@
 import math
 import re
 from contextlib import contextmanager
-from typing import Dict, Generator, Optional, Union
+from typing import Dict, Final, Generator, Optional, Union
 
 import sublime
 import sublime_plugin
@@ -29,7 +29,7 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
     panel = window.create_output_panel(PLUGIN_NAME)
     # Somehow there is an error about "scope:output.autosetsyntax.log" not found during updating this plugin.
     # Thus, I change it to use the syntax path to load the syntax.
-    panel.assign_syntax("Packages/AutoSetSyntax/syntaxes/AutoSetSyntaxLog.sublime-syntax")
+    panel.assign_syntax(Logger.SYNTAX_FILE)
     panel.set_read_only(True)
     panel.set_scratch(True)
     panel.settings().update(
@@ -47,7 +47,8 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
 
 
 class Logger:
-    DELIMITER = "-" * 10
+    DELIMITER: Final[str] = "-" * 10
+    SYNTAX_FILE: Final[str] = "Packages/AutoSetSyntax/syntaxes/AutoSetSyntaxLog.sublime-syntax"
 
     history_counts: Dict[int, int] = {}
     """per-window, WindowId => history count"""

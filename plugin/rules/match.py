@@ -118,7 +118,6 @@ class AbstractMatch(ABC):
     @abstractmethod
     def test(self, view: sublime.View, rules: Tuple[MatchableRule, ...]) -> bool:
         """Tests whether the `view` passes this `match` with those `rules`."""
-        pass
 
     @final
     @staticmethod

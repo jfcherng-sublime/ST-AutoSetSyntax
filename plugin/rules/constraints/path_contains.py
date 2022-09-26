@@ -2,7 +2,7 @@ from typing import Any, Tuple, final
 
 import sublime
 
-from ..constraint import AbstractConstraint
+from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
 @final
@@ -16,5 +16,7 @@ class PathContainsConstraint(AbstractConstraint):
         return not self.needles
 
     def test(self, view: sublime.View) -> bool:
-        filepath = self.get_view_info(view)["file_path"]
-        return any((needle in filepath) for needle in self.needles)
+        if not (file_path := self.get_view_info(view)["file_path"]):
+            raise AlwaysFalsyException("file not on disk")
+
+        return any((needle in file_path) for needle in self.needles)

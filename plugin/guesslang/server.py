@@ -3,7 +3,7 @@ import shutil
 import socket
 import subprocess
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Set, Union
+from typing import Dict, Final, Optional, Sequence, Set, Union
 
 import sublime
 
@@ -14,8 +14,8 @@ from ..settings import get_merged_plugin_setting
 
 
 class GuesslangServer:
-    server_dir = PLUGIN_STORAGE_DIR / "guesslang-server"
-    server_file = PLUGIN_STORAGE_DIR / "guesslang-server/websocket.js"
+    SERVER_DIR: Final[Path] = PLUGIN_STORAGE_DIR / "guesslang-server"
+    SERVER_FILE: Final[Path] = PLUGIN_STORAGE_DIR / "guesslang-server/websocket.js"
 
     # background server process(es)
     _subprocesses: Set[subprocess.Popen] = set()
@@ -32,8 +32,8 @@ class GuesslangServer:
 
         try:
             process = cls._start_process(
-                (node_path, cls.server_file),
-                cwd=cls.server_dir,
+                (node_path, cls.SERVER_FILE),
+                cwd=cls.SERVER_DIR,
                 extra_env={
                     "NODE_SKIP_PLATFORM_CHECK": "1",
                     "HOST": host,

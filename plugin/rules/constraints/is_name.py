@@ -2,7 +2,7 @@ from typing import Any, Tuple, final
 
 import sublime
 
-from ..constraint import AbstractConstraint
+from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
 @final
@@ -19,7 +19,9 @@ class IsNameConstraint(AbstractConstraint):
         return not self.names
 
     def test(self, view: sublime.View) -> bool:
-        filename = self.get_view_info(view)["file_name"]
+        if not (file_name := self.get_view_info(view)["file_name"]):
+            raise AlwaysFalsyException("file not on disk")
+
         if self.case_insensitive:
-            filename = filename.lower()
-        return filename in self.names
+            file_name = file_name.lower()
+        return file_name in self.names

@@ -15,6 +15,6 @@ def clearable_lru_cache(*args: Any, **kwargs: Any) -> Callable[[T_Callable], T_C
     return decorator
 
 
-def clear_all_cached_functions():
+def clear_all_cached_functions() -> None:
     for func in _cached_functions:
         func.cache_clear()

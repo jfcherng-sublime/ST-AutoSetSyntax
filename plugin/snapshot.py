@@ -17,23 +17,23 @@ class ViewSnapshot:
         window = view.window() or sublime.active_window()
 
         # is real file on a disk?
-        if (filepath := view.file_name()) and (p := Path(filepath).resolve()).is_file():
-            filename = p.name
-            filepath = p.as_posix()
-            filesize = p.stat().st_size
+        if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
+            file_name = path.name
+            file_path = path.as_posix()
+            file_size = path.stat().st_size
         else:
-            filename = ""
-            filepath = ""
-            filesize = -1
+            file_name = ""
+            file_path = ""
+            file_size = -1
 
         cls._snapshots[cache_id] = {
             "id": view.id(),
             "char_count": view.size(),
             "content": get_view_pseudo_content(view, window),
-            "file_name": filename,
-            "file_name_unhidden": remove_prefix(filename, "."),
-            "file_path": filepath,
-            "file_size": filesize,
+            "file_name": file_name,
+            "file_name_unhidden": remove_prefix(file_name, "."),
+            "file_path": file_path,
+            "file_size": file_size,
             "first_line": get_view_pseudo_first_line(view, window),
             "line_count": view.rowcol(view.size())[0] + 1,
             "syntax": view.syntax(),
@@ -57,6 +57,7 @@ def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:
 
 
 def get_view_pseudo_first_line(view: sublime.View, window: sublime.Window) -> str:
+    region = view.line(0)
     if (max_length := get_merged_plugin_setting("trim_first_line_length", window=window)) >= 0:
-        return view.substr(sublime.Region(0, max_length)).partition("\n")[0]
-    return view.substr(view.line(0))
+        region = sublime.Region(region.a, min(region.b, max_length))
+    return view.substr(region)

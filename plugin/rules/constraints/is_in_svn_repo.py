@@ -1,4 +1,5 @@
-from typing import final
+from pathlib import Path
+from typing import Set, final
 
 import sublime
 
@@ -9,11 +10,23 @@ from ..constraint import AbstractConstraint, AlwaysFalsyException
 class IsInSvnRepoConstraint(AbstractConstraint):
     """Check whether this file is in a SVN repo."""
 
+    _success_dirs: Set[Path] = set()
+    """Cached directories which make the result `True`."""
+
     def test(self, view: sublime.View) -> bool:
-        view_info = self.get_view_info(view)
+        cls = self.__class__
 
-        # early return so that we may save some IO operations
-        if not view_info["file_name"]:
+        # file not on disk, maybe just a buffer
+        if not (_file_path := self.get_view_info(view)["file_path"]):
             raise AlwaysFalsyException("file not on disk")
+        file_path = Path(_file_path)
 
-        return bool(self.find_parent_with_sibling(view_info["file_path"], ".svn/"))
+        # fast check from the cache
+        if any((parent in cls._success_dirs) for parent in file_path.parents):
+            return True
+
+        if _major_dir := self.find_parent_with_sibling(file_path, ".hg/"):
+            cls._success_dirs.add(_major_dir)
+            return True
+
+        return False

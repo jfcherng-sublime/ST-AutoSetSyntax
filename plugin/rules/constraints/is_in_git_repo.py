@@ -1,4 +1,5 @@
-from typing import final
+from pathlib import Path
+from typing import Set, final
 
 import sublime
 
@@ -9,12 +10,24 @@ from ..constraint import AbstractConstraint, AlwaysFalsyException
 class IsInGitRepoConstraint(AbstractConstraint):
     """Check whether this file is in a git repo."""
 
-    def test(self, view: sublime.View) -> bool:
-        view_info = self.get_view_info(view)
+    _success_dirs: Set[Path] = set()
+    """Cached directories which make the result `True`."""
 
-        # early return so that we may save some IO operations
-        if not view_info["file_name"]:
+    def test(self, view: sublime.View) -> bool:
+        cls = self.__class__
+
+        # file not on disk, maybe just a buffer
+        if not (_file_path := self.get_view_info(view)["file_path"]):
             raise AlwaysFalsyException("file not on disk")
+        file_path = Path(_file_path)
+
+        # fast check from the cache
+        if any((parent in cls._success_dirs) for parent in file_path.parents):
+            return True
 
         # `.git/` directory for normal Git repo and `.git` file for Git worktree
-        return bool(self.find_parent_with_sibling(view_info["file_path"], ".git", use_exists=True))
+        if _major_dir := self.find_parent_with_sibling(file_path, ".git", use_exists=True):
+            cls._success_dirs.add(_major_dir)
+            return True
+
+        return False

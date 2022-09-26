@@ -2,7 +2,7 @@ from typing import Any, final
 
 import sublime
 
-from ..constraint import AbstractConstraint
+from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
 @final
@@ -13,4 +13,7 @@ class PathContainsRegexConstraint(AbstractConstraint):
         self.regex = self._handled_regex(self.args, self.kwargs)
 
     def test(self, view: sublime.View) -> bool:
-        return bool(self.regex.search(self.get_view_info(view)["file_path"]))
+        if not (file_path := self.get_view_info(view)["file_path"]):
+            raise AlwaysFalsyException("file not on disk")
+
+        return bool(self.regex.search(file_path))

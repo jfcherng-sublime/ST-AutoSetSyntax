@@ -164,7 +164,10 @@ def get_all_subclasses(
 
 def get_nth_item(items: Sequence[T], n: int, default: Optional[T] = None) -> Optional[T]:
     """Gets the `n`th item in `items`. Returns `default` if out of index."""
-    return next(iter(items[n : n + 1]), default)
+    try:
+        return items[n]
+    except IndexError:
+        return default
 
 
 def get_st_window(
@@ -179,9 +182,9 @@ def get_st_window(
     return window or (sublime.active_window() if fallback else None)
 
 
-def get_view_by_id(id: int) -> Optional[sublime.View]:
+def get_view_by_id(id: int, *, include_transient: bool = False) -> Optional[sublime.View]:
     for window in sublime.windows():
-        for view in window.views():
+        for view in window.views(include_transient=include_transient):
             if view.id() == id:
                 return view
     return None
