@@ -64,7 +64,7 @@ def debounce(time_s: float = 0.3) -> Callable[[T_Callable], T_Callable]:
                 delattr(debounced, "_timer")
                 return func(*args, **kwargs)
 
-            timer = getattr(debounced, "_timer", None)  # type: Optional[threading.Timer]
+            timer: Optional[threading.Timer] = getattr(debounced, "_timer", None)
             if timer is not None:
                 timer.cancel()
 
