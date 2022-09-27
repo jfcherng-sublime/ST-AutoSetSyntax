@@ -87,7 +87,7 @@ def _settings_changed_callback(window: sublime.Window) -> None:
     compile_rules(window, is_update=True)
 
 
-def _load_custom_implementations():
+def _load_custom_implementations() -> None:
     for finder, name, _ in pkgutil.iter_modules(map(str, PLUGIN_CUSTOM_MODULE_PATHS.values())):
         assert isinstance(finder, importlib.machinery.FileFinder)
         # something like "AutoSetSyntax-Custom/matches"

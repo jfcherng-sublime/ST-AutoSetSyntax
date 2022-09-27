@@ -17,7 +17,7 @@ class IsExtensionConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.case_insensitive = self._handled_case_insensitive(args, kwargs)
+        self.case_insensitive = self._handled_case_insensitive(kwargs)
         self.exts: Tuple[str, ...] = self._handled_args(_extensionize)
         self.exts = tuple(map(self.fix_case, self.exts))
 

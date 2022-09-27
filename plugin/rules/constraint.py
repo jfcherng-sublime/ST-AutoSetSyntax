@@ -132,20 +132,19 @@ class AbstractConstraint(ABC):
     @staticmethod
     def _handled_comparator(comparator: str) -> Optional[Callable[[Any, Any], bool]]:
         """Convert the comparator string into a callable."""
-        op: Optional[Callable[[Any, Any], bool]] = None
         if comparator in {"<", "lt"}:
-            op = operator.lt
-        elif comparator in {"<=", "le", "lte"}:
-            op = operator.le
-        elif comparator in {">=", "ge", "gte"}:
-            op = operator.ge
-        elif comparator in {">", "gt"}:
-            op = operator.gt
-        elif comparator in {"=", "==", "===", "eq", "is"}:
-            op = operator.eq
-        elif comparator in {"!", "!=", "!==", "<>", "ne", "neq", "not"}:
-            op = operator.ne
-        return op
+            return operator.lt
+        if comparator in {"<=", "le", "lte"}:
+            return operator.le
+        if comparator in {">=", "ge", "gte"}:
+            return operator.ge
+        if comparator in {">", "gt"}:
+            return operator.gt
+        if comparator in {"=", "==", "===", "eq", "is"}:
+            return operator.eq
+        if comparator in {"!", "!=", "!==", "<>", "ne", "neq", "not"}:
+            return operator.ne
+        return None
 
     @final
     @staticmethod
@@ -158,7 +157,7 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def _handled_case_insensitive(args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> bool:
+    def _handled_case_insensitive(kwargs: Dict[str, Any]) -> bool:
         """Returns `case_insensitive` in `kwars`. Defaulted to platform's specification."""
         return bool(kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}))
 
@@ -172,15 +171,16 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def find_parent_with_sibling(me: Union[str, Path], sibling: str, *, use_exists: bool = False) -> Optional[Path]:
-        me = Path(me).resolve()
+    def find_parent_with_sibling(base: Union[str, Path], sibling: str, *, use_exists: bool = False) -> Optional[Path]:
+        """Find the first parent directory which contains `sibling`."""
+        path = Path(base).resolve()
 
         if use_exists:
             checker = Path.exists
         else:
             checker = Path.is_dir if sibling.endswith(("\\", "/")) else Path.is_file
 
-        return first(me.parents, lambda p: checker(p / sibling))
+        return first(path.parents, lambda p: checker(p / sibling))
 
 
 class AlwaysTruthyException(Exception):

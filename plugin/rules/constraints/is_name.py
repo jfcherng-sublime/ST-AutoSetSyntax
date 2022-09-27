@@ -12,7 +12,7 @@ class IsNameConstraint(AbstractConstraint):
 
         names: Tuple[str, ...] = self._handled_args()
 
-        self.case_insensitive = self._handled_case_insensitive(args, kwargs)
+        self.case_insensitive = self._handled_case_insensitive(kwargs)
         self.names = set(map(str.lower, names) if self.case_insensitive else names)
 
     def is_droppable(self) -> bool:
