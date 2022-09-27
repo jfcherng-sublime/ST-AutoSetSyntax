@@ -65,7 +65,7 @@ class GuesslangClient:
 
     @staticmethod
     def is_connected(ws: websocket.WebSocketApp) -> bool:
-        return not ws.sock
+        return bool(ws.sock)
 
     def request_guess_snapshot(
         self,
