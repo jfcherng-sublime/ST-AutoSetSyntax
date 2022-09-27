@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.9.6
+
+- fix: guesslang server doesn't response
+
 ## 2.9.5
 
 - feat: add `match` kwarg to `relative_exists` constraint
