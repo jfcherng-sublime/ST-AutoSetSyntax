@@ -350,20 +350,7 @@
                 },
                 {
                     "constraint": "is_name",
-                    "args": [
-                        "Berksfile",
-                        "Cartfile",
-                        "Cartfile.private",
-                        "Cartfile.resolved",
-                        "Cheffile",
-                        "config.ru",
-                        "Gemfile",
-                        "Guardfile",
-                        "Podfile",
-                        "Rakefile",
-                        "Thorfile",
-                        "Vagrantfile"
-                    ],
+                    "args": ["Cartfile", "Cartfile.private", "Cartfile.resolved", "config.ru"],
                     "kwargs": { "case_insensitive": true }
                 },
                 {
