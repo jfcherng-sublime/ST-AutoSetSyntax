@@ -652,10 +652,11 @@
         "v": ["scope:source.verilog"],
         "vba": ["scope:source.vbs"],
         "xml": ["scope:text.xml"],
-        "yaml": ["scope:source.yaml"],
-        // extra from vscode-regexp-languagedetection
+        "yml": ["scope:source.yaml"],
+        // extra from vscode-regexp-languagedetection (modelLangToVSCodeLang)
         "coffeescript": ["=coffee"],
         "csharp": ["=cs"],
+        "erlang": ["=erl"],
         "haskell": ["=hs"],
         "javascript": ["=js"],
         "markdown": ["=md"],
@@ -665,6 +666,8 @@
         "python": ["=py"],
         "ruby": ["=rb"],
         "rust": ["=rs"],
-        "typescript": ["=ts"]
+        "shellscript": ["=sh"],
+        "typescript": ["=ts"],
+        "yaml": ["=yml"]
     }
 }
