@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.9.7
+
+- fix: Unknown `languageId` from guesslang
+- chore: remove useless Ruby rules
+
 ## 2.9.6
 
 - fix: guesslang server doesn't response
