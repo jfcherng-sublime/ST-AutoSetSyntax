@@ -28,7 +28,7 @@ class ListenerEvent(Enum):
     UNTRANSIENTIZE = "untransientize"
 
     def __str__(self) -> str:
-        return str(self._value_)
+        return str(self.value)
 
     @classmethod
     def from_value(cls, value: Any) -> Optional[ListenerEvent]:
