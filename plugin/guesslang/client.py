@@ -5,7 +5,6 @@ import sublime
 
 from ..libs import websocket
 from ..types import ListenerEvent, TD_ViewSnapshot
-from .types import DetectorModel
 
 
 class TransportCallbacks(Protocol):
@@ -71,7 +70,6 @@ class GuesslangClient:
         self,
         view_info: TD_ViewSnapshot,
         *,
-        model: DetectorModel = DetectorModel.DEFAULT,
         event: Optional[ListenerEvent] = None,
     ) -> None:
         if self.ws and self.is_connected(self.ws):
@@ -79,7 +77,6 @@ class GuesslangClient:
                 sublime.encode_value(
                     {
                         "id": view_info["id"],
-                        "model": model.value,
                         "content": view_info["content"],
                         "event_name": event.value if event else None,
                     }

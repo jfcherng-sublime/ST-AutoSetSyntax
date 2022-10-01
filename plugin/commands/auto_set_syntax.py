@@ -9,7 +9,7 @@ import sublime
 import sublime_plugin
 
 from ..constant import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_RUN_ID_SETTINGS_KEY
-from ..guesslang.types import DetectorModel, GuesslangServerPredictionItem, GuesslangServerResponse
+from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
 from ..helper import (
     find_syntax_by_syntax_like,
     find_syntax_by_syntax_likes,
@@ -359,11 +359,7 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
     ):
         return None
 
-    G.guesslang.request_guess_snapshot(
-        view_info,
-        model=DetectorModel.VSCODE_REGEXP_LANGUAGEDETECTION,
-        event=event,
-    )
+    G.guesslang.request_guess_snapshot(view_info, event=event)
 
 
 def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
