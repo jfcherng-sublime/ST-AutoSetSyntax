@@ -2,7 +2,6 @@
   "version": "0.0.1",
   "type": "module",
   "dependencies": {
-    "@vscode/vscode-languagedetection": "^1",
     "ws": "^8"
   }
 }
