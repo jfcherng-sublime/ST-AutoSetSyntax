@@ -126,12 +126,16 @@
             ]
         },
         {
-            "syntaxes": "scope:source.shell.bash",
+            "syntaxes": ["scope:source.shell.bash"],
             "selector": "text.plain",
             "rules": [
                 {
+                    "constraint": "is_name",
+                    "args": ["profile", ".envrc"]
+                },
+                {
                     "constraint": "name_contains_regex",
-                    "args": ["^profile$", "^.*\\.bash.*$", "^.*\\.z(?:shrc|shenv|profile|login|logout).*$"]
+                    "args": ["\\.(?:bash|env|z(?:shrc|shenv|profile|login|logout))(?:\\.[^/]*)?$"]
                 }
             ]
         },
