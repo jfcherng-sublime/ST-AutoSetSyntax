@@ -686,6 +686,20 @@ To edit project settings, go to `Project` » `Edit Project`.
 
         Available comparators are: `<`, `<=`, `==`, `>=`, `>` and `!=`.
 
+#### `is_syntax`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_syntax",
+        "args": ["scope:source.python", "JavaScript", "/JSON."]
+    }
+    ```
+
+    Test whether the current syntax is in the given syntax list.
+    See [syntax representation][plugin-syntax-representations] for more informations.
+
 #### `name_contains`
 
 !!! example
