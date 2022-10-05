@@ -126,8 +126,13 @@
             ]
         },
         {
-            "syntaxes": ["scope:source.shell.bash"],
-            "selector": "text.plain",
+            // @todo improve this with "is_syntax" constraint
+            "syntaxes": [
+                "/DotENV.", // https://packagecontrol.io/packages/DotENV
+                "scope:source.shell.bash"
+            ],
+            // "source.env" is because "Plain Text (Dot ENV)" syntax from "AFileIcon"
+            "selector": "text.plain | source.env",
             "rules": [
                 {
                     "constraint": "is_name",
