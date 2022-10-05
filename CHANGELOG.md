@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.9.9
+
+- chore: improve `.env` files for AFileIcon users
+
 ## 2.9.8
 
 - feat: add rules for `.env` files
