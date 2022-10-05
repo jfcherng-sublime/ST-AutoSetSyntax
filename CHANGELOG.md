@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.9.8
+
+- feat: add rules for `.env` files
+- refactor: guesslang server only has one model now
+
 ## 2.9.7
 
 - fix: Unknown `languageId` from guesslang
