@@ -126,21 +126,45 @@
             ]
         },
         {
-            // @todo improve this with "is_syntax" constraint
+            "syntaxes": ["scope:source.shell.bash"],
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "is_name",
+                    "args": ["profile", ".bash_history"]
+                },
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["\\.(?:bash|z(?:shrc|shenv|profile|login|logout))(?:\\.[^/]*)?$"]
+                }
+            ]
+        },
+        {
+            "comment": "Linux .env files",
             "syntaxes": [
                 "/DotENV.", // https://packagecontrol.io/packages/DotENV
                 "scope:source.shell.bash"
             ],
-            // "source.env" is because "Plain Text (Dot ENV)" syntax from "AFileIcon"
-            "selector": "text.plain | source.env",
+            "selector": "",
+            "match": "all",
             "rules": [
                 {
-                    "constraint": "is_name",
-                    "args": ["profile", ".envrc"]
+                    "rules": [
+                        { "constraint": "selector_matches", "args": ["text.plain"] },
+                        { "constraint": "is_hidden_syntax" }
+                    ]
                 },
                 {
-                    "constraint": "name_contains_regex",
-                    "args": ["\\.(?:bash|env|z(?:shrc|shenv|profile|login|logout))(?:\\.[^/]*)?$"]
+                    "rules": [
+                        {
+                            "constraint": "is_name",
+                            "args": [".envrc"]
+                        },
+                        {
+                            "constraint": "name_contains_regex",
+                            "args": ["\\.(?:env)(?:\\.[^/]*)?$"]
+                        }
+                    ]
                 }
             ]
         },
