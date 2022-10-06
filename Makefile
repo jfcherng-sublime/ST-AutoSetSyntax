@@ -7,7 +7,7 @@ check:
 	flake8 .
 	pycln --config pyproject.toml --check .
 	black --check .
-	isort --check .
+	isort --check --diff .
 
 .PHONY: fix
 fix:
