@@ -5,6 +5,7 @@
 [black-formatter-online]: https://black.vercel.app
 [node.js]: https://nodejs.org
 [package-control]: https://packagecontrol.io
+[pc-a-file-icon]: https://packagecontrol.io/packages/A%20File%20Icon
 [pc-applysyntax]: https://packagecontrol.io/packages/ApplySyntax
 [pc-autosetsyntax]: https://packagecontrol.io/packages/AutoSetSyntax
 [pc-lsp-json]: https://packagecontrol.io/packages/LSP-json

@@ -5,6 +5,7 @@ from .first_line_contains_regex import FirstLineContainsRegexConstraint
 from .is_arch import IsArchConstraint
 from .is_extension import IsExtensionConstraint
 from .is_guesslang_enabled import IsGuesslangEnabledConstraint
+from .is_hidden_syntax import IsHiddenSyntaxConstraint
 from .is_in_git_repo import IsInGitRepoConstraint
 from .is_in_hg_repo import IsInHgRepoConstraint
 from .is_in_python_django_project import IsInPythonDjangoProjectConstraint
@@ -31,6 +32,7 @@ __all__ = (
     "IsArchConstraint",
     "IsExtensionConstraint",
     "IsGuesslangEnabledConstraint",
+    "IsHiddenSyntaxConstraint",
     "IsInGitRepoConstraint",
     "IsInHgRepoConstraint",
     "IsInPythonDjangoProjectConstraint",

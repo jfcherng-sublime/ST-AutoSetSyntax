@@ -509,6 +509,23 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     Test whether the `guesslang` server is enabled.
 
+#### `is_hidden_syntax`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_hidden_syntax",
+    }
+    ```
+
+    Test whether the current syntax is hidden.
+
+    !!! info
+
+        A hidden syntax is usually not for providing syntax highlighting.
+        For example, the "A File Icon" plugin uses hidden syntaxes just to show dedicated icons.
+
 #### `is_in_git_repo`
 
 !!! example
