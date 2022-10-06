@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.10.0
+
+- chore: improve `.env` files rules
+- feat: new constraint: `selector_matches`
+- feat: new constraint: `is_hidden_syntax`
+- feat: new constraint: `is_syntax`
+
 ## 2.9.9
 
 - chore: improve `.env` files for AFileIcon users
