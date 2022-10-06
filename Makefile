@@ -6,7 +6,7 @@ check:
 	mypy -p plugin
 	flake8 .
 	pycln --config pyproject.toml --check .
-	black --check .
+	black --check --diff .
 	isort --check --diff .
 
 .PHONY: fix
