@@ -771,6 +771,19 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     Test whether the file path contains regexes `/conf/.*\.conf$` or `/assets/.*\.js$`.
 
+#### `selector_matches`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "selector_matches",
+        "args": ["text.plain | source.env"],
+    }
+    ```
+
+    Test whether the any of selectors matches the base scope of the current syntax.
+
 ### Regular Expression Flags
 
 Some `constraint`s allow you to use (Python) regexes in `args`.

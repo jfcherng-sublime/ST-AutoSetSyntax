@@ -23,6 +23,7 @@ from .name_contains_regex import NameContainsRegexConstraint
 from .path_contains import PathContainsConstraint
 from .path_contains_regex import PathContainsRegexConstraint
 from .relative_exists import RelativeExistsConstraint
+from .selector_matches import SelectorMatchesConstraint
 
 __all__ = (
     "ContainsConstraint",
@@ -50,4 +51,5 @@ __all__ = (
     "PathContainsConstraint",
     "PathContainsRegexConstraint",
     "RelativeExistsConstraint",
+    "SelectorMatchesConstraint",
 )
