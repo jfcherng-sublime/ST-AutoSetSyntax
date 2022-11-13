@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.10.1
+
+- refactor: about `ViewSnapshot`...
+
 ## 2.10.0
 
 - chore: improve `.env` files rules
