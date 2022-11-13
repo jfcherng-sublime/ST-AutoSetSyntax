@@ -13,7 +13,7 @@ class NameContainsRegexConstraint(AbstractConstraint):
         self.regex = self._handled_regex(self.args, self.kwargs)
 
     def test(self, view: sublime.View) -> bool:
-        if not (file_name := self.get_view_info(view)["file_name"]):
+        if not (file_name := self.get_view_snapshot(view).file_name):
             raise AlwaysFalsyException("file not on disk")
 
         return bool(self.regex.search(file_name))

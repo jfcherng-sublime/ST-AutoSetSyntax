@@ -17,7 +17,7 @@ class ContainsConstraint(AbstractConstraint):
         return not (self.needles and isinstance(self.threshold, (int, float)))
 
     def test(self, view: sublime.View) -> bool:
-        content = self.get_view_info(view)["content"]
+        content = self.get_view_snapshot(view).content
         length = len(content)
         count = 0
         for needle in self.needles:

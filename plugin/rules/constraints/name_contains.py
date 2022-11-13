@@ -16,7 +16,7 @@ class NameContainsConstraint(AbstractConstraint):
         return not self.needles
 
     def test(self, view: sublime.View) -> bool:
-        if not (file_name := self.get_view_info(view)["file_name"]):
+        if not (file_name := self.get_view_snapshot(view).file_name):
             raise AlwaysFalsyException("file not on disk")
 
         return any((needle in file_name) for needle in self.needles)

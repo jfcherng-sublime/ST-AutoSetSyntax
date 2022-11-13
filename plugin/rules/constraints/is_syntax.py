@@ -17,7 +17,7 @@ class IsSyntaxConstraint(AbstractConstraint):
         return not self.candidates
 
     def test(self, view: sublime.View) -> bool:
-        if not (syntax := self.get_view_info(view)["syntax"]):
+        if not (syntax := self.get_view_snapshot(view).syntax):
             raise AlwaysFalsyException(f"View({view.id()}) has no syntax")
 
         return any((syntax in find_syntaxes_by_syntax_like(candidate)) for candidate in self.candidates)

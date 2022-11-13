@@ -27,7 +27,7 @@ class IsSizeConstraint(AbstractConstraint):
         return not (self.comparator and self.threshold is not None)
 
     def test(self, view: sublime.View) -> bool:
-        if (file_size := self.get_view_info(view)["file_size"]) < 0:
+        if (file_size := self.get_view_snapshot(view).file_size) < 0:
             raise AlwaysFalsyException("file not on disk")
 
         assert self.comparator

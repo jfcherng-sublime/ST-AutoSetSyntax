@@ -19,8 +19,8 @@ from ..helper import (
     remove_suffix,
 )
 from ..lru_cache import clearable_lru_cache
-from ..snapshot import ViewSnapshot
-from ..types import Optimizable, ST_ConstraintRule, TD_ViewSnapshot
+from ..snapshot import ViewSnapshot, ViewSnapshotCollection
+from ..types import Optimizable, ST_ConstraintRule
 
 T = TypeVar("T")
 
@@ -163,9 +163,9 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def get_view_info(view: sublime.View) -> TD_ViewSnapshot:
+    def get_view_snapshot(view: sublime.View) -> ViewSnapshot:
         """Gets the cached information for the `view`."""
-        snapshot = ViewSnapshot.from_view(view)
+        snapshot = ViewSnapshotCollection.get_by_view(view)
         assert snapshot  # our workflow guarantees this won't be None
         return snapshot
 

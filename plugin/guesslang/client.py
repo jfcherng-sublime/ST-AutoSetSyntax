@@ -4,7 +4,8 @@ from typing import Optional, Protocol
 import sublime
 
 from ..libs import websocket
-from ..types import ListenerEvent, TD_ViewSnapshot
+from ..snapshot import ViewSnapshot
+from ..types import ListenerEvent
 
 
 class TransportCallbacks(Protocol):
@@ -68,7 +69,7 @@ class GuesslangClient:
 
     def request_guess_snapshot(
         self,
-        view_info: TD_ViewSnapshot,
+        view_snapshot: ViewSnapshot,
         *,
         event: Optional[ListenerEvent] = None,
     ) -> None:
@@ -76,8 +77,8 @@ class GuesslangClient:
             self.ws.send(
                 sublime.encode_value(
                     {
-                        "id": view_info["id"],
-                        "content": view_info["content"],
+                        "id": view_snapshot.id,
+                        "content": view_snapshot.content,
                         "event_name": event.value if event else None,
                     }
                 )

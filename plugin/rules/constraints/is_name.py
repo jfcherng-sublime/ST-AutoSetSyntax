@@ -19,7 +19,7 @@ class IsNameConstraint(AbstractConstraint):
         return not self.names
 
     def test(self, view: sublime.View) -> bool:
-        if not (file_name := self.get_view_info(view)["file_name"]):
+        if not (file_name := self.get_view_snapshot(view).file_name):
             raise AlwaysFalsyException("file not on disk")
 
         if self.case_insensitive:

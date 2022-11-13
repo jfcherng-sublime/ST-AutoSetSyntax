@@ -17,7 +17,7 @@ class ContainsRegexConstraint(AbstractConstraint):
         return not isinstance(self.threshold, (int, float))
 
     def test(self, view: sublime.View) -> bool:
-        content = self.get_view_info(view)["content"]
+        content = self.get_view_snapshot(view).content
         count = 0
         for _ in self.regex.finditer(content):
             count += 1

@@ -49,7 +49,6 @@ class Optimizable(ABC):
     @abstractmethod
     def optimize(self) -> Generator[Any, None, None]:
         """Does optimizations and returns a generator for dropped objects."""
-        ...
 
 
 class ST_ConstraintRule(TypedDict):
@@ -77,26 +76,3 @@ class ST_SyntaxRule(ST_MatchRule):
     selector: str
     syntaxes: Union[str, List[str]]
     on_events: Optional[Union[str, List[str]]]
-
-
-class TD_ViewSnapshot(TypedDict):
-    id: int
-    """View ID."""
-    char_count: int
-    """Character count."""
-    content: str
-    """Pseudo file content."""
-    file_name: str
-    """The file name. Empty string if not on a disk."""
-    file_name_unhidden: str
-    """The file name without prefixed dots. Empty string if not on a disk."""
-    file_path: str
-    """The full file path with `/` as the directory separator. Empty string if not on a disk."""
-    file_size: int
-    """In bytes, -1 if file not on a disk."""
-    first_line: str
-    """Pseudo first line."""
-    line_count: int
-    """Number of lines in the original content."""
-    syntax: Optional[sublime.Syntax]
-    """The syntax object. Note that the value is as-is when it's cached."""

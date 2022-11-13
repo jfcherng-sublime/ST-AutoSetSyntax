@@ -13,4 +13,4 @@ class FirstLineContainsRegexConstraint(AbstractConstraint):
         self.regex = self._handled_regex(self.args, self.kwargs)
 
     def test(self, view: sublime.View) -> bool:
-        return bool(self.regex.search(self.get_view_info(view)["first_line"]))
+        return bool(self.regex.search(self.get_view_snapshot(view).first_line))

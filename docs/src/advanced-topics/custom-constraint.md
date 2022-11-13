@@ -24,23 +24,34 @@ You may create your own custom `Constraint` implementation by following steps.
 
         !!! tip
 
-            There is a `get_view_info` method, which accepts an `sublime.View` as an argument
-            and returns a `TD_ViewSnapshot` dict. In the dict, there are some cached information
+            There is a `get_view_snapshot` method, which accepts an `sublime.View` as an argument
+            and returns a `ViewSnapshot` object. In the object, there are some cached information
             about the current view to provide a uniform format and prevent from calling
             resource-consuming function calls several times among rules.
 
             ```py
-            class TD_ViewSnapshot(TypedDict):
-                id: int  # View ID
-                char_count: int  # Character count
-                content: str  # Pseudo file content
-                file_name: str  # The file name. Empty string if not on a disk
-                file_name_unhidden: str  # The file name without prefixed dots. Empty string if not on a disk
-                file_path: str  # Empty string if not on a disk
-                file_size: int  # In bytes, -1 if file not on a disk
-                first_line: str  # Pseudo first line
-                line_count: int  # Number of lines in the original content
-                syntax: Optional[sublime.Syntax]  # Note that the value is as-is when it's cached
+            @dataclass
+            class ViewSnapshot:
+                id: int
+                """View ID."""
+                char_count: int
+                """Character count."""
+                content: str
+                """Pseudo file content."""
+                file_name: str
+                """The file name. Empty string if not on a disk."""
+                file_name_unhidden: str
+                """The file name without prefixed dots. Empty string if not on a disk."""
+                file_path: str
+                """The full file path with `/` as the directory separator. Empty string if not on a disk."""
+                file_size: int
+                """In bytes, -1 if file not on a disk."""
+                first_line: str
+                """Pseudo first line."""
+                line_count: int
+                """Number of lines in the original content."""
+                syntax: Optional[sublime.Syntax]
+                """The syntax object. Note that the value is as-is when it's cached."""
             ```
 
 1.  Decide the constraint name of your `Constraint`.

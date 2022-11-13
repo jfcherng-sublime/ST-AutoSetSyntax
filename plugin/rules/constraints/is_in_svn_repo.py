@@ -17,7 +17,7 @@ class IsInSvnRepoConstraint(AbstractConstraint):
         cls = self.__class__
 
         # file not on disk, maybe just a buffer
-        if not (_file_path := self.get_view_info(view)["file_path"]):
+        if not (_file_path := self.get_view_snapshot(view).file_path):
             raise AlwaysFalsyException("file not on disk")
         file_path = Path(_file_path)
 

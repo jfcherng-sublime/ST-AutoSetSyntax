@@ -28,4 +28,4 @@ class IsLineCountConstraint(AbstractConstraint):
 
     def test(self, view: sublime.View) -> bool:
         assert self.comparator
-        return self.comparator(self.get_view_info(view)["line_count"], self.threshold)
+        return self.comparator(self.get_view_snapshot(view).line_count, self.threshold)

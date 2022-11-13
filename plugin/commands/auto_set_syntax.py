@@ -1,9 +1,10 @@
 import uuid
+from contextlib import contextmanager
 from functools import wraps
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, cast
 
 import sublime
 import sublime_plugin
@@ -25,8 +26,8 @@ from ..logger import Logger
 from ..rules import SyntaxRuleCollection
 from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
 from ..shared import G
-from ..snapshot import ViewSnapshot
-from ..types import ListenerEvent, T_Callable, TD_ViewSnapshot
+from ..snapshot import ViewSnapshot, ViewSnapshotCollection
+from ..types import ListenerEvent, T_Callable
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
@@ -140,6 +141,20 @@ class GuesslangClientCallbacks:
         sublime.status_message(msg)
 
 
+@contextmanager
+def _view_snapshot_context(view: sublime.View) -> Generator[ViewSnapshot, None, None]:
+    run_id = str(uuid.uuid4())
+    settings = view.settings()
+
+    try:
+        settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
+        ViewSnapshotCollection.add(run_id, view)
+        yield ViewSnapshotCollection.get(run_id)  # type: ignore
+    finally:
+        settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
+        ViewSnapshotCollection.pop(run_id)
+
+
 def _snapshot_view(failed_ret: Any = None) -> Callable[[T_Callable], T_Callable]:
     def decorator(func: T_Callable) -> T_Callable:
         @wraps(func)
@@ -148,16 +163,8 @@ def _snapshot_view(failed_ret: Any = None) -> Callable[[T_Callable], T_Callable]
                 print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
                 return failed_ret
 
-            run_id = str(uuid.uuid4())
-            settings = view.settings()
-
-            settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
-            ViewSnapshot.add(run_id, view)
-            result = func(view, *args, **kwargs)
-            ViewSnapshot.remove(run_id)
-            settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
-
-            return result
+            with _view_snapshot_context(view):
+                return func(view, *args, **kwargs)
 
         return cast(T_Callable, wrapped)
 
@@ -235,9 +242,9 @@ def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEven
 
 def _assign_syntax_for_st_syntax_test(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
     if (
-        (view_info := ViewSnapshot.from_view(view))
-        and (not view_info["syntax"] or is_plaintext_syntax(view_info["syntax"]))
-        and (m := RE_ST_SYNTAX_TEST_LINE.search(view_info["first_line"]))
+        (view_snapshot := ViewSnapshotCollection.get_by_view(view))
+        and (not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax))
+        and (m := RE_ST_SYNTAX_TEST_LINE.search(view_snapshot.first_line))
         and (new_syntax := m.group("syntax")).endswith(".sublime-syntax")
         and (syntax := find_syntax_by_syntax_like(new_syntax, allow_hidden=True, allow_plaintext=True))
     ):
@@ -265,28 +272,28 @@ def _assign_syntax_with_plugin_rules(
 
 
 def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
-    if not (view_info := ViewSnapshot.from_view(view)):
+    if not (view_snapshot := ViewSnapshotCollection.get_by_view(view)):
         return False
 
     # Note that this only works for files under some circumstances.
     # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
-    def assign_by_shebang(view_info: TD_ViewSnapshot) -> Optional[sublime.Syntax]:
+    def assign_by_shebang(view_snapshot: ViewSnapshot) -> Optional[sublime.Syntax]:
         if (
             (
-                (not view_info["syntax"] or is_plaintext_syntax(view_info["syntax"]))
-                or "." not in view_info["file_name_unhidden"]
-                or view_info["first_line"].startswith("#!")
+                (not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax))
+                or "." not in view_snapshot.file_name_unhidden
+                or view_snapshot.first_line.startswith("#!")
             )
-            and (syntax := sublime.find_syntax_for_file("", view_info["first_line"]))
+            and (syntax := sublime.find_syntax_for_file("", view_snapshot.first_line))
             and not is_plaintext_syntax(syntax)
         ):
             return syntax
         return None
 
-    def assign_by_vim_modeline(view_info: TD_ViewSnapshot) -> Optional[sublime.Syntax]:
-        if not view_info["syntax"] or is_plaintext_syntax(view_info["syntax"]):
-            for match in RE_VIM_SYNTAX_LINE.finditer(view_info["content"]):
+    def assign_by_vim_modeline(view_snapshot: ViewSnapshot) -> Optional[sublime.Syntax]:
+        if not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax):
+            for match in RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content):
                 if syntax := find_syntax_by_syntax_like(match.group("syntax")):
                     return syntax
         return None
@@ -296,7 +303,7 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
         assign_by_shebang,
         assign_by_vim_modeline,
     ):
-        if syntax := checker(view_info):
+        if syntax := checker(view_snapshot):
             break
 
     if not syntax:
@@ -347,19 +354,19 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
 def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[ListenerEvent] = None) -> None:
     if not (
         G.guesslang
-        and (view_info := ViewSnapshot.from_view(view))
+        and (view_snapshot := ViewSnapshotCollection.get_by_view(view))
         # don't apply on those have an extension
-        and (event == ListenerEvent.COMMAND or "." not in view_info["file_name_unhidden"])
+        and (event == ListenerEvent.COMMAND or "." not in view_snapshot.file_name_unhidden)
         # only apply on plain text syntax
-        and ((syntax := view_info["syntax"]) and is_plaintext_syntax(syntax))
+        and ((syntax := view_snapshot.syntax) and is_plaintext_syntax(syntax))
         # we don't want to use AI model during typing when there is only one line
         # that may result in unwanted behavior such as a new buffer may be assigned to Python
         # right after "import" is typed but it could be JavaScript or TypeScript as well
-        and (event != ListenerEvent.MODIFY or "\n" in view_info["content"])
+        and (event != ListenerEvent.MODIFY or "\n" in view_snapshot.content)
     ):
         return None
 
-    G.guesslang.request_guess_snapshot(view_info, event=event)
+    G.guesslang.request_guess_snapshot(view_snapshot, event=event)
 
 
 def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:

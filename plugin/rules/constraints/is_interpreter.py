@@ -28,4 +28,4 @@ class IsInterpreterConstraint(AbstractConstraint):
         return not self.first_line_regex
 
     def test(self, view: sublime.View) -> bool:
-        return bool(self.first_line_regex.search(self.get_view_info(view)["first_line"]))
+        return bool(self.first_line_regex.search(self.get_view_snapshot(view).first_line))

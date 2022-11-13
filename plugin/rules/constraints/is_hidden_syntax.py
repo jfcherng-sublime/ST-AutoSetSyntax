@@ -11,7 +11,7 @@ class IsHiddenSyntaxConstraint(AbstractConstraint):
         super().__init__(*args, **kwargs)
 
     def test(self, view: sublime.View) -> bool:
-        if not (syntax := self.get_view_info(view)["syntax"]):
+        if not (syntax := self.get_view_snapshot(view).syntax):
             raise AlwaysFalsyException(f"View({view.id()}) has no syntax")
 
         return syntax.hidden

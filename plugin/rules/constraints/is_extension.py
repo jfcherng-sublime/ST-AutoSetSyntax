@@ -33,7 +33,7 @@ class IsExtensionConstraint(AbstractConstraint):
             for filename in map(
                 self.fix_case,
                 generate_trimmed_strings(
-                    self.get_view_info(view)["file_name"],
+                    self.get_view_snapshot(view).file_name,
                     pref_trim_suffixes(window=window),
                 ),
             )

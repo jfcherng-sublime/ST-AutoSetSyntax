@@ -20,7 +20,7 @@ class RelativeExistsConstraint(AbstractConstraint):
 
     def test(self, view: sublime.View) -> bool:
         # file not on disk, maybe just a buffer
-        if not (file_path := self.get_view_info(view)["file_path"]):
+        if not (file_path := self.get_view_snapshot(view).file_path):
             raise AlwaysFalsyException("no filename")
 
         folder = Path(file_path).parent

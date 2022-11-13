@@ -16,5 +16,5 @@ class FirstLineContainsConstraint(AbstractConstraint):
         return not self.needles
 
     def test(self, view: sublime.View) -> bool:
-        first_line = self.get_view_info(view)["first_line"]
+        first_line = self.get_view_snapshot(view).first_line
         return any((needle in first_line) for needle in self.needles)
