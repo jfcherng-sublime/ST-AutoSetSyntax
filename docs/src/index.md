@@ -1,6 +1,6 @@
---8<-- "refs.md"
+# Introduction
 
-# AutoSetSyntax
+--8<-- "refs.md"
 
 [![Required ST Build](https://img.shields.io/badge/ST-4114+-orange.svg?style=flat-square&logo=sublime-text)](https://www.sublimetext.com)
 [![GitHub Actions](https://img.shields.io/github/workflow/status/jfcherng-sublime/ST-AutoSetSyntax/Python?style=flat-square)](https://github.com/jfcherng-sublime/ST-AutoSetSyntax/actions)

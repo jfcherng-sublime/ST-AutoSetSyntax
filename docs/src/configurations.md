@@ -1,6 +1,6 @@
---8<-- "refs.md"
-
 # Configurations
+
+--8<-- "refs.md"
 
 ## Settings
 

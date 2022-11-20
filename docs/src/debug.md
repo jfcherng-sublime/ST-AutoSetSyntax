@@ -1,11 +1,10 @@
 ---
+title: Debug
 hide:
   - toc
 ---
 
 --8<-- "refs.md"
-
-# Debug
 
 ## Log Panel
 

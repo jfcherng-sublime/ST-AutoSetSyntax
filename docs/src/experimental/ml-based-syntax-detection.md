@@ -1,6 +1,6 @@
---8<-- "refs.md"
-
 # Machine Learning Based Syntax Detection
+
+--8<-- "refs.md"
 
 !!! warning "This feature is experimental and disabled by default."
 

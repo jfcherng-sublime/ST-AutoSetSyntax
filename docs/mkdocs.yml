@@ -14,20 +14,6 @@ copyright: Copyright &copy; 2017 - 2022 Jack Cherng
 docs_dir: src
 site_dir: site
 
-nav:
-  - Introduction: index.md
-  - Changelog: changelog.md
-  - Use Cases: use-cases.md
-  - Configurations: configurations.md
-  - Experimental:
-    - ML-based detection: experimental/ml-based-syntax-detection.md
-  - Commands: commands.md
-  - Debug: debug.md
-  - Advanced Topics:
-    - How plugin works: advanced-topics/how-plugin-works.md
-    - Custom Match: advanced-topics/custom-match.md
-    - Custom Constraint: advanced-topics/custom-constraint.md
-
 ###############################################################
 # http://squidfunk.github.io/mkdocs-material/getting-started/ #
 ###############################################################
@@ -79,6 +65,9 @@ extra_javascript:
   - _assets/js/config-mathjax.js
 
 plugins:
+  - exclude:
+      glob:
+        - _* # everything starting with "_" under "src/"
   - search:
       lang:
         - en

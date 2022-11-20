@@ -1,6 +1,6 @@
---8<-- "refs.md"
+# How Plugin Works
 
-# How AutoSetSyntax Works
+--8<-- "refs.md"
 
 When AutoSetSyntax is loaded or plugin/project settings updated, AutoSetSyntax runs following procedures.
 

@@ -1,6 +1,6 @@
---8<-- "refs.md"
-
 # Use Cases
+
+--8<-- "refs.md"
 
 ## Default syntax for new files
 

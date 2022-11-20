@@ -1,6 +1,6 @@
---8<-- "refs.md"
-
 # Commands
+
+--8<-- "refs.md"
 
 ## Main
 
