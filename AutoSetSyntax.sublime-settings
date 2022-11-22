@@ -136,6 +136,13 @@
                 {
                     "constraint": "name_contains_regex",
                     "args": ["\\.(?:bash|z(?:shrc|shenv|profile|login|logout))(?:\\.[^/]*)?$"]
+                },
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": [
+                        // @see https://www.shellcheck.net/wiki/SC2148
+                        "^\\s*#\\s+shellcheck\\s+shell=(?:bash|zsh)"
+                    ]
                 }
             ]
         },
