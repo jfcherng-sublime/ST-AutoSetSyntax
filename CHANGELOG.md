@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.10.2
+
+- feat: detect "shellcheck directive" for bash/zsh
+
 ## 2.10.1
 
 - refactor: about `ViewSnapshot`...
