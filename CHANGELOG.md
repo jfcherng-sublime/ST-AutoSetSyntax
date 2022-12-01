@@ -1,8 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.10.3
+
+- fix: "multiple text changes at once" is not detected
+
 ## 2.10.2
 
-- feat: detect "shellcheck directive" for bash/zsh
+- feat: detect "[shellcheck directive](https://www.shellcheck.net/wiki/Directive#shell)" for bash/zsh
 
 ## 2.10.1
 
