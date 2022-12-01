@@ -18,7 +18,7 @@ from .constant import (
     VIEW_IS_TRANSIENT_SETTINGS_KEY,
 )
 from .guesslang.server import GuesslangServer
-from .helper import debounce, is_syntaxable_view, is_transient_view, stringify
+from .helper import debounce, is_sum_gt, is_syntaxable_view, is_transient_view, stringify
 from .logger import Logger
 from .rules import SyntaxRuleCollection, get_constraints, get_matches
 from .settings import pref_syntax_rules
@@ -146,7 +146,7 @@ def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[s
         return False
 
     # paste = added change is too large
-    if len(changes) == 1 and len(changes[0].str) >= 5:
+    if is_sum_gt((len(change.str) for change in changes), 8, gte=True):
         return run_auto_set_syntax_on_view(view, ListenerEvent.PASTE, must_plaintext=True)
 
     historic_position = changes[0].b

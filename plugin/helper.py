@@ -221,6 +221,17 @@ def is_plaintext_syntax(syntax: sublime.Syntax) -> bool:
     return syntax.name == "Plain Text"
 
 
+def is_sum_gt(items: Iterable[float], threshold: float, *, gte: bool = False) -> bool:
+    """Determinates whether the sum of `items` is greater (or equal) than `threshold`."""
+    comparator = operator.ge if gte else operator.gt
+    total = 0.0
+    for item in items:
+        total += item
+        if comparator(total, threshold):
+            return True
+    return False
+
+
 def is_syntaxable_view(view: sublime.View, must_plaintext: bool = False) -> bool:
     """Determinates whether the view is what we want to set a sytnax on."""
     return bool(
