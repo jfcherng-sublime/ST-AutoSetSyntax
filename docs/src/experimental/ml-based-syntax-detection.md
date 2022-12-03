@@ -10,7 +10,7 @@ It uses machine learning models from VSCode to predict the syntax of codes.
 
 ## Prerequisites
 
-- [Node.js][node.js] ≥ 16
+1. [Node.js][node.js] ≥ 16
 
 
     - If the directory of your `node` executable is in the `PATH` environment variable, then you don't have to configure it.
@@ -20,14 +20,14 @@ It uses machine learning models from VSCode to predict the syntax of codes.
         !!! Tip "Windows 7 Users"
 
             The official Node.js v16 installer won't work on Windows 7 but you can simply download a
-            [portable](https://nodejs.org/dist/latest-v16.x/) version such as `node-v16.17.1-win-x64.zip`,
+            [portable](https://nodejs.org/dist/latest-v16.x/) version such as `node-v16.18.1-win-x64.zip`,
             decompress it and set the `guesslang.node_bin` path.
 
-- Install the server.
+1. Install the server.
 
     Run `AutoSetSyntax: Download Guesslang Server` from the command palette. It will popup a dialogue when it's done.
 
-- Enable the feature.
+1. Enable the feature.
 
     Set `"guesslang.enabled"` to `true` in AutoSetSyntax's settings.
 
