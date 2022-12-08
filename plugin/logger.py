@@ -75,7 +75,7 @@ class Logger:
     @classmethod
     def destroy(cls, window: sublime.Window) -> None:
         window.destroy_output_panel(PLUGIN_NAME)
-        cls.history_counts.pop(window.id())
+        cls.history_counts.pop(window.id(), None)
 
     @classmethod
     def _get_history_count(cls, window: sublime.Window) -> int:
