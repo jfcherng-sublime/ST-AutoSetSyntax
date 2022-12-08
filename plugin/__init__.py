@@ -58,6 +58,11 @@ __all__ = (
 
 
 def plugin_loaded() -> None:
+    # somehow "AutoSetSyntaxAppendLogCommand" won't be ready if we don't wait a bit
+    sublime.set_timeout(_plugin_loaded)
+
+
+def _plugin_loaded() -> None:
     _load_custom_implementations()
 
     AioSettings.plugin_name = PLUGIN_NAME
