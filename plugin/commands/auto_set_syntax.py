@@ -159,8 +159,11 @@ def _snapshot_view(failed_ret: Any = None) -> Callable[[T_Callable], T_Callable]
     def decorator(func: T_Callable) -> T_Callable:
         @wraps(func)
         def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
-            if not (view.is_valid() and (window := view.window()) and G.is_plugin_ready(window)):
-                print(f"[{PLUGIN_NAME}] ⏳ Calm down! View has gone or the plugin is not ready yet.")
+            if not ((window := view.window()) and G.is_plugin_ready(window) and view.is_valid()):
+                Logger.log(
+                    window or sublime.active_window(),
+                    "⏳ Calm down! View has gone or the plugin is not ready yet.",
+                )
                 return failed_ret
 
             with _view_snapshot_context(view):
