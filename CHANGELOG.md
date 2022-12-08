@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 2.10.4
+
+- fix: many log messages aren't shown in the panel when ST starts
+- fix: don't exception when close 2nd window when `enable_log=false`
+- refactor: don't how "⏳ Calm down!..." if `enable_log=false`
+
 ## 2.10.3
 
 - fix: "multiple text changes at once" is not detected
