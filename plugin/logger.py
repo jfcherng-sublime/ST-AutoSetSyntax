@@ -54,7 +54,7 @@ class Logger:
     """per-window, WindowId => history count"""
 
     @classmethod
-    def log(cls, window: Optional[sublime.Window], msg: str, enabled: bool = True) -> None:
+    def log(cls, window: Optional[sublime.Window], msg: str, *, enabled: bool = True) -> None:
         if not (enabled and window and get_merged_plugin_setting("enable_log", window=window)):
             return
 

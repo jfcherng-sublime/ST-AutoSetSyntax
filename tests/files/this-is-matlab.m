@@ -39,19 +39,18 @@ function constrained_controller_example(use_constraint)
         use_plane_constraint = 1;
     end
 
-
     % use the namespace
     include_namespace_dq
 
     % We use a KUKA LWR4 robot
     kuka = KukaLwr4Robot.kinematics();
     kuka.name = 'KUKA';
-    
+
     % Initial configuration
     q = [pi/2, -1.8*pi/2, 0, -1.5*pi/2, -1.5*pi/2, 0, 0]';
     % Integration step
     T = 0.001;
-    
+
     solver = DQ_QuadprogSolver;
 
     % The controller is given by
@@ -94,45 +93,45 @@ function constrained_controller_example(use_constraint)
     title('Controlling the pose.');
     % plot the reference to aid in the visualization
     plot(x_pose, 'scale', 0.2, 'name', 'desired pose');
-    
+
     % plot the plane constraint
     plot(plane, 'plane', 5, 'color', 'c');
-    
+
     %plot the robot
     plot(kuka,q', 'nojoints');
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     pause(1);
-    
+
     % This is actually the important part on how to use the controller.
     while ~controller.system_reached_stable_region()
-        
+
         x_pose = kuka.fkm(q);
-        p = translation(x_pose);  
-        
+        p = translation(x_pose);
+
         if use_plane_constraint ~= 0
-            % First we define a differential inequality given by d_dot >= -eta*d, 
+            % First we define a differential inequality given by d_dot >= -eta*d,
             % where d is the distance from the end-effector to the
             % plane, d_dot is its time derivative and eta determines the
             % maximum rate for the approach velocity.
             % To calculate the aforementioned differential inequality, we need
             % to calculate the point-to-plane distance Jacobian
-        
-            J_pose = kuka.pose_jacobian(q);                 
+
+            J_pose = kuka.pose_jacobian(q);
             J_trans = kuka.translation_jacobian(J_pose,x_pose);
 
             Jdist = kuka.point_to_plane_distance_jacobian(J_trans, p, plane);
             dist = DQ_Geometry.point_to_plane_distance(p,plane);
-        
-            % Add inequality constraint d_dot >= -eta*d, which implies    
-            % -d_dot <= eta*d, where d_dot = Jdist*u; therefore 
+
+            % Add inequality constraint d_dot >= -eta*d, which implies
+            % -d_dot <= eta*d, where d_dot = Jdist*u; therefore
             % -Jdist*u <= eta*d. Let's choose eta = 10.
             controller.set_inequality_constraint(-Jdist,100*dist);
         end
-        
+
         % Let us calculate the control input
         u = controller.compute_setpoint_control_signal(q, task_reference);
-        
+
         % Do a numerical integration to update the robot in Matlab. In
         % an actual robot actuated by means of velocity inputs, this step
         % is not necessary.
@@ -140,13 +139,10 @@ function constrained_controller_example(use_constraint)
 
         % Draw the robot in Matlab.
         plot(kuka,q', 'nojoints');
-        
+
         pvec = vec3(p);
         plot3(pvec(1),pvec(2),pvec(3), 'ro');
         drawnow;
         %pause;
     end
 end
-
-
-
