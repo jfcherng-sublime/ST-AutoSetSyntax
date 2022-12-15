@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.10.5
+
+- fix: `RE_VIM_SYNTAX_LINE` also capture "ft" (abbr. of "filetype")
+
 ## 2.10.4
 
 - fix: many log messages aren't shown in the panel when ST starts
