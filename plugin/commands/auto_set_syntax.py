@@ -188,7 +188,7 @@ def run_auto_set_syntax_on_view(
     if not (
         (window := view.window())
         and is_syntaxable_view(view, must_plaintext)
-        and (syntax_rule_collection := G.get_syntax_rule_collection(window)) is not None
+        and (syntax_rule_collection := G.get_syntax_rule_collection(window))
     ):
         return False
 
@@ -275,7 +275,9 @@ def _assign_syntax_with_plugin_rules(
 
 
 def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
-    if not (view_snapshot := ViewSnapshotCollection.get_by_view(view)):
+    if not (view_snapshot := ViewSnapshotCollection.get_by_view(view)) or (
+        view_snapshot.syntax and not is_plaintext_syntax(view_snapshot.syntax)
+    ):
         return False
 
     # Note that this only works for files under some circumstances.
@@ -283,11 +285,7 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
     def assign_by_shebang(view_snapshot: ViewSnapshot) -> Optional[sublime.Syntax]:
         if (
-            (
-                (not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax))
-                or "." not in view_snapshot.file_name_unhidden
-                or view_snapshot.first_line.startswith("#!")
-            )
+            ("." not in view_snapshot.file_name_unhidden or view_snapshot.first_line.startswith("#!"))
             and (syntax := sublime.find_syntax_for_file("", view_snapshot.first_line))
             and not is_plaintext_syntax(syntax)
         ):
@@ -295,28 +293,20 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
         return None
 
     def assign_by_vim_modeline(view_snapshot: ViewSnapshot) -> Optional[sublime.Syntax]:
-        if not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax):
-            for match in RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content):
-                if syntax := find_syntax_by_syntax_like(match.group("syntax")):
-                    return syntax
+        for match in RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content):
+            if syntax := find_syntax_by_syntax_like(match.group("syntax")):
+                return syntax
         return None
 
-    syntax: Optional[sublime.Syntax] = None
-    for checker in (
-        assign_by_shebang,
-        assign_by_vim_modeline,
-    ):
+    for checker in (assign_by_shebang, assign_by_vim_modeline):
         if syntax := checker(view_snapshot):
-            break
+            return assign_syntax_to_view(
+                view,
+                syntax,
+                details={"event": event, "reason": f'syntax "first_line_match" by {checker.__name__}'},
+            )
 
-    if not syntax:
-        return False
-
-    return assign_syntax_to_view(
-        view,
-        syntax,
-        details={"event": event, "reason": 'syntax "first_line_match"'},
-    )
+    return False
 
 
 def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:

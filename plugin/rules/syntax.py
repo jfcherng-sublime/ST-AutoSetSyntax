@@ -81,6 +81,9 @@ class SyntaxRuleCollection(Optimizable):
     version: str = VERSION
     rules: Tuple[SyntaxRule, ...] = tuple()
 
+    def __len__(self) -> int:
+        return len(self.rules)
+
     def optimize(self) -> Generator[Optimizable, None, None]:
         rules: List[SyntaxRule] = []
         for rule in self.rules:
