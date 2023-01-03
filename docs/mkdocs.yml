@@ -67,7 +67,7 @@ extra_javascript:
 plugins:
   - exclude:
       glob:
-        - _* # everything starting with "_" under "src/"
+        - _snippets/*
   - search:
       lang:
         - en
@@ -90,7 +90,7 @@ markdown_extensions:
   - meta
   - toc:
       permalink: true
-      slugify: !!python/name:pymdownx.slugs.uslugify
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}
       # toc_depth: 4
   #####################################################
   # pip install -U pymdown-extensions                 #
