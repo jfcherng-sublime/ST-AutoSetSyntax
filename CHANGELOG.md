@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.10.6
+
+- fix: wrong `lsp_utils`-managed node executable path on Linux
+
 ## 2.10.5
 
 - fix: `RE_VIM_SYNTAX_LINE` also capture "ft" (abbr. of "filetype")
