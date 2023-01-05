@@ -417,7 +417,7 @@ def get_expand_variable_map() -> Dict[str, str]:
 
     if node_info := _find_latest_lsp_utils_node(paths["package_storage"]):
         paths["lsp_utils_node_dir"] = node_info[0]
-        paths["lsp_utils_node_bin"] = node_info[0] / ("node.exe" if ST_PLATFORM == "windows" else "node")
+        paths["lsp_utils_node_bin"] = node_info[0] / ("node.exe" if ST_PLATFORM == "windows" else "bin/node")
 
     return {name: str(path.resolve()) for name, path in paths.items()}
 
