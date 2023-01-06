@@ -7,7 +7,7 @@ import urllib.request
 import zipfile
 from functools import cmp_to_key
 from pathlib import Path
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 
 import sublime
 import sublime_plugin
@@ -84,16 +84,6 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         zip_path.unlink(missing_ok=True)
 
 
-def simple_urlopen(url: str, chunk_size: int = 512 * 1024) -> bytes:
-    response = urllib.request.urlopen(url)
-    data = b""
-    while chunk := response.read(chunk_size):
-        data += chunk
-    if response.info().get("Content-Encoding") == "gzip":
-        data = gzip.decompress(data)
-    return data
-
-
 def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bool:
     """
     Decompress the tarball.
@@ -104,6 +94,21 @@ def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bo
     :returns:   Successfully decompressed the tarball or not
     """
 
+    def tar_safe_extract(
+        tar: tarfile.TarFile,
+        path: PathLike = ".",
+        members: Optional[Iterable[tarfile.TarInfo]] = None,
+        *,
+        numeric_owner: bool = False,
+    ) -> None:
+        path = Path(path).resolve()
+        for member in tar.getmembers():
+            member_path = (path / member.name).resolve()
+            if path not in member_path.parents:
+                raise Exception("Attempted Path Traversal in Tar File")
+
+        tar.extractall(path, members, numeric_owner=numeric_owner)
+
     tarball = Path(tarball)
     dst_dir = Path(dst_dir) if dst_dir else tarball.parent
     filename = tarball.name
@@ -111,53 +116,12 @@ def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bo
     try:
         if filename.endswith(".tar.gz"):
             with tarfile.open(tarball, "r:gz") as f_1:
-                
-                import os
-                
-                def is_within_directory(directory, target):
-                    
-                    abs_directory = os.path.abspath(directory)
-                    abs_target = os.path.abspath(target)
-                
-                    prefix = os.path.commonprefix([abs_directory, abs_target])
-                    
-                    return prefix == abs_directory
-                
-                def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
-                
-                    for member in tar.getmembers():
-                        member_path = os.path.join(path, member.name)
-                        if not is_within_directory(path, member_path):
-                            raise Exception("Attempted Path Traversal in Tar File")
-                
-                    tar.extractall(path, members, numeric_owner) 
-                    
-                
-                safe_extract(f_1, dst_dir)
+                tar_safe_extract(f_1, dst_dir)
             return True
 
         if filename.endswith(".tar"):
             with tarfile.open(tarball, "r:") as f_2:
-                def is_within_directory(directory, target):
-                    
-                    abs_directory = os.path.abspath(directory)
-                    abs_target = os.path.abspath(target)
-                
-                    prefix = os.path.commonprefix([abs_directory, abs_target])
-                    
-                    return prefix == abs_directory
-                
-                def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
-                
-                    for member in tar.getmembers():
-                        member_path = os.path.join(path, member.name)
-                        if not is_within_directory(path, member_path):
-                            raise Exception("Attempted Path Traversal in Tar File")
-                
-                    tar.extractall(path, members, numeric_owner) 
-                    
-                
-                safe_extract(f_2, dst_dir)
+                tar_safe_extract(f_2, dst_dir)
             return True
 
         if filename.endswith(".zip"):
@@ -182,3 +146,13 @@ def download_file(url: str, save_path: PathLike) -> None:
     save_path.unlink(missing_ok=True)
     save_path.parent.mkdir(parents=True, exist_ok=True)
     save_path.write_bytes(simple_urlopen(url))
+
+
+def simple_urlopen(url: str, chunk_size: int = 512 * 1024) -> bytes:
+    response = urllib.request.urlopen(url)
+    data = b""
+    while chunk := response.read(chunk_size):
+        data += chunk
+    if response.info().get("Content-Encoding") == "gzip":
+        data = gzip.decompress(data)
+    return data
