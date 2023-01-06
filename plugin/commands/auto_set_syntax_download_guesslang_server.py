@@ -130,8 +130,7 @@ def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bo
             return True
     except Exception:
         pass
-    finally:
-        return False
+    return False
 
 
 def download_file(url: str, save_path: PathLike) -> None:
