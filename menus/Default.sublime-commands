@@ -38,4 +38,12 @@
         "caption": "AutoSetSyntax: Restart Guesslang Server",
         "command": "auto_set_syntax_restart_guesslang",
     },
+    {
+        "caption": "AutoSetSyntax: Settings",
+        "command": "edit_settings",
+        "args": {
+            "base_file": "${packages}/AutoSetSyntax/AutoSetSyntax.sublime-settings",
+            "default": "{\n\t$0\n}\n",
+        },
+    },
 ]
