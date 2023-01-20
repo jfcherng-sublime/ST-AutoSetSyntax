@@ -2,7 +2,7 @@
 --index https://pypi.python.org/simple/
 
 # main
-mkdocs-material==9.0.1
+mkdocs-material==9.0.6
 
 # plugins
 mkdocs-exclude==1.0.2
