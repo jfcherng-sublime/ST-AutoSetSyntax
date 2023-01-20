@@ -9,7 +9,7 @@ repo_name: AutoSetSyntax
 repo_url: https://github.com/jfcherng-sublime/ST-AutoSetSyntax
 # empty to disable the edit button
 edit_uri: edit/st4/docs/src/
-copyright: Copyright &copy; 2017 - 2022 Jack Cherng
+copyright: Copyright &copy; 2017 - 2023 Jack Cherng
 
 docs_dir: src
 site_dir: site
