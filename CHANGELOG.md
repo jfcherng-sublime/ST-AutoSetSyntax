@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.10.7
+
+- chore: add `.qa` and `.common` into `default_trim_suffixes`
+- feat: add to command palette: `AutoSetSyntax: Settings`
+- fix: `return` in `finally` overwrites `return` in `try`
+- fix: CVE-2007-4559 Patch
+
 ## 2.10.6
 
 - fix: wrong `lsp_utils`-managed node executable path on Linux
