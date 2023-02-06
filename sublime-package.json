@@ -431,6 +431,31 @@
                       }
                     }
                   }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "constraint": {
+                        "pattern": "^is_interpreter$"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "kwargs": {
+                        "type": "object",
+                        "properties": {
+                          "loosy_version": {
+                            "type": "boolean",
+                            "markdownDescription": "Also match interpreters with version numbers. E.g., `php` will also match `php8`.",
+                            "default": false
+                          }
+                        },
+                        "default": {},
+                        "additionalItems": false
+                      }
+                    }
+                  }
                 }
               ],
               "required": ["constraint"]

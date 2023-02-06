@@ -593,7 +593,8 @@ To edit project settings, go to `Project` » `Edit Project`.
     ```js
     {
         "constraint": "is_interpreter",
-        "args": ["bash", "zsh"],
+        "args": ["python", "cpython"],
+        "kwargs": {"loosy_version": true},
     }
     ```
 
@@ -602,7 +603,7 @@ To edit project settings, go to `Project` » `Edit Project`.
     - the interpreter in shebang
     - the `syntax` in the VIM's syntax line
 
-    is `bash` or `zsh`.
+    is `python`, `pypy`, `python3`, `python3.8`, etc.
 
 #### `is_line_count`
 

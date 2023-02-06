@@ -269,7 +269,11 @@ def list_sorted_syntaxes() -> Tuple[sublime.Syntax, ...]:
 
 
 def merge_literals_to_regex(literals: Iterable[str]) -> str:
-    """Merge (non-regex) literal strings into an optimized regex string."""
+    """
+    Merge (non-regex) literal strings into an optimized regex string.
+
+    The returned regex is enclosed as `(?:...)`.
+    """
     from .libs.triegex import Triegex
 
     # this regex is enclosed by "(?:)"

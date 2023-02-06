@@ -11,15 +11,20 @@ class IsInterpreterConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.interpretors: Tuple[str, ...] = self._handled_args()
-        syntax_regex = merge_literals_to_regex(self.interpretors)
+        self.interpreters: Tuple[str, ...] = self._handled_args()
+        self.loosy_version = bool(self.kwargs.get("loosy_version", False))
+
+        interpreters_regex = merge_literals_to_regex(self.interpreters)
+        if self.loosy_version:
+            interpreters_regex = rf"(?:{interpreters_regex}(?:[\-_]?\d+(?:\.\d+)*)?)"
+
         self.first_line_regex: Pattern[str] = compile_regex(
             merge_regexes(
                 (
                     # shebang
-                    rf"^#!(?:.+)\b{syntax_regex}\b",
+                    rf"^#!(?:.+)\b{interpreters_regex}\b",
                     # VIM's syntax line
-                    rf"\bsyntax={syntax_regex}(?=$|\\s)",
+                    rf"\bsyntax={interpreters_regex}(?=$|\\s)",
                 )
             )
         )
