@@ -204,10 +204,20 @@ def run_auto_set_syntax_on_view(
     if _assign_syntax_with_first_line(view, event):
         return True
 
-    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD) and _assign_syntax_with_trimmed_filename(view, event):
+    if event in {
+        ListenerEvent.INIT,
+        ListenerEvent.COMMAND,
+        ListenerEvent.LOAD,
+    } and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
-    if event in (ListenerEvent.COMMAND, ListenerEvent.LOAD, ListenerEvent.MODIFY, ListenerEvent.PASTE):
+    if event in {
+        ListenerEvent.INIT,
+        ListenerEvent.COMMAND,
+        ListenerEvent.LOAD,
+        ListenerEvent.MODIFY,
+        ListenerEvent.PASTE,
+    }:
         # this is the ultimate fallback and done async
         _assign_syntax_with_guesslang_async(view, event)
 
