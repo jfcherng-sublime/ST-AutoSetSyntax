@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.11.0
+
+- feat: add `loosy_version` kwarg to `is_interpreter` constraint
+- fix: `run_on_startup_views` doesn't work in some cases
+
 ## 2.10.7
 
 - chore: add `.qa` and `.common` into `default_trim_suffixes`
