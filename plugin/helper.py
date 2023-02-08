@@ -405,21 +405,19 @@ def get_expand_variable_map() -> Dict[str, str]:
         "package_storage": cache_path.parent / "Package Storage",
     }
 
-    def _find_latest_lsp_utils_node(package_storage: Path) -> Optional[Tuple[Path, Tuple[int, int, int]]]:
-        if not (base_dir := package_storage / "lsp_utils" / "node-runtime").is_dir():
-            return None
+    def find_latest_lsp_utils_node(package_storage: Path) -> Optional[Tuple[Path, Tuple[int, int, int]]]:
+        def list_node_versions(folder: Path) -> Generator[Tuple[int, int, int], None, None]:
+            for path in folder.iterdir() if folder.is_dir() else []:
+                if path.is_dir() and (m := re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", path.name)):
+                    yield int(m.group(1)), int(m.group(2)), int(m.group(3))
 
-        version: Tuple[int, int, int] = (-1, -1, -1)
-        for path in base_dir.iterdir():
-            if path.is_dir() and (m := re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", path.name)):
-                version = max(version, (int(m.group(1)), int(m.group(2)), int(m.group(3))))
-
-        if version[0] == -1:
+        base_dir = package_storage / "lsp_utils" / "node-runtime"
+        if not (version := max(list_node_versions(base_dir), default=None)):
             return None
 
         return (base_dir / ".".join(map(str, version)) / "node", version)
 
-    if node_info := _find_latest_lsp_utils_node(paths["package_storage"]):
+    if node_info := find_latest_lsp_utils_node(paths["package_storage"]):
         paths["lsp_utils_node_dir"] = node_info[0]
         paths["lsp_utils_node_bin"] = node_info[0] / ("node.exe" if ST_PLATFORM == "windows" else "bin/node")
 
