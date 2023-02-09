@@ -324,6 +324,10 @@
                     "constraint": "name_contains_regex",
                     "args": ["^Makefile\\."],
                     "kwargs": { "regex_flags": ["IGNORECASE"] }
+                },
+                {
+                    "constraint": "contains_regex",
+                    "args": ["^.PHONY\\s*:"],
                 }
             ]
         },
