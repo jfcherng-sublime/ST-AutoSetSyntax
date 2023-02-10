@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.1
+
+- chore: update rules for Makefile
+
 ## 2.11.0
 
 - feat: add `loosy_version` kwarg to `is_interpreter` constraint
