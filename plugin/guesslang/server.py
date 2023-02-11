@@ -1,6 +1,5 @@
 import os
 import shutil
-import socket
 import subprocess
 from pathlib import Path
 from typing import Dict, Final, Optional, Sequence, Set, Union
@@ -9,7 +8,6 @@ import sublime
 
 from ..constant import PLUGIN_NAME, PLUGIN_STORAGE_DIR
 from ..helper import expand_variables
-from ..logger import Logger
 from ..settings import get_merged_plugin_setting
 
 
@@ -17,57 +15,58 @@ class GuesslangServer:
     SERVER_DIR: Final[Path] = PLUGIN_STORAGE_DIR / "guesslang-server"
     SERVER_FILE: Final[Path] = PLUGIN_STORAGE_DIR / "guesslang-server/websocket.js"
 
-    # background server process(es)
-    _subprocesses: Set[subprocess.Popen] = set()
+    def __init__(self, host: str, port: int) -> None:
+        self.host = host
+        self.port = port
+        # background server process(es)
+        self._subprocesses: Set[subprocess.Popen] = set()
 
-    @classmethod
-    def start(cls, host: str, port: int) -> bool:
+    def start(self) -> bool:
         """Starts the guesslang server and return whether it starts."""
         if not is_executable(node_path := parse_node_path()):
             sublime.error_message(f'[{PLUGIN_NAME}] Node.js binary not found or not executable: "{node_path}"')
             return False
 
-        if is_port_in_use(port):
-            Logger.log(sublime.active_window(), f"⚠ Port {port} is in use.")
-
         try:
-            process = cls._start_process(
-                (node_path, cls.SERVER_FILE),
-                cwd=cls.SERVER_DIR,
+            process = self._start_process(
+                (node_path, self.SERVER_FILE),
+                cwd=self.SERVER_DIR,
                 extra_env={
                     "NODE_SKIP_PLATFORM_CHECK": "1",
-                    "HOST": host,
-                    "PORT": str(port),
+                    "HOST": self.host,
+                    "PORT": str(self.port),
                 },
             )
         except Exception as e:
-            sublime.error_message(f"[{PLUGIN_NAME}] Fail starting guesslang server because {e}")
+            sublime.error_message(f"[{PLUGIN_NAME}] Failed starting guesslang server because {e}")
             return False
 
         if process.stdout and process.stdout.read(2) == "OK":
-            cls._subprocesses.add(process)
+            self._subprocesses.add(process)
             return True
 
-        sublime.error_message(f"[{PLUGIN_NAME}] Fail starting guesslang server.")
+        sublime.error_message(f"[{PLUGIN_NAME}] Failed starting guesslang server.")
         return False
 
-    @classmethod
-    def stop(cls) -> None:
-        for p in cls._subprocesses:
+    def stop(self) -> None:
+        for p in self._subprocesses:
             try:
                 p.kill()
             except Exception:
                 pass
-        for p in cls._subprocesses:
+        for p in self._subprocesses:
             try:
                 p.wait()
             except Exception:
                 pass
-        cls._subprocesses.clear()
+        self._subprocesses.clear()
 
-    @classmethod
-    def is_running(cls) -> bool:
-        return len(cls._subprocesses) > 0
+    def restart(self) -> bool:
+        self.stop()
+        return self.start()
+
+    def is_running(self) -> bool:
+        return len(self._subprocesses) > 0
 
     @staticmethod
     def _start_process(
@@ -104,8 +103,3 @@ def parse_node_path() -> str:
 
 def is_executable(path: Union[str, Path]) -> bool:
     return bool((os.path.isfile(path) and os.access(path, os.X_OK)) or shutil.which(path))
-
-
-def is_port_in_use(port: int) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(("localhost", port)) == 0

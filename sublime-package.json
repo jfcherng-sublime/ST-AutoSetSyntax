@@ -473,9 +473,9 @@
                   "default": "node"
                 },
                 "guesslang.port": {
-                  "description": "The port number which should be used by the guesslang server.",
+                  "description": "The port number which should be used by the guesslang server. You can use a negative number for auto determination.",
                   "type": "number",
-                  "default": 15151
+                  "default": -1
                 },
                 "guesslang.confidence_threshold": {
                   "markdownDescription": "The ML model will give a confidence within a range of `0 ~ 1` for the best gussed syntax. This setting control the min confidence which convinces ST to adopt its prediction.",

@@ -15,7 +15,6 @@ from .commands.auto_set_syntax_debug_information import AutoSetSyntaxDebugInform
 from .commands.auto_set_syntax_download_guesslang_server import AutoSetSyntaxDownloadGuesslangServerCommand
 from .commands.auto_set_syntax_restart_guesslang import AutoSetSyntaxRestartGuesslangCommand
 from .constant import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME
-from .guesslang.server import GuesslangServer
 from .helper import remove_prefix
 from .listener import (
     AutoSetSyntaxEventListener,
@@ -84,7 +83,8 @@ def plugin_unloaded() -> None:
     for window in sublime.windows():
         tear_down_window(window)
 
-    GuesslangServer.stop()
+    if G.guesslang_server:
+        G.guesslang_server.stop()
 
 
 def _settings_changed_callback(window: sublime.Window) -> None:

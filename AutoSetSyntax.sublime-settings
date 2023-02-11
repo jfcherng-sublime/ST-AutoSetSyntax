@@ -327,7 +327,7 @@
                 },
                 {
                     "constraint": "contains_regex",
-                    "args": ["^.PHONY\\s*:"],
+                    "args": ["^.PHONY\\s*:"]
                 }
             ]
         },
@@ -632,7 +632,9 @@
     // The path of the node/node.exe executable.
     // You can use "${lsp_utils_node_bin}" if your Node.js is installed by lsp_utils
     "guesslang.node_bin": "node",
-    "guesslang.port": 15151,
+    // The port number which should be used by the guesslang server.
+    // You can use a negative number for auto determination.
+    "guesslang.port": -1,
     "guesslang.confidence_threshold": 0.15,
     "guesslang.syntax_map": {
         "asm": [

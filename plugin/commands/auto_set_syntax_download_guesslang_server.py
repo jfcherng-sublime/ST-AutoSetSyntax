@@ -16,6 +16,7 @@ from ..constant import GUESSLANG_SERVER_URL, PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
 from ..helper import first
 from ..settings import get_merged_plugin_setting
+from ..shared import G
 
 PathLike = Union[Path, str]
 
@@ -33,39 +34,38 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
     def _worker(self) -> None:
         sublime.status_message("Begin downloading guesslang server...")
 
-        is_enabled_or_running = bool(get_merged_plugin_setting("guesslang.enabled") or GuesslangServer.is_running())
-
-        if is_enabled_or_running:
-            GuesslangServer.stop()
+        if (server := G.guesslang_server) and server.is_running():
+            server.stop()
             time.sleep(1)  # wait for stopping the server
 
         shutil.rmtree(GuesslangServer.SERVER_DIR, ignore_errors=True)
 
         try:
-            zip_path = GuesslangServer.SERVER_DIR / "source.zip"
-            download_file(GUESSLANG_SERVER_URL, zip_path)
-            decompress_file(zip_path)
-            self._chore(zip_path)
+            self._prepare_bin()
 
             if not GuesslangServer.SERVER_FILE.is_file():
                 sublime.error_message(f"[{PLUGIN_NAME}] Cannot find the server: {str(GuesslangServer.SERVER_FILE)}")
 
-            if is_enabled_or_running:
+            if get_merged_plugin_setting("guesslang.enabled"):
                 sublime.run_command("auto_set_syntax_restart_guesslang")
 
             sublime.message_dialog(f"[{PLUGIN_NAME}] Finish downloading guesslang server!")
         except Exception as e:
             sublime.error_message(f"[{PLUGIN_NAME}] {e}")
 
-    def _chore(self, zip_path: Path) -> None:
-        def _sorter(a: Path, b: Path) -> int:
+    def _prepare_bin(self) -> None:
+        def sorter(a: Path, b: Path) -> int:
             return int(a.stat().st_mtime - b.stat().st_mtime)
+
+        zip_path = GuesslangServer.SERVER_DIR / "source.zip"
+        download_file(GUESSLANG_SERVER_URL, zip_path)
+        decompress_file(zip_path)
 
         # get the folder, which is just decompressed
         folder = first(
             sorted(
                 (path for path in zip_path.parent.iterdir() if path.is_dir()),
-                key=cmp_to_key(_sorter),
+                key=cmp_to_key(sorter),
                 reverse=True,
             )
         )

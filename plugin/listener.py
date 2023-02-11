@@ -17,7 +17,6 @@ from .constant import (
     VERSION,
     VIEW_IS_TRANSIENT_SETTINGS_KEY,
 )
-from .guesslang.server import GuesslangServer
 from .helper import debounce, is_sum_gt, is_syntaxable_view, is_transient_view, stringify
 from .logger import Logger
 from .rules import SyntaxRuleCollection, get_constraints, get_matches
@@ -101,7 +100,8 @@ class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
 
 class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
     def on_exit(self) -> None:
-        GuesslangServer.stop()
+        if G.guesslang_server:
+            G.guesslang_server.stop()
 
     def on_activated(self, view: sublime.View) -> None:
         _try_assign_syntax_when_view_untransientize(view)

@@ -42,7 +42,7 @@ class GuesslangClientCallbacks:
     """This class contains event callbacks for the guesslang server."""
 
     def on_open(self, ws: websocket.WebSocketApp) -> None:
-        self._status_msg_and_log("🤝 Connected to the guesslang server!")
+        self._status_msg_and_log(f"🤝 Connected to guesslang server: ({ws.url})")
 
     def on_message(self, ws: websocket.WebSocketApp, message: str) -> None:
         try:

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, Optional, Tuple
 
 import sublime
 
+from .guesslang.server import GuesslangServer
 from .settings import get_merged_plugin_settings
 from .types import Optimizable
 
@@ -21,6 +22,9 @@ class G:
 
     guesslang: Optional[GuesslangClient] = None
     """The guesslang object, which interacts with the Node.js guesslang server."""
+
+    guesslang_server: Optional[GuesslangServer] = None
+    """The guesslang server object."""
 
     views_on_init: Tuple[sublime.View, ...] = tuple()
     """Views exist when ST just starts (even before plugin loaded)."""
