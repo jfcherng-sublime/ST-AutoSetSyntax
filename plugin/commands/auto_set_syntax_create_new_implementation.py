@@ -6,8 +6,8 @@ import sublime
 import sublime_plugin
 
 from ..constants import PLUGIN_CUSTOM_DIR, PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME
-from ..helper import find_syntax_by_syntax_like
 from ..types import SyntaxLike
+from ..utils import find_syntax_by_syntax_like
 
 
 class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):

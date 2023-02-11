@@ -2,7 +2,7 @@ from typing import Any, Tuple, final
 
 import sublime
 
-from ...helper import find_syntaxes_by_syntax_like
+from ...utils import find_syntaxes_by_syntax_likes
 from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
@@ -20,4 +20,4 @@ class IsSyntaxConstraint(AbstractConstraint):
         if not (syntax := self.get_view_snapshot(view).syntax):
             raise AlwaysFalsyException(f"View({view.id()}) has no syntax")
 
-        return any((syntax in find_syntaxes_by_syntax_like(candidate)) for candidate in self.candidates)
+        return syntax in find_syntaxes_by_syntax_likes(self.candidates)

@@ -7,8 +7,8 @@ from typing import Dict, Optional
 import sublime
 
 from .constants import VIEW_RUN_ID_SETTINGS_KEY
-from .helper import head_tail_content_st, remove_prefix
 from .settings import get_merged_plugin_setting
+from .utils import head_tail_content_st, remove_prefix
 
 
 @dataclass

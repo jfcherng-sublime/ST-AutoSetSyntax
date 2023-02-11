@@ -6,8 +6,8 @@ from typing import Generator, Iterable, List, Optional, Set, Tuple
 import sublime
 
 from ..constants import VERSION
-from ..helper import find_syntax_by_syntax_likes, first
 from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
+from ..utils import find_syntax_by_syntax_likes, first_true
 from .match import MatchRule
 
 
@@ -98,7 +98,7 @@ class SyntaxRuleCollection(Optimizable):
         self.rules = tuple(rules)
 
     def test(self, view: sublime.View, event: Optional[ListenerEvent] = None) -> Optional[SyntaxRule]:
-        return first(self.rules, lambda rule: rule.test(view, event))
+        return first_true(self.rules, pred=lambda rule: rule.test(view, event))
 
     @classmethod
     def make(cls, syntax_rules: Iterable[ST_SyntaxRule]) -> SyntaxRuleCollection:

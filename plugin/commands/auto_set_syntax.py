@@ -4,30 +4,32 @@ from functools import wraps
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, cast
+from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, TypeVar, cast
 
 import sublime
 import sublime_plugin
 
 from ..constants import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_RUN_ID_SETTINGS_KEY
 from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
-from ..helper import (
-    find_syntax_by_syntax_like,
-    find_syntax_by_syntax_likes,
-    generate_trimmed_filenames,
-    generate_trimmed_strings,
-    get_view_by_id,
-    is_plaintext_syntax,
-    is_syntaxable_view,
-    stringify,
-)
+from ..helpers import is_syntaxable_view
 from ..libs import websocket
 from ..logger import Logger
 from ..rules import SyntaxRuleCollection
 from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot, ViewSnapshotCollection
-from ..types import ListenerEvent, T_Callable
+from ..types import ListenerEvent
+from ..utils import (
+    find_syntax_by_syntax_like,
+    find_syntax_by_syntax_likes,
+    get_view_by_id,
+    is_plaintext_syntax,
+    list_trimmed_filenames,
+    list_trimmed_strings,
+    stringify,
+)
+
+_T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
@@ -42,7 +44,7 @@ class GuesslangClientCallbacks:
     """This class contains event callbacks for the guesslang server."""
 
     def on_open(self, ws: websocket.WebSocketApp) -> None:
-        self._status_msg_and_log(f"🤝 Connected to guesslang server: ({ws.url})")
+        self._status_msg_and_log(f"🤝 Connected to guesslang server: {ws.url}")
 
     def on_message(self, ws: websocket.WebSocketApp, message: str) -> None:
         try:
@@ -51,9 +53,9 @@ class GuesslangClientCallbacks:
             predictions = response["data"]
             event = ListenerEvent.from_value(response["event_name"])
             view_id = response["id"]
-            Logger.log(sublime.active_window(), f"🐛 Guesslang top predictions: {predictions[:5]}")
+            Logger.log(f"🐛 Guesslang top predictions: {predictions[:5]}")
         except (TypeError, ValueError):
-            Logger.log(sublime.active_window(), f"💬 Guesslang server says: {message}")
+            Logger.log(f"💬 Guesslang server says: {message}")
             return
         except KeyError as e:
             print(f"[{PLUGIN_NAME}] {e}")
@@ -102,16 +104,16 @@ class GuesslangClientCallbacks:
         best_prediction = predictions[0]
         # confidence < 0 means unknown confidence
         if 0 <= best_prediction["confidence"] < min_confidence:
-            Logger.log(window, f'👎 Prediction confidence too low: {best_prediction["confidence"]}')
+            Logger.log(f'👎 Prediction confidence too low: {best_prediction["confidence"]}', window=window)
             return None
 
         syntax_likes = cls.resolve_language_id(syntax_map, best_prediction["languageId"])
         if not syntax_likes:
-            Logger.log(window, f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}')
+            Logger.log(f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}', window=window)
             return None
 
-        if not (syntax := find_syntax_by_syntax_likes(syntax_likes, allow_plaintext=False)):
-            Logger.log(window, f"😢 Failed finding syntax from guesslang: {syntax_likes}")
+        if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
+            Logger.log(f"😢 Failed finding syntax from guesslang: {syntax_likes}", window=window)
             return None
 
         return (syntax, best_prediction["confidence"])
@@ -137,7 +139,7 @@ class GuesslangClientCallbacks:
 
     @staticmethod
     def _status_msg_and_log(msg: str, window: Optional[sublime.Window] = None) -> None:
-        Logger.log(window or sublime.active_window(), msg)
+        Logger.log(msg, window=window)
         sublime.status_message(msg)
 
 
@@ -155,21 +157,18 @@ def _view_snapshot_context(view: sublime.View) -> Generator[ViewSnapshot, None, 
         ViewSnapshotCollection.pop(run_id)
 
 
-def _snapshot_view(failed_ret: Any = None) -> Callable[[T_Callable], T_Callable]:
-    def decorator(func: T_Callable) -> T_Callable:
+def _snapshot_view(failed_ret: Any = None) -> Callable[[_T_Callable], _T_Callable]:
+    def decorator(func: _T_Callable) -> _T_Callable:
         @wraps(func)
         def wrapped(view: sublime.View, *args: Any, **kwargs: Any) -> Any:
             if not ((window := view.window()) and G.is_plugin_ready(window) and view.is_valid()):
-                Logger.log(
-                    window or sublime.active_window(),
-                    "⏳ Calm down! View has gone or the plugin is not ready yet.",
-                )
+                Logger.log("⏳ Calm down! View has gone or the plugin is not ready yet.")
                 return failed_ret
 
             with _view_snapshot_context(view):
                 return func(view, *args, **kwargs)
 
-        return cast(T_Callable, wrapped)
+        return cast(_T_Callable, wrapped)
 
     return decorator
 
@@ -229,7 +228,7 @@ def _assign_syntax_for_exec_output(view: sublime.View, event: Optional[ListenerE
         (window := view.window())
         and (not (syntax_old := view.syntax()) or syntax_old.scope == "text.plain")
         and (exec_file_syntax := get_merged_plugin_setting("exec_file_syntax", window=window))
-        and (syntax := find_syntax_by_syntax_like(exec_file_syntax, allow_hidden=True))
+        and (syntax := find_syntax_by_syntax_like(exec_file_syntax, include_hidden=True))
     ):
         return assign_syntax_to_view(
             view,
@@ -243,7 +242,7 @@ def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEven
     if (
         (window := view.window())
         and (new_file_syntax := get_merged_plugin_setting("new_file_syntax", window=window))
-        and (syntax := find_syntax_by_syntax_like(new_file_syntax, allow_plaintext=False))
+        and (syntax := find_syntax_by_syntax_like(new_file_syntax, include_plaintext=False))
     ):
         return assign_syntax_to_view(
             view,
@@ -259,7 +258,7 @@ def _assign_syntax_for_st_syntax_test(view: sublime.View, event: Optional[Listen
         and (not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax))
         and (m := RE_ST_SYNTAX_TEST_LINE.search(view_snapshot.first_line))
         and (new_syntax := m.group("syntax")).endswith(".sublime-syntax")
-        and (syntax := find_syntax_by_syntax_like(new_syntax, allow_hidden=True, allow_plaintext=True))
+        and (syntax := find_syntax_by_syntax_like(new_syntax, include_hidden=True, include_plaintext=True))
     ):
         return assign_syntax_to_view(
             view,
@@ -333,8 +332,8 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
     trim_suffixes_auto = get_merged_plugin_setting("trim_suffixes_auto", window=window)
 
     filenames = chain(
-        generate_trimmed_strings(original, trim_suffixes, skip_self=True),
-        generate_trimmed_filenames(original, skip_self=True) if trim_suffixes_auto else tuple(),
+        list_trimmed_strings(original, trim_suffixes, skip_self=True),
+        list_trimmed_filenames(original, skip_self=True) if trim_suffixes_auto else tuple(),
     )
 
     for filename in filenames:
@@ -374,7 +373,7 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
 
 def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
     details = {"event": event, "reason": "no matching rule"}
-    Logger.log(view.window(), f"❌ Cannot help {stringify(view)} because {stringify(details)}")
+    Logger.log(f"❌ Cannot help {stringify(view)} because {stringify(details)}", window=view.window())
     return False
 
 
@@ -399,16 +398,16 @@ def assign_syntax_to_view(
         if syntax == (syntax_old := view.syntax() or sublime.Syntax("", "", False, "")):
             details["reason"] = f'[ALREADY] {details["reason"]}'
             Logger.log(
-                _window,
                 f'💯 Remain {stringify(_view)} syntax "{syntax.name}" because {stringify(details)}',
+                window=_window,
             )
             continue
 
         _view.assign_syntax(syntax)
         Logger.log(
-            _window,
             f"✔ Change {stringify(_view)} syntax"
             + f' from "{syntax_old.name}" to "{syntax.name}" because {stringify(details)}',
+            window=_window,
         )
 
     return True

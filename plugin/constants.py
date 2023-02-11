@@ -6,10 +6,8 @@ import sublime
 
 ################################################################################
 
-VERSION_INFO = (2, 11, 1, "stable")
-VERSION = ".".join(map(str, VERSION_INFO[:3]))
-if len(VERSION_INFO) > 3:
-    VERSION += f"-{VERSION_INFO[3]}"
+VERSION_INFO = (2, 11, 1)
+VERSION = ".".join(map(str, VERSION_INFO))
 
 ################################################################################
 
@@ -45,6 +43,7 @@ RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|ft|syntax)=(?P<syntax>[^\s:]+):?
 ################################################################################
 
 GUESSLANG_SERVER_TAG = "server-0.1.7"
-GUESSLANG_SERVER_URL = (
-    f"https://github.com/jfcherng-sublime/ST-AutoSetSyntax/archive/refs/tags/{GUESSLANG_SERVER_TAG}.zip"
+GUESSLANG_SERVER_URL = "https://github.com/{repo}/archive/{ref}.zip".format(
+    repo="jfcherng-sublime/ST-AutoSetSyntax",
+    ref=f"refs/tags/{GUESSLANG_SERVER_TAG}",
 )

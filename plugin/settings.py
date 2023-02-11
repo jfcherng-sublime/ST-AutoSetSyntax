@@ -8,6 +8,7 @@ import sublime
 import sublime_plugin
 
 from .types import ST_SyntaxRule
+from .utils import stable_unique
 
 
 def get_merged_plugin_setting(
@@ -51,10 +52,9 @@ def extra_settings_producer(settings: MergedSettingsDict) -> Dict[str, Any]:
 
     # use tuple to freeze setting for better performance (cache-able)
     ret["trim_suffixes"] = tuple(
-        set(
-            # remove empty string, which causes an infinite loop
-            filter(
-                None,
+        filter(
+            None,  # remove falsy values
+            stable_unique(
                 chain(
                     settings.get("project_trim_suffixes", []),
                     settings.get("user_trim_suffixes", []),

@@ -6,21 +6,21 @@ from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union, fin
 
 import sublime
 
-from ..helper import camel_to_snake, first, get_all_subclasses, remove_suffix
-from ..lru_cache import clearable_lru_cache
+from ..cache import clearable_lru_cache
 from ..types import Optimizable, ST_MatchRule
+from ..utils import camel_to_snake, first_true, list_all_subclasses, remove_suffix
 from .constraint import ConstraintRule
 
 
 def find_match(obj: Any) -> Optional[Type[AbstractMatch]]:
-    return first(get_matches(), lambda t: t.is_supported(obj))
+    return first_true(get_matches(), pred=lambda t: t.is_supported(obj))
 
 
 @clearable_lru_cache()
 def get_matches() -> Tuple[Type[AbstractMatch], ...]:
     return tuple(
         sorted(
-            get_all_subclasses(AbstractMatch, skip_abstract=True),  # type: ignore
+            list_all_subclasses(AbstractMatch, skip_abstract=True),  # type: ignore
             key=lambda cls: cls.name(),
         )
     )

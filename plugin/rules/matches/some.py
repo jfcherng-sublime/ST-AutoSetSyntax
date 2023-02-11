@@ -2,7 +2,7 @@ from typing import Any, Tuple, final
 
 import sublime
 
-from ...helper import get_nth_item
+from ...utils import nth
 from ..match import AbstractMatch, MatchableRule
 
 
@@ -13,7 +13,7 @@ class SomeMatch(AbstractMatch):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.count: float = get_nth_item(self.args, 0) or -1
+        self.count: float = nth(self.args, 0) or -1
 
     def is_droppable(self, rules: Tuple[MatchableRule, ...]) -> bool:
         return not (0 <= self.count <= len(rules))

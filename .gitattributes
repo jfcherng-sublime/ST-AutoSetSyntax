@@ -1,3 +1,4 @@
+*.pyi export-ignore
 .dependabot export-ignore
 .editorconfig export-ignore
 .flake8 export-ignore
@@ -12,6 +13,7 @@ docs/ export-ignore
 Makefile export-ignore
 mkdocs.yml export-ignore
 mypy.ini export-ignore
+py.typed export-ignore
 pyproject.toml export-ignore
 pyrightconfig.json export-ignore
 requirements.txt export-ignore

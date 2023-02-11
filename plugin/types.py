@@ -2,12 +2,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Callable, Dict, Generator, List, Optional, TypedDict, TypeVar, Union
+from typing import Any, Dict, Generator, List, Optional, TypedDict, Union
 
 import sublime
-
-T = TypeVar("T")
-T_Callable = TypeVar("T_Callable", bound=Callable[..., Any])
 
 SyntaxLike = Union[str, sublime.Syntax]
 

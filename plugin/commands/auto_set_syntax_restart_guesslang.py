@@ -31,7 +31,7 @@ class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):
         host = "localhost"
         port_raw = get_merged_plugin_setting("guesslang.port")
         if (port := resolve_port(port_raw)) < 0:
-            Logger.log(window, f"⚠ Guesslang server port is unusable: {port_raw}")
+            Logger.log(f"⚠ Guesslang server port is unusable: {port_raw}", window=window)
 
         G.guesslang_server = GuesslangServer(host, port)
         if G.guesslang_server.restart():

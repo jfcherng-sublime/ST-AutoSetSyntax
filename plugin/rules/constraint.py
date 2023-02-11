@@ -8,32 +8,32 @@ from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, 
 
 import sublime
 
+from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
-from ..helper import (
+from ..snapshot import ViewSnapshot, ViewSnapshotCollection
+from ..types import Optimizable, ST_ConstraintRule
+from ..utils import (
     camel_to_snake,
     compile_regex,
-    first,
-    get_all_subclasses,
+    first_true,
+    list_all_subclasses,
     merge_regexes,
     parse_regex_flags,
     remove_suffix,
 )
-from ..lru_cache import clearable_lru_cache
-from ..snapshot import ViewSnapshot, ViewSnapshotCollection
-from ..types import Optimizable, ST_ConstraintRule
 
 T = TypeVar("T")
 
 
 def find_constraint(obj: Any) -> Optional[Type[AbstractConstraint]]:
-    return first(get_constraints(), lambda t: t.is_supported(obj))
+    return first_true(get_constraints(), pred=lambda t: t.is_supported(obj))
 
 
 @clearable_lru_cache()
 def get_constraints() -> Tuple[Type[AbstractConstraint], ...]:
     return tuple(
         sorted(
-            get_all_subclasses(AbstractConstraint, skip_abstract=True),  # type: ignore
+            list_all_subclasses(AbstractConstraint, skip_abstract=True),  # type: ignore
             key=lambda cls: cls.name(),
         )
     )
@@ -180,7 +180,7 @@ class AbstractConstraint(ABC):
         else:
             checker = Path.is_dir if sibling.endswith(("\\", "/")) else Path.is_file
 
-        return first(path.parents, lambda p: checker(p / sibling))
+        return first_true(path.parents, pred=lambda p: checker(p / sibling))
 
 
 class AlwaysTruthyException(Exception):

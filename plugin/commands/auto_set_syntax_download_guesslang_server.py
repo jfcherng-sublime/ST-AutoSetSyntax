@@ -14,9 +14,9 @@ import sublime_plugin
 
 from ..constants import GUESSLANG_SERVER_URL, PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
-from ..helper import first
 from ..settings import get_merged_plugin_setting
 from ..shared import G
+from ..utils import first_true
 
 PathLike = Union[Path, str]
 
@@ -62,12 +62,12 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         decompress_file(zip_path)
 
         # get the folder, which is just decompressed
-        folder = first(
+        folder = first_true(
             sorted(
                 (path for path in zip_path.parent.iterdir() if path.is_dir()),
                 key=cmp_to_key(sorter),
                 reverse=True,
-            )
+            ),
         )
 
         if not folder:

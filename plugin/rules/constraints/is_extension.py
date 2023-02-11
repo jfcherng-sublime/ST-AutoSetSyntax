@@ -2,8 +2,8 @@ from typing import Any, Tuple, final
 
 import sublime
 
-from ...helper import generate_trimmed_strings
 from ...settings import pref_trim_suffixes
+from ...utils import list_trimmed_strings
 from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
@@ -32,7 +32,7 @@ class IsExtensionConstraint(AbstractConstraint):
             filename.endswith(self.exts)
             for filename in map(
                 self.fix_case,
-                generate_trimmed_strings(
+                list_trimmed_strings(
                     self.get_view_snapshot(view).file_name,
                     pref_trim_suffixes(window=window),
                 ),
