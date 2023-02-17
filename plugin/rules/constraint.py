@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, 
 
 import sublime
 
-from ..constant import PLUGIN_NAME, ST_PLATFORM
+from ..constants import PLUGIN_NAME, ST_PLATFORM
 from ..helper import (
     camel_to_snake,
     compile_regex,

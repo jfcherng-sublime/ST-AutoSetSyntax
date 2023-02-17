@@ -2,7 +2,7 @@ from typing import Any, final
 
 import sublime
 
-from ...constant import ST_ARCH
+from ...constants import ST_ARCH
 from ..constraint import AbstractConstraint
 
 

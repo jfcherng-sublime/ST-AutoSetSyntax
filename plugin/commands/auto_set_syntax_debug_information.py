@@ -3,7 +3,7 @@ from typing import Any, Dict
 import sublime
 import sublime_plugin
 
-from ..constant import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION
+from ..constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION
 from ..helper import stringify
 from ..rules.constraint import get_constraints
 from ..rules.match import get_matches

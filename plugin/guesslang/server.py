@@ -6,7 +6,7 @@ from typing import Dict, Final, Optional, Sequence, Set, Union
 
 import sublime
 
-from ..constant import PLUGIN_NAME, PLUGIN_STORAGE_DIR
+from ..constants import PLUGIN_NAME, PLUGIN_STORAGE_DIR
 from ..helper import expand_variables
 from ..settings import get_merged_plugin_setting
 

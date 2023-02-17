@@ -6,7 +6,7 @@ from typing import Iterable, Union
 import sublime
 import sublime_plugin
 
-from ..constant import PLUGIN_NAME
+from ..constants import PLUGIN_NAME
 from ..guesslang.client import GuesslangClient
 from ..guesslang.server import GuesslangServer
 from ..logger import Logger

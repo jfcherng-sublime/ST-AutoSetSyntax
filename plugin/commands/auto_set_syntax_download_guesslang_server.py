@@ -12,7 +12,7 @@ from typing import Iterable, Optional, Union
 import sublime
 import sublime_plugin
 
-from ..constant import GUESSLANG_SERVER_URL, PLUGIN_NAME
+from ..constants import GUESSLANG_SERVER_URL, PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
 from ..helper import first
 from ..settings import get_merged_plugin_setting

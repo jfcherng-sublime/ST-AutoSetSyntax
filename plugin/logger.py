@@ -6,7 +6,7 @@ from typing import Dict, Final, Generator, Optional, Union
 import sublime
 import sublime_plugin
 
-from .constant import PLUGIN_NAME
+from .constants import PLUGIN_NAME
 from .helper import get_st_window
 from .settings import get_merged_plugin_setting, get_st_setting
 

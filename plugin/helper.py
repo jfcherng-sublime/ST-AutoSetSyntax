@@ -25,7 +25,7 @@ from typing import (
 
 import sublime
 
-from .constant import ST_PLATFORM
+from .constants import ST_PLATFORM
 from .libs.trie import TrieNode
 from .lru_cache import clearable_lru_cache
 from .settings import get_st_setting

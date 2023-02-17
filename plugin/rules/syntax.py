@@ -5,7 +5,7 @@ from typing import Generator, Iterable, List, Optional, Set, Tuple
 
 import sublime
 
-from ..constant import VERSION
+from ..constants import VERSION
 from ..helper import find_syntax_by_syntax_likes, first
 from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
 from .match import MatchRule

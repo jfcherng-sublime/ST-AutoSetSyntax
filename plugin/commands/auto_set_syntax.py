@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, c
 import sublime
 import sublime_plugin
 
-from ..constant import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_RUN_ID_SETTINGS_KEY
+from ..constants import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_RUN_ID_SETTINGS_KEY
 from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
 from ..helper import (
     find_syntax_by_syntax_like,

@@ -14,7 +14,7 @@ from .commands.auto_set_syntax_create_new_implementation import (
 from .commands.auto_set_syntax_debug_information import AutoSetSyntaxDebugInformationCommand
 from .commands.auto_set_syntax_download_guesslang_server import AutoSetSyntaxDownloadGuesslangServerCommand
 from .commands.auto_set_syntax_restart_guesslang import AutoSetSyntaxRestartGuesslangCommand
-from .constant import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME
+from .constants import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME
 from .helper import remove_prefix
 from .listener import (
     AutoSetSyntaxEventListener,

@@ -8,7 +8,7 @@ import sublime
 import sublime_plugin
 
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
-from .constant import (
+from .constants import (
     PLUGIN_NAME,
     PY_VERSION,
     ST_CHANNEL,

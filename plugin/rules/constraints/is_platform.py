@@ -2,7 +2,7 @@ from typing import Any, final
 
 import sublime
 
-from ...constant import ST_PLATFORM
+from ...constants import ST_PLATFORM
 from ..constraint import AbstractConstraint
 
 
