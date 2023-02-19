@@ -389,7 +389,7 @@ def assign_syntax_to_view(
         return False
 
     details = details or {}
-    details["sytnax"] = syntax
+    details["syntax"] = syntax
 
     _views = view.buffer().views() if same_buffer else (view,)
     for _view in _views:
