@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.2
+
+- feat: (by default) auto determine guesslang server port
+
 ## 2.11.1
 
 - chore: update rules for Makefile
