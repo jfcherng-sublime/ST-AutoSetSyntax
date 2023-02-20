@@ -72,7 +72,7 @@ def _plugin_loaded() -> None:
     for window in sublime.windows():
         set_up_window(window)
 
-    sublime.set_timeout_async(_run_on_init_views)
+    sublime.set_timeout_async(_run_on_startup_views)
     sublime.run_command("auto_set_syntax_restart_guesslang")
 
 
@@ -107,7 +107,7 @@ def _load_custom_implementations() -> None:
             print(f"[{PLUGIN_NAME}] _load_custom_implementations: {e}")
 
 
-def _run_on_init_views() -> None:
+def _run_on_startup_views() -> None:
     if get_merged_plugin_setting("run_on_startup_views"):
-        for view in G.views_on_init:
+        for view in G.startup_views:
             run_auto_set_syntax_on_view(view, ListenerEvent.INIT)

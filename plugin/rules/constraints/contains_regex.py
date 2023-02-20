@@ -2,6 +2,7 @@ from typing import Any, final
 
 import sublime
 
+from ...utils import nth
 from ..constraint import AbstractConstraint
 
 
@@ -17,10 +18,13 @@ class ContainsRegexConstraint(AbstractConstraint):
         return not isinstance(self.threshold, (int, float))
 
     def test(self, view: sublime.View) -> bool:
-        content = self.get_view_snapshot(view).content
-        count = 0
-        for _ in self.regex.finditer(content):
-            count += 1
-            if count >= self.threshold:
-                return True
-        return False
+        if self.threshold <= 0:
+            return True
+
+        return (
+            nth(
+                self.regex.finditer(self.get_view_snapshot(view).content),
+                self.threshold - 1,
+            )
+            is not None
+        )

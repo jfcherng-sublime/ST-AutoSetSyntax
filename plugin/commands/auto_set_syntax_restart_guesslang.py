@@ -36,7 +36,7 @@ class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):
         G.guesslang_server = GuesslangServer(host, port)
         if G.guesslang_server.restart():
             time.sleep(1)  # wait for server initialization
-            G.guesslang = GuesslangClient(host, port, callback=GuesslangClientCallbacks())
+            G.guesslang_client = GuesslangClient(host, port, callback=GuesslangClientCallbacks())
 
 
 def resolve_port(port: Union[int, str]) -> int:

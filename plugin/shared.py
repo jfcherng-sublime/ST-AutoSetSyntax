@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Set, Tuple
 
 import sublime
 
@@ -20,20 +20,20 @@ DroppedRulesArg = Iterable[Optimizable]
 class G:
     """This class holds "G"lobal variables as its class variables."""
 
-    guesslang: Optional[GuesslangClient] = None
-    """The guesslang object, which interacts with the Node.js guesslang server."""
+    guesslang_client: Optional[GuesslangClient] = None
+    """The guesslang client object, which interacts with the Node.js guesslang server."""
 
     guesslang_server: Optional[GuesslangServer] = None
     """The guesslang server object."""
 
-    views_on_init: Tuple[sublime.View, ...] = tuple()
-    """Views exist when ST just starts (even before plugin loaded)."""
+    startup_views: Set[sublime.View] = set()
+    """Views exist before this plugin is loaded when Sublime Text just starts."""
 
     windows_syntax_rule_collection: Dict[WindowId, SyntaxRuleCollection] = {}
-    """Per window, the compiled top-level plugin rules."""
+    """(Per window) The compiled top-level plugin rules."""
 
     windows_dropped_rules: Dict[WindowId, DroppedRules] = {}
-    """Per window, those rules which are dropped after doing optimizations."""
+    """(Per window) Those rules which are dropped after doing optimizations."""
 
     @classmethod
     def is_plugin_ready(cls, window: sublime.Window) -> bool:

@@ -2,6 +2,7 @@ from typing import Any, Tuple, final
 
 import sublime
 
+from ...utils import nth, str_finditer
 from ..constraint import AbstractConstraint
 
 
@@ -17,14 +18,15 @@ class ContainsConstraint(AbstractConstraint):
         return not (self.needles and isinstance(self.threshold, (int, float)))
 
     def test(self, view: sublime.View) -> bool:
+        if self.threshold <= 0:
+            return True
+
         content = self.get_view_snapshot(view).content
-        length = len(content)
-        count = 0
-        for needle in self.needles:
-            cursor = 0
-            while cursor < length and (idx := content.find(needle, cursor)) != -1:
-                count += 1
-                if count >= self.threshold:
-                    return True
-                cursor += idx + len(needle)
-        return False
+
+        return (
+            nth(
+                (_ for needle in self.needles for _ in str_finditer(content, needle)),
+                self.threshold - 1,
+            )
+            is not None
+        )

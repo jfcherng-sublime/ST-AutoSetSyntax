@@ -110,7 +110,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
         _try_assign_syntax_when_view_untransientize(view)
 
     def on_init(self, views: List[sublime.View]) -> None:
-        G.views_on_init = tuple(views)
+        G.startup_views |= set(views)
 
     def on_load(self, view: sublime.View) -> None:
         view.settings().set(VIEW_IS_TRANSIENT_SETTINGS_KEY, is_transient_view(view))

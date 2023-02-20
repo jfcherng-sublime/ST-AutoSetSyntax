@@ -22,7 +22,7 @@ class IsInHgRepoConstraint(AbstractConstraint):
         file_path = Path(_file_path)
 
         # fast check from the cache
-        if any((parent in cls._success_dirs) for parent in file_path.parents):
+        if any(map(lambda p: p in cls._success_dirs, file_path.parents)):
             return True
 
         if _major_dir := self.find_parent_with_sibling(file_path, ".hg/"):

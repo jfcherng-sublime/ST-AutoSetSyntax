@@ -203,7 +203,7 @@ def nth(items: Iterable[_T], n: int, default: _U) -> Union[_T, _U]:
 
 
 def nth(items: Iterable[_T], n: int, default: Optional[_U] = None) -> Union[_T, Optional[_U]]:
-    """Gets the `n`th item in `items`. Returns `default` if no such item."""
+    """Gets the `n`th item (started from 0th) in `items`. Returns `default` if no such item."""
     return next(islice(iter(items), n, None), default)
 
 
@@ -445,6 +445,13 @@ def list_trimmed_strings(string: str, suffixes: Tuple[str], skip_self: bool = Fa
         if trimmed not in results:
             results.add(trimmed)
             yield trimmed[::-1]
+
+
+def str_finditer(content: str, substr: str) -> Generator[int, None, None]:
+    idx = 0
+    while (idx := content.find(substr, idx)) != -1:
+        yield idx
+        idx += len(substr)
 
 
 def stringify(obj: Any) -> str:

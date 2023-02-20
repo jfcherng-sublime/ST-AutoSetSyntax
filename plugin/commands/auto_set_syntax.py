@@ -355,7 +355,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
 
 def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[ListenerEvent] = None) -> None:
     if not (
-        G.guesslang
+        G.guesslang_client
         and (view_snapshot := ViewSnapshotCollection.get_by_view(view))
         # don't apply on those have an extension
         and (event == ListenerEvent.COMMAND or "." not in view_snapshot.file_name_unhidden)
@@ -368,7 +368,7 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
     ):
         return None
 
-    G.guesslang.request_guess_snapshot(view_snapshot, event=event)
+    G.guesslang_client.request_guess_snapshot(view_snapshot, event=event)
 
 
 def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
