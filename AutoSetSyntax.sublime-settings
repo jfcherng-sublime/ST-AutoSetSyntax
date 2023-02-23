@@ -394,7 +394,7 @@
                 },
                 {
                     "constraint": "is_name",
-                    "args": ["Cartfile", "Cartfile.private", "Cartfile.resolved", "config.ru"],
+                    "args": ["Cartfile", "Cartfile.private", "Cartfile.resolved", "config.ru", "Dangerfile"],
                     "kwargs": { "case_insensitive": true }
                 },
                 {
