@@ -32,6 +32,7 @@ class GuesslangServer:
                 (node_path, self.SERVER_FILE),
                 cwd=self.SERVER_DIR,
                 extra_env={
+                    "ELECTRON_RUN_AS_NODE": "1",
                     "NODE_SKIP_PLATFORM_CHECK": "1",
                     "HOST": self.host,
                     "PORT": str(self.port),

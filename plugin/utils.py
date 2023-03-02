@@ -407,9 +407,27 @@ def get_expand_variable_map() -> Dict[str, str]:
 
         return (base_dir / ".".join(map(str, version)) / "node", version)
 
+    def get_electron_path(node_dir: Path) -> Path:
+        electron_dist_dir = node_dir / "node_modules/electron/dist"
+        if ST_PLATFORM == "osx":
+            return electron_dist_dir / "Electron.app/Contents/MacOS/Electron"
+        if ST_PLATFORM == "windows":
+            return electron_dist_dir / "electron.exe"
+        return electron_dist_dir / "electron"
+
+    def get_node_path(node_dir: Path) -> Path:
+        return node_dir / ("node.exe" if ST_PLATFORM == "windows" else "bin/node")
+
     if node_info := find_latest_lsp_utils_node(paths["package_storage"]):
-        paths["lsp_utils_node_dir"] = node_info[0]
-        paths["lsp_utils_node_bin"] = node_info[0] / ("node.exe" if ST_PLATFORM == "windows" else "bin/node")
+        node_dir, node_version = node_info
+        electron_path = get_electron_path(node_dir)
+        node_path = get_node_path(node_dir)
+
+        paths["lsp_utils_node_dir"] = node_dir
+        if electron_path.is_file():
+            paths["lsp_utils_node_bin"] = electron_path
+        else:
+            paths["lsp_utils_node_bin"] = node_path
 
     return {name: str(path.resolve()) for name, path in paths.items()}
 
