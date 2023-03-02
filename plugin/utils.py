@@ -31,7 +31,7 @@ import sublime
 from .cache import clearable_lru_cache
 from .constants import ST_PLATFORM
 from .libs.trie import TrieNode
-from .types import SyntaxLike
+from .types import SemanticVersion, SyntaxLike
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")
@@ -395,17 +395,21 @@ def get_expand_variable_map() -> Dict[str, str]:
         "package_storage": cache_path.parent / "Package Storage",
     }
 
-    def find_latest_lsp_utils_node(package_storage: Path) -> Optional[Tuple[Path, Tuple[int, int, int]]]:
-        def list_node_versions(folder: Path) -> Generator[Tuple[int, int, int], None, None]:
+    def find_latest_lsp_utils_node(package_storage: Path) -> Optional[Tuple[Path, SemanticVersion]]:
+        def list_node_versions(folder: Path) -> Generator[SemanticVersion, None, None]:
             for path in folder.iterdir() if folder.is_dir() else []:
-                if path.is_dir() and (m := re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", path.name)):
-                    yield int(m.group(1)), int(m.group(2)), int(m.group(3))
+                if (
+                    path.is_dir()
+                    and (m := re.fullmatch(r"\d+\.\d+\.\d+", path.name))
+                    and (version := SemanticVersion.from_str(m.group(0)))
+                ):
+                    yield version
 
-        base_dir = package_storage / "lsp_utils" / "node-runtime"
+        base_dir = package_storage / "lsp_utils/node-runtime"
         if not (version := max(list_node_versions(base_dir), default=None)):
             return None
 
-        return (base_dir / ".".join(map(str, version)) / "node", version)
+        return (base_dir / f"{version}/node", version)
 
     def get_electron_path(node_dir: Path) -> Path:
         electron_dist_dir = node_dir / "node_modules/electron/dist"
@@ -419,15 +423,11 @@ def get_expand_variable_map() -> Dict[str, str]:
         return node_dir / ("node.exe" if ST_PLATFORM == "windows" else "bin/node")
 
     if node_info := find_latest_lsp_utils_node(paths["package_storage"]):
-        node_dir, node_version = node_info
+        node_dir = node_info[0]
         electron_path = get_electron_path(node_dir)
         node_path = get_node_path(node_dir)
-
         paths["lsp_utils_node_dir"] = node_dir
-        if electron_path.is_file():
-            paths["lsp_utils_node_bin"] = electron_path
-        else:
-            paths["lsp_utils_node_bin"] = node_path
+        paths["lsp_utils_node_bin"] = electron_path if electron_path.is_file() else node_path
 
     return {name: str(path.resolve()) for name, path in paths.items()}
 

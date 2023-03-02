@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Generator, List, Optional, TypedDict, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, TypedDict, Union
 
 import sublime
 
@@ -73,3 +74,41 @@ class ST_SyntaxRule(ST_MatchRule):
     selector: str
     syntaxes: Union[str, List[str]]
     on_events: Optional[Union[str, List[str]]]
+
+
+@dataclass
+class SemanticVersion:
+    major: int
+    minor: int
+    patch: int
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}.{self.patch}"
+
+    def __repr__(self) -> str:
+        return f"<SemanticVersion {str(self)}>"
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, SemanticVersion):
+            return NotImplemented
+        return self.to_tuple() == other.to_tuple()
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, SemanticVersion):
+            return NotImplemented
+        return self.to_tuple() < other.to_tuple()
+
+    def __init__(self, major: Union[int, str] = 0, minor: Union[int, str] = 0, patch: Union[int, str] = 0) -> None:
+        self.major = int(major)
+        self.minor = int(minor)
+        self.patch = int(patch)
+
+    @classmethod
+    def from_str(cls, version: str) -> Optional[SemanticVersion]:
+        try:
+            return cls(*version.split("."))
+        except Exception:
+            return None
+
+    def to_tuple(self) -> Tuple[int, int, int]:
+        return (self.major, self.minor, self.patch)
