@@ -284,9 +284,7 @@ def _assign_syntax_with_plugin_rules(
 
 
 def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
-    if not (view_snapshot := ViewSnapshotCollection.get_by_view(view)) or (
-        view_snapshot.syntax and not is_plaintext_syntax(view_snapshot.syntax)
-    ):
+    if not (view_snapshot := ViewSnapshotCollection.get_by_view(view)):
         return False
 
     # Note that this only works for files under some circumstances.
@@ -294,7 +292,9 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
     def assign_by_shebang(view_snapshot: ViewSnapshot) -> Optional[sublime.Syntax]:
         if (
-            ("." not in view_snapshot.file_name_unhidden or view_snapshot.first_line.startswith("#!"))
+            view_snapshot.syntax
+            and not is_plaintext_syntax(view_snapshot.syntax)
+            and ("." not in view_snapshot.file_name_unhidden or view_snapshot.first_line.startswith("#!"))
             and (syntax := sublime.find_syntax_for_file("", view_snapshot.first_line))
             and not is_plaintext_syntax(syntax)
         ):
