@@ -1,9 +1,13 @@
 # AutoSetSyntax Changelog
 
+## 2.11.4
+
+- fix: shebang should be preferred over filename
+
 ## 2.11.3
 
 - chore: add `Dangerfile` to Ruby patterns
-- feat: `lsp_utils_node_bin` prefers electron if available 
+- feat: `lsp_utils_node_bin` prefers electron if available
 
 ## 2.11.2
 
