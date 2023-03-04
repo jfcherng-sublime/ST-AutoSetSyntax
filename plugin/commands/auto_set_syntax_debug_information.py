@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Mapping
 
 import sublime
 import sublime_plugin
@@ -10,8 +10,8 @@ from ..settings import get_merged_plugin_settings
 from ..shared import G
 from ..utils import stringify
 
-TEMPLATE = """
-# === AutoSetSyntax Debug Information === #
+TEMPLATE = f"""
+# === {PLUGIN_NAME} Debug Information === #
 # You may use the following website to format this debug information.
 # @link https://black.vercel.app
 
@@ -19,29 +19,29 @@ TEMPLATE = """
 # Environment #
 ###############
 
-{env}
+{{env}}
 
 ###################
 # Plugin settings #
 ###################
 
-{plugin_settings}
+{{plugin_settings}}
 
 ##########################
 # Syntax rule collection #
 ##########################
 
-{syntax_rule_collection}
+{{syntax_rule_collection}}
 
 ########################
 # Dropped syntax rules #
 ########################
 
-{dropped_rules}
+{{dropped_rules}}
 """.lstrip()
 
 
-def _pythonize(d: Dict[str, Any]) -> Dict[str, str]:
+def _pythonize(d: Mapping[str, Any]) -> Dict[str, str]:
     return {k: stringify(v) for k, v in d.items()}
 
 

@@ -49,7 +49,7 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
 
 class Logger:
     DELIMITER: Final[str] = "-" * 10
-    SYNTAX_FILE: Final[str] = "Packages/AutoSetSyntax/syntaxes/AutoSetSyntaxLog.sublime-syntax"
+    SYNTAX_FILE: Final[str] = f"Packages/{PLUGIN_NAME}/syntaxes/AutoSetSyntaxLog.sublime-syntax"
 
     history_counts: Dict[int, int] = {}
     """per-window, WindowId => history count"""

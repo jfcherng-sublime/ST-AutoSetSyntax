@@ -4,7 +4,7 @@ from functools import wraps
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Set, Tuple, TypeVar, cast
+from typing import Any, Callable, Dict, Generator, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, cast
 
 import sublime
 import sublime_plugin
@@ -22,6 +22,7 @@ from ..types import ListenerEvent
 from ..utils import (
     find_syntax_by_syntax_like,
     find_syntax_by_syntax_likes,
+    first_true,
     get_view_by_id,
     is_plaintext_syntax,
     list_trimmed_filenames,
@@ -92,14 +93,13 @@ class GuesslangClientCallbacks:
     def resolve_guess_predictions(
         cls,
         window: sublime.Window,
-        predictions: Sequence[GuesslangServerPredictionItem],
+        predictions: Iterable[GuesslangServerPredictionItem],
     ) -> Optional[Tuple[sublime.Syntax, float]]:
-        if not predictions:
+        if not (best_prediction := first_true(predictions, None)):
             return None
 
         settings = get_merged_plugin_settings(window=window)
         syntax_map: Dict[str, List[str]] = settings.get("guesslang.syntax_map", {})
-        best_prediction = predictions[0]
 
         if not (syntax_likes := cls.resolve_language_id(syntax_map, best_prediction["languageId"])):
             Logger.log(f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}', window=window)
@@ -114,7 +114,7 @@ class GuesslangClientCallbacks:
     @classmethod
     def resolve_language_id(
         cls,
-        syntax_map: Dict[str, List[str]],
+        syntax_map: Mapping[str, Iterable[str]],
         language_id: str,
         *,
         referred: Optional[Set[str]] = None,
