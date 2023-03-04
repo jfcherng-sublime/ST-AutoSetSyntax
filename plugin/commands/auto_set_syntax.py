@@ -4,7 +4,7 @@ from functools import wraps
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, List, Optional, Set, Tuple, TypeVar, cast
+from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Set, Tuple, TypeVar, cast
 
 import sublime
 import sublime_plugin
@@ -92,23 +92,16 @@ class GuesslangClientCallbacks:
     def resolve_guess_predictions(
         cls,
         window: sublime.Window,
-        predictions: List[GuesslangServerPredictionItem],
+        predictions: Sequence[GuesslangServerPredictionItem],
     ) -> Optional[Tuple[sublime.Syntax, float]]:
         if not predictions:
             return None
 
         settings = get_merged_plugin_settings(window=window)
         syntax_map: Dict[str, List[str]] = settings.get("guesslang.syntax_map", {})
-        min_confidence: float = settings.get("guesslang.confidence_threshold", 0)
-
         best_prediction = predictions[0]
-        # confidence < 0 means unknown confidence
-        if 0 <= best_prediction["confidence"] < min_confidence:
-            Logger.log(f'👎 Prediction confidence too low: {best_prediction["confidence"]}', window=window)
-            return None
 
-        syntax_likes = cls.resolve_language_id(syntax_map, best_prediction["languageId"])
-        if not syntax_likes:
+        if not (syntax_likes := cls.resolve_language_id(syntax_map, best_prediction["languageId"])):
             Logger.log(f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}', window=window)
             return None
 

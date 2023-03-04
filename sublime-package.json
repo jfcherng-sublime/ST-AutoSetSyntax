@@ -477,11 +477,6 @@
                   "type": "number",
                   "default": -1
                 },
-                "guesslang.confidence_threshold": {
-                  "markdownDescription": "The ML model will give a confidence within a range of `0 ~ 1` for the best gussed syntax. This setting control the min confidence which convinces ST to adopt its prediction.",
-                  "type": "number",
-                  "default": 0.15
-                },
                 "guesslang.syntax_map": {
                   "markdownDescription": "The relationship between `languageId`s in VSCode and syntaxes in ST.",
                   "type": "object",
