@@ -38,6 +38,7 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
             "gutter": False,
             "is_widget": True,  # ST 3 convention for a non-normal view
             "line_numbers": False,
+            "scroll_context_lines": 0,
             "scroll_past_end": False,
             "spell_check": False,
             "word_wrap": False,
