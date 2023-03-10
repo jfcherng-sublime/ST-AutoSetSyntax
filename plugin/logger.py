@@ -22,7 +22,7 @@ def _editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
 
 
 def _find_log_panel(obj: Any) -> Optional[sublime.View]:
-    return window.find_output_panel(PLUGIN_NAME) if (window := resolve_window(obj) or sublime.active_window()) else None
+    return (resolve_window(obj) or sublime.active_window()).find_output_panel(PLUGIN_NAME)
 
 
 def _create_log_panel(window: sublime.Window) -> sublime.View:
@@ -106,22 +106,19 @@ class AutoSetSyntaxUpdateLogCommand(sublime_plugin.TextCommand):
         return False
 
     def run(self, edit: sublime.Edit, region: List[int], msg: str) -> None:
-        with _editable_view(self.view) as view:
-            view.replace(edit, sublime.Region(*region), msg)
+        with _editable_view(self.view):
+            self.view.replace(edit, sublime.Region(*region), msg)
 
 
-class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
+class AutoSetSyntaxAppendLogCommand(sublime_plugin.WindowCommand):
     """Internal use only."""
 
     def is_visible(self) -> bool:
         return False
 
-    def run(self, edit: sublime.Edit, msg: str, squash_history: bool = True) -> None:
-        if not (window := self.view.window()):
-            return
-
-        if not (panel := _find_log_panel(window)):
-            panel = _create_log_panel(window)
+    def run(self, msg: str, squash_history: bool = True) -> None:
+        if not (panel := _find_log_panel(self.window)):
+            panel = _create_log_panel(self.window)
 
         if (
             squash_history
@@ -156,7 +153,7 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
             return
 
         if panel := _find_log_panel(window):
-            with _editable_view(panel) as panel:
+            with _editable_view(panel):
                 panel.erase(edit, sublime.Region(0, panel.size()))
 
 
@@ -170,10 +167,4 @@ class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
         return bool(_find_log_panel(self.window))
 
     def run(self) -> None:
-        self.window.run_command(
-            "show_panel",
-            {
-                "panel": f"output.{PLUGIN_NAME}",
-                "toggle": True,
-            },
-        )
+        self.window.run_command("show_panel", {"panel": f"output.{PLUGIN_NAME}", "toggle": True})
