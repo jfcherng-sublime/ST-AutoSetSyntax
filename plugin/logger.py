@@ -1,7 +1,7 @@
 import math
 import re
 from contextlib import contextmanager
-from typing import Any, Dict, Final, Generator, Optional
+from typing import Any, Dict, Final, Generator, List, Optional
 
 import sublime
 import sublime_plugin
@@ -99,6 +99,17 @@ class Logger:
             sublime.set_timeout_async(panel.clear_undo_stack)
 
 
+class AutoSetSyntaxUpdateLogCommand(sublime_plugin.TextCommand):
+    """Internal use only."""
+
+    def is_visible(self) -> bool:
+        return False
+
+    def run(self, edit: sublime.Edit, region: List[int], msg: str) -> None:
+        with _editable_view(self.view) as view:
+            view.replace(edit, sublime.Region(*region), msg)
+
+
 class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
     """Internal use only."""
 
@@ -123,8 +134,7 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.TextCommand):
         else:
             replace_region = sublime.Region(panel.size())  # EOF
 
-        with _editable_view(panel) as panel:
-            panel.replace(edit, replace_region, f"{msg}\n")
+        panel.run_command("auto_set_syntax_update_log", {"region": replace_region.to_tuple(), "msg": f"{msg}\n"})
 
 
 class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):

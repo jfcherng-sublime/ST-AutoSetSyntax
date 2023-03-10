@@ -23,7 +23,12 @@ from .listener import (
     set_up_window,
     tear_down_window,
 )
-from .logger import AutoSetSyntaxAppendLogCommand, AutoSetSyntaxClearLogPanelCommand, AutoSetSyntaxToggleLogPanelCommand
+from .logger import (
+    AutoSetSyntaxAppendLogCommand,
+    AutoSetSyntaxClearLogPanelCommand,
+    AutoSetSyntaxToggleLogPanelCommand,
+    AutoSetSyntaxUpdateLogCommand,
+)
 from .rules import AbstractConstraint, AbstractMatch, MatchableRule
 from .settings import AioSettings, extra_settings_producer, get_merged_plugin_setting
 from .shared import G
@@ -38,6 +43,7 @@ __all__ = (
     "AutoSetSyntaxAppendLogCommand",
     "AutoSetSyntaxClearLogPanelCommand",
     "AutoSetSyntaxToggleLogPanelCommand",
+    "AutoSetSyntaxUpdateLogCommand",
     # ST: commands
     "AutoSetSyntaxCommand",
     "AutoSetSyntaxCreateNewConstraintCommand",
