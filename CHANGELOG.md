@@ -1,12 +1,18 @@
 # AutoSetSyntax Changelog
 
+## 2.11.6
+
+- fix: lots of error messages with GitSavvy (continued)
+
+  For the `AutoSetSyntax: Clear Log Panel` case.
+
 ## 2.11.5
 
 - fix: lots of error messages with `GitSavvy`
 
   For more details, see https://discord.com/channels/280102180189634562/280157067396775936/1083804884924633088
 
-- refactor: remove useless "guesslang.confidence_threshold" setting
+- refactor: remove useless `guesslang.confidence_threshold` setting
 
 ## 2.11.4
 
