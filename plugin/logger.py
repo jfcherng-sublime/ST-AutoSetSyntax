@@ -134,27 +134,23 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.WindowCommand):
         panel.run_command("auto_set_syntax_update_log", {"region": replace_region.to_tuple(), "msg": f"{msg}\n"})
 
 
-class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.TextCommand):
+class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.WindowCommand):
     """Clear the plugin log panel for the current window."""
 
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Clear Log Panel"
 
     def is_enabled(self) -> bool:
-        return bool(_find_log_panel(self.view))
+        return bool(_find_log_panel(self.window))
 
-    def run(self, edit: sublime.Edit, from_logger: bool = False) -> None:
-        if not (window := self.view.window()):
-            return
-
+    def run(self, *, from_logger: bool = False) -> None:
         # ensure command is triggered by the logger so that we can maintain internal states
         if not from_logger:
-            Logger.clear(window=window)
+            Logger.clear(window=self.window)
             return
 
-        if panel := _find_log_panel(window):
-            with _editable_view(panel):
-                panel.erase(edit, sublime.Region(0, panel.size()))
+        if panel := _find_log_panel(self.window):
+            panel.run_command("auto_set_syntax_update_log", {"region": (0, panel.size()), "msg": ""})
 
 
 class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
