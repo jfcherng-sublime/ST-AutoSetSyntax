@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
-site_name: AutoSetSyntax Documentation
+site_name: AutoSetSyntax Document
 site_description: Syntax detector for Sublime Text.
 site_author: Jack Cherng
 site_url: https://github.com/jfcherng-sublime/ST-AutoSetSyntax

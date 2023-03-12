@@ -22,9 +22,9 @@ AutoSetSyntax helps you set the syntax for a view automatically in various ways:
 
 This package is available on [Package Control][package-control] by the name of [AutoSetSyntax][autosetsyntax].
 
-## Documentation
+## Documents
 
-https://jfcherng-sublime.github.io/ST-AutoSetSyntax/
+- https://jfcherng-sublime.github.io/ST-AutoSetSyntax/
 
 [autosetsyntax]: https://packagecontrol.io/packages/AutoSetSyntax
 [package-control]: https://packagecontrol.io
