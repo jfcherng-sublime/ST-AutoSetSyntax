@@ -409,25 +409,21 @@ def get_expand_variable_map() -> Dict[str, str]:
         if not (version := max(list_node_versions(base_dir), default=None)):
             return None
 
-        return (base_dir / f"{version}/node", version)
+        return (base_dir, version)
 
-    def get_electron_path(node_dir: Path) -> Path:
-        electron_dist_dir = node_dir / "node_modules/electron/dist"
-        if ST_PLATFORM == "osx":
-            return electron_dist_dir / "Electron.app/Contents/MacOS/Electron"
-        if ST_PLATFORM == "windows":
-            return electron_dist_dir / "electron.exe"
-        return electron_dist_dir / "electron"
+    def get_node_path_candidates(node_version_dir: Path) -> Generator[Path, None, None]:
+        yield node_version_dir / "Electron.app/Contents/MacOS/Electron"  # Electron (Linux)
+        yield node_version_dir / "electron"  # Electron (Linux)
+        yield node_version_dir / "electron.exe"  # Electron (Windows)
+        yield node_version_dir / "node/bin/node"  # Node.js (Linux & Mac)
+        yield node_version_dir / "node/node.exe"  # Node.js (Windows)
 
-    def get_node_path(node_dir: Path) -> Path:
-        return node_dir / ("node.exe" if ST_PLATFORM == "windows" else "bin/node")
+    def get_node_path(node_version_dir: Path) -> Optional[Path]:
+        return first_true(get_node_path_candidates(node_version_dir), None, pred=lambda path: path.is_file())
 
     if node_info := find_latest_lsp_utils_node(paths["package_storage"]):
-        node_dir = node_info[0]
-        electron_path = get_electron_path(node_dir)
-        node_path = get_node_path(node_dir)
-        paths["lsp_utils_node_dir"] = node_dir
-        paths["lsp_utils_node_bin"] = electron_path if electron_path.is_file() else node_path
+        node_version_dir = node_info[0] / str(node_info[1])
+        paths["lsp_utils_node_bin"] = get_node_path(node_version_dir) or Path.cwd()
 
     return {name: str(path.resolve()) for name, path in paths.items()}
 
