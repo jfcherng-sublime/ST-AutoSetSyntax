@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.7
+
+- fix: Electron path of lsp_utils
+
 ## 2.11.6
 
 - fix: lots of error messages with GitSavvy (continued)
