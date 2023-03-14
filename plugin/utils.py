@@ -29,7 +29,6 @@ from typing import (
 import sublime
 
 from .cache import clearable_lru_cache
-from .constants import ST_PLATFORM
 from .libs.trie import TrieNode
 from .types import SemanticVersion, SyntaxLike
 
@@ -419,7 +418,11 @@ def get_expand_variable_map() -> Dict[str, str]:
         yield node_version_dir / "node/node.exe"  # Node.js (Windows)
 
     def get_node_path(node_version_dir: Path) -> Optional[Path]:
-        return first_true(get_node_path_candidates(node_version_dir), None, pred=lambda path: path.is_file())
+        return first_true(
+            get_node_path_candidates(node_version_dir),
+            None,
+            pred=lambda path: bool(path and path.is_file()),
+        )
 
     if node_info := find_latest_lsp_utils_node(paths["package_storage"]):
         node_version_dir = node_info[0] / str(node_info[1])
