@@ -5,7 +5,6 @@ import threading
 import time
 import urllib.request
 import zipfile
-from functools import cmp_to_key
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
@@ -31,7 +30,8 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         self.t = threading.Thread(target=self._worker)
         self.t.start()
 
-    def _worker(self) -> None:
+    @classmethod
+    def _worker(cls) -> None:
         sublime.status_message("Begin downloading guesslang server...")
 
         if (server := G.guesslang_server) and server.is_running():
@@ -41,7 +41,7 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         shutil.rmtree(GuesslangServer.SERVER_DIR, ignore_errors=True)
 
         try:
-            self._prepare_bin()
+            cls._prepare_bin()
 
             if not GuesslangServer.SERVER_FILE.is_file():
                 sublime.error_message(f"[{PLUGIN_NAME}] Cannot find the server: {str(GuesslangServer.SERVER_FILE)}")
@@ -53,10 +53,8 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         except Exception as e:
             sublime.error_message(f"[{PLUGIN_NAME}] {e}")
 
-    def _prepare_bin(self) -> None:
-        def sorter(a: Path, b: Path) -> int:
-            return int(a.stat().st_mtime - b.stat().st_mtime)
-
+    @staticmethod
+    def _prepare_bin() -> None:
         zip_path = GuesslangServer.SERVER_DIR / "source.zip"
         download_file(GUESSLANG_SERVER_URL, zip_path)
         decompress_file(zip_path)
@@ -64,8 +62,8 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         # get the folder, which is just decompressed
         folder = first_true(
             sorted(
-                (path for path in zip_path.parent.iterdir() if path.is_dir()),
-                key=cmp_to_key(sorter),
+                filter(Path.is_dir, zip_path.parent.iterdir()),
+                key=lambda p: p.stat().st_mtime,
                 reverse=True,
             ),
         )

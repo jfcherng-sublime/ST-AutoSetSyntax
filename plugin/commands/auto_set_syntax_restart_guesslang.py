@@ -12,6 +12,7 @@ from ..guesslang.server import GuesslangServer
 from ..logger import Logger
 from ..settings import get_merged_plugin_setting
 from ..shared import G
+from ..utils import first_true
 from .auto_set_syntax import GuesslangClientCallbacks
 
 
@@ -28,18 +29,20 @@ class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):
 
     def _worker(self) -> None:
         window = sublime.active_window()
-        host = "localhost"
         port_raw = get_merged_plugin_setting("guesslang.port")
-        if (port := resolve_port(port_raw)) < 0:
-            Logger.log(f"⚠ Guesslang server port is unusable: {port_raw}", window=window)
+        if (port := _resolve_port(port_raw)) < 0:
+            Logger.log(f"❌ Guesslang server port is unusable: {port_raw}", window=window)
+            return
 
-        G.guesslang_server = GuesslangServer(host, port)
+        host = "localhost"
+        G.guesslang_client = G.guesslang_client or GuesslangClient(host, port, callback=GuesslangClientCallbacks())
+        G.guesslang_server = G.guesslang_server or GuesslangServer(host, port)
         if G.guesslang_server.restart():
             time.sleep(1)  # wait for server initialization
-            G.guesslang_client = GuesslangClient(host, port, callback=GuesslangClientCallbacks())
+            G.guesslang_client.connect()
 
 
-def resolve_port(port: Union[int, str]) -> int:
+def _resolve_port(port: Union[int, str]) -> int:
     try:
         port = int(port)
     except ValueError:
@@ -48,9 +51,9 @@ def resolve_port(port: Union[int, str]) -> int:
         ports: Iterable[int] = (port,)
     else:
         ports = range(30000, 65536)
-    return next((p for p in ports if not is_port_in_use(p)), -1)
+    return first_true(ports, -1, pred=_is_port_available)
 
 
-def is_port_in_use(port: Union[int, str]) -> bool:
+def _is_port_available(port: Union[int, str]) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(("localhost", int(port))) == 0
+        return s.connect_ex(("localhost", int(port))) != 0

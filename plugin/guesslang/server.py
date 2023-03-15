@@ -4,9 +4,8 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Final, Optional, Sequence, Set, Union
 
-import sublime
-
-from ..constants import PLUGIN_NAME, PLUGIN_STORAGE_DIR
+from ..constants import PLUGIN_STORAGE_DIR
+from ..logger import Logger
 from ..settings import get_merged_plugin_setting
 from ..utils import expand_variables
 
@@ -24,7 +23,7 @@ class GuesslangServer:
     def start(self) -> bool:
         """Starts the guesslang server and return whether it starts."""
         if not is_executable(node_path := parse_node_path()):
-            sublime.error_message(f'[{PLUGIN_NAME}] Node.js binary not found or not executable: "{node_path}"')
+            Logger.log(f'❌ Node.js binary not found or not executable: "{node_path}"')
             return False
 
         try:
@@ -39,14 +38,14 @@ class GuesslangServer:
                 },
             )
         except Exception as e:
-            sublime.error_message(f"[{PLUGIN_NAME}] Failed starting guesslang server because {e}")
+            Logger.log(f"❌ Failed starting guesslang server because {e}")
             return False
 
         if process.stdout and process.stdout.read(2) == "OK":
             self._subprocesses.add(process)
             return True
 
-        sublime.error_message(f"[{PLUGIN_NAME}] Failed starting guesslang server.")
+        Logger.log("❌ Failed starting guesslang server.")
         return False
 
     def stop(self) -> None:

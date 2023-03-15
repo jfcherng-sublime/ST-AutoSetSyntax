@@ -3,6 +3,7 @@
 import inspect
 import operator
 import re
+import sys
 import tempfile
 import threading
 from functools import cmp_to_key, lru_cache, reduce, wraps
@@ -50,15 +51,19 @@ def snake_to_camel(s: str, upper_first: bool = True) -> str:
     return (first.title() if upper_first else first.lower()) + "".join(map(str.title, others))
 
 
-def remove_prefix(s: str, prefix: str) -> str:
-    """Remove the prefix from the string. I.e., str.removeprefix in Python 3.9."""
-    return s[len(prefix) :] if s.startswith(prefix) else s
+if sys.version_info >= (3, 9):
+    remove_prefix = str.removeprefix
+    remove_suffix = str.removesuffix
+else:
 
+    def remove_prefix(s: str, prefix: str) -> str:
+        """Remove the prefix from the string. I.e., str.removeprefix in Python 3.9."""
+        return s[len(prefix) :] if s.startswith(prefix) else s
 
-def remove_suffix(s: str, suffix: str) -> str:
-    """Remove the suffix from the string. I.e., str.removesuffix in Python 3.9."""
-    # suffix="" should not call s[:-0]
-    return s[: -len(suffix)] if suffix and s.endswith(suffix) else s
+    def remove_suffix(s: str, suffix: str) -> str:
+        """Remove the suffix from the string. I.e., str.removesuffix in Python 3.9."""
+        # suffix="" should not call s[:-0]
+        return s[: -len(suffix)] if suffix and s.endswith(suffix) else s
 
 
 @clearable_lru_cache()
@@ -188,7 +193,7 @@ def list_all_subclasses(
     if not skip_self and not (skip_abstract and inspect.isabstract(root)):
         yield root
     for leaf in root.__subclasses__():
-        yield from list_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)  # type: ignore
+        yield from list_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)
 
 
 @overload
@@ -420,13 +425,12 @@ def get_expand_variable_map() -> Dict[str, str]:
     def get_node_path(node_version_dir: Path) -> Optional[Path]:
         return first_true(
             get_node_path_candidates(node_version_dir),
-            None,
             pred=lambda path: bool(path and path.is_file()),
         )
 
     if node_info := find_latest_lsp_utils_node(paths["package_storage"]):
         node_version_dir = node_info[0] / str(node_info[1])
-        paths["lsp_utils_node_bin"] = get_node_path(node_version_dir) or Path.cwd()
+        paths["lsp_utils_node_bin"] = get_node_path(node_version_dir) or Path("LSP_UTILS_NODE_NOT_FOUND")
 
     return {name: str(path.resolve()) for name, path in paths.items()}
 

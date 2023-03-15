@@ -26,17 +26,16 @@ T = TypeVar("T")
 
 
 def find_constraint(obj: Any) -> Optional[Type[AbstractConstraint]]:
-    return first_true(get_constraints(), pred=lambda t: t.is_supported(obj))
+    return first_true(get_constraints(), pred=lambda t: t.can_support(obj))
 
 
 @clearable_lru_cache()
 def get_constraints() -> Tuple[Type[AbstractConstraint], ...]:
-    return tuple(
-        sorted(
-            list_all_subclasses(AbstractConstraint, skip_abstract=True),  # type: ignore
-            key=lambda cls: cls.name(),
-        )
-    )
+    return tuple(sorted(list_constraints(), key=lambda cls: cls.name()))
+
+
+def list_constraints() -> Generator[Type[AbstractConstraint], None, None]:
+    yield from list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore
 
 
 @dataclass
@@ -105,7 +104,7 @@ class AbstractConstraint(ABC):
 
     @final
     @classmethod
-    def is_supported(cls, obj: Any) -> bool:
+    def can_support(cls, obj: Any) -> bool:
         """Determines whether this class supports `obj`."""
         return str(obj) == cls.name()
 

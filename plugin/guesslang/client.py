@@ -40,15 +40,14 @@ class GuesslangClient:
         self.host = host
         self.port = port
         self.callback = callback or NullTransportCallbacks()
-
+        # internals
         self._ws: Optional[websocket.WebSocketApp] = None
-        self._start_client_thread()
 
     def __del__(self) -> None:
         if self._ws:
             self._ws.close()
 
-    def _start_client_thread(self) -> None:
+    def connect(self) -> None:
         def _worker(client: GuesslangClient) -> None:
             client._ws = websocket.WebSocketApp(
                 f"ws://{client.host}:{client.port}",
@@ -59,9 +58,10 @@ class GuesslangClient:
             )
             client._ws.run_forever()
 
-        # websocket.enableTrace(True)
-        self.thread = threading.Thread(target=_worker, args=(self,))
-        self.thread.start()
+        if not self.is_connected():
+            # websocket.enableTrace(True)
+            self.thread = threading.Thread(target=_worker, args=(self,))
+            self.thread.start()
 
     def is_connected(self) -> bool:
         return bool(self._ws and self._ws.sock)

@@ -33,7 +33,6 @@ from .rules import AbstractConstraint, AbstractMatch, MatchableRule
 from .settings import AioSettings, extra_settings_producer, get_merged_plugin_setting
 from .shared import G
 from .types import ListenerEvent
-from .utils import remove_prefix
 
 __all__ = (
     # ST: core
@@ -78,7 +77,8 @@ def _plugin_loaded() -> None:
     for window in sublime.windows():
         set_up_window(window)
 
-    sublime.set_timeout_async(_run_on_startup_views)
+    if get_merged_plugin_setting("run_on_startup_views"):
+        sublime.set_timeout_async(_run_on_startup_views)
     sublime.run_command("auto_set_syntax_restart_guesslang")
 
 
@@ -102,18 +102,17 @@ def _load_custom_implementations() -> None:
     for finder, name, _ in pkgutil.iter_modules(map(str, PLUGIN_CUSTOM_MODULE_PATHS.values())):
         assert isinstance(finder, importlib.machinery.FileFinder)
         # something like "AutoSetSyntax-Custom/matches"
-        module_relative_path = Path(remove_prefix(finder.path, sublime.packages_path())).as_posix().strip("/")
+        module_relpath = Path(finder.path).relative_to(sublime.packages_path()).as_posix()
         # something like "AutoSetSyntax-Custom.matches"
-        module_base = module_relative_path.replace("/", ".")
+        module_base = module_relpath.replace("/", ".")
         module_name = f"{module_base}.{name}"
         try:
             importlib.import_module(module_name)
-            print(f"[{PLUGIN_NAME}] Load custom Implementation: {module_name}")
+            print(f"[{PLUGIN_NAME}][INFO] Load custom implementation: {module_name}")
         except ImportError as e:
-            print(f"[{PLUGIN_NAME}] _load_custom_implementations: {e}")
+            print(f"[{PLUGIN_NAME}][ERROR] Failed loading custom implementation: {e}")
 
 
 def _run_on_startup_views() -> None:
-    if get_merged_plugin_setting("run_on_startup_views"):
-        for view in G.startup_views:
-            run_auto_set_syntax_on_view(view, ListenerEvent.INIT)
+    for view in G.startup_views:
+        run_auto_set_syntax_on_view(view, ListenerEvent.INIT)

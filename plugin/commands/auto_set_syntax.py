@@ -58,8 +58,8 @@ class GuesslangClientCallbacks:
         except (TypeError, ValueError):
             Logger.log(f"💬 Guesslang server says: {message}")
             return
-        except KeyError as e:
-            print(f"[{PLUGIN_NAME}] {e}")
+        except Exception as e:
+            Logger.log(f"💣 Guesslang exception: {e}")
             return
 
         if not predictions or not (view := get_view_by_id(view_id)) or not (window := view.window()):
@@ -95,7 +95,7 @@ class GuesslangClientCallbacks:
         window: sublime.Window,
         predictions: Iterable[GuesslangServerPredictionItem],
     ) -> Optional[Tuple[sublime.Syntax, float]]:
-        if not (best_prediction := first_true(predictions, None)):
+        if not (best_prediction := first_true(predictions)):
             return None
 
         settings = get_merged_plugin_settings(window=window)
