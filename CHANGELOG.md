@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.8
+
+- refactor: tidy codes
+
 ## 2.11.7
 
 - fix: Electron path of lsp_utils
