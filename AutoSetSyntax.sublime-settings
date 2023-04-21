@@ -181,7 +181,7 @@
             "rules": [
                 {
                     "constraint": "path_contains_regex",
-                    "args": ["^.*/.git/config$"]
+                    "args": ["/\\.?git/config$"]
                 }
             ]
         },
