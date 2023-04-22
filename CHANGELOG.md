@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.9
+
+- chore: improve rule for git config file
+
 ## 2.11.8
 
 - refactor: tidy codes
