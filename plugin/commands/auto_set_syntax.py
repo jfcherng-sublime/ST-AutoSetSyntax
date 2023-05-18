@@ -1,3 +1,4 @@
+import re
 import uuid
 from contextlib import contextmanager
 from functools import wraps
@@ -203,6 +204,9 @@ def run_auto_set_syntax_on_view(
     } and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
+    if _may_assign_syntax_special_cases(view, event):
+        return True
+
     if event in {
         ListenerEvent.INIT,
         ListenerEvent.COMMAND,
@@ -343,6 +347,31 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
                     "trim_suffixes_auto": trim_suffixes_auto,
                 },
             )
+    return False
+
+
+def _may_assign_syntax_special_cases(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+    def is_large_file(view: sublime.View) -> bool:
+        return view.size() >= 10 * 1024  # 10KB
+
+    def is_json(view: sublime.View) -> bool:
+        view_size = view.size()
+        text_begin = re.sub(r"\s+", "", view.substr(sublime.Region(0, 10)))
+        text_end = re.sub(r"\s+", "", view.substr(sublime.Region(view_size - 10, view_size)))
+
+        return bool(
+            # map
+            (re.search(r'^\{"', text_begin) and re.search(r'(?:[\d"\]}]|true|false|null)\}$', text_end))
+            # array
+            or (re.search(r'^\["', text_begin) and re.search(r'(?:[\d"\]}]|true|false|null)\]$', text_end))
+            or (text_begin.startswith("[[") and text_end.endswith("]]"))
+            or (text_begin.startswith("[{") and text_end.endswith("}]"))
+        )
+
+    if is_large_file(view):
+        if is_json(view) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
+            return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "special case"})
+
     return False
 
 
