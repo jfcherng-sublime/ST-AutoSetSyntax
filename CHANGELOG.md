@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.10
+
+- feat: improve assigning JSON syntax for large JSON file
+
 ## 2.11.9
 
 - chore: improve rule for git config file
