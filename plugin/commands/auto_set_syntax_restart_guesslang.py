@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import socket
 import threading
 import time
-from typing import Iterable, Union
+from typing import Iterable
 
 import sublime
 import sublime_plugin
@@ -42,7 +44,7 @@ class AutoSetSyntaxRestartGuesslangCommand(sublime_plugin.ApplicationCommand):
             G.guesslang_client.connect()
 
 
-def _resolve_port(port: Union[int, str]) -> int:
+def _resolve_port(port: int | str) -> int:
     try:
         port = int(port)
     except ValueError:
@@ -54,6 +56,6 @@ def _resolve_port(port: Union[int, str]) -> int:
     return first_true(ports, -1, pred=_is_port_available)
 
 
-def _is_port_available(port: Union[int, str]) -> bool:
+def _is_port_available(port: int | str) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(("localhost", int(port))) != 0

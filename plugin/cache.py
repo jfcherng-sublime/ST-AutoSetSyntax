@@ -1,7 +1,9 @@
-from functools import _lru_cache_wrapper, lru_cache
-from typing import Any, Callable, Set, TypeVar, cast
+from __future__ import annotations
 
-_cached_functions: Set[_lru_cache_wrapper] = set()
+from functools import _lru_cache_wrapper, lru_cache
+from typing import Any, Callable, TypeVar, cast
+
+_cached_functions: set[_lru_cache_wrapper] = set()
 
 _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
 

@@ -1,4 +1,6 @@
-from typing import Any, Dict, Mapping
+from __future__ import annotations
+
+from typing import Any, Mapping
 
 import sublime
 import sublime_plugin
@@ -41,7 +43,7 @@ TEMPLATE = f"""
 """.lstrip()
 
 
-def _pythonize(d: Mapping[str, Any]) -> Dict[str, str]:
+def _pythonize(d: Mapping[str, Any]) -> dict[str, str]:
     return {k: stringify(v) for k, v in d.items()}
 
 
@@ -50,7 +52,7 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
         return f"{PLUGIN_NAME}: Debug Information"
 
     def run(self) -> None:
-        info: Dict[str, Any] = {}
+        info: dict[str, Any] = {}
 
         info["env"] = {
             "sublime_text": f"{ST_VERSION} ({ST_PLATFORM_ARCH} {ST_CHANNEL} build) with Python {PY_VERSION}",

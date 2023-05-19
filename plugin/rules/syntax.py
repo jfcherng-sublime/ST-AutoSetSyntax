@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generator, Iterable, List, Optional, Set, Tuple
+from typing import Generator, Iterable
 
 import sublime
 
@@ -14,12 +14,12 @@ from .match import MatchRule
 @dataclass
 class SyntaxRule(Optimizable):
     comment: str = ""
-    syntax: Optional[sublime.Syntax] = None
-    syntaxes_name: Optional[Tuple[str, ...]] = tuple()
+    syntax: sublime.Syntax | None = None
+    syntaxes_name: tuple[str, ...] | None = tuple()
     selector: str = "text.plain"
-    on_events: Optional[Set[ListenerEvent]] = None
+    on_events: set[ListenerEvent] | None = None
     """`None` = no restriction, empty = no event = never triggered."""
-    root_rule: Optional[MatchRule] = None
+    root_rule: MatchRule | None = None
 
     def is_droppable(self) -> bool:
         return not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule)
@@ -35,7 +35,7 @@ class SyntaxRule(Optimizable):
                     yield self.root_rule
                     self.root_rule = None
 
-    def test(self, view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+    def test(self, view: sublime.View, event: ListenerEvent | None = None) -> bool:
         if event and self.on_events is not None and event not in self.on_events:
             return False
 
@@ -79,13 +79,13 @@ class SyntaxRule(Optimizable):
 @dataclass
 class SyntaxRuleCollection(Optimizable):
     version: str = VERSION
-    rules: Tuple[SyntaxRule, ...] = tuple()
+    rules: tuple[SyntaxRule, ...] = tuple()
 
     def __len__(self) -> int:
         return len(self.rules)
 
     def optimize(self) -> Generator[Optimizable, None, None]:
-        rules: List[SyntaxRule] = []
+        rules: list[SyntaxRule] = []
         for rule in self.rules:
             if rule.is_droppable():
                 yield rule
@@ -97,7 +97,7 @@ class SyntaxRuleCollection(Optimizable):
             rules.append(rule)
         self.rules = tuple(rules)
 
-    def test(self, view: sublime.View, event: Optional[ListenerEvent] = None) -> Optional[SyntaxRule]:
+    def test(self, view: sublime.View, event: ListenerEvent | None = None) -> SyntaxRule | None:
         return first_true(self.rules, pred=lambda rule: rule.test(view, event))
 
     @classmethod

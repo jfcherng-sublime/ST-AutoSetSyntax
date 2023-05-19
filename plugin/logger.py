@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import math
 import re
 from contextlib import contextmanager
-from typing import Any, Dict, Final, Generator, List, Optional
+from typing import Any, Final, Generator
 
 import sublime
 import sublime_plugin
@@ -21,7 +23,7 @@ def _editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
         view.set_read_only(is_read_only)
 
 
-def _find_log_panel(obj: Any) -> Optional[sublime.View]:
+def _find_log_panel(obj: Any) -> sublime.View | None:
     return (resolve_window(obj) or sublime.active_window()).find_output_panel(PLUGIN_NAME)
 
 
@@ -51,11 +53,11 @@ class Logger:
     DELIMITER: Final[str] = "-" * 10
     SYNTAX_FILE: Final[str] = f"Packages/{PLUGIN_NAME}/syntaxes/AutoSetSyntaxLog.sublime-syntax"
 
-    history_counts: Dict[int, int] = {}
+    history_counts: dict[int, int] = {}
     """per-window, WindowId => history count"""
 
     @classmethod
-    def log(cls, msg: str, *, window: Optional[sublime.Window] = None, enabled: bool = True) -> None:
+    def log(cls, msg: str, *, window: sublime.Window | None = None, enabled: bool = True) -> None:
         window = window or sublime.active_window()
         if not (enabled and get_merged_plugin_setting("enable_log", window=window)):
             return
@@ -69,14 +71,14 @@ class Logger:
         cls._clear_undo_stack(window)
 
     @classmethod
-    def clear(cls, *, window: Optional[sublime.Window] = None) -> None:
+    def clear(cls, *, window: sublime.Window | None = None) -> None:
         window = window or sublime.active_window()
         window.run_command("auto_set_syntax_clear_log_panel", {"from_logger": True})
         cls._set_history_count(window, 0)
         cls._clear_undo_stack(window)
 
     @classmethod
-    def destroy(cls, *, window: Optional[sublime.Window] = None) -> None:
+    def destroy(cls, *, window: sublime.Window | None = None) -> None:
         window = window or sublime.active_window()
         window.destroy_output_panel(PLUGIN_NAME)
         cls.history_counts.pop(window.id(), None)
@@ -105,7 +107,7 @@ class AutoSetSyntaxUpdateLogCommand(sublime_plugin.TextCommand):
     def is_visible(self) -> bool:
         return False
 
-    def run(self, edit: sublime.Edit, region: List[int], msg: str) -> None:
+    def run(self, edit: sublime.Edit, region: list[int], msg: str) -> None:
         with _editable_view(self.view):
             self.view.replace(edit, sublime.Region(*region), msg)
 

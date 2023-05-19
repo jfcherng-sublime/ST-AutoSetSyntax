@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC
 from pathlib import Path
-from typing import Optional
 
 import sublime
 import sublime_plugin
@@ -13,7 +14,7 @@ from ..utils import find_syntax_by_syntax_like
 class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
     template_type = ""
     template_file = ""
-    template_syntax: Optional[str] = None
+    template_syntax: str | None = None
     save_dir = ""
 
     def description(self) -> str:
@@ -51,8 +52,8 @@ def _clone_file_as_template(
     window: sublime.Window,
     source_path: str,
     save_dir: str,
-    syntax: Optional[SyntaxLike] = None,
-) -> Optional[sublime.View]:
+    syntax: SyntaxLike | None = None,
+) -> sublime.View | None:
     try:
         template = sublime.load_resource(source_path)
     except FileNotFoundError as e:

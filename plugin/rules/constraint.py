@@ -4,7 +4,7 @@ import operator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Iterable, Optional, Pattern, Tuple, Type, TypeVar, Union, final
+from typing import Any, Callable, Generator, Iterable, Pattern, TypeVar, final
 
 import sublime
 
@@ -25,25 +25,25 @@ from ..utils import (
 T = TypeVar("T")
 
 
-def find_constraint(obj: Any) -> Optional[Type[AbstractConstraint]]:
+def find_constraint(obj: Any) -> type[AbstractConstraint] | None:
     return first_true(get_constraints(), pred=lambda t: t.can_support(obj))
 
 
 @clearable_lru_cache()
-def get_constraints() -> Tuple[Type[AbstractConstraint], ...]:
+def get_constraints() -> tuple[type[AbstractConstraint], ...]:
     return tuple(sorted(list_constraints(), key=lambda cls: cls.name()))
 
 
-def list_constraints() -> Generator[Type[AbstractConstraint], None, None]:
+def list_constraints() -> Generator[type[AbstractConstraint], None, None]:
     yield from list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore
 
 
 @dataclass
 class ConstraintRule(Optimizable):
-    constraint: Optional[AbstractConstraint] = None
+    constraint: AbstractConstraint | None = None
     constraint_name: str = ""
-    args: Tuple[Any, ...] = tuple()
-    kwargs: Dict[str, Any] = field(default_factory=dict)
+    args: tuple[Any, ...] = tuple()
+    kwargs: dict[str, Any] = field(default_factory=dict)
     inverted: bool = False  # whether the test result should be inverted
 
     def is_droppable(self) -> bool:
@@ -120,7 +120,7 @@ class AbstractConstraint(ABC):
         """Tests whether the `view` passes this constraint."""
 
     @final
-    def _handled_args(self, normalizer: Optional[Callable[[T], T]] = None) -> Tuple[T, ...]:
+    def _handled_args(self, normalizer: Callable[[T], T] | None = None) -> tuple[T, ...]:
         """Filter falsy args and normalize them. Note that `0`, `""` and `None` are falsy."""
         args: Iterable[T] = filter(None, self.args)
         if normalizer:
@@ -129,7 +129,7 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def _handled_comparator(comparator: str) -> Optional[Callable[[Any, Any], bool]]:
+    def _handled_comparator(comparator: str) -> Callable[[Any, Any], bool] | None:
         """Convert the comparator string into a callable."""
         if comparator in {"<", "lt"}:
             return operator.lt
@@ -147,7 +147,7 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def _handled_regex(args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Pattern[str]:
+    def _handled_regex(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Pattern[str]:
         """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
         return compile_regex(
             merge_regexes(args),
@@ -156,7 +156,7 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def _handled_case_insensitive(kwargs: Dict[str, Any]) -> bool:
+    def _handled_case_insensitive(kwargs: dict[str, Any]) -> bool:
         """Returns `case_insensitive` in `kwars`. Defaulted to platform's specification."""
         return bool(kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}))
 
@@ -170,7 +170,7 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def find_parent_with_sibling(base: Union[str, Path], sibling: str, *, use_exists: bool = False) -> Optional[Path]:
+    def find_parent_with_sibling(base: str | Path, sibling: str, *, use_exists: bool = False) -> Path | None:
         """Find the first parent directory which contains `sibling`."""
         path = Path(base).resolve()
 

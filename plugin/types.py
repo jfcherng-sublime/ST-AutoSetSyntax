@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Generator, List, Optional, Tuple, TypedDict, Union
+from typing import Any, Generator, TypedDict, Union
 
 import sublime
 
@@ -29,7 +29,7 @@ class ListenerEvent(Enum):
         return str(self.value)
 
     @classmethod
-    def from_value(cls, value: Any) -> Optional[ListenerEvent]:
+    def from_value(cls, value: Any) -> ListenerEvent | None:
         try:
             return cls(value)
         except ValueError:
@@ -53,8 +53,8 @@ class ST_ConstraintRule(TypedDict):
     """Typed dict for corresponding ST settings."""
 
     constraint: str
-    args: Optional[Union[List[Any], Any]]
-    kwargs: Optional[Dict[str, Any]]
+    args: list[Any] | Any | None
+    kwargs: dict[str, Any] | None
     inverted: bool
 
 
@@ -62,9 +62,9 @@ class ST_MatchRule(TypedDict):
     """Typed dict for corresponding ST settings."""
 
     match: str
-    args: Optional[Union[List[Any], Any]]
-    kwargs: Optional[Dict[str, Any]]
-    rules: List[Union[ST_MatchRule, ST_ConstraintRule]]  # type: ignore
+    args: list[Any] | Any | None
+    kwargs: dict[str, Any] | None
+    rules: list[ST_MatchRule | ST_ConstraintRule]  # type: ignore
 
 
 class ST_SyntaxRule(ST_MatchRule):
@@ -72,8 +72,8 @@ class ST_SyntaxRule(ST_MatchRule):
 
     comment: str
     selector: str
-    syntaxes: Union[str, List[str]]
-    on_events: Optional[Union[str, List[str]]]
+    syntaxes: str | list[str]
+    on_events: str | list[str] | None
 
 
 @dataclass
@@ -98,17 +98,17 @@ class SemanticVersion:
             return NotImplemented
         return self.to_tuple() < other.to_tuple()
 
-    def __init__(self, major: Union[int, str] = 0, minor: Union[int, str] = 0, patch: Union[int, str] = 0) -> None:
+    def __init__(self, major: int | str = 0, minor: int | str = 0, patch: int | str = 0) -> None:
         self.major = int(major)
         self.minor = int(minor)
         self.patch = int(patch)
 
     @classmethod
-    def from_str(cls, version: str) -> Optional[SemanticVersion]:
+    def from_str(cls, version: str) -> SemanticVersion | None:
         try:
             return cls(*version.split("."))
         except Exception:
             return None
 
-    def to_tuple(self) -> Tuple[int, int, int]:
+    def to_tuple(self) -> tuple[int, int, int]:
         return (self.major, self.minor, self.patch)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generator, List, Optional, Tuple, Type, Union, final
+from typing import Any, Generator, Union, final
 
 import sublime
 
@@ -12,16 +12,16 @@ from ..utils import camel_to_snake, first_true, list_all_subclasses, remove_suff
 from .constraint import ConstraintRule
 
 
-def find_match(obj: Any) -> Optional[Type[AbstractMatch]]:
+def find_match(obj: Any) -> type[AbstractMatch] | None:
     return first_true(get_matches(), pred=lambda t: t.can_support(obj))
 
 
 @clearable_lru_cache()
-def get_matches() -> Tuple[Type[AbstractMatch], ...]:
+def get_matches() -> tuple[type[AbstractMatch], ...]:
     return tuple(sorted(list_matches(), key=lambda cls: cls.name()))
 
 
-def list_matches() -> Generator[Type[AbstractMatch], None, None]:
+def list_matches() -> Generator[type[AbstractMatch], None, None]:
     yield from list_all_subclasses(AbstractMatch, skip_abstract=True)  # type: ignore
 
 
@@ -29,17 +29,17 @@ def list_matches() -> Generator[Type[AbstractMatch], None, None]:
 class MatchRule(Optimizable):
     DEFAULT_MATCH_NAME = "any"
 
-    match: Optional[AbstractMatch] = None
+    match: AbstractMatch | None = None
     match_name: str = ""
-    args: Tuple[Any, ...] = tuple()
-    kwargs: Dict[str, Any] = field(default_factory=dict)
-    rules: Tuple[MatchableRule, ...] = tuple()
+    args: tuple[Any, ...] = tuple()
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    rules: tuple[MatchableRule, ...] = tuple()
 
     def is_droppable(self) -> bool:
         return not (self.rules and self.match and not self.match.is_droppable(self.rules))
 
     def optimize(self) -> Generator[Optimizable, None, None]:
-        rules: List[MatchableRule] = []
+        rules: list[MatchableRule] = []
         for rule in self.rules:
             if rule.is_droppable():
                 yield rule
@@ -72,9 +72,9 @@ class MatchRule(Optimizable):
             obj.match_name = match
             obj.match = match_class(*obj.args, **obj.kwargs)
 
-        rules_compiled: List[MatchableRule] = []
+        rules_compiled: list[MatchableRule] = []
         for rule in match_rule.get("rules", []):
-            rule_class: Optional[Type[MatchableRule]] = None
+            rule_class: type[MatchableRule] | None = None
             if "constraint" in rule:
                 rule_class = ConstraintRule
             elif "rules" in rule:  # nested MatchRule
@@ -107,7 +107,7 @@ class AbstractMatch(ABC):
         """Determines whether this class supports `obj`."""
         return str(obj) == cls.name()
 
-    def is_droppable(self, rules: Tuple[MatchableRule, ...]) -> bool:
+    def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         """
         Determines whether this object is droppable.
         If it's droppable, then it may be dropped by who holds it during optimizing.
@@ -115,12 +115,12 @@ class AbstractMatch(ABC):
         return False
 
     @abstractmethod
-    def test(self, view: sublime.View, rules: Tuple[MatchableRule, ...]) -> bool:
+    def test(self, view: sublime.View, rules: tuple[MatchableRule, ...]) -> bool:
         """Tests whether the `view` passes this `match` with those `rules`."""
 
     @final
     @staticmethod
-    def test_count(view: sublime.View, rules: Tuple[MatchableRule, ...], goal: float) -> bool:
+    def test_count(view: sublime.View, rules: tuple[MatchableRule, ...], goal: float) -> bool:
         """Tests whether the amount of passing `rules` is greater than or equal to `goal`."""
         if goal <= 0:
             return True

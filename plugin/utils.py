@@ -1,4 +1,5 @@
 # This file is more self-sustained and shouldn't use things from other higher-level modules.
+from __future__ import annotations
 
 import inspect
 import operator
@@ -9,23 +10,7 @@ import threading
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from itertools import islice
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Pattern,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from typing import Any, Callable, Dict, Generator, Iterable, List, Pattern, Tuple, TypeVar, Union, cast, overload
 
 import sublime
 
@@ -67,7 +52,7 @@ else:
 
 
 @clearable_lru_cache()
-def compile_regex(regex: Union[str, Pattern[str]], flags: int = 0) -> Pattern[str]:
+def compile_regex(regex: str | Pattern[str], flags: int = 0) -> Pattern[str]:
     """Compile the regex string/object into a object with the given flags."""
     if isinstance(regex, Pattern):
         if regex.flags == flags:
@@ -118,7 +103,7 @@ def parse_regex_flags(flags: Iterable[str]) -> int:
 
 
 @clearable_lru_cache()
-def build_reversed_trie(words: Tuple[str]) -> TrieNode:
+def build_reversed_trie(words: tuple[str]) -> TrieNode:
     """Returns a trie with all words reversed. It can be used to match suffixes with reversed input string."""
     trie = TrieNode()
     for word in words:
@@ -158,8 +143,8 @@ def debounce(time_s: float = 0.3) -> Callable[[_T_Callable], _T_Callable]:
 def first_true(
     items: Iterable[_T],
     default: _U,
-    pred: Optional[Callable[[_T], bool]] = None,
-) -> Union[_T, _U]:
+    pred: Callable[[_T], bool] | None = None,
+) -> _T | _U:
     ...
 
 
@@ -167,16 +152,16 @@ def first_true(
 def first_true(
     items: Iterable[_T],
     *,
-    pred: Optional[Callable[[_T], bool]] = None,
-) -> Optional[_T]:
+    pred: Callable[[_T], bool] | None = None,
+) -> _T | None:
     ...
 
 
 def first_true(
     items: Iterable[_T],
-    default: Optional[_U] = None,
-    pred: Optional[Callable[[_T], bool]] = None,
-) -> Union[_T, Optional[_U]]:
+    default: _U | None = None,
+    pred: Callable[[_T], bool] | None = None,
+) -> _T | _U | None:
     """
     Gets the first item which satisfies the `pred`. Otherwise, `default`.
     If `pred` is not given or `None`, the first truthy item will be returned.
@@ -185,10 +170,10 @@ def first_true(
 
 
 def list_all_subclasses(
-    root: Type[_T],
+    root: type[_T],
     skip_abstract: bool = False,
     skip_self: bool = False,
-) -> Generator[Type[_T], None, None]:
+) -> Generator[type[_T], None, None]:
     """Gets all sub-classes of the root class."""
     if not skip_self and not (skip_abstract and inspect.isabstract(root)):
         yield root
@@ -197,16 +182,16 @@ def list_all_subclasses(
 
 
 @overload
-def nth(items: Iterable[_T], n: int) -> Optional[_T]:
+def nth(items: Iterable[_T], n: int) -> _T | None:
     ...
 
 
 @overload
-def nth(items: Iterable[_T], n: int, default: _U) -> Union[_T, _U]:
+def nth(items: Iterable[_T], n: int, default: _U) -> _T | _U:
     ...
 
 
-def nth(items: Iterable[_T], n: int, default: Optional[_U] = None) -> Union[_T, Optional[_U]]:
+def nth(items: Iterable[_T], n: int, default: _U | None = None) -> _T | _U | None:
     """Gets the `n`th item (started from 0th) in `items`. Returns `default` if no such item."""
     return next(islice(iter(items), n, None), default)
 
@@ -222,7 +207,7 @@ def find_syntax_by_syntax_like(
     *,
     include_hidden: bool = False,
     include_plaintext: bool = True,
-) -> Optional[sublime.Syntax]:
+) -> sublime.Syntax | None:
     """Finds a syntax by a "Syntax object" / "scope" / "name" / "partial path"."""
     return first_true(
         find_syntaxes_by_syntax_like(
@@ -238,7 +223,7 @@ def find_syntax_by_syntax_likes(
     *,
     include_hidden: bool = False,
     include_plaintext: bool = True,
-) -> Optional[sublime.Syntax]:
+) -> sublime.Syntax | None:
     """Finds a syntax by an Iterable of "Syntax object" / "scope" / "name" / "partial path"."""
     return first_true(
         find_syntaxes_by_syntax_likes(
@@ -255,7 +240,7 @@ def find_syntaxes_by_syntax_like(
     *,
     include_hidden: bool = False,
     include_plaintext: bool = True,
-) -> Tuple[sublime.Syntax, ...]:
+) -> tuple[sublime.Syntax, ...]:
     """Finds syntaxes by a "Syntax object" / "scope" / "name" / "partial path"."""
     if not like:
         return tuple()
@@ -303,7 +288,7 @@ def find_syntaxes_by_syntax_likes(
 
 
 @clearable_lru_cache()
-def get_sorted_syntaxes() -> Tuple[sublime.Syntax, ...]:
+def get_sorted_syntaxes() -> tuple[sublime.Syntax, ...]:
     """Gets all syntaxes, which are sorted by conventions."""
 
     def syntax_cmp(a: sublime.Syntax, b: sublime.Syntax) -> int:
@@ -323,7 +308,7 @@ def get_sorted_syntaxes() -> Tuple[sublime.Syntax, ...]:
     return tuple(sorted(sublime.list_syntaxes(), key=cmp_to_key(syntax_cmp)))
 
 
-def resolve_window(obj: Any) -> Optional[sublime.Window]:
+def resolve_window(obj: Any) -> sublime.Window | None:
     if isinstance(obj, sublime.Window):
         return obj
     window = None
@@ -337,7 +322,7 @@ def list_all_views(*, include_transient: bool = False) -> Generator[sublime.View
         yield from window.views(include_transient=include_transient)
 
 
-def get_view_by_id(id: int) -> Optional[sublime.View]:
+def get_view_by_id(id: int) -> sublime.View | None:
     return first_true(list_all_views(include_transient=True), pred=lambda view: view.id() == id)
 
 
@@ -377,7 +362,7 @@ def is_transient_view(view: sublime.View) -> bool:
 
 
 @lru_cache
-def get_expand_variable_map() -> Dict[str, str]:
+def get_expand_variable_map() -> dict[str, str]:
     cache_path = Path(sublime.cache_path())
     packages_path = Path(sublime.packages_path())
 
@@ -399,7 +384,7 @@ def get_expand_variable_map() -> Dict[str, str]:
         "package_storage": cache_path.parent / "Package Storage",
     }
 
-    def find_latest_lsp_utils_node(package_storage: Path) -> Optional[Tuple[Path, SemanticVersion]]:
+    def find_latest_lsp_utils_node(package_storage: Path) -> tuple[Path, SemanticVersion] | None:
         def list_node_versions(folder: Path) -> Generator[SemanticVersion, None, None]:
             for path in folder.iterdir() if folder.is_dir() else []:
                 if (
@@ -422,7 +407,7 @@ def get_expand_variable_map() -> Dict[str, str]:
         yield node_version_dir / "node/bin/node"  # Node.js (Linux & Mac)
         yield node_version_dir / "node/node.exe"  # Node.js (Windows)
 
-    def get_node_path(node_version_dir: Path) -> Optional[Path]:
+    def get_node_path(node_version_dir: Path) -> Path | None:
         return first_true(
             get_node_path_candidates(node_version_dir),
             pred=lambda path: bool(path and path.is_file()),
@@ -435,7 +420,7 @@ def get_expand_variable_map() -> Dict[str, str]:
     return {name: str(path.resolve()) for name, path in paths.items()}
 
 
-def expand_variables(value: _T_ExpandableVar, variables: Optional[Dict[str, str]] = None) -> _T_ExpandableVar:
+def expand_variables(value: _T_ExpandableVar, variables: dict[str, str] | None = None) -> _T_ExpandableVar:
     return sublime.expand_variables(value, {**get_expand_variable_map(), **(variables or {})})
 
 
@@ -449,7 +434,7 @@ def list_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[
         end = filename.rfind(".", 0, end)
 
 
-def list_trimmed_strings(string: str, suffixes: Tuple[str], skip_self: bool = False) -> Generator[str, None, None]:
+def list_trimmed_strings(string: str, suffixes: tuple[str], skip_self: bool = False) -> Generator[str, None, None]:
     """Generates strings with suffixes trimmed."""
     trie = build_reversed_trie(suffixes)
 
@@ -461,7 +446,7 @@ def list_trimmed_strings(string: str, suffixes: Tuple[str], skip_self: bool = Fa
     if not skip_self:
         yield string
 
-    results: Set[str] = set()
+    results: set[str] = set()
     for trimmed in dfs(string[::-1]):
         if trimmed not in results:
             results.add(trimmed)

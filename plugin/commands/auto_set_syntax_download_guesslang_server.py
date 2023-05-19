@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import gzip
 import shutil
 import tarfile
@@ -6,7 +8,7 @@ import time
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from typing import Iterable, Union
 
 import sublime
 import sublime_plugin
@@ -82,7 +84,7 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         zip_path.unlink(missing_ok=True)
 
 
-def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bool:
+def decompress_file(tarball: PathLike, dst_dir: PathLike | None = None) -> bool:
     """
     Decompress the tarball.
 
@@ -95,7 +97,7 @@ def decompress_file(tarball: PathLike, dst_dir: Optional[PathLike] = None) -> bo
     def tar_safe_extract(
         tar: tarfile.TarFile,
         path: PathLike = ".",
-        members: Optional[Iterable[tarfile.TarInfo]] = None,
+        members: Iterable[tarfile.TarInfo] | None = None,
         *,
         numeric_owner: bool = False,
     ) -> None:

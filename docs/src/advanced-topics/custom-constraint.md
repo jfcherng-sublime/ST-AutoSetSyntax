@@ -51,7 +51,7 @@ You may create your own custom `Constraint` implementation by following steps.
                 """Pseudo first line."""
                 line_count: int
                 """Number of lines in the original content."""
-                syntax: Optional[sublime.Syntax]
+                syntax: sublime.Syntax | None
                 """The syntax object. Note that the value is as-is when it's cached."""
             ```
 

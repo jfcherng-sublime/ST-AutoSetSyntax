@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import threading
-from typing import Optional, Protocol
+from typing import Protocol
 
 import sublime
 
@@ -35,13 +37,13 @@ class GuesslangClient:
         host: str,
         port: int,
         *,
-        callback: Optional[TransportCallbacks] = None,
+        callback: TransportCallbacks | None = None,
     ) -> None:
         self.host = host
         self.port = port
         self.callback = callback or NullTransportCallbacks()
         # internals
-        self._ws: Optional[websocket.WebSocketApp] = None
+        self._ws: websocket.WebSocketApp | None = None
 
     def __del__(self) -> None:
         if self._ws:
@@ -70,7 +72,7 @@ class GuesslangClient:
         self,
         view_snapshot: ViewSnapshot,
         *,
-        event: Optional[ListenerEvent] = None,
+        event: ListenerEvent | None = None,
     ) -> None:
         if self.is_connected():
             assert self._ws

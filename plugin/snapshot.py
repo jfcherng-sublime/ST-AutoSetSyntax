@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional
 
 import sublime
 
@@ -31,12 +30,12 @@ class ViewSnapshot:
     """Pseudo first line."""
     line_count: int
     """Number of lines in the original content."""
-    syntax: Optional[sublime.Syntax]
+    syntax: sublime.Syntax | None
     """The syntax object. Note that the value is as-is when it's cached."""
 
 
 class ViewSnapshotCollection:
-    _snapshots: Dict[str, ViewSnapshot] = {}
+    _snapshots: dict[str, ViewSnapshot] = {}
 
     @classmethod
     def add(cls, cache_id: str, view: sublime.View) -> None:
@@ -69,11 +68,11 @@ class ViewSnapshotCollection:
         )
 
     @classmethod
-    def get(cls, cache_id: str) -> Optional[ViewSnapshot]:
+    def get(cls, cache_id: str) -> ViewSnapshot | None:
         return cls._snapshots.get(cache_id, None)
 
     @classmethod
-    def get_by_view(cls, view: sublime.View) -> Optional[ViewSnapshot]:
+    def get_by_view(cls, view: sublime.View) -> ViewSnapshot | None:
         return cls.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
 
     @classmethod
@@ -81,7 +80,7 @@ class ViewSnapshotCollection:
         cls._snapshots[cache_id] = snapshot
 
     @classmethod
-    def pop(cls, cache_id: str) -> Optional[ViewSnapshot]:
+    def pop(cls, cache_id: str) -> ViewSnapshot | None:
         return cls._snapshots.pop(cache_id, None)
 
 

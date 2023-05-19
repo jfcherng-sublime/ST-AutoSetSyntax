@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import uuid
 from contextlib import contextmanager
@@ -5,7 +7,7 @@ from functools import wraps
 from itertools import chain
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Iterable, List, Mapping, Optional, Set, Tuple, TypeVar, cast
+from typing import Any, Callable, Generator, Iterable, Mapping, TypeVar, cast
 
 import sublime
 import sublime_plugin
@@ -95,12 +97,12 @@ class GuesslangClientCallbacks:
         cls,
         window: sublime.Window,
         predictions: Iterable[GuesslangServerPredictionItem],
-    ) -> Optional[Tuple[sublime.Syntax, float]]:
+    ) -> tuple[sublime.Syntax, float] | None:
         if not (best_prediction := first_true(predictions)):
             return None
 
         settings = get_merged_plugin_settings(window=window)
-        syntax_map: Dict[str, List[str]] = settings.get("guesslang.syntax_map", {})
+        syntax_map: dict[str, list[str]] = settings.get("guesslang.syntax_map", {})
 
         if not (syntax_likes := cls.resolve_language_id(syntax_map, best_prediction["languageId"])):
             Logger.log(f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}', window=window)
@@ -118,9 +120,9 @@ class GuesslangClientCallbacks:
         syntax_map: Mapping[str, Iterable[str]],
         language_id: str,
         *,
-        referred: Optional[Set[str]] = None,
-    ) -> List[str]:
-        res: List[str] = []
+        referred: set[str] | None = None,
+    ) -> list[str]:
+        res: list[str] = []
         referred = referred or set()
         for syntax_like in syntax_map.get(language_id, []):
             if syntax_like.startswith("="):
@@ -132,7 +134,7 @@ class GuesslangClientCallbacks:
         return res
 
     @staticmethod
-    def _status_msg_and_log(msg: str, window: Optional[sublime.Window] = None) -> None:
+    def _status_msg_and_log(msg: str, window: sublime.Window | None = None) -> None:
         Logger.log(msg, window=window)
         sublime.status_message(msg)
 
@@ -170,7 +172,7 @@ def _snapshot_view(failed_ret: Any = None) -> Callable[[_T_Callable], _T_Callabl
 @_snapshot_view(failed_ret=False)
 def run_auto_set_syntax_on_view(
     view: sublime.View,
-    event: Optional[ListenerEvent] = None,
+    event: ListenerEvent | None = None,
     *,
     must_plaintext: bool = False,
 ) -> bool:
@@ -204,7 +206,7 @@ def run_auto_set_syntax_on_view(
     } and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
-    if _may_assign_syntax_special_cases(view, event):
+    if _assign_syntax_with_special_cases(view, event):
         return True
 
     if event in {
@@ -220,7 +222,7 @@ def run_auto_set_syntax_on_view(
     return _sorry_cannot_help(view, event)
 
 
-def _assign_syntax_for_exec_output(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+def _assign_syntax_for_exec_output(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     if (
         (window := view.window())
         and (not (syntax_old := view.syntax()) or syntax_old.scope == "text.plain")
@@ -235,7 +237,7 @@ def _assign_syntax_for_exec_output(view: sublime.View, event: Optional[ListenerE
     return False
 
 
-def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+def _assign_syntax_for_new_view(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     if (
         (window := view.window())
         and (new_file_syntax := get_merged_plugin_setting("new_file_syntax", window=window))
@@ -249,7 +251,7 @@ def _assign_syntax_for_new_view(view: sublime.View, event: Optional[ListenerEven
     return False
 
 
-def _assign_syntax_for_st_syntax_test(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+def _assign_syntax_for_st_syntax_test(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     if (
         (view_snapshot := ViewSnapshotCollection.get_by_view(view))
         and (not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax))
@@ -268,7 +270,7 @@ def _assign_syntax_for_st_syntax_test(view: sublime.View, event: Optional[Listen
 def _assign_syntax_with_plugin_rules(
     view: sublime.View,
     syntax_rule_collection: SyntaxRuleCollection,
-    event: Optional[ListenerEvent] = None,
+    event: ListenerEvent | None = None,
 ) -> bool:
     if syntax_rule := syntax_rule_collection.test(view, event):
         assert syntax_rule.syntax  # otherwise it should be dropped during optimizing
@@ -280,14 +282,14 @@ def _assign_syntax_with_plugin_rules(
     return False
 
 
-def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+def _assign_syntax_with_first_line(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     if not (view_snapshot := ViewSnapshotCollection.get_by_view(view)):
         return False
 
     # Note that this only works for files under some circumstances.
     # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
-    def assign_by_shebang(view_snapshot: ViewSnapshot) -> Optional[sublime.Syntax]:
+    def assign_by_shebang(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
         if (
             view_snapshot.syntax
             and not is_plaintext_syntax(view_snapshot.syntax)
@@ -298,7 +300,7 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
             return syntax
         return None
 
-    def assign_by_vim_modeline(view_snapshot: ViewSnapshot) -> Optional[sublime.Syntax]:
+    def assign_by_vim_modeline(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
         for match in RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content):
             if syntax := find_syntax_by_syntax_like(match.group("syntax")):
                 return syntax
@@ -315,7 +317,7 @@ def _assign_syntax_with_first_line(view: sublime.View, event: Optional[ListenerE
     return False
 
 
-def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+def _assign_syntax_with_trimmed_filename(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     if not (
         (filepath := view.file_name())
         and (window := view.window())
@@ -350,7 +352,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
     return False
 
 
-def _may_assign_syntax_special_cases(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+def _assign_syntax_with_special_cases(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     if not (
         (view_snapshot := ViewSnapshotCollection.get_by_view(view))
         and view_snapshot.syntax
@@ -382,7 +384,7 @@ def _may_assign_syntax_special_cases(view: sublime.View, event: Optional[Listene
     return False
 
 
-def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[ListenerEvent] = None) -> None:
+def _assign_syntax_with_guesslang_async(view: sublime.View, event: ListenerEvent | None = None) -> None:
     if not (
         G.guesslang_client
         and (view_snapshot := ViewSnapshotCollection.get_by_view(view))
@@ -400,7 +402,7 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
     G.guesslang_client.request_guess_snapshot(view_snapshot, event=event)
 
 
-def _sorry_cannot_help(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+def _sorry_cannot_help(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     details = {"event": event, "reason": "no matching rule"}
     Logger.log(f"❌ Cannot help {stringify(view)} because {stringify(details)}", window=view.window())
     return False
@@ -410,7 +412,7 @@ def assign_syntax_to_view(
     view: sublime.View,
     syntax: sublime.Syntax,
     *,
-    details: Optional[Dict[str, Any]] = None,
+    details: dict[str, Any] | None = None,
     same_buffer: bool = True,
 ) -> bool:
     if not view.is_valid():

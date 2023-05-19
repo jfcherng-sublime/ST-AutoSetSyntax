@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 from operator import methodcaller
-from typing import Any, Callable, Dict, Iterable, List, Sequence, TypeVar, cast
+from typing import Any, Callable, Iterable, Sequence, TypeVar, cast
 
 import sublime
 import sublime_plugin
@@ -97,7 +97,7 @@ class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
         run_auto_set_syntax_on_view(view, ListenerEvent.REVERT)
 
     @_guarantee_primary_view(must_plaintext=True)
-    def on_text_changed_async(self, view: sublime.View, changes: List[sublime.TextChange]) -> None:
+    def on_text_changed_async(self, view: sublime.View, changes: list[sublime.TextChange]) -> None:
         _try_assign_syntax_when_text_changed(view, changes)
 
 
@@ -109,7 +109,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
     def on_activated(self, view: sublime.View) -> None:
         _try_assign_syntax_when_view_untransientize(view)
 
-    def on_init(self, views: List[sublime.View]) -> None:
+    def on_init(self, views: list[sublime.View]) -> None:
         G.startup_views |= set(views)
 
     def on_load(self, view: sublime.View) -> None:
@@ -136,7 +136,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
     def on_reload(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.RELOAD)
 
-    def on_post_window_command(self, window: sublime.Window, command_name: str, args: Dict[str, Any]) -> None:
+    def on_post_window_command(self, window: sublime.Window, command_name: str, args: dict[str, Any]) -> None:
         if command_name in ("build", "exec") and (view := window.find_output_panel("exec")):
             run_auto_set_syntax_on_view(view, ListenerEvent.EXEC)
 

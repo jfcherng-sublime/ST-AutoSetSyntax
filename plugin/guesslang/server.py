@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, Final, Optional, Sequence, Set, Union
+from typing import Final, Sequence
 
 from ..constants import PLUGIN_STORAGE_DIR
 from ..logger import Logger
@@ -18,7 +20,7 @@ class GuesslangServer:
         self.host = host
         self.port = port
         # background server process(es)
-        self._subprocesses: Set[subprocess.Popen] = set()
+        self._subprocesses: set[subprocess.Popen] = set()
 
     def start(self) -> bool:
         """Starts the guesslang server and return whether it starts."""
@@ -70,8 +72,8 @@ class GuesslangServer:
 
     @staticmethod
     def _start_process(
-        cmd: Union[str, Path, Sequence[Union[str, Path]]],
-        extra_env: Optional[Dict[str, str]] = None,
+        cmd: str | Path | Sequence[str | Path],
+        extra_env: dict[str, str] | None = None,
         **kwargs,
     ) -> subprocess.Popen:
         if os.name == "nt":
@@ -101,5 +103,5 @@ def parse_node_path() -> str:
     return expand_variables(get_merged_plugin_setting("guesslang.node_bin"))
 
 
-def is_executable(path: Union[str, Path]) -> bool:
+def is_executable(path: str | Path) -> bool:
     return bool((os.path.isfile(path) and os.access(path, os.X_OK)) or shutil.which(path))
