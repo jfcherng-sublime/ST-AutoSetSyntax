@@ -351,6 +351,13 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: Optional[Lis
 
 
 def _may_assign_syntax_special_cases(view: sublime.View, event: Optional[ListenerEvent] = None) -> bool:
+    if not (
+        (view_snapshot := ViewSnapshotCollection.get_by_view(view))
+        and view_snapshot.syntax
+        and is_plaintext_syntax(view_snapshot.syntax)
+    ):
+        return False
+
     def is_large_file(view: sublime.View) -> bool:
         return view.size() >= 10 * 1024  # 10KB
 
@@ -388,7 +395,7 @@ def _assign_syntax_with_guesslang_async(view: sublime.View, event: Optional[List
         # right after "import" is typed but it could be JavaScript or TypeScript as well
         and (event != ListenerEvent.MODIFY or "\n" in view_snapshot.content)
     ):
-        return None
+        return
 
     G.guesslang_client.request_guess_snapshot(view_snapshot, event=event)
 
