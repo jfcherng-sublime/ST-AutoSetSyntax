@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.11
+
+- fix: don't apply JSON syntax if non-plaintext already
+
 ## 2.11.10
 
 - feat: improve assigning JSON syntax for large JSON file
@@ -14,7 +18,7 @@
 
 ## 2.11.7
 
-- fix: Electron path of lsp_utils
+- fix: Electron path of `lsp_utils`
 
 ## 2.11.6
 
