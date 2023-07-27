@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.11.12
+
+- fix: also guess syntax when untransientize
+- refactor: upgrade more py38 syntax
+
 ## 2.11.11
 
 - fix: don't apply JSON syntax if non-plaintext already
