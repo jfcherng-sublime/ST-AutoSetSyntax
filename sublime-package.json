@@ -468,9 +468,9 @@
                   "default": false
                 },
                 "guesslang.node_bin": {
-                  "markdownDescription": "The absolute path of the `node` executable.\n\n- If `node` is in your `PATH` environment variable, you can simply use `\"node\"`.\n- If your `node` comes from `lsp_utils`, you can use `\"${lsp_utils_node_bin}\"`.",
+                  "markdownDescription": "The path of the node executable. Leave it blank for auto determination. You can use \"${lsp_utils_node_bin}\" if your Node.js is installed by lsp_utils.",
                   "type": "string",
-                  "default": "node"
+                  "default": ""
                 },
                 "guesslang.port": {
                   "description": "The port number which should be used by the guesslang server. You can use a negative number for auto determination.",

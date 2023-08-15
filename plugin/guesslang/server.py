@@ -9,7 +9,7 @@ from typing import Final, Sequence
 from ..constants import PLUGIN_STORAGE_DIR
 from ..logger import Logger
 from ..settings import get_merged_plugin_setting
-from ..utils import expand_variables
+from ..utils import expand_variables, first_true
 
 
 class GuesslangServer:
@@ -24,9 +24,10 @@ class GuesslangServer:
 
     def start(self) -> bool:
         """Starts the guesslang server and return whether it starts."""
-        if not is_executable(node_path := parse_node_path()):
-            Logger.log(f'❌ Node.js binary not found or not executable: "{node_path}"')
+        if not (node_path := parse_node_path()):
+            Logger.log("❌ Node.js binary not found or not executable")
             return False
+        Logger.log(f"✔ Use Node.js binary: {node_path}")
 
         try:
             process = self._start_process(
@@ -96,8 +97,10 @@ class GuesslangServer:
         )
 
 
-def parse_node_path() -> str:
-    return expand_variables(get_merged_plugin_setting("guesslang.node_bin"))
+def parse_node_path() -> str | None:
+    user_node_bin: str = get_merged_plugin_setting("guesslang.node_bin")
+    candidates = (user_node_bin,) if user_node_bin else (R"${lsp_utils_node_bin}", "node")
+    return first_true(map(expand_variables, candidates), pred=is_executable)  # type: ignore
 
 
 def is_executable(path: str | Path) -> bool:
