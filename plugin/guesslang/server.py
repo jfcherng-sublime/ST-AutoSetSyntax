@@ -83,9 +83,6 @@ class GuesslangServer:
         else:
             startupinfo = None  # type: ignore
 
-        env = os.environ.copy()
-        env.update(extra_env or {})
-
         return subprocess.Popen(
             cmd,
             startupinfo=startupinfo,
@@ -94,7 +91,7 @@ class GuesslangServer:
             stderr=subprocess.PIPE,
             text=True,
             encoding="utf-8",
-            env=env,
+            env=dict(os.environ, **(extra_env or {})),
             **kwargs,
         )
 
