@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.13
+
+- refactor: auto determinate `guesslang.node_bin` by default
+
 ## 2.11.12
 
 - fix: also guess syntax when untransientize
