@@ -144,8 +144,7 @@ def first_true(
     items: Iterable[_T],
     default: _U,
     pred: Callable[[_T], bool] | None = None,
-) -> _T | _U:
-    ...
+) -> _T | _U: ...
 
 
 @overload
@@ -153,8 +152,7 @@ def first_true(
     items: Iterable[_T],
     *,
     pred: Callable[[_T], bool] | None = None,
-) -> _T | None:
-    ...
+) -> _T | None: ...
 
 
 def first_true(
@@ -182,13 +180,11 @@ def list_all_subclasses(
 
 
 @overload
-def nth(items: Iterable[_T], n: int) -> _T | None:
-    ...
+def nth(items: Iterable[_T], n: int) -> _T | None: ...
 
 
 @overload
-def nth(items: Iterable[_T], n: int, default: _U) -> _T | _U:
-    ...
+def nth(items: Iterable[_T], n: int, default: _U) -> _T | _U: ...
 
 
 def nth(items: Iterable[_T], n: int, default: _U | None = None) -> _T | _U | None:
