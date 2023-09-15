@@ -3,7 +3,7 @@ all: fix
 
 .PHONY: install
 install:
-	pip install  -U pip -r requirements.txt
+	pip install -U pip -r requirements.txt
 
 .PHONY: check
 check:
