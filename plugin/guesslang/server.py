@@ -9,7 +9,7 @@ from typing import Final, Sequence
 from ..constants import PLUGIN_STORAGE_DIR
 from ..logger import Logger
 from ..settings import get_merged_plugin_setting
-from ..utils import expand_variables, first_true
+from ..utils import expand_variables
 
 
 class GuesslangServer:
@@ -24,14 +24,15 @@ class GuesslangServer:
 
     def start(self) -> bool:
         """Starts the guesslang server and return whether it starts."""
-        if not (node_path := parse_node_path()):
-            Logger.log("❌ Node.js binary not found or not executable")
+        node_path, node_args = parse_node_path_args()
+        if not node_path:
+            Logger.log("❌ Node.js binary is not found or not executable")
             return False
-        Logger.log(f"✔ Use Node.js binary: {node_path}")
+        Logger.log(f"✔ Use Node.js binary ({node_path}) and args ({node_args})")
 
         try:
             process = self._start_process(
-                (node_path, self.SERVER_FILE),
+                (node_path, *node_args, self.SERVER_FILE),
                 cwd=self.SERVER_DIR,
                 extra_env={
                     "ELECTRON_RUN_AS_NODE": "1",
@@ -97,11 +98,23 @@ class GuesslangServer:
         )
 
 
-def parse_node_path() -> str | None:
-    user_node_bin: str = get_merged_plugin_setting("guesslang.node_bin")
-    candidates = (user_node_bin,) if user_node_bin else (R"${lsp_utils_node_bin}", "node")
-    return first_true(map(expand_variables, candidates), pred=is_executable)  # type: ignore
+def parse_node_path_args() -> tuple[str | None, list[str]]:
+    for node, args in (
+        (
+            get_merged_plugin_setting("guesslang.node_bin"),
+            get_merged_plugin_setting("guesslang.node_bin_args"),
+        ),
+        (R"${lsp_utils_node_bin}", []),
+        (shutil.which("electron"), []),
+        (shutil.which("node"), []),
+        (shutil.which("code"), ["--ms-enable-electron-run-as-node"]),  # VSCode
+        (shutil.which("codium"), []),  # VSCodium (non-Windows)
+        (shutil.which("VSCodium"), []),  # VSCodium (Windows)
+    ):
+        if (node := expand_variables(node)) and is_executable(node):
+            return (node, args)
+    return (None, [])
 
 
 def is_executable(path: str | Path) -> bool:
-    return bool((os.path.isfile(path) and os.access(path, os.X_OK)) or shutil.which(path))
+    return bool((os.path.isfile(path) and os.access(path, os.X_OK)))

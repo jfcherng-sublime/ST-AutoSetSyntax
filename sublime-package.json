@@ -468,9 +468,17 @@
                   "default": false
                 },
                 "guesslang.node_bin": {
-                  "markdownDescription": "The path of the node executable. Leave it blank for auto determination. You can use \"${lsp_utils_node_bin}\" if your Node.js is installed by lsp_utils.",
+                  "markdownDescription": "The path of the node-like executable. Leave it blank for auto determination.",
                   "type": "string",
                   "default": ""
+                },
+                "guesslang.node_bin_args": {
+                  "markdownDescription": "Extra command line arguments for invoking the node-like executable.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
                 },
                 "guesslang.port": {
                   "description": "The port number which should be used by the guesslang server. You can use a negative number for auto determination.",

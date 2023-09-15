@@ -12,16 +12,20 @@ It uses machine learning models from VSCode to predict the syntax of codes.
 
 1. [Node.js][node.js] ≥ 16
 
+    Node.js is searched under the following order:
 
-    - If the directory of your `node` executable is in the `PATH` environment variable, then you don't have to configure it.
-    - If your Node runtime is provided by `lsp_utils`, then you can config `"guesslang.node_bin"` to `"${lsp_utils_node_bin}"`.
-    - If you are none of the above cases, you have to provide the path of your `node` executable in `"guesslang.node_bin"`.
+    - User specified path (i.e., `guesslang.node_bin`)
+    - Sublime Text's `lsp_utils`-managed Node.js/Electron
+    - `electron` (i.e., the executable of Electron)
+    - `node` (i.e., the executable of Node.js)
+    - `code` (i.e., the executable of VS Code)
+    - `VSCodium` (i.e., the executable of VSCodium)
 
-        !!! Tip "Windows 7 Users"
+    !!! Tip "Windows 7 Users"
 
-            The official Node.js v16 installer won't work on Windows 7 but you can simply download a
-            [portable](https://nodejs.org/dist/latest-v16.x/) version such as `node-v16.20.2-win-x64.zip`,
-            decompress it and set the `guesslang.node_bin` path.
+        The official Node.js v16 installer won't work on Windows 7 but you can simply download a
+        [portable](https://nodejs.org/dist/latest-v16.x/) version such as `node-v16.20.2-win-x64.zip`,
+        decompress it and set `guesslang.node_bin` (or add its directory into the `PATH` environment variable).
 
 1. Install the server.
 
