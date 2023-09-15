@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.14
+
+- feat: auto detect Electron/VSCode/VSCodium for `guesslang.node_bin`
+
 ## 2.11.13
 
 - refactor: auto determinate `guesslang.node_bin` by default
