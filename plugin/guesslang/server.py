@@ -24,10 +24,10 @@ class GuesslangServer:
 
     def start(self) -> bool:
         """Starts the guesslang server and return whether it starts."""
-        node_path, node_args = parse_node_path_args()
-        if not node_path:
+        if not (node_info := parse_node_path_args()):
             Logger.log("❌ Node.js binary is not found or not executable")
             return False
+        node_path, node_args = node_info
         Logger.log(f"✔ Use Node.js binary ({node_path}) and args ({node_args})")
 
         try:
@@ -98,13 +98,13 @@ class GuesslangServer:
         )
 
 
-def parse_node_path_args() -> tuple[str | None, list[str]]:
+def parse_node_path_args() -> tuple[str, list[str]] | None:
     for node, args in (
         (
             get_merged_plugin_setting("guesslang.node_bin"),
             get_merged_plugin_setting("guesslang.node_bin_args"),
         ),
-        (R"${lsp_utils_node_bin}", []),
+        ("${lsp_utils_node_bin}", []),
         (shutil.which("electron"), []),
         (shutil.which("node"), []),
         (shutil.which("code"), ["--ms-enable-electron-run-as-node"]),  # VSCode
@@ -113,7 +113,7 @@ def parse_node_path_args() -> tuple[str | None, list[str]]:
     ):
         if (node := expand_variables(node)) and is_executable(node):
             return (node, args)
-    return (None, [])
+    return None
 
 
 def is_executable(path: str | Path) -> bool:

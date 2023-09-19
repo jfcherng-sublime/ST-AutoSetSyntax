@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import gzip
-import shutil
 import tarfile
 import threading
 import time
@@ -17,7 +16,7 @@ from ..constants import GUESSLANG_SERVER_URL, PLUGIN_NAME
 from ..guesslang.server import GuesslangServer
 from ..settings import get_merged_plugin_setting
 from ..shared import G
-from ..utils import first_true
+from ..utils import first_true, rmtree_ex
 
 PathLike = Union[Path, str]
 
@@ -40,7 +39,7 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
             server.stop()
             time.sleep(1)  # wait for stopping the server
 
-        shutil.rmtree(GuesslangServer.SERVER_DIR, ignore_errors=True)
+        rmtree_ex(GuesslangServer.SERVER_DIR, ignore_errors=True)
 
         try:
             cls._prepare_bin()
@@ -76,9 +75,9 @@ class AutoSetSyntaxDownloadGuesslangServerCommand(sublime_plugin.ApplicationComm
         # move the decompressed folder one level up
         guesslang_server_dir = folder.parent
         tmp_dir = guesslang_server_dir.parent / ".tmp"
-        shutil.rmtree(tmp_dir, ignore_errors=True)
+        rmtree_ex(tmp_dir, ignore_errors=True)
         folder.replace(tmp_dir)
-        shutil.rmtree(guesslang_server_dir, ignore_errors=True)
+        rmtree_ex(guesslang_server_dir, ignore_errors=True)
         tmp_dir.replace(guesslang_server_dir)
         # cleanup
         zip_path.unlink(missing_ok=True)

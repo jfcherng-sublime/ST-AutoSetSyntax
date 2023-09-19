@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import inspect
 import operator
+import os
 import re
+import shutil
 import sys
 import tempfile
 import threading
@@ -454,6 +456,18 @@ def str_finditer(content: str, substr: str) -> Generator[int, None, None]:
     while (idx := content.find(substr, idx)) != -1:
         yield idx
         idx += len(substr)
+
+
+def rmtree_ex(path: str | Path, ignore_errors: bool = False, **kwargs: Any) -> None:
+    """
+    Same with `shutil.rmtree` but with a workaround for long path on Windows.
+
+    @see https://stackoverflow.com/a/14076169/4643765
+    @see https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+    """
+    if os.name == "nt" and (path := Path(path)).is_absolute():
+        path = R"\\?\{}".format(path)
+    shutil.rmtree(path, ignore_errors, **kwargs)
 
 
 def stringify(obj: Any) -> str:
