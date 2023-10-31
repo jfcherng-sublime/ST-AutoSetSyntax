@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.15
+
+- fix: `syntax.name` maybe an empty string
+
 ## 2.11.14
 
 - feat: auto detect Electron/VSCode/VSCodium for `guesslang.node_bin`
