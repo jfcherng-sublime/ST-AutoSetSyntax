@@ -260,7 +260,7 @@ def find_syntaxes_by_syntax_like(
         # by name
         yield from sublime.find_syntax_by_name(like)
         # by name (case-insensitive)
-        yield from filter(lambda syntax: like_cf == syntax.name.casefold(), all_syntaxes)
+        yield from filter(lambda syntax: like_cf == get_syntax_name(syntax).casefold(), all_syntaxes)
         # by partial path
         yield from filter(lambda syntax: like in syntax.path, all_syntaxes)  # type: ignore
 
@@ -352,7 +352,7 @@ def head_tail_content_st(view: sublime.View, partial: int) -> str:
 
 def is_plaintext_syntax(syntax: sublime.Syntax) -> bool:
     """Determinates whether the syntax is plain text."""
-    return syntax.name == "Plain Text"
+    return get_syntax_name(syntax) == "Plain Text"
 
 
 def is_transient_view(view: sublime.View) -> bool:
@@ -468,6 +468,15 @@ def rmtree_ex(path: str | Path, ignore_errors: bool = False, **kwargs: Any) -> N
     if os.name == "nt" and (path := Path(path)).is_absolute():
         path = R"\\?\{}".format(path)
     shutil.rmtree(path, ignore_errors, **kwargs)
+
+
+def get_syntax_name(syntax: sublime.Syntax) -> str:
+    """
+    Gets syntax name with a workaround.
+
+    @see https://github.com/sublimehq/sublime_text/issues/5560
+    """
+    return syntax.name or Path(syntax.path).stem
 
 
 def stringify(obj: Any) -> str:

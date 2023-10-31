@@ -26,6 +26,7 @@ from ..utils import (
     find_syntax_by_syntax_like,
     find_syntax_by_syntax_likes,
     first_true,
+    get_syntax_name,
     get_view_by_id,
     is_plaintext_syntax,
     list_trimmed_filenames,
@@ -79,7 +80,7 @@ class GuesslangClientCallbacks:
 
         best_syntax, confidence = resolved_prediction
         details = {"event": event, "reason": "predict", "confidence": confidence}
-        status_message = f'Predicted as "{best_syntax.name}"'
+        status_message = f'Predicted as "{get_syntax_name(best_syntax)}"'
         if confidence >= 0:
             status_message += f" ({int(confidence * 100)}% confidence)"
 
@@ -433,7 +434,7 @@ def assign_syntax_to_view(
         if syntax == (syntax_old := view.syntax() or sublime.Syntax("", "", False, "")):
             details["reason"] = f'[ALREADY] {details["reason"]}'
             Logger.log(
-                f'💯 Remain {stringify(_view)} syntax "{syntax.name}" because {stringify(details)}',
+                f'💯 Remain {stringify(_view)} syntax "{get_syntax_name(syntax)}" because {stringify(details)}',
                 window=_window,
             )
             continue
@@ -441,7 +442,7 @@ def assign_syntax_to_view(
         _view.assign_syntax(syntax)
         Logger.log(
             f"✔ Change {stringify(_view)} syntax"
-            + f' from "{syntax_old.name}" to "{syntax.name}" because {stringify(details)}',
+            + f' from "{get_syntax_name(syntax_old)}" to "{get_syntax_name(syntax)}" because {stringify(details)}',
             window=_window,
         )
 
