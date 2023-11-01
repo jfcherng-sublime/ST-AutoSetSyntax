@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -20,7 +20,7 @@ class IsExtensionConstraint(AbstractConstraint):
         super().__init__(*args, **kwargs)
 
         self.case_insensitive = self._handled_case_insensitive(kwargs)
-        self.exts: Tuple[str, ...] = self._handled_args(_extensionize)
+        self.exts: tuple[str, ...] = self._handled_args(_extensionize)
         self.exts = tuple(map(self.fix_case, self.exts))
 
     def is_droppable(self) -> bool:

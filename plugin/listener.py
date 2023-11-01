@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from functools import wraps
 from operator import methodcaller
-from typing import Any, Callable, Iterable, Sequence, TypeVar, cast
+from typing import Any, Callable, TypeVar, cast
 
 import sublime
 import sublime_plugin
@@ -39,8 +40,8 @@ def set_up_window(window: sublime.Window) -> None:
 
 
 def tear_down_window(window: sublime.Window) -> None:
-    G.clear_syntax_rule_collection(window)
-    G.clear_dropped_rules(window)
+    G.syntax_rule_collections.pop(window, None)
+    G.dropped_rules_collection.pop(window, None)
     Logger.log("👋 Bye!", window=window)
     Logger.destroy(window=window)
 
@@ -59,11 +60,11 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     Logger.log(f'🔍 Found "Constraint" implementations: {names_as_str(get_constraints())}', window=window)
 
     syntax_rule_collection = SyntaxRuleCollection.make(pref_syntax_rules(window=window))
-    G.set_syntax_rule_collection(window, syntax_rule_collection)
+    G.syntax_rule_collections[window] = syntax_rule_collection
     Logger.log(f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
 
-    dropped_rules = tuple(syntax_rule_collection.optimize())
-    G.set_dropped_rules(window, dropped_rules)
+    dropped_rules = list(syntax_rule_collection.optimize())
+    G.dropped_rules_collection[window] = dropped_rules
     Logger.log(f"✨ Optimized syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
     Logger.log(f"💀 Dropped rules during optimizing: {stringify(dropped_rules)}", window=window)
 

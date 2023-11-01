@@ -6,8 +6,9 @@ import threading
 import time
 import urllib.request
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Union
 
 import sublime
 import sublime_plugin

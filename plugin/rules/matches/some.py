@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -17,8 +17,8 @@ class SomeMatch(AbstractMatch):
 
         self.count: float = nth(self.args, 0) or -1
 
-    def is_droppable(self, rules: Tuple[MatchableRule, ...]) -> bool:
+    def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         return not (0 <= self.count <= len(rules))
 
-    def test(self, view: sublime.View, rules: Tuple[MatchableRule, ...]) -> bool:
+    def test(self, view: sublime.View, rules: tuple[MatchableRule, ...]) -> bool:
         return self.test_count(view, rules, self.count)

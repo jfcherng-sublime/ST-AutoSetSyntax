@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -12,7 +12,7 @@ class IsNameConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        names: Tuple[str, ...] = self._handled_args()
+        names: tuple[str, ...] = self._handled_args()
 
         self.case_insensitive = self._handled_case_insensitive(kwargs)
         self.names = set(map(str.lower, names) if self.case_insensitive else names)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, final
+from typing import Any, Callable, final
 
 import sublime
 
@@ -14,8 +14,8 @@ class IsSizeConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.comparator: Optional[Comparator] = None
-        self.threshold: Optional[float] = None
+        self.comparator: Comparator | None = None
+        self.threshold: float | None = None
 
         if len(self.args) != 2:
             return

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -13,7 +13,7 @@ class ContainsConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.needles: Tuple[str, ...] = self._handled_args()
+        self.needles: tuple[str, ...] = self._handled_args()
         self.threshold: int = kwargs.get("threshold", 1)
 
     def is_droppable(self) -> bool:

@@ -34,18 +34,16 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
     panel.assign_syntax(Logger.SYNTAX_FILE)
     panel.set_read_only(True)
     panel.set_scratch(True)
-    panel.settings().update(
-        {
-            "draw_white_space": "none",
-            "gutter": False,
-            "is_widget": True,  # ST 3 convention for a non-normal view
-            "line_numbers": False,
-            "scroll_context_lines": 0,
-            "scroll_past_end": False,
-            "spell_check": False,
-            "word_wrap": False,
-        }
-    )
+    panel.settings().update({
+        "draw_white_space": "none",
+        "gutter": False,
+        "is_widget": True,  # ST 3 convention for a non-normal view
+        "line_numbers": False,
+        "scroll_context_lines": 0,
+        "scroll_past_end": False,
+        "spell_check": False,
+        "word_wrap": False,
+    })
     return panel
 
 

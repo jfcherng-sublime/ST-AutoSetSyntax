@@ -3,7 +3,7 @@ from __future__ import annotations
 import socket
 import threading
 import time
-from typing import Iterable
+from collections.abc import Iterable
 
 import sublime
 import sublime_plugin

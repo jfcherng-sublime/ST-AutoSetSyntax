@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -13,7 +13,7 @@ class IsSyntaxConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.candidates: Tuple[str, ...] = self._handled_args()
+        self.candidates: tuple[str, ...] = self._handled_args()
 
     def is_droppable(self) -> bool:
         return not self.candidates

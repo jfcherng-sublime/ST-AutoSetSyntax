@@ -77,11 +77,9 @@ class GuesslangClient:
         if self.is_connected():
             assert self._ws
             self._ws.send(
-                sublime.encode_value(
-                    {
-                        "id": view_snapshot.id,
-                        "content": view_snapshot.content,
-                        "event_name": event.value if event else None,
-                    }
-                )
+                sublime.encode_value({
+                    "id": view_snapshot.id,
+                    "content": view_snapshot.content,
+                    "event_name": event.value if event else None,
+                })
             )

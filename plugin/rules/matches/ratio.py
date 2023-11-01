@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -19,8 +19,8 @@ class RatioMatch(AbstractMatch):
         self.denominator: float = nth(self.args, 1) or 0
         self.ratio: float = (self.numerator / self.denominator) if self.denominator else -1
 
-    def is_droppable(self, rules: Tuple[MatchableRule, ...]) -> bool:
+    def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         return not (self.denominator > 0 and 0 <= self.ratio <= 1)
 
-    def test(self, view: sublime.View, rules: Tuple[MatchableRule, ...]) -> bool:
+    def test(self, view: sublime.View, rules: tuple[MatchableRule, ...]) -> bool:
         return self.test_count(view, rules, self.ratio * len(rules))

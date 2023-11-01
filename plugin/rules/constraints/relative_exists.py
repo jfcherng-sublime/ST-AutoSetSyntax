@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -13,7 +13,7 @@ class RelativeExistsConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.relatives: Tuple[str, ...] = self._handled_args()
+        self.relatives: tuple[str, ...] = self._handled_args()
         self.match: str = kwargs.get("match", "any").lower()
         self.matcher = all if self.match == "all" else any
 

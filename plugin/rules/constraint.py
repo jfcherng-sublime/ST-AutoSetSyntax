@@ -10,7 +10,8 @@ import sublime
 
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
-from ..snapshot import ViewSnapshot, ViewSnapshotCollection
+from ..shared import G
+from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_ConstraintRule
 from ..utils import (
     camel_to_snake,
@@ -164,7 +165,7 @@ class AbstractConstraint(ABC):
     @staticmethod
     def get_view_snapshot(view: sublime.View) -> ViewSnapshot:
         """Gets the cached information for the `view`."""
-        snapshot = ViewSnapshotCollection.get_by_view(view)
+        snapshot = G.view_snapshot_collection.get_by_view(view)
         assert snapshot  # our workflow guarantees this won't be None
         return snapshot
 
@@ -176,8 +177,10 @@ class AbstractConstraint(ABC):
 
         if use_exists:
             checker = Path.exists
+        elif sibling.endswith(("\\", "/")):
+            checker = Path.is_dir  # type: ignore
         else:
-            checker = Path.is_dir if sibling.endswith(("\\", "/")) else Path.is_file
+            checker = Path.is_file  # type: ignore
 
         return first_true(path.parents, pred=lambda p: checker(p / sibling))
 

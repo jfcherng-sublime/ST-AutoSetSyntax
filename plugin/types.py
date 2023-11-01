@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import UserDict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Generator, TypedDict, Union
+from typing import TYPE_CHECKING, Any, Generator, KeysView, TypedDict, TypeVar, Union
 
 import sublime
 
 SyntaxLike = Union[str, sublime.Syntax]
+WindowId = int
+WindowIdAble = Union[WindowId, sublime.Window]
+
+_T = TypeVar("_T")
 
 
 class ListenerEvent(Enum):
@@ -74,6 +79,40 @@ class ST_SyntaxRule(ST_MatchRule):
     selector: str
     syntaxes: str | list[str]
     on_events: str | list[str] | None
+
+
+# `UserDict` is not subscriptable until Python 3.9...
+if TYPE_CHECKING:
+
+    class WindowKeyedDict(UserDict[WindowIdAble, _T]):
+        def __setitem__(self, key: WindowIdAble, value: _T) -> None: ...
+        def __getitem__(self, key: WindowIdAble) -> _T: ...
+        def __delitem__(self, key: WindowIdAble) -> None: ...
+        def keys(self) -> KeysView[WindowId]: ...
+        @staticmethod
+        def _to_window_id(value: WindowIdAble) -> WindowId: ...
+
+else:
+
+    class WindowKeyedDict(UserDict):
+        def __setitem__(self, key: WindowIdAble, value: _T) -> None:
+            key = self._to_window_id(key)
+            super().__setitem__(key, value)
+
+        def __getitem__(self, key: WindowIdAble) -> _T:
+            key = self._to_window_id(key)
+            return super().__getitem__(key)
+
+        def __delitem__(self, key: WindowIdAble) -> None:
+            key = self._to_window_id(key)
+            super().__delitem__(key)
+
+        def keys(self) -> KeysView[WindowId]:
+            return super().keys()
+
+        @staticmethod
+        def _to_window_id(value: WindowIdAble) -> WindowId:
+            return value.id() if isinstance(value, sublime.Window) else value
 
 
 @dataclass

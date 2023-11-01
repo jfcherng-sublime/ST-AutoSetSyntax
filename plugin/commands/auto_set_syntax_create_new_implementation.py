@@ -62,12 +62,10 @@ def _clone_file_as_template(
 
     new = window.new_file()
     new.run_command("append", {"characters": template})
-    new.settings().update(
-        {
-            "default_dir": save_dir,
-            "is_auto_set_syntax_template_buffer": True,
-        }
-    )
+    new.settings().update({
+        "default_dir": save_dir,
+        "is_auto_set_syntax_template_buffer": True,
+    })
 
     if syntax and (syntax := find_syntax_by_syntax_like(syntax)):
         new.assign_syntax(syntax)

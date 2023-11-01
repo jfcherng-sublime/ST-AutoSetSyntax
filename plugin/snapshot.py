@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import uuid
+from collections import UserDict
+from collections.abc import Generator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import sublime
 
@@ -34,26 +39,32 @@ class ViewSnapshot:
     """The syntax object. Note that the value is as-is when it's cached."""
 
 
-class ViewSnapshotCollection:
-    _snapshots: dict[str, ViewSnapshot] = {}
+# `UserDict` is not subscriptable until Python 3.9...
+if TYPE_CHECKING:
 
-    @classmethod
-    def add(cls, cache_id: str, view: sublime.View) -> None:
-        window = view.window() or sublime.active_window()
+    class ViewSnapshotCollection(UserDict[str, ViewSnapshot]):
+        def add(self, cache_id: str, view: sublime.View) -> None: ...
+        def get_by_view(self, view: sublime.View) -> ViewSnapshot | None: ...
+        @contextmanager
+        def snapshot_context(self, view: sublime.View) -> Generator[ViewSnapshot, None, None]: ...
 
-        # is real file on a disk?
-        if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
-            file_name = path.name
-            file_path = path.as_posix()
-            file_size = path.stat().st_size
-        else:
-            file_name = ""
-            file_path = ""
-            file_size = -1
+else:
 
-        cls.set(
-            cache_id,
-            ViewSnapshot(
+    class ViewSnapshotCollection(UserDict):
+        def add(self, cache_id: str, view: sublime.View) -> None:
+            window = view.window() or sublime.active_window()
+
+            # is real file on a disk?
+            if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
+                file_name = path.name
+                file_path = path.as_posix()
+                file_size = path.stat().st_size
+            else:
+                file_name = ""
+                file_path = ""
+                file_size = -1
+
+            self[cache_id] = ViewSnapshot(
                 id=view.id(),
                 char_count=view.size(),
                 content=get_view_pseudo_content(view, window),
@@ -64,24 +75,23 @@ class ViewSnapshotCollection:
                 first_line=get_view_pseudo_first_line(view, window),
                 line_count=view.rowcol(view.size())[0] + 1,
                 syntax=view.syntax(),
-            ),
-        )
+            )
 
-    @classmethod
-    def get(cls, cache_id: str) -> ViewSnapshot | None:
-        return cls._snapshots.get(cache_id, None)
+        def get_by_view(self, view: sublime.View) -> ViewSnapshot | None:
+            return self.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
 
-    @classmethod
-    def get_by_view(cls, view: sublime.View) -> ViewSnapshot | None:
-        return cls.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
+        @contextmanager
+        def snapshot_context(self, view: sublime.View) -> Generator[ViewSnapshot, None, None]:
+            run_id = str(uuid.uuid4())
+            settings = view.settings()
 
-    @classmethod
-    def set(cls, cache_id: str, snapshot: ViewSnapshot) -> None:
-        cls._snapshots[cache_id] = snapshot
-
-    @classmethod
-    def pop(cls, cache_id: str) -> ViewSnapshot | None:
-        return cls._snapshots.pop(cache_id, None)
+            try:
+                settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
+                self.add(run_id, view)
+                yield self.get(run_id)  # type: ignore
+            finally:
+                settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
+                self.pop(run_id)
 
 
 def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:

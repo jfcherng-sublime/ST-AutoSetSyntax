@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Tuple, final
+from typing import Any, final
 
 import sublime
 
@@ -12,7 +12,7 @@ class FirstLineContainsConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.needles: Tuple[str, ...] = self._handled_args()
+        self.needles: tuple[str, ...] = self._handled_args()
 
     def is_droppable(self) -> bool:
         return not self.needles

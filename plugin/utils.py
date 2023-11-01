@@ -9,10 +9,11 @@ import shutil
 import sys
 import tempfile
 import threading
+from collections.abc import Generator, Iterable
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from itertools import islice
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Iterable, List, Pattern, Tuple, TypeVar, Union, cast, overload
+from typing import Any, Callable, Dict, List, Pattern, Tuple, TypeVar, Union, cast, overload
 
 import sublime
 
@@ -466,7 +467,7 @@ def rmtree_ex(path: str | Path, ignore_errors: bool = False, **kwargs: Any) -> N
     @see https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
     """
     if os.name == "nt" and (path := Path(path)).is_absolute():
-        path = R"\\?\{}".format(path)
+        path = Rf"\\?\{path}"
     shutil.rmtree(path, ignore_errors, **kwargs)
 
 

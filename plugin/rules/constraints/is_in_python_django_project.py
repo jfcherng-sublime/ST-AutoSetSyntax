@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Set, final
+from typing import final
 
 import sublime
 
@@ -12,7 +12,7 @@ from ..constraint import AbstractConstraint, AlwaysFalsyException
 class IsInPythonDjangoProjectConstraint(AbstractConstraint):
     """Check whether this file is in a (Python) Django project."""
 
-    _success_dirs: Set[Path] = set()
+    _success_dirs: set[Path] = set()
     """Cached directories which make the result `True`."""
 
     def test(self, view: sublime.View) -> bool:
