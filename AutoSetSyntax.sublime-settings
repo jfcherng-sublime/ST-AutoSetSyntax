@@ -141,7 +141,7 @@
                     "constraint": "first_line_contains_regex",
                     "args": [
                         // @see https://www.shellcheck.net/wiki/SC2148
-                        "^\\s*#\\s+shellcheck\\s+shell=(?:bash|zsh)"
+                        "^\\s*#\\s+shellcheck\\s+shell=(?:bash|sh|zsh)"
                     ]
                 }
             ]
