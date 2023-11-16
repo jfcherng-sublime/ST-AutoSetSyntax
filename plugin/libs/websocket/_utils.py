@@ -1,8 +1,10 @@
+from typing import Union
+
 """
 _url.py
 websocket - WebSocket client library for Python
 
-Copyright 2021 engn33r
+Copyright 2023 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,12 +21,12 @@ limitations under the License.
 __all__ = ["NoLock", "validate_utf8", "extract_err_message", "extract_error_code"]
 
 
-class NoLock(object):
+class NoLock:
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         pass
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         pass
 
 
@@ -33,7 +35,7 @@ try:
     # strings.
     from wsaccel.utf8validator import Utf8Validator
 
-    def _validate_utf8(utfbytes):
+    def _validate_utf8(utfbytes: bytes) -> bool:
         return Utf8Validator().validate(utfbytes)[0]
 
 except ImportError:
@@ -63,7 +65,7 @@ except ImportError:
         12,12,12,12,12,12,12,36,12,36,12,12, 12,36,12,12,12,12,12,36,12,36,12,12,
         12,36,12,12,12,12,12,12,12,12,12,12, ]
 
-    def _decode(state, codep, ch):
+    def _decode(state: int, codep: int, ch: int) -> tuple:
         tp = _UTF8D[ch]
 
         codep = (ch & 0x3f) | (codep << 6) if (
@@ -72,7 +74,7 @@ except ImportError:
 
         return state, codep
 
-    def _validate_utf8(utfbytes):
+    def _validate_utf8(utfbytes: Union[str, bytes]) -> bool:
         state = _UTF8_ACCEPT
         codep = 0
         for i in utfbytes:
@@ -83,7 +85,7 @@ except ImportError:
         return True
 
 
-def validate_utf8(utfbytes):
+def validate_utf8(utfbytes: Union[str, bytes]) -> bool:
     """
     validate utf8 byte string.
     utfbytes: utf byte string to check.
@@ -92,13 +94,13 @@ def validate_utf8(utfbytes):
     return _validate_utf8(utfbytes)
 
 
-def extract_err_message(exception):
+def extract_err_message(exception: Exception) -> Union[str, None]:
     if exception.args:
         return exception.args[0]
     else:
         return None
 
 
-def extract_error_code(exception):
+def extract_error_code(exception: Exception) -> Union[int, None]:
     if exception.args and len(exception.args) > 1:
         return exception.args[0] if isinstance(exception.args[0], int) else None

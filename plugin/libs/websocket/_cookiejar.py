@@ -1,12 +1,12 @@
-"""
+import http.cookies
 
-"""
+from typing import Optional
 
 """
 _cookiejar.py
 websocket - WebSocket client library for Python
 
-Copyright 2021 engn33r
+Copyright 2023 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import http.cookies
 
 
-class SimpleCookieJar(object):
-    def __init__(self):
+class SimpleCookieJar:
+    def __init__(self) -> None:
         self.jar = dict()
 
-    def add(self, set_cookie):
+    def add(self, set_cookie: Optional[str]) -> None:
         if set_cookie:
             simpleCookie = http.cookies.SimpleCookie(set_cookie)
 
@@ -40,7 +39,7 @@ class SimpleCookieJar(object):
                     cookie.update(simpleCookie)
                     self.jar[domain.lower()] = cookie
 
-    def set(self, set_cookie):
+    def set(self, set_cookie: str) -> None:
         if set_cookie:
             simpleCookie = http.cookies.SimpleCookie(set_cookie)
 
@@ -51,7 +50,7 @@ class SimpleCookieJar(object):
                         domain = "." + domain
                     self.jar[domain.lower()] = simpleCookie
 
-    def get(self, host):
+    def get(self, host: str) -> str:
         if not host:
             return ""
 

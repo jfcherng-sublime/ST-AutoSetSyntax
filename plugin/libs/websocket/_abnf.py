@@ -1,12 +1,19 @@
-"""
+import array
+import os
+import struct
+import sys
 
-"""
+from threading import Lock
+from typing import Callable, Union
+
+from ._exceptions import *
+from ._utils import validate_utf8
 
 """
 _abnf.py
 websocket - WebSocket client library for Python
 
-Copyright 2021 engn33r
+Copyright 2023 engn33r
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +27,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import array
-import os
-import struct
-import sys
-
-from ._exceptions import *
-from ._utils import validate_utf8
-from threading import Lock
 
 try:
     # If wsaccel is available, use compiled routines to mask data.
@@ -36,18 +35,18 @@ try:
     # Note that wsaccel is unmaintained.
     from wsaccel.xormask import XorMaskerSimple
 
-    def _mask(_m, _d):
+    def _mask(_m, _d) -> bytes:
         return XorMaskerSimple(_m).process(_d)
 
 except ImportError:
     # wsaccel is not available, use websocket-client _mask()
     native_byteorder = sys.byteorder
 
-    def _mask(mask_value, data_value):
+    def _mask(mask_value: array.array, data_value: array.array) -> bytes:
         datalen = len(data_value)
-        data_value = int.from_bytes(data_value, native_byteorder)
-        mask_value = int.from_bytes(mask_value * (datalen // 4) + mask_value[: datalen % 4], native_byteorder)
-        return (data_value ^ mask_value).to_bytes(datalen, native_byteorder)
+        int_data_value = int.from_bytes(data_value, native_byteorder)
+        int_mask_value = int.from_bytes(mask_value * (datalen // 4) + mask_value[: datalen % 4], native_byteorder)
+        return (int_data_value ^ int_mask_value).to_bytes(datalen, native_byteorder)
 
 
 __all__ = [
@@ -79,6 +78,8 @@ STATUS_POLICY_VIOLATION = 1008
 STATUS_MESSAGE_TOO_BIG = 1009
 STATUS_INVALID_EXTENSION = 1010
 STATUS_UNEXPECTED_CONDITION = 1011
+STATUS_SERVICE_RESTART = 1012
+STATUS_TRY_AGAIN_LATER = 1013
 STATUS_BAD_GATEWAY = 1014
 STATUS_TLS_HANDSHAKE_ERROR = 1015
 
@@ -92,11 +93,13 @@ VALID_CLOSE_STATUS = (
     STATUS_MESSAGE_TOO_BIG,
     STATUS_INVALID_EXTENSION,
     STATUS_UNEXPECTED_CONDITION,
+    STATUS_SERVICE_RESTART,
+    STATUS_TRY_AGAIN_LATER,
     STATUS_BAD_GATEWAY,
 )
 
 
-class ABNF(object):
+class ABNF:
     """
     ABNF frame class.
     See http://tools.ietf.org/html/rfc5234
@@ -130,8 +133,8 @@ class ABNF(object):
     LENGTH_16 = 1 << 16
     LENGTH_63 = 1 << 63
 
-    def __init__(self, fin=0, rsv1=0, rsv2=0, rsv3=0,
-                 opcode=OPCODE_TEXT, mask=1, data=""):
+    def __init__(self, fin: int = 0, rsv1: int = 0, rsv2: int = 0, rsv3: int = 0,
+                 opcode: int = OPCODE_TEXT, mask: int = 1, data: Union[str, bytes] = "") -> None:
         """
         Constructor for ABNF. Please check RFC for arguments.
         """
@@ -146,7 +149,7 @@ class ABNF(object):
         self.data = data
         self.get_mask_key = os.urandom
 
-    def validate(self, skip_utf8_validation=False):
+    def validate(self, skip_utf8_validation: bool = False) -> None:
         """
         Validate the ABNF frame.
 
@@ -174,31 +177,31 @@ class ABNF(object):
 
             code = 256 * self.data[0] + self.data[1]
             if not self._is_valid_close_status(code):
-                raise WebSocketProtocolException("Invalid close opcode.")
+                raise WebSocketProtocolException("Invalid close opcode %r", code)
 
     @staticmethod
-    def _is_valid_close_status(code):
+    def _is_valid_close_status(code: int) -> bool:
         return code in VALID_CLOSE_STATUS or (3000 <= code < 5000)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "fin=" + str(self.fin) \
             + " opcode=" + str(self.opcode) \
             + " data=" + str(self.data)
 
     @staticmethod
-    def create_frame(data, opcode, fin=1):
+    def create_frame(data: Union[bytes, str], opcode: int, fin: int = 1) -> 'ABNF':
         """
         Create frame to send text, binary and other data.
 
         Parameters
         ----------
-        data: <type>
+        data: str
             data to send. This is string value(byte array).
             If opcode is OPCODE_TEXT and this value is unicode,
             data value is converted into unicode string, automatically.
-        opcode: <type>
-            operation code. please see OPCODE_XXX.
-        fin: <type>
+        opcode: int
+            operation code. please see OPCODE_MAP.
+        fin: int
             fin flag. if set to 0, create continue fragmentation.
         """
         if opcode == ABNF.OPCODE_TEXT and isinstance(data, str):
@@ -206,7 +209,7 @@ class ABNF(object):
         # mask must be set if send data from client
         return ABNF(fin, 0, 0, 0, opcode, 1, data)
 
-    def format(self):
+    def format(self) -> bytes:
         """
         Format this object to string(byte array) to send data to server.
         """
@@ -236,7 +239,7 @@ class ABNF(object):
             mask_key = self.get_mask_key(4)
             return frame_header + self._get_masked(mask_key)
 
-    def _get_masked(self, mask_key):
+    def _get_masked(self, mask_key: Union[str, bytes]) -> bytes:
         s = ABNF.mask(mask_key, self.data)
 
         if isinstance(mask_key, str):
@@ -245,15 +248,15 @@ class ABNF(object):
         return mask_key + s
 
     @staticmethod
-    def mask(mask_key, data):
+    def mask(mask_key: Union[str, bytes], data: Union[str, bytes]) -> bytes:
         """
         Mask or unmask data. Just do xor for each byte
 
         Parameters
         ----------
-        mask_key: <type>
-            4 byte string.
-        data: <type>
+        mask_key: bytes or str
+            4 byte mask.
+        data: bytes or str
             data to mask/unmask.
         """
         if data is None:
@@ -268,11 +271,11 @@ class ABNF(object):
         return _mask(array.array("B", mask_key), array.array("B", data))
 
 
-class frame_buffer(object):
+class frame_buffer:
     _HEADER_MASK_INDEX = 5
     _HEADER_LENGTH_INDEX = 6
 
-    def __init__(self, recv_fn, skip_utf8_validation):
+    def __init__(self, recv_fn: Callable[[int], int], skip_utf8_validation: bool) -> None:
         self.recv = recv_fn
         self.skip_utf8_validation = skip_utf8_validation
         # Buffers over the packets from the layer beneath until desired amount
@@ -281,15 +284,15 @@ class frame_buffer(object):
         self.clear()
         self.lock = Lock()
 
-    def clear(self):
+    def clear(self) -> None:
         self.header = None
         self.length = None
         self.mask = None
 
-    def has_received_header(self):
+    def has_received_header(self) -> bool:
         return self.header is None
 
-    def recv_header(self):
+    def recv_header(self) -> None:
         header = self.recv_strict(2)
         b1 = header[0]
         fin = b1 >> 7 & 1
@@ -303,15 +306,15 @@ class frame_buffer(object):
 
         self.header = (fin, rsv1, rsv2, rsv3, opcode, has_mask, length_bits)
 
-    def has_mask(self):
+    def has_mask(self) -> Union[bool, int]:
         if not self.header:
             return False
         return self.header[frame_buffer._HEADER_MASK_INDEX]
 
-    def has_received_length(self):
+    def has_received_length(self) -> bool:
         return self.length is None
 
-    def recv_length(self):
+    def recv_length(self) -> None:
         bits = self.header[frame_buffer._HEADER_LENGTH_INDEX]
         length_bits = bits & 0x7f
         if length_bits == 0x7e:
@@ -323,13 +326,13 @@ class frame_buffer(object):
         else:
             self.length = length_bits
 
-    def has_received_mask(self):
+    def has_received_mask(self) -> bool:
         return self.mask is None
 
-    def recv_mask(self):
+    def recv_mask(self) -> None:
         self.mask = self.recv_strict(4) if self.has_mask() else ""
 
-    def recv_frame(self):
+    def recv_frame(self) -> ABNF:
 
         with self.lock:
             # Header
@@ -360,7 +363,7 @@ class frame_buffer(object):
 
         return frame
 
-    def recv_strict(self, bufsize):
+    def recv_strict(self, bufsize: int) -> bytes:
         shortage = bufsize - sum(map(len, self.recv_buffer))
         while shortage > 0:
             # Limit buffer size that we pass to socket.recv() to avoid
@@ -373,7 +376,7 @@ class frame_buffer(object):
             self.recv_buffer.append(bytes_)
             shortage -= len(bytes_)
 
-        unified = bytes("", 'utf-8').join(self.recv_buffer)
+        unified = b"".join(self.recv_buffer)
 
         if shortage == 0:
             self.recv_buffer = []
@@ -383,22 +386,22 @@ class frame_buffer(object):
             return unified[:bufsize]
 
 
-class continuous_frame(object):
+class continuous_frame:
 
-    def __init__(self, fire_cont_frame, skip_utf8_validation):
+    def __init__(self, fire_cont_frame: bool, skip_utf8_validation: bool) -> None:
         self.fire_cont_frame = fire_cont_frame
         self.skip_utf8_validation = skip_utf8_validation
         self.cont_data = None
         self.recving_frames = None
 
-    def validate(self, frame):
+    def validate(self, frame: ABNF) -> None:
         if not self.recving_frames and frame.opcode == ABNF.OPCODE_CONT:
             raise WebSocketProtocolException("Illegal frame")
         if self.recving_frames and \
                 frame.opcode in (ABNF.OPCODE_TEXT, ABNF.OPCODE_BINARY):
             raise WebSocketProtocolException("Illegal frame")
 
-    def add(self, frame):
+    def add(self, frame: ABNF) -> None:
         if self.cont_data:
             self.cont_data[1] += frame.data
         else:
@@ -409,10 +412,10 @@ class continuous_frame(object):
         if frame.fin:
             self.recving_frames = None
 
-    def is_fire(self, frame):
+    def is_fire(self, frame: ABNF) -> Union[bool, int]:
         return frame.fin or self.fire_cont_frame
 
-    def extract(self, frame):
+    def extract(self, frame: ABNF) -> list:
         data = self.cont_data
         self.cont_data = None
         frame.data = data[1]

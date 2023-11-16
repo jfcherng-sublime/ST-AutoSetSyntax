@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import threading
-from typing import Protocol
+from typing import Any, Protocol
 
 import sublime
 
@@ -25,10 +25,13 @@ class TransportCallbacks(Protocol):
 
 
 class NullTransportCallbacks:
-    on_open = None
-    on_message = None
-    on_error = None
-    on_close = None
+    def _(*args: Any, **kwargs: Any) -> None:
+        pass
+
+    on_open = _
+    on_message = _
+    on_error = _
+    on_close = _
 
 
 class GuesslangClient:
