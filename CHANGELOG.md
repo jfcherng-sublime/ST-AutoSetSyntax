@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 2.11.16
+
+- chore: assign `Bash` syntax for `# shellcheck shell=sh` first line
+
 ## 2.11.15
 
 - fix: `syntax.name` maybe an empty string
