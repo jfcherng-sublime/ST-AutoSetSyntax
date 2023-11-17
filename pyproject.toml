@@ -43,10 +43,10 @@ pythonVersion = '3.8'
 
 [tool.ruff]
 preview = true
-select = ["E", "F", "W", "I"]
+select = ["E", "F", "W", "I", "UP"]
 ignore = ["E203"]
 line-length = 120
-target-version = 'py312'
+target-version = 'py38'
 exclude = [
   ".git",
   ".mypy_cache",

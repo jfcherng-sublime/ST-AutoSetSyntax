@@ -21,6 +21,9 @@ indent_size = 4
 [*.py]
 indent_size = 4
 
+[*.toml]
+indent_size = 2
+
 [sublime-package.json]
 indent_size = 2
 
