@@ -41,57 +41,53 @@ class ViewSnapshot:
 
 # `UserDict` is not subscriptable until Python 3.9...
 if TYPE_CHECKING:
-
-    class ViewSnapshotCollection(UserDict[str, ViewSnapshot]):
-        def add(self, cache_id: str, view: sublime.View) -> None: ...
-        def get_by_view(self, view: sublime.View) -> ViewSnapshot | None: ...
-        @contextmanager
-        def snapshot_context(self, view: sublime.View) -> Generator[ViewSnapshot, None, None]: ...
-
+    _UserDict_ViewSnapshot = UserDict[str, ViewSnapshot]
 else:
+    _UserDict_ViewSnapshot = UserDict
 
-    class ViewSnapshotCollection(UserDict):
-        def add(self, cache_id: str, view: sublime.View) -> None:
-            window = view.window() or sublime.active_window()
 
-            # is real file on a disk?
-            if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
-                file_name = path.name
-                file_path = path.as_posix()
-                file_size = path.stat().st_size
-            else:
-                file_name = ""
-                file_path = ""
-                file_size = -1
+class ViewSnapshotCollection(_UserDict_ViewSnapshot):
+    def add(self, cache_id: str, view: sublime.View) -> None:
+        window = view.window() or sublime.active_window()
 
-            self[cache_id] = ViewSnapshot(
-                id=view.id(),
-                char_count=view.size(),
-                content=get_view_pseudo_content(view, window),
-                file_name=file_name,
-                file_name_unhidden=remove_prefix(file_name, "."),
-                file_path=file_path,
-                file_size=file_size,
-                first_line=get_view_pseudo_first_line(view, window),
-                line_count=view.rowcol(view.size())[0] + 1,
-                syntax=view.syntax(),
-            )
+        # is real file on a disk?
+        if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
+            file_name = path.name
+            file_path = path.as_posix()
+            file_size = path.stat().st_size
+        else:
+            file_name = ""
+            file_path = ""
+            file_size = -1
 
-        def get_by_view(self, view: sublime.View) -> ViewSnapshot | None:
-            return self.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
+        self[cache_id] = ViewSnapshot(
+            id=view.id(),
+            char_count=view.size(),
+            content=get_view_pseudo_content(view, window),
+            file_name=file_name,
+            file_name_unhidden=remove_prefix(file_name, "."),
+            file_path=file_path,
+            file_size=file_size,
+            first_line=get_view_pseudo_first_line(view, window),
+            line_count=view.rowcol(view.size())[0] + 1,
+            syntax=view.syntax(),
+        )
 
-        @contextmanager
-        def snapshot_context(self, view: sublime.View) -> Generator[ViewSnapshot, None, None]:
-            run_id = str(uuid.uuid4())
-            settings = view.settings()
+    def get_by_view(self, view: sublime.View) -> ViewSnapshot | None:
+        return self.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
 
-            try:
-                settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
-                self.add(run_id, view)
-                yield self.get(run_id)  # type: ignore
-            finally:
-                settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
-                self.pop(run_id)
+    @contextmanager
+    def snapshot_context(self, view: sublime.View) -> Generator[ViewSnapshot, None, None]:
+        run_id = str(uuid.uuid4())
+        settings = view.settings()
+
+        try:
+            settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
+            self.add(run_id, view)
+            yield self.get(run_id)  # type: ignore
+        finally:
+            settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
+            self.pop(run_id)
 
 
 def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:
