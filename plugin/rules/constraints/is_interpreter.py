@@ -21,14 +21,12 @@ class IsInterpreterConstraint(AbstractConstraint):
             interpreters_regex = rf"(?:{interpreters_regex}(?:[\-_]?\d+(?:\.\d+)*)?)"
 
         self.first_line_regex: Pattern[str] = compile_regex(
-            merge_regexes(
-                (
-                    # shebang
-                    rf"^#!(?:.+)\b{interpreters_regex}\b",
-                    # VIM's syntax line
-                    rf"\bsyntax={interpreters_regex}(?=$|\\s)",
-                )
-            )
+            merge_regexes((
+                # shebang
+                rf"^#!(?:.+)\b{interpreters_regex}\b",
+                # VIM's syntax line
+                rf"\bsyntax={interpreters_regex}(?=$|\\s)",
+            ))
         )
 
     def is_droppable(self) -> bool:
