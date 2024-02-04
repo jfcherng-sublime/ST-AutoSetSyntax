@@ -23,20 +23,34 @@ class ViewSnapshot:
     """Character count."""
     content: str
     """Pseudo file content."""
-    file_name: str
-    """The file name. Empty string if not on a disk."""
-    file_name_unhidden: str
-    """The file name without prefixed dots. Empty string if not on a disk."""
-    file_path: str
-    """The full file path with `/` as the directory separator. Empty string if not on a disk."""
-    file_size: int
-    """In bytes, -1 if file not on a disk."""
     first_line: str
     """Pseudo first line."""
     line_count: int
     """Number of lines in the original content."""
+    path_obj: Path | None
+    """The path object of this file. `None` if not on a disk."""
     syntax: sublime.Syntax | None
     """The syntax object. Note that the value is as-is when it's cached."""
+
+    @property
+    def file_name(self) -> str:
+        """The file name. Empty string if not on a disk."""
+        return self.path_obj.name if self.path_obj else ""
+
+    @property
+    def file_name_unhidden(self) -> str:
+        """The file name without prefixed dots. Empty string if not on a disk."""
+        return remove_prefix(self.file_name, ".")
+
+    @property
+    def file_path(self) -> str:
+        """The full file path with `/` as the directory separator. Empty string if not on a disk."""
+        return self.path_obj.as_posix() if self.path_obj else ""
+
+    @property
+    def file_size(self) -> int:
+        """The file size in bytes, -1 if file not on a disk."""
+        return self.path_obj.stat().st_size if self.path_obj else -1
 
 
 # `UserDict` is not subscriptable until Python 3.9...
@@ -52,24 +66,17 @@ class ViewSnapshotCollection(_UserDict_ViewSnapshot):
 
         # is real file on a disk?
         if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
-            file_name = path.name
-            file_path = path.as_posix()
-            file_size = path.stat().st_size
+            pass
         else:
-            file_name = ""
-            file_path = ""
-            file_size = -1
+            path = None
 
         self[cache_id] = ViewSnapshot(
             id=view.id(),
             char_count=view.size(),
             content=get_view_pseudo_content(view, window),
-            file_name=file_name,
-            file_name_unhidden=remove_prefix(file_name, "."),
-            file_path=file_path,
-            file_size=file_size,
             first_line=get_view_pseudo_first_line(view, window),
             line_count=view.rowcol(view.size())[0] + 1,
+            path_obj=path,
             syntax=view.syntax(),
         )
 
