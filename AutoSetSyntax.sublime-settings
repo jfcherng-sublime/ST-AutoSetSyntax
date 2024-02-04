@@ -404,6 +404,18 @@
             ]
         },
         {
+            "comment": "SSH config from https://packagecontrol.io/packages/SSH%20Config",
+            "syntaxes": ["scope:source.ssh_config", "scope:source.ssh-config"],
+            // some syntaxes just aggresively set "config" filename as XML file
+            "selector": "text.plain | text.xml.config",
+            "rules": [
+                {
+                    "constraint": "path_contains_regex",
+                    "args": ["/\\.ssh/config$"]
+                }
+            ]
+        },
+        {
             // Meteor templates follow Handlebars syntax, but must end in .html;
             // but they also always begin with `<template name=`
             "syntaxes": "scope:text.html.handlebars",
