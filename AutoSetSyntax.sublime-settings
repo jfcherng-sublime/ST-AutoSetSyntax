@@ -370,6 +370,17 @@
             ]
         },
         {
+            "comment": "Python requirements.txt from https://packagecontrol.io/packages/requirementstxt",
+            "syntaxes": ["scope:source.requirementstxt", "scope:source.pip-requirements"],
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["^requirements([\\-_.].*)?.txt$"]
+                }
+            ]
+        },
+        {
             "comment": "\"Ruby on Rails\" project",
             "syntaxes": "scope:source.ruby.rails",
             "selector": "source.ruby",
