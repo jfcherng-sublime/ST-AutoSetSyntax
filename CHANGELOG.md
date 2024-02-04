@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.11.17
+
+- chore: add rule for Python `requirements.txt` files
+- chore: add rule for SSH config files
+
 ## 2.11.16
 
 - chore: assign `Bash` syntax for `# shellcheck shell=sh` first line
