@@ -194,7 +194,7 @@ def run_auto_set_syntax_on_view(
     } and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
-    if _assign_syntax_with_special_cases(view, event):
+    if _assign_syntax_with_heuristics(view, event):
         return True
 
     if event in {
@@ -342,7 +342,7 @@ def _assign_syntax_with_trimmed_filename(view: sublime.View, event: ListenerEven
     return False
 
 
-def _assign_syntax_with_special_cases(view: sublime.View, event: ListenerEvent | None = None) -> bool:
+def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | None = None) -> bool:
     if not (
         (view_snapshot := G.view_snapshot_collection.get_by_view(view))
         and view_snapshot.syntax
@@ -369,7 +369,7 @@ def _assign_syntax_with_special_cases(view: sublime.View, event: ListenerEvent |
 
     if is_large_file(view):
         if is_json(view) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
-            return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "special case"})
+            return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "heuristics"})
 
     return False
 
