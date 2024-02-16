@@ -1,10 +1,13 @@
 .phony: all
 all: build
 
-.phony: install
-install:
-	python -m pip install --upgrade pip
-	python -m pip install --upgrade -r requirements.txt
+.PHONY: install
+install: pip-compile
+	uv pip install -r requirements.txt
+
+.PHONY: pip-compile
+pip-compile:
+	uv pip compile requirements.in -o requirements.txt
 
 .phony: serve
 serve:

@@ -2,8 +2,12 @@
 all:
 
 .PHONY: install
-install:
-	python -m pip install -U pip -r requirements.txt
+install: pip-compile
+	uv pip install -r requirements.txt
+
+.PHONY: pip-compile
+pip-compile:
+	uv pip compile requirements.in -o requirements.txt
 
 .PHONY: ci-check
 ci-check:
