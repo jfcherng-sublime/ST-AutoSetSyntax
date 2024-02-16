@@ -1,10 +1,7 @@
-# This is an implicit value, here for clarity
---index https://pypi.python.org/simple/
-
 # main
-mkdocs-material==9.4.9
+mkdocs-material==9.5.9
 
 # plugins
 mkdocs-exclude==1.0.2
-mkdocs-git-revision-date-localized-plugin==1.2.1
-mkdocs-minify-plugin==0.7.1
+mkdocs-git-revision-date-localized-plugin==1.2.4
+mkdocs-minify-plugin==0.8.0
