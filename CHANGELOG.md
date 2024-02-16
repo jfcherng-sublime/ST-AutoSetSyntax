@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 2.11.18
+
+- chore: match "requirements.in" as Python `requirements.txt`
+- chore: rename "special cases" to "heuristics"
+
 ## 2.11.17
 
 - chore: add rule for Python `requirements.txt` files
