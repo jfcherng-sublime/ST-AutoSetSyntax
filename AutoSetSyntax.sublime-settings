@@ -643,6 +643,68 @@
         }
     ],
 
+    /////////////////////
+    // Magika settings //
+    /////////////////////
+
+    // To use this feature, you have to install the "magika" library.
+    // @see https://jfcherng-sublime.github.io/ST-AutoSetSyntax/dl-based-syntax-detection/#prerequisites
+    "magika.enabled": false,
+    "magika.min_confidence": 0.85,
+    // @see https://github.com/google/magika/blob/9e733e847ea0d93ea100d5d478a4b54c3ec5fd1c/docs/supported-content-types-list.md
+    "magika.syntax_map": {
+        "asm": [
+            // no good way to do this?
+            "scope:source.asm.x86_64",
+            "scope:source.asm.arm",
+            "scope:source.rvasm",
+            "scope:source.assembly"
+        ],
+        "asp": ["scope:source.asp"],
+        "batch": ["scope:source.dosbatch"],
+        "c": [
+            // C++ is basically a superset and magika can't distinguish C and C++
+            "scope:source.c++"
+        ],
+        "cs": ["scope:source.cs"],
+        "css": ["scope:source.scss", "scope:source.css"],
+        "csv": ["scope:text.advanced_csv", "scope:text.csv"],
+        "go": ["scope:source.go"],
+        "html": ["scope:text.html.basic"],
+        "ini": ["scope:source.ini"],
+        "java": ["scope:source.java"],
+        "javascript": [
+            // TypeScript is a superset and magika can't distinguish JavaScript and TypeScript
+            "scope:source.ts"
+        ],
+        "json": ["scope:source.json"],
+        "latex": ["scope:text.tex.latex"],
+        "lisp": ["scope:source.lisp"],
+        "m3u": ["scope:text.m3u"],
+        "makefile": ["scope:source.makefile"],
+        "markdown": ["scope:text.html.markdown"],
+        "mum": ["=xml"],
+        "perl": ["scope:source.perl"],
+        "php": ["scope:embedding.php", "scope:text.html.php"],
+        "postscript": ["scope:source.postscript"],
+        "powershell": ["scope:source.powershell"],
+        "python": ["scope:source.python"],
+        "rdf": ["=xml"],
+        "rst": ["scope:text.restructuredtext"],
+        "rtf": ["scope:text.rtf"],
+        "ruby": ["scope:source.ruby"],
+        "rust": ["scope:source.rust"],
+        "scala": ["scope:source.scala"],
+        "shell": ["scope:source.shell.bash"],
+        "smali": ["scope:source.smali"],
+        "sql": ["scope:source.sql"],
+        "svg": ["=xml"],
+        "vba": ["scope:source.vbs"],
+        "winregistry": ["scope:source.reg"],
+        "xml": ["scope:text.xml"],
+        "yaml": ["scope:source.yaml"]
+    },
+
     ///////////////////////////////////////
     // Guesslang settings (experimental) //
     /////////////////////////////////////////////////////////////////////////

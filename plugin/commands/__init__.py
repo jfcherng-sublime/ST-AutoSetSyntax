@@ -4,6 +4,7 @@ from .auto_set_syntax_create_new_implementation import (
     AutoSetSyntaxCreateNewMatchCommand,
 )
 from .auto_set_syntax_debug_information import AutoSetSyntaxDebugInformationCommand
+from .auto_set_syntax_download_dependencies import AutoSetSyntaxDownloadDependenciesCommand
 from .auto_set_syntax_download_guesslang_server import AutoSetSyntaxDownloadGuesslangServerCommand
 from .auto_set_syntax_restart_guesslang import AutoSetSyntaxRestartGuesslangCommand
 
@@ -13,6 +14,7 @@ __all__ = (
     "AutoSetSyntaxCreateNewConstraintCommand",
     "AutoSetSyntaxCreateNewMatchCommand",
     "AutoSetSyntaxDebugInformationCommand",
+    "AutoSetSyntaxDownloadDependenciesCommand",
     "AutoSetSyntaxDownloadGuesslangServerCommand",
     "AutoSetSyntaxRestartGuesslangCommand",
     # ...

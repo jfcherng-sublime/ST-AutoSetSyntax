@@ -1,0 +1,17 @@
+BLACK: str
+RED: str
+GREEN: str
+YELLOW: str
+BLUE: str
+PURPLE: str
+CYAN: str
+LIGHT_GRAY: str
+DARK_GRAY: str
+LIGHT_RED: str
+LIGHT_GREEN: str
+LIGHT_YELLOW: str
+LIGHT_BLUE: str
+LIGHT_PURPLE: str
+LIGHT_CYAN: str
+WHITE: str
+RESET: str

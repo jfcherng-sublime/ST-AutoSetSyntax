@@ -1,0 +1,6 @@
+import enum
+
+class StrEnum(str, enum.Enum):
+    def __new__(cls, value: str | StrEnum, *args, **kwargs): ...
+
+class LowerCaseStrEnum(StrEnum): ...

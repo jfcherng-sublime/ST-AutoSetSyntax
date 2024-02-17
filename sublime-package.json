@@ -14,6 +14,9 @@
               "$ref": "sublime://settings/AutoSetSyntax#/definitions/root_plugin_settings"
             },
             {
+              "$ref": "sublime://settings/AutoSetSyntax#/definitions/magika_settings"
+            },
+            {
               "$ref": "sublime://settings/AutoSetSyntax#/definitions/guesslang_settings"
             }
           ],
@@ -226,6 +229,7 @@
                     "is_in_svn_repo",
                     "is_interpreter",
                     "is_line_count",
+                    "is_magika_enabled",
                     "is_name",
                     "is_platform",
                     "is_platform_arch",
@@ -254,6 +258,7 @@
                     "Test whether the file is in a SVN repository.",
                     "Test whether the interpreter in the shebang of the file is any given ones. The `args` is a list of interpreters.",
                     "Test whether the file line count satisfies the given condition. The `args` is in the form of `[operator, size]` like `[\">=\", 30]`.",
+                    "Test whether the `magika` detection is enabled.",
                     "Test whether the file name is any given strings. The `args` is a list of strings.",
                     "Test whether the system platform is one of the given values. The `args` is a list of `linux`, `osx` and `windows`.",
                     "Test whether the system `platform_arch` is one of the given values. The `args` is a list of `linux_x32`, `osx_arm64`, `windows_x64`, etc...",
@@ -459,6 +464,25 @@
                 }
               ],
               "required": ["constraint"]
+            },
+            "magika_settings": {
+              "properties": {
+                "magika.enabled": {
+                  "description": "Enables the magika feature.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "magika.min_confidence": {
+                  "description": "The minimum confidence to accept the magika detection result.",
+                  "type": "number",
+                  "default": 0.85
+                },
+                "magika.syntax_map": {
+                  "markdownDescription": "The relationship between `languageId`s in VSCode and syntaxes in ST.",
+                  "type": "object",
+                  "default": {}
+                }
+              }
             },
             "guesslang_settings": {
               "properties": {

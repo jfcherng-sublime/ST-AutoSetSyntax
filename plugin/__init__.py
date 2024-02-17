@@ -1,6 +1,7 @@
 import importlib
 import importlib.machinery
 import pkgutil
+import sys
 from pathlib import Path
 
 import sublime
@@ -11,11 +12,12 @@ from .commands import (
     AutoSetSyntaxCreateNewConstraintCommand,
     AutoSetSyntaxCreateNewMatchCommand,
     AutoSetSyntaxDebugInformationCommand,
+    AutoSetSyntaxDownloadDependenciesCommand,
     AutoSetSyntaxDownloadGuesslangServerCommand,
     AutoSetSyntaxRestartGuesslangCommand,
     run_auto_set_syntax_on_view,
 )
-from .constants import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME
+from .constants import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME, PLUGIN_PY_LIBS_DIR
 from .listener import (
     AutoSetSyntaxEventListener,
     AutoSetSyntaxTextChangeListener,
@@ -48,6 +50,7 @@ __all__ = (
     "AutoSetSyntaxCreateNewConstraintCommand",
     "AutoSetSyntaxCreateNewMatchCommand",
     "AutoSetSyntaxDebugInformationCommand",
+    "AutoSetSyntaxDownloadDependenciesCommand",
     "AutoSetSyntaxDownloadGuesslangServerCommand",
     "AutoSetSyntaxRestartGuesslangCommand",
     # ST: listeners
@@ -67,6 +70,7 @@ def plugin_loaded() -> None:
 
 
 def _plugin_loaded() -> None:
+    _add_python_lib_path()
     _load_custom_implementations()
 
     AioSettings.plugin_name = PLUGIN_NAME
@@ -96,6 +100,11 @@ def plugin_unloaded() -> None:
 def _settings_changed_callback(window: sublime.Window) -> None:
     clear_all_cached_functions()
     compile_rules(window, is_update=True)
+
+
+def _add_python_lib_path() -> None:
+    if (path := str(PLUGIN_PY_LIBS_DIR)) not in sys.path:
+        sys.path.insert(0, path)
 
 
 def _load_custom_implementations() -> None:

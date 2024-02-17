@@ -31,6 +31,10 @@
         "command": "auto_set_syntax_toggle_log_panel",
     },
     {
+        "caption": "AutoSetSyntax: Download Dependencies",
+        "command": "auto_set_syntax_download_dependencies",
+    },
+    {
         "caption": "AutoSetSyntax: Download Guesslang Server",
         "command": "auto_set_syntax_download_guesslang_server",
     },

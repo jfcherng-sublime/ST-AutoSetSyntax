@@ -13,7 +13,7 @@ import sublime_plugin
 
 from ..constants import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE
 from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
-from ..helpers import is_syntaxable_view
+from ..helpers import is_syntaxable_view, resolve_magika_label_with_syntax_map
 from ..libs import websocket
 from ..logger import Logger
 from ..rules import SyntaxRuleCollection
@@ -194,6 +194,17 @@ def run_auto_set_syntax_on_view(
     } and _assign_syntax_with_trimmed_filename(view, event):
         return True
 
+    if event in {
+        ListenerEvent.COMMAND,
+        ListenerEvent.INIT,
+        ListenerEvent.LOAD,
+        ListenerEvent.MODIFY,
+        ListenerEvent.PASTE,
+        ListenerEvent.SAVE,
+        ListenerEvent.UNTRANSIENTIZE,
+    } and _assign_syntax_with_magika(view, event):
+        return True
+
     if _assign_syntax_with_heuristics(view, event):
         return True
 
@@ -372,6 +383,50 @@ def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | No
             return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "heuristics"})
 
     return False
+
+
+def _assign_syntax_with_magika(view: sublime.View, event: ListenerEvent | None = None) -> bool:
+    if not (
+        (window := view.window())
+        and (settings := get_merged_plugin_settings(window=window))
+        and settings.get("magika.enabled")
+        and (view_snapshot := G.view_snapshot_collection.get_by_view(view))
+        # don't apply on those have an extension
+        and (event == ListenerEvent.COMMAND or "." not in view_snapshot.file_name_unhidden)
+        # only apply on plain text syntax
+        and ((syntax := view_snapshot.syntax) and is_plaintext_syntax(syntax))
+        # we don't want to use AI model during typing when there is only one line
+        # that may result in unwanted behavior such as a new buffer may be assigned to Python
+        # right after "import" is typed but it could be JavaScript or TypeScript as well
+        and (event != ListenerEvent.MODIFY or "\n" in view_snapshot.content)
+    ):
+        return False
+
+    try:
+        from magika import Magika
+    except ImportError as e:
+        Logger.log(f"💣 Error occured when importing Magika: {e}", window=window)
+        return False
+
+    classifier = Magika()
+    output = classifier.identify_bytes(view_snapshot.content.encode()).output
+    Logger.log(f"🐛 Magika's prediction: {output}", window=window)
+
+    threadshold: float = settings.get("magika.min_confidence", 0.0)
+    if output.score < threadshold or output.ct_label in {"directory", "empty", "txt", "unknown"}:
+        return False
+
+    syntax_map: dict[str, list[str]] = settings.get("magika.syntax_map", {})
+    if not (syntax_likes := resolve_magika_label_with_syntax_map(output.ct_label, syntax_map)):
+        Logger.log(f'🤔 Unknown "label" from Magika: {output.ct_label}', window=window)
+        return False
+
+    if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
+        Logger.log(f"😢 Failed finding syntax from Magika: {syntax_likes}", window=window)
+        return False
+
+    sublime.status_message(f"Predicted syntax: {output.ct_label} ({round(output.score * 100, 2)}% confidence)")
+    return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "Magika (Deep Learning)"})
 
 
 def _assign_syntax_with_guesslang_async(view: sublime.View, event: ListenerEvent | None = None) -> None:

@@ -1,0 +1,19 @@
+from _typeshed import Incomplete
+from magika import Magika as Magika, MagikaError as MagikaError, PredictionMode as PredictionMode, colors as colors
+from magika.content_types import ContentTypesManager as ContentTypesManager
+from magika.logger import get_logger as get_logger
+from magika.types import FeedbackReport as FeedbackReport, MagikaResult as MagikaResult
+from pathlib import Path
+from typing import List, Optional
+
+VERSION: str
+CONTACT_EMAIL: str
+CONTEXT_SETTINGS: Incomplete
+HELP_EPILOG: Incomplete
+
+def main(file: List[Path], recursive: bool, json_output: bool, jsonl_output: bool, mime_output: bool, label_output: bool, magic_compatibility_mode: bool, output_score: bool, prediction_mode_str: str, batch_size: int, no_dereference: bool, with_colors: bool, verbose: bool, debug: bool, generate_report_flag: bool, output_version: bool, list_output_content_types: bool, model_dir: Optional[Path]) -> None: ...
+def should_read_from_stdin(files_paths: List[Path]) -> bool: ...
+def get_magika_result_from_stdin(magika: Magika) -> MagikaResult: ...
+def generate_feedback_report(magika: Magika, file_path: Path, magika_result: MagikaResult) -> FeedbackReport: ...
+def print_feedback_report(magika: Magika, reports: List[FeedbackReport]) -> None: ...
+def print_output_content_types_list() -> None: ...

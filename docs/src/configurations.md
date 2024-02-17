@@ -622,6 +622,18 @@ To edit project settings, go to `Project` » `Edit Project`.
 
         Available comparators are: `<`, `<=`, `==`, `>=`, `>` and `!=`.
 
+#### `is_magika_enabled`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_magika_enabled",
+    }
+    ```
+
+    Test whether the `magika` is enabled.
+
 #### `is_name`
 
 !!! example

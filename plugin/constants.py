@@ -44,6 +44,14 @@ RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|ft|syntax)=(?P<syntax>[^\s:]+):?
 
 ################################################################################
 
+PLUGIN_PY_LIBS_DIR_NAME = f"libs-py38@{ST_PLATFORM_ARCH}"
+PLUGIN_PY_LIBS_DIR = PLUGIN_STORAGE_DIR / PLUGIN_PY_LIBS_DIR_NAME
+PLUGIN_PY_LIBS_ZIP_NAME = f"{PLUGIN_PY_LIBS_DIR_NAME}.zip"
+PLUGIN_PY_LIBS_URL = "https://github.com/{repo}/raw/dependencies/{file}".format(
+    repo="jfcherng-sublime/ST-AutoSetSyntax",
+    file=PLUGIN_PY_LIBS_ZIP_NAME,
+)
+
 GUESSLANG_SERVER_TAG = "server-0.1.7"
 GUESSLANG_SERVER_URL = "https://github.com/{repo}/archive/{ref}.zip".format(
     repo="jfcherng-sublime/ST-AutoSetSyntax",

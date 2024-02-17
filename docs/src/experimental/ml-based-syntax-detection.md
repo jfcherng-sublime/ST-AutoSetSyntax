@@ -2,7 +2,7 @@
 
 --8<-- "refs.md"
 
-!!! warning "This feature is experimental and disabled by default."
+!!! warning "This feature has been deprecated and will be removed in AutoSetSyntax v3."
 
 ## Overview
 
