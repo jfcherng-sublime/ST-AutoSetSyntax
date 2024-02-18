@@ -195,9 +195,10 @@ def nth(items: Iterable[_T], n: int, default: _U | None = None) -> _T | _U | Non
     return next(islice(iter(items), n, None), default)
 
 
-def stable_unique(items: Iterable[_T]) -> Generator[_T, None, None]:
+def stable_unique(items: Iterable[_T], *, key: Callable[[_T], Any] | None = None) -> Generator[_T, None, None]:
     """Lists unique items from the iterable, in their original order."""
-    yield from {item: True for item in items}.keys()
+    key = key or (lambda x: x)
+    yield from {key(item): item for item in items}.values()
 
 
 @clearable_lru_cache()
