@@ -1,0 +1,3 @@
+.venv-*/
+.venv/
+/libs-py38@*/
