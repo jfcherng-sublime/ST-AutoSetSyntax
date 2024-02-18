@@ -4,13 +4,11 @@ from typing import TYPE_CHECKING, Iterable, List
 
 import sublime
 
-from .guesslang.server import GuesslangServer
 from .settings import get_merged_plugin_settings
 from .snapshot import ViewSnapshotCollection
 from .types import Optimizable, WindowKeyedDict
 
 if TYPE_CHECKING:
-    from .guesslang.client import GuesslangClient
     from .rules import SyntaxRuleCollection
 
 DroppedRules = List[Optimizable]
@@ -35,12 +33,6 @@ class SyntaxRuleCollections(_WindowKeyedDict_SyntaxRuleCollection):
 
 class G:
     """This class holds "G"lobal variables as its class variables."""
-
-    guesslang_client: GuesslangClient | None = None
-    """The guesslang client object, which interacts with the Node.js guesslang server."""
-
-    guesslang_server: GuesslangServer | None = None
-    """The guesslang server object."""
 
     startup_views: set[sublime.View] = set()
     """Views exist before this plugin is loaded when Sublime Text just starts."""

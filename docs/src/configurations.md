@@ -497,18 +497,6 @@ To edit project settings, go to `Project` » `Edit Project`.
 
         If `case_insensitive` is not provided, it will be `true` on Windows but `false` on other OSes.
 
-#### `is_guesslang_enabled`
-
-!!! example
-
-    ```js
-    {
-        "constraint": "is_guesslang_enabled",
-    }
-    ```
-
-    Test whether the `guesslang` server is enabled.
-
 #### `is_hidden_syntax`
 
 !!! example

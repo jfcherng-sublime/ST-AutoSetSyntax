@@ -35,14 +35,6 @@
         "command": "auto_set_syntax_download_dependencies",
     },
     {
-        "caption": "AutoSetSyntax: Download Guesslang Server",
-        "command": "auto_set_syntax_download_guesslang_server",
-    },
-    {
-        "caption": "AutoSetSyntax: Restart Guesslang Server",
-        "command": "auto_set_syntax_restart_guesslang",
-    },
-    {
         "caption": "AutoSetSyntax: Settings",
         "command": "edit_settings",
         "args": {

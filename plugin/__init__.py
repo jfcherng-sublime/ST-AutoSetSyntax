@@ -13,8 +13,6 @@ from .commands import (
     AutoSetSyntaxCreateNewMatchCommand,
     AutoSetSyntaxDebugInformationCommand,
     AutoSetSyntaxDownloadDependenciesCommand,
-    AutoSetSyntaxDownloadGuesslangServerCommand,
-    AutoSetSyntaxRestartGuesslangCommand,
     run_auto_set_syntax_on_view,
 )
 from .constants import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME, PLUGIN_PY_LIBS_DIR
@@ -51,8 +49,6 @@ __all__ = (
     "AutoSetSyntaxCreateNewMatchCommand",
     "AutoSetSyntaxDebugInformationCommand",
     "AutoSetSyntaxDownloadDependenciesCommand",
-    "AutoSetSyntaxDownloadGuesslangServerCommand",
-    "AutoSetSyntaxRestartGuesslangCommand",
     # ST: listeners
     "AioSettings",
     "AutoSetSyntaxEventListener",
@@ -83,7 +79,6 @@ def _plugin_loaded() -> None:
 
     if get_merged_plugin_setting("run_on_startup_views"):
         sublime.set_timeout_async(_run_on_startup_views)
-    sublime.run_command("auto_set_syntax_restart_guesslang")
 
 
 def plugin_unloaded() -> None:
@@ -92,9 +87,6 @@ def plugin_unloaded() -> None:
 
     for window in sublime.windows():
         tear_down_window(window)
-
-    if G.guesslang_server:
-        G.guesslang_server.stop()
 
 
 def _settings_changed_callback(window: sublime.Window) -> None:

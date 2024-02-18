@@ -103,10 +103,6 @@ class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
 
 
 class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
-    def on_exit(self) -> None:
-        if G.guesslang_server:
-            G.guesslang_server.stop()
-
     def on_activated(self, view: sublime.View) -> None:
         _try_assign_syntax_when_view_untransientize(view)
 

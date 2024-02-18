@@ -287,9 +287,8 @@
             "selector": "text.plain",
             "match": "all",
             "rules": [
-                // the guesslang server does a better job at guessing JavaScript vs TypeScript
                 {
-                    "constraint": "is_guesslang_enabled",
+                    "constraint": "is_magika_enabled",
                     "inverted": true
                 },
                 {
@@ -703,105 +702,5 @@
         "winregistry": ["scope:source.reg"],
         "xml": ["scope:text.xml"],
         "yaml": ["scope:source.yaml"]
-    },
-
-    ///////////////////////////////////////
-    // Guesslang settings (experimental) //
-    /////////////////////////////////////////////////////////////////////////
-    // You have to restart ST after modifying any of guesslang's settings. //
-    /////////////////////////////////////////////////////////////////////////
-
-    // To use this feature, you have to install the server.
-    // @see https://jfcherng-sublime.github.io/ST-AutoSetSyntax/experimental/ml-based-syntax-detection/#prerequisites
-    "guesslang.enabled": false,
-    // The path of the node-like executable. Leave it blank for auto determination.
-    "guesslang.node_bin": "",
-    // Extra command line arguments for invoking the node-like executable.
-    "guesslang.node_bin_args": [],
-    // The port number which should be used by the guesslang server.
-    // You can use a negative number for auto determination.
-    "guesslang.port": -1,
-    "guesslang.syntax_map": {
-        "asm": [
-            // no good way to do this?
-            "scope:source.asm.x86_64",
-            "scope:source.asm.arm",
-            "scope:source.rvasm",
-            "scope:source.assembly"
-        ],
-        "bat": ["scope:source.dosbatch"],
-        "c": ["scope:source.c"],
-        "cbl": ["scope:source.cobol"],
-        "clj": ["scope:source.clojure"],
-        "cmake": ["scope:source.cmake"],
-        "coffee": ["scope:source.coffee"],
-        "cpp": ["scope:source.c++"],
-        "cs": ["scope:source.cs"],
-        "css": [
-            // SCSS is a superset and this server can't distinguish SCSS and CSS
-            "scope:source.scss",
-            "scope:source.css"
-        ],
-        "csv": ["scope:text.advanced_csv", "scope:text.csv"],
-        "dart": ["scope:source.dart"],
-        "dm": ["scope:source.dm"],
-        "dockerfile": ["scope:source.dockerfile"],
-        "erl": ["scope:source.erlang"],
-        "ex": ["scope:source.elixir"],
-        "f90": ["scope:source.modern-fortran"],
-        "go": ["scope:source.go"],
-        "groovy": ["scope:source.groovy"],
-        "hs": ["scope:source.haskell"],
-        "html": ["scope:text.html.basic"],
-        "ini": ["scope:source.ini"],
-        "java": ["scope:source.java"],
-        "jl": ["scope:source.julia"],
-        "js": ["scope:source.js"],
-        "json": ["scope:source.json"],
-        "kt": ["scope:source.Kotlin"],
-        "lisp": ["scope:source.lisp"],
-        "lua": ["scope:source.lua"],
-        "makefile": ["scope:source.makefile"],
-        "matlab": ["scope:source.matlab"],
-        "md": ["scope:text.html.markdown"],
-        "ml": [], // what is this?
-        "mm": ["objective-c"],
-        "pas": ["scope:source.pascal"],
-        "php": ["scope:embedding.php", "scope:text.html.php"],
-        "pl": ["scope:source.perl"],
-        "pm": [], // what is this?
-        "prolog": ["scope:source.prolog"],
-        "ps1": ["scope:source.powershell"],
-        "py": ["scope:source.python"],
-        "r": ["scope:source.r"],
-        "rb": ["scope:source.ruby"],
-        "rs": ["scope:source.rust"],
-        "scala": ["scope:source.scala"],
-        "sh": ["scope:source.shell.bash"],
-        "sql": ["scope:source.sql"],
-        "swift": ["scope:source.swift"],
-        "tex": ["scope:text.tex.latex"],
-        "toml": ["scope:source.toml"],
-        "ts": ["scope:source.ts"],
-        "v": ["scope:source.verilog"],
-        "vba": ["scope:source.vbs"],
-        "xml": ["scope:text.xml"],
-        "yml": ["scope:source.yaml"],
-        // extra from vscode-regexp-languagedetection (modelLangToVSCodeLang)
-        "coffeescript": ["=coffee"],
-        "csharp": ["=cs"],
-        "erlang": ["=erl"],
-        "haskell": ["=hs"],
-        "javascript": ["=js"],
-        "markdown": ["=md"],
-        "objective-c": ["=mm"],
-        "perl": ["=pl"],
-        "powershell": ["=ps1"],
-        "python": ["=py"],
-        "ruby": ["=rb"],
-        "rust": ["=rs"],
-        "shellscript": ["=sh"],
-        "typescript": ["=ts"],
-        "yaml": ["=yml"]
     }
 }

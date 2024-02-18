@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Mapping
 from functools import wraps
 from itertools import chain
-from operator import itemgetter
 from pathlib import Path
 from typing import Any, Callable, TypeVar, cast
 
@@ -12,9 +10,7 @@ import sublime
 import sublime_plugin
 
 from ..constants import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE
-from ..guesslang.types import GuesslangServerPredictionItem, GuesslangServerResponse
 from ..helpers import is_syntaxable_view, resolve_magika_label_with_syntax_map
-from ..libs import websocket
 from ..logger import Logger
 from ..rules import SyntaxRuleCollection
 from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
@@ -24,9 +20,7 @@ from ..types import ListenerEvent
 from ..utils import (
     find_syntax_by_syntax_like,
     find_syntax_by_syntax_likes,
-    first_true,
     get_syntax_name,
-    get_view_by_id,
     is_plaintext_syntax,
     list_trimmed_filenames,
     list_trimmed_strings,
@@ -42,101 +36,6 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 
     def run(self, edit: sublime.Edit) -> None:
         run_auto_set_syntax_on_view(self.view, ListenerEvent.COMMAND, must_plaintext=False)
-
-
-class GuesslangClientCallbacks:
-    """This class contains event callbacks for the guesslang server."""
-
-    def on_open(self, ws: websocket.WebSocketApp) -> None:
-        self._status_msg_and_log(f"🤝 Connected to guesslang server: {ws.url}")
-
-    def on_message(self, ws: websocket.WebSocketApp, message: str) -> None:
-        try:
-            response: GuesslangServerResponse = sublime.decode_value(message)
-            # shorthands
-            predictions = response["data"]
-            event = ListenerEvent.from_value(response["event_name"])
-            view_id = response["id"]
-            Logger.log(f"🐛 Guesslang top predictions: {predictions[:5]}")
-        except (TypeError, ValueError):
-            Logger.log(f"💬 Guesslang server says: {message}")
-            return
-        except Exception as e:
-            Logger.log(f"💣 Guesslang exception: {e}")
-            return
-
-        if not predictions or not (view := get_view_by_id(view_id)) or not (window := view.window()):
-            return
-
-        predictions.sort(key=itemgetter("confidence"), reverse=True)
-
-        if not (resolved_prediction := self.resolve_guess_predictions(window, predictions)):
-            return
-
-        # on_message() callback is async and maybe now the syntax has been set by other things somehow
-        if (current_syntax := view.syntax()) and not is_plaintext_syntax(current_syntax):
-            return
-
-        best_syntax, confidence = resolved_prediction
-        details = {"event": event, "reason": "predict", "confidence": confidence}
-        status_message = f'Predicted as "{get_syntax_name(best_syntax)}"'
-        if confidence >= 0:
-            status_message += f" ({int(confidence * 100)}% confidence)"
-
-        assign_syntax_to_view(view, best_syntax, details=details)
-        sublime.status_message(status_message)
-
-    def on_error(self, ws: websocket.WebSocketApp, error: str) -> None:
-        self._status_msg_and_log(f"❌ Guesslang server went wrong: {error}")
-
-    def on_close(self, ws: websocket.WebSocketApp, close_status_code: int, close_msg: str) -> None:
-        self._status_msg_and_log("💔 Guesslang server disconnected...")
-
-    @classmethod
-    def resolve_guess_predictions(
-        cls,
-        window: sublime.Window,
-        predictions: Iterable[GuesslangServerPredictionItem],
-    ) -> tuple[sublime.Syntax, float] | None:
-        if not (best_prediction := first_true(predictions)):
-            return None
-
-        settings = get_merged_plugin_settings(window=window)
-        syntax_map: dict[str, list[str]] = settings.get("guesslang.syntax_map", {})
-
-        if not (syntax_likes := cls.resolve_language_id(syntax_map, best_prediction["languageId"])):
-            Logger.log(f'🤔 Unknown "languageId" from guesslang: {best_prediction["languageId"]}', window=window)
-            return None
-
-        if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
-            Logger.log(f"😢 Failed finding syntax from guesslang: {syntax_likes}", window=window)
-            return None
-
-        return (syntax, best_prediction["confidence"])
-
-    @classmethod
-    def resolve_language_id(
-        cls,
-        syntax_map: Mapping[str, Iterable[str]],
-        language_id: str,
-        *,
-        referred: set[str] | None = None,
-    ) -> list[str]:
-        res: list[str] = []
-        referred = referred or set()
-        for syntax_like in syntax_map.get(language_id, []):
-            if syntax_like.startswith("="):
-                if (language_id := syntax_like[1:]) not in referred:
-                    referred.add(language_id)
-                    res.extend(cls.resolve_language_id(syntax_map, language_id, referred=referred))
-            else:
-                res.append(syntax_like)
-        return res
-
-    @staticmethod
-    def _status_msg_and_log(msg: str, window: sublime.Window | None = None) -> None:
-        Logger.log(msg, window=window)
-        sublime.status_message(msg)
 
 
 def _snapshot_view(failed_ret: Any = None) -> Callable[[_T_Callable], _T_Callable]:
@@ -207,18 +106,6 @@ def run_auto_set_syntax_on_view(
 
     if _assign_syntax_with_heuristics(view, event):
         return True
-
-    if event in {
-        ListenerEvent.COMMAND,
-        ListenerEvent.INIT,
-        ListenerEvent.LOAD,
-        ListenerEvent.MODIFY,
-        ListenerEvent.PASTE,
-        ListenerEvent.SAVE,
-        ListenerEvent.UNTRANSIENTIZE,
-    }:
-        # this is the ultimate fallback and done async
-        _assign_syntax_with_guesslang_async(view, event)
 
     return _sorry_cannot_help(view, event)
 
@@ -427,24 +314,6 @@ def _assign_syntax_with_magika(view: sublime.View, event: ListenerEvent | None =
 
     sublime.status_message(f"Predicted syntax: {output.ct_label} ({round(output.score * 100, 2)}% confidence)")
     return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "Magika (Deep Learning)"})
-
-
-def _assign_syntax_with_guesslang_async(view: sublime.View, event: ListenerEvent | None = None) -> None:
-    if not (
-        G.guesslang_client
-        and (view_snapshot := G.view_snapshot_collection.get_by_view(view))
-        # don't apply on those have an extension
-        and (event == ListenerEvent.COMMAND or "." not in view_snapshot.file_name_unhidden)
-        # only apply on plain text syntax
-        and ((syntax := view_snapshot.syntax) and is_plaintext_syntax(syntax))
-        # we don't want to use AI model during typing when there is only one line
-        # that may result in unwanted behavior such as a new buffer may be assigned to Python
-        # right after "import" is typed but it could be JavaScript or TypeScript as well
-        and (event != ListenerEvent.MODIFY or "\n" in view_snapshot.content)
-    ):
-        return
-
-    G.guesslang_client.request_guess_snapshot(view_snapshot, event=event)
 
 
 def _sorry_cannot_help(view: sublime.View, event: ListenerEvent | None = None) -> bool:

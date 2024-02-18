@@ -15,9 +15,6 @@
             },
             {
               "$ref": "sublime://settings/AutoSetSyntax#/definitions/magika_settings"
-            },
-            {
-              "$ref": "sublime://settings/AutoSetSyntax#/definitions/guesslang_settings"
             }
           ],
           "definitions": {
@@ -220,7 +217,6 @@
                     "first_line_contains_regex",
                     "is_arch",
                     "is_extension",
-                    "is_guesslang_enabled",
                     "is_hidden_syntax",
                     "is_in_git_repo",
                     "is_in_hg_repo",
@@ -249,7 +245,6 @@
                     "Test whether the first line of the file contains any given regexes. The `args` is a list of regexes.",
                     "Test whether the system architecture is one of the given values. The `args` is a list of `x32`, `x64` and `arm64`.",
                     "Test whether the file name has any given extensions. The `args` is a list of extensions.",
-                    "Test whether the `guesslang` server is enabled.",
                     "Test whether the current syntax is hidden.",
                     "Test whether the file is in a git repository.",
                     "Test whether the file is in a Mercurial repository.",
@@ -478,38 +473,6 @@
                   "default": 0.85
                 },
                 "magika.syntax_map": {
-                  "markdownDescription": "The relationship between `languageId`s in VSCode and syntaxes in ST.",
-                  "type": "object",
-                  "default": {}
-                }
-              }
-            },
-            "guesslang_settings": {
-              "properties": {
-                "guesslang.enabled": {
-                  "description": "Enables the guesslang feature.",
-                  "type": "boolean",
-                  "default": false
-                },
-                "guesslang.node_bin": {
-                  "markdownDescription": "The path of the node-like executable. Leave it blank for auto determination.",
-                  "type": "string",
-                  "default": ""
-                },
-                "guesslang.node_bin_args": {
-                  "markdownDescription": "Extra command line arguments for invoking the node-like executable.",
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "default": []
-                },
-                "guesslang.port": {
-                  "description": "The port number which should be used by the guesslang server. You can use a negative number for auto determination.",
-                  "type": "number",
-                  "default": -1
-                },
-                "guesslang.syntax_map": {
                   "markdownDescription": "The relationship between `languageId`s in VSCode and syntaxes in ST.",
                   "type": "object",
                   "default": {}
