@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 3.0.0
+
+- refactor: remove `guesslang` (now we prefer `magika`)
+
 ## 2.12.0
 
 - feat: experimental `Magika` syntax detect method
