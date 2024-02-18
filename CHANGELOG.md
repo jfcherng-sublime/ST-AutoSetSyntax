@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 2.12.0
+
+- feat: experimental `Magika` syntax detect method
+
+  See documentation for more details.
+  https://jfcherng-sublime.github.io/ST-AutoSetSyntax/experimental/dl-based-syntax-detection/
+
 ## 2.11.18
 
 - chore: match "requirements.in" as Python `requirements.txt`
