@@ -2,12 +2,12 @@
 all:
 
 .PHONY: install
-install: pip-compile
+install:
 	uv pip install -r requirements.txt
 
 .PHONY: pip-compile
 pip-compile:
-	uv pip compile requirements.in -o requirements.txt
+	uv pip compile --upgrade requirements.in -o requirements.txt
 
 .PHONY: ci-check
 ci-check:
