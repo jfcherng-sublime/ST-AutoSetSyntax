@@ -12,7 +12,7 @@ import sublime
 
 from .constants import VIEW_RUN_ID_SETTINGS_KEY
 from .settings import get_merged_plugin_setting
-from .utils import head_tail_content_st, remove_prefix
+from .utils import get_view_by_id, head_tail_content_st, remove_prefix
 
 
 @dataclass
@@ -51,6 +51,10 @@ class ViewSnapshot:
     def file_size(self) -> int:
         """The file size in bytes, -1 if file not on a disk."""
         return self.path_obj.stat().st_size if self.path_obj else -1
+
+    @property
+    def view(self) -> sublime.View | None:
+        return get_view_by_id(self.id)
 
 
 # `UserDict` is not subscriptable until Python 3.9...

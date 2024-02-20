@@ -252,11 +252,17 @@ def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | No
         return view.size() >= 10 * 1024  # 10KB
 
     def is_json(view: sublime.View) -> bool:
-        view_size = view.size()
-        text_begin = re.sub(r"\s+", "", view.substr(sublime.Region(0, 10)))
-        text_end = re.sub(r"\s+", "", view.substr(sublime.Region(view_size - 10, view_size)))
+        view_snapshot = G.view_snapshot_collection.get_by_view(view)
+        assert view_snapshot
 
-        return bool(
+        text_begin = re.sub(r"\s+", "", view_snapshot.content[:10])
+        text_end = re.sub(r"\s+", "", view_snapshot.content[-10:])
+
+        # XSSI protection prefix (https://security.stackexchange.com/q/110539)
+        if text_begin.startswith((")]}'\n", ")]}',\n")):
+            return True
+
+        return is_large_file(view) and bool(
             # map
             (re.search(r'^\{"', text_begin) and re.search(r'(?:[\d"\]}]|true|false|null)\}$', text_end))
             # array
@@ -265,9 +271,8 @@ def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | No
             or (text_begin.startswith("[{") and text_end.endswith("}]"))
         )
 
-    if is_large_file(view):
-        if is_json(view) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
-            return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "heuristics"})
+    if is_json(view) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
+        return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "heuristics"})
 
     return False
 
