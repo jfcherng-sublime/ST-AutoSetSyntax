@@ -7,7 +7,7 @@ install: pip-compile
 
 .PHONY: pip-compile
 pip-compile:
-	uv pip compile requirements.in -o requirements.txt
+	uv pip compile --upgrade requirements.in -o requirements.txt
 
 .phony: serve
 serve:

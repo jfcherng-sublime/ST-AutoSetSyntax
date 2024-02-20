@@ -19,8 +19,7 @@ jobs:
       - run: |
           cd docs/
           uv v && . .venv/bin/activate
-          uv pip install -r requirements.txt
-          make build
+          make install build
   job_deploy:
     # deploy only on the "stable" branch
     if: ${{ github.ref == 'refs/heads/stable' }}
@@ -35,5 +34,4 @@ jobs:
       - run: |
           cd docs/
           uv v && . .venv/bin/activate
-          uv pip install -r requirements.txt
-          make deploy
+          make install deploy

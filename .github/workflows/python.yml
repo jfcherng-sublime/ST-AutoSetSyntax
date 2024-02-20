@@ -48,5 +48,4 @@ jobs:
       - name: Do linting
         run: |
           uv v && . .venv/bin/activate
-          uv pip install -r requirements.txt
-          make ci-check
+          make install ci-check

@@ -16,7 +16,7 @@ mypy.ini export-ignore
 py.typed export-ignore
 pyproject.toml export-ignore
 pyrightconfig.json export-ignore
-requirements.txt export-ignore
+requirements.* export-ignore
 scripts/ export-ignore
 stubs/ export-ignore
 tests/ export-ignore
