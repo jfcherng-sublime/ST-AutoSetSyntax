@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 3.0.1
+
+- fix: better detection for JSON with XSSI protection prefix
+
 ## 3.0.0
 
 - refactor: remove `guesslang` (now we prefer `magika`)
