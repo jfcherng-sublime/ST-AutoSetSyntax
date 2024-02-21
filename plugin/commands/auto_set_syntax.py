@@ -67,7 +67,7 @@ def run_auto_set_syntax_on_view(
     # prerequsites
     if not (
         (window := view.window())
-        and is_syntaxable_view(view, must_plaintext)
+        and is_syntaxable_view(view, must_plaintext=must_plaintext)
         and (syntax_rule_collection := G.syntax_rule_collections.get(window))
     ):
         return False

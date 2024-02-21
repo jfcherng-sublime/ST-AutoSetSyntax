@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from collections import deque
+
 import sublime
 
 from .settings import get_st_setting
-from .utils import is_plaintext_syntax, is_transient_view, stable_unique
+from .utils import is_plaintext_syntax, is_transient_view
 
 
-def is_syntaxable_view(view: sublime.View, must_plaintext: bool = False) -> bool:
+def is_syntaxable_view(view: sublime.View, *, must_plaintext: bool = False) -> bool:
     """Determinates whether the view is what we want to set a syntax on."""
     return bool(
         view.is_valid()
@@ -18,15 +20,20 @@ def is_syntaxable_view(view: sublime.View, must_plaintext: bool = False) -> bool
 
 
 def resolve_magika_label_with_syntax_map(label: str, syntax_map: dict[str, list[str]]) -> list[str]:
-    res: list[str] = []
-    queue: list[str] = syntax_map.get(label, []).copy()
+    # note that dict is insertion-ordered (since Python 3.7)
+    res: dict[str, bool] = {}
 
-    # @todo what if there are circular references?
-    while queue:
-        syntax_like = queue.pop()
-        if syntax_like.startswith("="):
-            queue.extend(syntax_map.get(syntax_like[1:], []))
+    deq = deque(syntax_map.get(label, []))
+    while deq:
+        if (notation := deq.popleft()) in res:
             continue
-        res.append(syntax_like)
+        res[notation] = False  # visited
 
-    return list(stable_unique(reversed(res)))
+        scope, _, ref = notation.partition("=")
+
+        if ref:
+            deq.extendleft(reversed(syntax_map.get(ref, [])))
+        else:
+            res[scope] = True  # parsed
+
+    return [scope for scope, is_parsed in res.items() if is_parsed]
