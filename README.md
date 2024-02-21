@@ -16,7 +16,7 @@ AutoSetSyntax helps you set the syntax for a view automatically in various ways:
 - Assigning syntax for Sublime Text syntax test files.
 - Assigning syntax by the first line.
 - User-defined rules.
-- (Experimental) Machine learning based syntax detection.
+- (Experimental) Deep learning based syntax detection. ([Magika][google-magika])
 
 ## Installation
 
@@ -27,4 +27,5 @@ This package is available on [Package Control][package-control] by the name of [
 - https://jfcherng-sublime.github.io/ST-AutoSetSyntax/
 
 [autosetsyntax]: https://packagecontrol.io/packages/AutoSetSyntax
+[google-magika]: https://github.com/google/magika
 [package-control]: https://packagecontrol.io

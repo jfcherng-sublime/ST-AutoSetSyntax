@@ -24,7 +24,7 @@ AutoSetSyntax helps you set the syntax for a view automatically in various ways:
 - Assigning syntax for Sublime Text syntax test files.
 - Assigning syntax by the first line.
 - User-defined rules.
-- (Experimental) Machine learning based syntax detection.
+- (Experimental) Deep learning based syntax detection. ([Magika][google-magika])
 
 If you want to learn more details, read "[Use Cases][plugin-use-cases]" and "[Configurations][plugin-configurations]".
 
