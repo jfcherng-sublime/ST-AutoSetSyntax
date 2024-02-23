@@ -267,8 +267,8 @@ def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | No
         view_snapshot = G.view_snapshot_collection.get_by_view(view)
         assert view_snapshot
 
-        text_begin = re.sub(r"\s+", "", view_snapshot.content[:10])
-        text_end = re.sub(r"\s+", "", view_snapshot.content[-10:])
+        text_begin = re.sub(r"^\s+", "", view_snapshot.content[:10])
+        text_end = re.sub(r"\s+$", "", view_snapshot.content[-10:])
 
         # XSSI protection prefix (https://security.stackexchange.com/q/110539)
         if text_begin.startswith((")]}'\n", ")]}',\n")):
