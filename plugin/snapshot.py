@@ -12,7 +12,7 @@ import sublime
 
 from .constants import VIEW_RUN_ID_SETTINGS_KEY
 from .settings import get_merged_plugin_setting
-from .utils import get_view_by_id, head_tail_content_st, remove_prefix
+from .utils import get_view_by_id, head_tail_content_st
 
 
 @dataclass
@@ -47,7 +47,7 @@ class ViewSnapshot:
     @property
     def file_name_unhidden(self) -> str:
         """The file name without prefixed dots. Empty string if not on a disk."""
-        return remove_prefix(self.file_name, ".")
+        return self.file_name.lstrip(".")
 
     @property
     def file_path(self) -> str:
