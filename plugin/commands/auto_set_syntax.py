@@ -171,30 +171,42 @@ def _assign_syntax_with_plugin_rules(
 
 
 def _assign_syntax_with_first_line(view: sublime.View, event: ListenerEvent | None = None) -> bool:
-    if not (view_snapshot := G.view_snapshot_collection.get_by_view(view)):
-        return False
-
     # Note that this only works for files under some circumstances.
     # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
-    def assign_by_shebang(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
+    def _prefer_shebang(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
         if (
-            view_snapshot.syntax
-            and not is_plaintext_syntax(view_snapshot.syntax)
-            and ("." not in view_snapshot.file_name_unhidden or view_snapshot.first_line.startswith("#!"))
+            view_snapshot.first_line.startswith("#!")
             and (syntax := sublime.find_syntax_for_file("", view_snapshot.first_line))
             and not is_plaintext_syntax(syntax)
         ):
             return syntax
         return None
 
-    def assign_by_vim_modeline(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
+    def _prefer_general_first_line(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
+        if (
+            not view_snapshot.file_extensions
+            and (syntax := sublime.find_syntax_for_file(view_snapshot.file_name_unhidden, view_snapshot.first_line))
+            and not is_plaintext_syntax(syntax)
+        ):
+            return syntax
+        return None
+
+    def _prefer_vim_modeline(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
         for match in RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content):
             if syntax := find_syntax_by_syntax_like(match.group("syntax")):
                 return syntax
         return None
 
-    for checker in (assign_by_shebang, assign_by_vim_modeline):
+    if not (view_snapshot := G.view_snapshot_collection.get_by_view(view)):
+        return False
+
+    # It's potentially that a first line of a syntax is a prefix of another syntax's.
+    # Thus if the user is typing, only try assigning syntax if this is not triggered by the first line.
+    if event is ListenerEvent.MODIFY and view_snapshot.caret_rowcol[0] == 0:
+        return False
+
+    for checker in (_prefer_shebang, _prefer_vim_modeline, _prefer_general_first_line):
         if syntax := checker(view_snapshot):
             return assign_syntax_to_view(
                 view,

@@ -31,6 +31,13 @@ class ViewSnapshot:
     """The path object of this file. `None` if not on a disk."""
     syntax: sublime.Syntax | None
     """The syntax object. Note that the value is as-is when it's cached."""
+    caret_rowcol: tuple[int, int] = (-1, -1)
+    """The 0-indexed `(row, column)` of the first caret visually. -1 if no caret."""
+
+    @property
+    def file_extensions(self) -> list[str]:
+        """The file extensions. Empty list if not on a disk."""
+        return self.path_obj.suffixes if self.path_obj else []
 
     @property
     def file_name(self) -> str:
@@ -82,6 +89,7 @@ class ViewSnapshotCollection(_UserDict_ViewSnapshot):
             line_count=view.rowcol(view.size())[0] + 1,
             path_obj=path,
             syntax=view.syntax(),
+            caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
         )
 
     def get_by_view(self, view: sublime.View) -> ViewSnapshot | None:
