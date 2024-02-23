@@ -1,5 +1,14 @@
 # AutoSetSyntax Changelog
 
+## 3.0.2
+
+- fix: JSON with XSSI protection prefix doesn't work
+- fix: first line syntax detection doesn't work while typing
+
+  E.g., type `<?php` and then press Enter. It should be detected as `PHP`.
+
+- refactor: file_name_unhidden should base on `lstrip()`
+
 ## 3.0.1
 
 - fix: better detection for JSON with XSSI protection prefix
