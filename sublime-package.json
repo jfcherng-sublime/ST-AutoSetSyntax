@@ -20,6 +20,11 @@
           "definitions": {
             "root_plugin_settings": {
               "properties": {
+                "debounce": {
+                  "description": "The time (in secondes) to wait for the next event to be triggered.",
+                  "type": "number",
+                  "default": 0.3
+                },
                 "enable_log": {
                   "description": "Enables plugin log (in a dedicated panel).",
                   "type": "boolean",

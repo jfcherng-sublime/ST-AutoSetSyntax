@@ -21,7 +21,7 @@ from .constants import (
 from .helpers import is_syntaxable_view
 from .logger import Logger
 from .rules import SyntaxRuleCollection, get_constraints, get_matches
-from .settings import pref_syntax_rules
+from .settings import get_merged_plugin_setting, pref_syntax_rules
 from .shared import G
 from .types import ListenerEvent
 from .utils import debounce, is_transient_view, stringify
@@ -73,6 +73,17 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
         window=window,
         enabled=is_update,
     )
+
+
+def _configured_debounce(func: _T_Callable) -> _T_Callable:
+    """Debounce a function so that it's called once in seconds."""
+
+    def debounced(*args: Any, **kwargs: Any) -> None:
+        if (time_s := get_merged_plugin_setting("debounce", 0)) > 0:
+            return debounce(time_s)(func)(*args, **kwargs)
+        return func(*args, **kwargs)
+
+    return cast(_T_Callable, debounced)
 
 
 def _guarantee_primary_view(*, must_plaintext: bool = False) -> Callable[[_T_Callable], _T_Callable]:
@@ -138,7 +149,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
             run_auto_set_syntax_on_view(view, ListenerEvent.EXEC)
 
 
-@debounce()
+@_configured_debounce
 def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[sublime.TextChange]) -> bool:
     # don't use `len(changes) <= 1` here because it has a length of 3
     # for `view.run_command('insert', {'characters': 'foo\nbar'})` and that's unwanted
