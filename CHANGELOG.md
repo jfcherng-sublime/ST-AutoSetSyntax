@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 3.1.0
+
+- feat: configurable debounce time via `debound` setting
+
 ## 3.0.2
 
 - fix: JSON with XSSI protection prefix doesn't work
