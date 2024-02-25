@@ -12,6 +12,7 @@
 [pc-lsp-json]: https://packagecontrol.io/packages/LSP-json
 [pc-lsp]: https://packagecontrol.io/packages/LSP
 [plugin-constraints-dir]: https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tree/st4/plugin/rules/constraints
+[plugin-dependencies-dir]: https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tree/dependencies
 [plugin-matches-dir]: https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tree/st4/plugin/rules/matches
 [python-regex-flags]: https://docs.python.org/3.8/library/re.html#re.A
 [python-regex-inline-flags]: https://docs.python.org/3.8/library/re.html#index-16

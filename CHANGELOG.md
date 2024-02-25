@@ -2,7 +2,7 @@
 
 ## 3.1.0
 
-- feat: configurable debounce time via `debound` setting
+- feat: configurable debounce time via `debounce` setting
 
 ## 3.0.2
 
