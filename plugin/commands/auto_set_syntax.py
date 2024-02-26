@@ -260,13 +260,10 @@ def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | No
     ):
         return False
 
-    def is_large_file(view: sublime.View) -> bool:
-        return view.size() >= 10 * 1024  # 10KB
+    def is_large_file(view_snapshot: ViewSnapshot) -> bool:
+        return view_snapshot.char_count >= 10 * 1024  # 10KB
 
-    def is_json(view: sublime.View) -> bool:
-        view_snapshot = G.view_snapshot_collection.get_by_view(view)
-        assert view_snapshot
-
+    def is_json(view_snapshot: ViewSnapshot) -> bool:
         text_begin = re.sub(r"^\s+", "", view_snapshot.content[:10])
         text_end = re.sub(r"\s+$", "", view_snapshot.content[-10:])
 
@@ -274,7 +271,7 @@ def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | No
         if text_begin.startswith((")]}'\n", ")]}',\n")):
             return True
 
-        return is_large_file(view) and bool(
+        return is_large_file(view_snapshot) and bool(
             # map
             (re.search(r'^\{"', text_begin) and re.search(r'(?:[\d"\]}]|true|false|null)\}$', text_end))
             # array
@@ -283,7 +280,7 @@ def _assign_syntax_with_heuristics(view: sublime.View, event: ListenerEvent | No
             or (text_begin.startswith("[{") and text_end.endswith("}]"))
         )
 
-    if is_json(view) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
+    if is_json(view_snapshot) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
         return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "heuristics"})
 
     return False
@@ -314,7 +311,7 @@ def _assign_syntax_with_magika(view: sublime.View, event: ListenerEvent | None =
 
     classifier = Magika()
     output = classifier.identify_bytes(view_snapshot.content.encode()).output
-    Logger.log(f"🐛 Magika's prediction: {output}", window=window)
+    # Logger.log(f"🐛 Magika's prediction: {output}", window=window)
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
     if output.score < threadshold or output.ct_label in {"directory", "empty", "txt", "unknown"}:

@@ -323,7 +323,11 @@ def list_all_views(*, include_transient: bool = False) -> Generator[sublime.View
 
 
 def get_view_by_id(id: int) -> sublime.View | None:
-    return first_true(list_all_views(include_transient=True), pred=lambda view: view.id() == id)
+    return view if (view := sublime.View(id)).is_valid() else None
+
+
+def get_window_by_id(id: int) -> sublime.Window | None:
+    return window if (window := sublime.Window(id)).is_valid() else None
 
 
 def head_tail_content(content: str, partial: int) -> str:

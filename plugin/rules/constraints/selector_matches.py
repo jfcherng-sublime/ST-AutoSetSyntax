@@ -9,11 +9,28 @@ from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 @final
 class SelectorMatchesConstraint(AbstractConstraint):
-    # Quick tips:
-    #   - sublime.score_selector('a.b', 'b') == 0
-    #   - sublime.score_selector('a.b', '')  == 1
-    #   - sublime.score_selector('a.b', 'a') == 8
     SCORE_THRESHOLD = 1
+    """
+    Quick tips (ST >= 4173):
+
+    ```python
+    sublime.score_selector("a.b", "b") == 0
+    sublime.score_selector("a.b", "")  == 1
+    sublime.score_selector("a.b", " ")  == 1
+    sublime.score_selector("a.b", "a") == 1
+    sublime.score_selector("a.b", "a.b") == 2
+    ```
+
+    Quick tips (ST < 4173):
+
+    ```python
+    sublime.score_selector("a.b", "b") == 0
+    sublime.score_selector("a.b", "")  == 1
+    sublime.score_selector("a.b", " ")  == 1
+    sublime.score_selector("a.b", "a") == 8
+    sublime.score_selector("a.b", "a.b") == 16
+    ```
+    """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

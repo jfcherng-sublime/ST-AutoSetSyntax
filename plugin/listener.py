@@ -78,7 +78,7 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
 def _configured_debounce(func: _T_Callable) -> _T_Callable:
     """Debounce a function so that it's called once in seconds."""
 
-    def debounced(*args: Any, **kwargs: Any) -> None:
+    def debounced(*args: Any, **kwargs: Any) -> Any:
         if (time_s := get_merged_plugin_setting("debounce", 0)) > 0:
             return debounce(time_s)(func)(*args, **kwargs)
         return func(*args, **kwargs)
