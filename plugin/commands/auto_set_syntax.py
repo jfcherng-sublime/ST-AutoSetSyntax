@@ -61,6 +61,10 @@ def run_auto_set_syntax_on_view(
     *,
     must_plaintext: bool = False,
 ) -> bool:
+    # multithread guard...
+    if not G.view_snapshot_collection.get_by_view(view):
+        return False
+
     if event is ListenerEvent.EXEC:
         return _assign_syntax_for_exec_output(view, event)
 
