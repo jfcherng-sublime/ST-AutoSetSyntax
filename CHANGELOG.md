@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 3.1.1
+
+- fix: exception related to `None` when triggered frequently
+
 ## 3.1.0
 
 - feat: configurable debounce time via `debounce` setting
