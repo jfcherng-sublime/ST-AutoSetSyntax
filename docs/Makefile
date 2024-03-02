@@ -1,9 +1,11 @@
+UV_INSTALL_FLAGS :=
+
 .phony: all
 all: build
 
 .PHONY: install
-install: pip-compile
-	uv pip install -r requirements.txt
+install:
+	uv pip install $(UV_INSTALL_FLAGS) -r requirements.txt
 
 .PHONY: pip-compile
 pip-compile:

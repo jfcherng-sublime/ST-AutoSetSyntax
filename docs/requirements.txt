@@ -68,7 +68,7 @@ pygments==2.17.2
     # via mkdocs-material
 pymdown-extensions==10.7
     # via mkdocs-material
-python-dateutil==2.9.0
+python-dateutil==2.9.0.post0
     # via ghp-import
 pytz==2024.1
     # via mkdocs-git-revision-date-localized-plugin

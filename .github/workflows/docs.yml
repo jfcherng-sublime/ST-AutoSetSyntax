@@ -15,11 +15,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - run: python -m pip install -U uv
+      - name: Install dependencies
+        run: |
+          python -m pip install -U uv
+          make -C docs/ UV_INSTALL_FLAGS="--system" install
       - run: |
-          cd docs/
-          uv v && . .venv/bin/activate
-          make install build
+          make -C docs/ build
   job_deploy:
     # deploy only on the "stable" branch
     if: ${{ github.ref == 'refs/heads/stable' }}
@@ -30,8 +31,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - run: python -m pip install -U uv
+      - name: Install dependencies
+        run: |
+          python -m pip install -U uv
+          make -C docs/ UV_INSTALL_FLAGS="--system" install
       - run: |
-          cd docs/
-          uv v && . .venv/bin/activate
-          make install deploy
+          make -C docs/ deploy
