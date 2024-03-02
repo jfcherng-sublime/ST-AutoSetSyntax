@@ -377,7 +377,7 @@
             "rules": [
                 {
                     "constraint": "name_contains_regex",
-                    "args": ["^requirements([\\-_.].*)?.(txt|in)$"]
+                    "args": ["^requirements([-_.].+)?\\.(in|txt)$"]
                 }
             ]
         },
