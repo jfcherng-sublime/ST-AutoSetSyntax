@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 3.1.2
+
+- chore: refine `requirements.txt` rule pattern
+- chore: add `PEM` syntax mapping for magika
+- chore: fix docs link
+
 ## 3.1.1
 
 - fix: exception related to `None` when triggered frequently
