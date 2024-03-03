@@ -685,6 +685,7 @@
         "makefile": ["scope:source.makefile"],
         "markdown": ["scope:text.html.markdown"],
         "mum": ["=xml"],
+        "pem": ["scope:text.pem"],
         "perl": ["scope:source.perl"],
         "php": ["scope:embedding.php", "scope:text.html.php"],
         "postscript": ["scope:source.postscript"],
