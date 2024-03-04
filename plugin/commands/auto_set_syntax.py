@@ -314,23 +314,27 @@ def _assign_syntax_with_magika(view: sublime.View, event: ListenerEvent | None =
         return False
 
     classifier = Magika()
-    output = classifier.identify_bytes(view_snapshot.content.encode()).output
-    # Logger.log(f"🐛 Magika's prediction: {output}", window=window)
+    if not view.is_dirty() and view_snapshot.path_obj:
+        result = classifier.identify_path(view_snapshot.path_obj)
+    else:
+        result = classifier.identify_bytes(view_snapshot.content.encode())
+    # Logger.log(f"🐛 Magika's prediction: {result.output}", window=window)
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
-    if output.score < threadshold or output.ct_label in {"directory", "empty", "txt", "unknown"}:
+    if result.output.score < threadshold or result.output.ct_label in {"directory", "empty", "txt", "unknown"}:
         return False
 
     syntax_map: dict[str, list[str]] = settings.get("magika.syntax_map", {})
-    if not (syntax_likes := resolve_magika_label_with_syntax_map(output.ct_label, syntax_map)):
-        Logger.log(f'🤔 Unknown "label" from Magika: {output.ct_label}', window=window)
+    if not (syntax_likes := resolve_magika_label_with_syntax_map(result.output.ct_label, syntax_map)):
+        Logger.log(f'🤔 Unknown "label" from Magika: {result.output.ct_label}', window=window)
         return False
 
     if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
         Logger.log(f"😢 Failed finding syntax from Magika: {syntax_likes}", window=window)
         return False
 
-    sublime.status_message(f"Predicted syntax: {output.ct_label} ({round(output.score * 100, 2)}% confidence)")
+    confidence = round(result.output.score * 100, 2)
+    sublime.status_message(f"Predicted syntax: {result.output.ct_label} ({confidence}% confidence)")
     return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "Magika (Deep Learning)"})
 
 
