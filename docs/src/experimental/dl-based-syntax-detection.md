@@ -18,7 +18,7 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
     The dependencies can be up to \~50 MB in size, so it may take a while.
     When it's done, there will be a popup dialogue.
 
-    !!! tip "If your machine have no access to GitHub..."
+    !!! tip "If your machine has no access to GitHub..."
 
         You can download the dependencies on [GitHub][plugin-dependencies-dir]
         basing on your machine's OS and CPU architecture by any means.
