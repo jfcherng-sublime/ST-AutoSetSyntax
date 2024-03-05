@@ -63,6 +63,27 @@ class ViewSnapshot:
     def view(self) -> sublime.View | None:
         return get_view_by_id(self.id)
 
+    @classmethod
+    def from_view(cls, view: sublime.View) -> ViewSnapshot:
+        window = view.window() or sublime.active_window()
+
+        # is real file on a disk?
+        if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
+            pass
+        else:
+            path = None
+
+        return cls(
+            id=view.id(),
+            char_count=view.size(),
+            content=get_view_pseudo_content(view, window),
+            first_line=get_view_pseudo_first_line(view, window),
+            line_count=view.rowcol(view.size())[0] + 1,
+            path_obj=path,
+            syntax=view.syntax(),
+            caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
+        )
+
 
 # `UserDict` is not subscriptable until Python 3.9...
 if TYPE_CHECKING:
@@ -73,24 +94,7 @@ else:
 
 class ViewSnapshotCollection(_UserDict_ViewSnapshot):
     def add(self, cache_id: str, view: sublime.View) -> None:
-        window = view.window() or sublime.active_window()
-
-        # is real file on a disk?
-        if (_path := view.file_name()) and (path := Path(_path).resolve()).is_file():
-            pass
-        else:
-            path = None
-
-        self[cache_id] = ViewSnapshot(
-            id=view.id(),
-            char_count=view.size(),
-            content=get_view_pseudo_content(view, window),
-            first_line=get_view_pseudo_first_line(view, window),
-            line_count=view.rowcol(view.size())[0] + 1,
-            path_obj=path,
-            syntax=view.syntax(),
-            caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
-        )
+        self[cache_id] = ViewSnapshot.from_view(view)
 
     def get_by_view(self, view: sublime.View) -> ViewSnapshot | None:
         return self.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
@@ -116,5 +120,5 @@ def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:
 def get_view_pseudo_first_line(view: sublime.View, window: sublime.Window) -> str:
     region = view.line(0)
     if (max_length := get_merged_plugin_setting("trim_first_line_length", window=window)) >= 0:
-        region = sublime.Region(region.a, min(region.b, max_length))
+        region.b = min(region.b, max_length)
     return view.substr(region)
