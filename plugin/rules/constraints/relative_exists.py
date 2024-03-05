@@ -3,8 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
@@ -20,9 +19,9 @@ class RelativeExistsConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not self.relatives
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         # file not on disk, maybe just a buffer
-        if not (file_path := self.get_view_snapshot(view).file_path):
+        if not (file_path := view_snapshot.file_path):
             raise AlwaysFalsyException("no filename")
 
         folder = Path(file_path).parent

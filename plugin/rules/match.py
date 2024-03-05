@@ -4,9 +4,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Generator, Union, final
 
-import sublime
-
 from ..cache import clearable_lru_cache
+from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_MatchRule
 from ..utils import camel_to_snake, first_true, list_all_subclasses, remove_suffix
 from .constraint import ConstraintRule
@@ -51,9 +50,9 @@ class MatchRule(Optimizable):
             rules.append(rule)
         self.rules = tuple(rules)
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.match
-        return self.match.test(view, self.rules)
+        return self.match.test(view_snapshot, self.rules)
 
     @classmethod
     def make(cls, match_rule: ST_MatchRule) -> MatchRule:
@@ -115,12 +114,12 @@ class AbstractMatch(ABC):
         return False
 
     @abstractmethod
-    def test(self, view: sublime.View, rules: tuple[MatchableRule, ...]) -> bool:
-        """Tests whether the `view` passes this `match` with those `rules`."""
+    def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
+        """Tests whether the `view_snapshot` passes this `match` with those `rules`."""
 
     @final
     @staticmethod
-    def test_count(view: sublime.View, rules: tuple[MatchableRule, ...], goal: float) -> bool:
+    def test_count(view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...], goal: float) -> bool:
         """Tests whether the amount of passing `rules` is greater than or equal to `goal`."""
         if goal <= 0:
             return True
@@ -129,7 +128,7 @@ class AbstractMatch(ABC):
         for rule in rules:
             if tolerance < 0:
                 return False
-            if rule.test(view):
+            if rule.test(view_snapshot):
                 goal -= 1
                 if goal == 0:
                     return True

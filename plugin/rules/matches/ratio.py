@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ...utils import nth
 from ..match import AbstractMatch, MatchableRule
 
@@ -22,5 +21,5 @@ class RatioMatch(AbstractMatch):
     def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         return not (self.denominator > 0 and 0 <= self.ratio <= 1)
 
-    def test(self, view: sublime.View, rules: tuple[MatchableRule, ...]) -> bool:
-        return self.test_count(view, rules, self.ratio * len(rules))
+    def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
+        return self.test_count(view_snapshot, rules, self.ratio * len(rules))

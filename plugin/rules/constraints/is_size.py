@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 Comparator = Callable[[Any, Any], bool]
@@ -28,8 +27,8 @@ class IsSizeConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not (self.comparator and self.threshold is not None)
 
-    def test(self, view: sublime.View) -> bool:
-        if (file_size := self.get_view_snapshot(view).file_size) < 0:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
+        if (file_size := view_snapshot.file_size) < 0:
             raise AlwaysFalsyException("file not on disk")
 
         assert self.comparator

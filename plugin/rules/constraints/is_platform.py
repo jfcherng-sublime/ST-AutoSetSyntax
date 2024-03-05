@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Any, final
 
-import sublime
-
 from ...constants import ST_PLATFORM
+from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
 
 
@@ -19,5 +18,5 @@ class IsPlatformConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not self.names
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         return self.result

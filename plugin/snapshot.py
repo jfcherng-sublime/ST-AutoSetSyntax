@@ -1,24 +1,18 @@
 from __future__ import annotations
 
-import uuid
-from collections import UserDict
-from collections.abc import Generator
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import sublime
 
-from .constants import VIEW_RUN_ID_SETTINGS_KEY
 from .settings import get_merged_plugin_setting
-from .utils import get_view_by_id, head_tail_content_st
+from .utils import head_tail_content_st
 
 
 @dataclass
 class ViewSnapshot:
-    id: int
-    """View ID."""
+    view: sublime.View
+    """The view object."""
     char_count: int
     """Character count."""
     content: str
@@ -60,11 +54,13 @@ class ViewSnapshot:
         return self.path_obj.stat().st_size if self.path_obj else -1
 
     @property
-    def view(self) -> sublime.View | None:
-        return get_view_by_id(self.id)
+    def valid_view(self) -> sublime.View | None:
+        """The `view` object if it's still valid, otherwise `None`."""
+        return self.view if self.view.is_valid() else None
 
     @classmethod
     def from_view(cls, view: sublime.View) -> ViewSnapshot:
+        """Create a `ViewSnapshot` object from a `sublime.View` object."""
         window = view.window() or sublime.active_window()
 
         # is real file on a disk?
@@ -74,7 +70,7 @@ class ViewSnapshot:
             path = None
 
         return cls(
-            id=view.id(),
+            view=view,
             char_count=view.size(),
             content=get_view_pseudo_content(view, window),
             first_line=get_view_pseudo_first_line(view, window),
@@ -83,34 +79,6 @@ class ViewSnapshot:
             syntax=view.syntax(),
             caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
         )
-
-
-# `UserDict` is not subscriptable until Python 3.9...
-if TYPE_CHECKING:
-    _UserDict_ViewSnapshot = UserDict[str, ViewSnapshot]
-else:
-    _UserDict_ViewSnapshot = UserDict
-
-
-class ViewSnapshotCollection(_UserDict_ViewSnapshot):
-    def add(self, cache_id: str, view: sublime.View) -> None:
-        self[cache_id] = ViewSnapshot.from_view(view)
-
-    def get_by_view(self, view: sublime.View) -> ViewSnapshot | None:
-        return self.get(view.settings().get(VIEW_RUN_ID_SETTINGS_KEY))
-
-    @contextmanager
-    def snapshot_context(self, view: sublime.View) -> Generator[ViewSnapshot, None, None]:
-        run_id = str(uuid.uuid4())
-        settings = view.settings()
-
-        try:
-            settings.set(VIEW_RUN_ID_SETTINGS_KEY, run_id)
-            self.add(run_id, view)
-            yield self.get(run_id)  # type: ignore
-        finally:
-            settings.erase(VIEW_RUN_ID_SETTINGS_KEY)
-            self.pop(run_id)
 
 
 def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:

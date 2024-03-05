@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ...utils import nth
 from ..constraint import AbstractConstraint
 
@@ -19,13 +18,13 @@ class ContainsRegexConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not isinstance(self.threshold, (int, float))
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         if self.threshold <= 0:
             return True
 
         return (
             nth(
-                self.regex.finditer(self.get_view_snapshot(view).content),
+                self.regex.finditer(view_snapshot.content),
                 self.threshold - 1,
             )
             is not None

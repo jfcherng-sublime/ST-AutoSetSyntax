@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import sublime
 from AutoSetSyntax.plugin import AbstractMatch, MatchableRule
+from AutoSetSyntax.plugin.snapshot import ViewSnapshot
 
 
 class MyOwnMatch(AbstractMatch):
@@ -12,7 +12,7 @@ class MyOwnMatch(AbstractMatch):
         # can be dropped under certain circumstances by the optimizer.
         return False
 
-    def test(self, view: sublime.View, rules: tuple[MatchableRule, ...]) -> bool:
+    def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
         # Your job is to implement this function, at least.
         # This function tests `rules` (mix of `ConstraintRule`s and `MatchRule`s).
         return False

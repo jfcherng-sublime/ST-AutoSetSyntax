@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
 
 Comparator = Callable[[Any, Any], bool]
@@ -28,6 +27,6 @@ class IsLineCountConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not (self.comparator and self.threshold is not None)
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.comparator
-        return self.comparator(self.get_view_snapshot(view).line_count, self.threshold)
+        return self.comparator(view_snapshot.line_count, self.threshold)

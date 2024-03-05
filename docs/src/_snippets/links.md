@@ -1,8 +1,9 @@
+<!-- markdownlint-disable MD053 -->
+
 <!-- out-going -->
 
 [applysyntax-v1-idea]: https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629
 [autosetsyntax-new-issue]: https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/new
-[black-formatter-online]: https://black.vercel.app
 [google-magika]: https://github.com/google/magika
 [node.js]: https://nodejs.org
 [package-control]: https://packagecontrol.io
@@ -16,6 +17,7 @@
 [plugin-matches-dir]: https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tree/st4/plugin/rules/matches
 [python-regex-flags]: https://docs.python.org/3.8/library/re.html#re.A
 [python-regex-inline-flags]: https://docs.python.org/3.8/library/re.html#index-16
+[ruff-formatter-online]: https://play.ruff.rs/?secondary=Format
 [st-docs-selectors]: https://www.sublimetext.com/docs/selectors.html
 
 <!-- in-docs references -->

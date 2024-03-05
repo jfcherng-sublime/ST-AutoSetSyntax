@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ...utils import find_syntaxes_by_syntax_likes
 from ..constraint import AbstractConstraint, AlwaysFalsyException
 
@@ -18,8 +17,8 @@ class IsSyntaxConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not self.candidates
 
-    def test(self, view: sublime.View) -> bool:
-        if not (syntax := self.get_view_snapshot(view).syntax):
-            raise AlwaysFalsyException(f"View({view.id()}) has no syntax")
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
+        if not (syntax := view_snapshot.syntax):
+            raise AlwaysFalsyException(f"{view_snapshot.view} has no syntax")
 
         return syntax in find_syntaxes_by_syntax_likes(self.candidates)

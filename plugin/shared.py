@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Iterable, List
 import sublime
 
 from .settings import get_merged_plugin_settings
-from .snapshot import ViewSnapshotCollection
 from .types import Optimizable, WindowKeyedDict
 
 if TYPE_CHECKING:
@@ -42,9 +41,6 @@ class G:
 
     dropped_rules_collection = DroppedRulesCollection()
     """Those per-window rules which are dropped after doing optimizations."""
-
-    view_snapshot_collection = ViewSnapshotCollection()
-    """Caches of view attributes."""
 
     @classmethod
     def is_plugin_ready(cls, window: sublime.Window) -> bool:

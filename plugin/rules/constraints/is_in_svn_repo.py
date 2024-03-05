@@ -3,8 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
 
 
@@ -15,11 +14,11 @@ class IsInSvnRepoConstraint(AbstractConstraint):
     _success_dirs: set[Path] = set()
     """Cached directories which make the result `True`."""
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         cls = self.__class__
 
         # file not on disk, maybe just a buffer
-        if not (_file_path := self.get_view_snapshot(view).file_path):
+        if not (_file_path := view_snapshot.file_path):
             raise AlwaysFalsyException("file not on disk")
         file_path = Path(_file_path)
 

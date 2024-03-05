@@ -28,6 +28,6 @@ Log messages are printed in the dedicated log panel. There are two ways to open 
 !!! tip
 
     The debug information is designed to be Python-compatible, thus you can format it
-    with a Python formatter like [Black][black-formatter-online].
+    with a Python formatter like [Ruff][ruff-formatter-online].
 
 [^1]: Command palette: ++ctrl+p++ for Windows/Linux. ++cmd+p++ for macOS.

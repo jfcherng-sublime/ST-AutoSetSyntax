@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
 
 
@@ -17,6 +16,5 @@ class FirstLineContainsConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not self.needles
 
-    def test(self, view: sublime.View) -> bool:
-        first_line = self.get_view_snapshot(view).first_line
-        return any((needle in first_line) for needle in self.needles)
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
+        return any((needle in view_snapshot.first_line) for needle in self.needles)

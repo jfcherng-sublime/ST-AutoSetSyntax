@@ -12,8 +12,8 @@ When AutoSetSyntax is loaded or plugin/project settings updated, AutoSetSyntax r
 AutoSetSyntax has some event listeners (see `listener.py`) which tests syntax rules by calling
 `SyntaxRuleCollection.test(...)` under certain circumstances.
 
-Before `SyntaxRuleCollection.test(...)` runs, `ViewSnapshot` takes a snapshot of the view
-and that snapshot will be used in this whole run to prevent from calling expensive APIs among syntax rules.
+Before `SyntaxRuleCollection.test(...)` runs, `ViewSnapshot` is a snapshot of the view at the moment
+and that snapshot will be used in this whole run to prevent from calling expensive APIs multiple times.
 
 When `SyntaxRuleCollection.test(...)` runs, syntax rules in it are tested in the order
 as they are defined in settings. If there is a syntax rule matches, the test ends and

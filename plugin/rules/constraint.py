@@ -6,11 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Generator, Iterable, Pattern, TypeVar, final
 
-import sublime
-
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
-from ..shared import G
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_ConstraintRule
 from ..utils import (
@@ -54,11 +51,11 @@ class ConstraintRule(Optimizable):
         return
         yield
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.constraint
 
         try:
-            result = self.constraint.test(view)
+            result = self.constraint.test(view_snapshot)
         except AlwaysTruthyException:
             return True
         except AlwaysFalsyException:
@@ -117,8 +114,8 @@ class AbstractConstraint(ABC):
         return False
 
     @abstractmethod
-    def test(self, view: sublime.View) -> bool:
-        """Tests whether the `view` passes this constraint."""
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
+        """Tests whether the `view_snapshot` passes this constraint."""
 
     @final
     def _handled_args(self, normalizer: Callable[[T], T] | None = None) -> tuple[T, ...]:
@@ -160,14 +157,6 @@ class AbstractConstraint(ABC):
     def _handled_case_insensitive(kwargs: dict[str, Any]) -> bool:
         """Returns `case_insensitive` in `kwars`. Defaulted to platform's specification."""
         return bool(kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}))
-
-    @final
-    @staticmethod
-    def get_view_snapshot(view: sublime.View) -> ViewSnapshot:
-        """Gets the cached information for the `view`."""
-        snapshot = G.view_snapshot_collection.get_by_view(view)
-        assert snapshot  # our workflow guarantees this won't be None
-        return snapshot
 
     @final
     @staticmethod

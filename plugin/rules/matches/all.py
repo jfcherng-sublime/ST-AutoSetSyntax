@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ..match import AbstractMatch, MatchableRule
 
 
@@ -14,5 +13,5 @@ class AllMatch(AbstractMatch):
     def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         return len(rules) == 0
 
-    def test(self, view: sublime.View, rules: tuple[MatchableRule, ...]) -> bool:
-        return all(rule.test(view) for rule in rules)
+    def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
+        return all(rule.test(view_snapshot) for rule in rules)

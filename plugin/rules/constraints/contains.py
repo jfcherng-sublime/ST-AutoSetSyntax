@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import Any, final
 
-import sublime
-
+from ...snapshot import ViewSnapshot
 from ...utils import nth, str_finditer
 from ..constraint import AbstractConstraint
 
@@ -19,15 +18,13 @@ class ContainsConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         return not (self.needles and isinstance(self.threshold, (int, float)))
 
-    def test(self, view: sublime.View) -> bool:
+    def test(self, view_snapshot: ViewSnapshot) -> bool:
         if self.threshold <= 0:
             return True
 
-        content = self.get_view_snapshot(view).content
-
         return (
             nth(
-                (_ for needle in self.needles for _ in str_finditer(content, needle)),
+                (_ for needle in self.needles for _ in str_finditer(view_snapshot.content, needle)),
                 self.threshold - 1,
             )
             is not None

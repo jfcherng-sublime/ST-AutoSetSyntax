@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import sublime
 
 from ..constants import VERSION
+from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
 from ..utils import find_syntax_by_syntax_likes, first_true
 from .match import MatchRule
@@ -35,16 +36,19 @@ class SyntaxRule(Optimizable):
                     yield self.root_rule
                     self.root_rule = None
 
-    def test(self, view: sublime.View, event: ListenerEvent | None = None) -> bool:
+    def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
         if event and self.on_events is not None and event not in self.on_events:
             return False
 
+        if not view_snapshot.syntax:
+            return False
+
         # note that an empty selector matches anything
-        if not view.match_selector(0, self.selector):
+        if sublime.score_selector(view_snapshot.syntax.scope, self.selector) == 0:
             return False
 
         assert self.root_rule
-        return self.root_rule.test(view)
+        return self.root_rule.test(view_snapshot)
 
     @classmethod
     def make(cls, syntax_rule: ST_SyntaxRule) -> SyntaxRule:
@@ -97,8 +101,8 @@ class SyntaxRuleCollection(Optimizable):
             rules.append(rule)
         self.rules = tuple(rules)
 
-    def test(self, view: sublime.View, event: ListenerEvent | None = None) -> SyntaxRule | None:
-        return first_true(self.rules, pred=lambda rule: rule.test(view, event))
+    def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> SyntaxRule | None:
+        return first_true(self.rules, pred=lambda rule: rule.test(view_snapshot, event))
 
     @classmethod
     def make(cls, syntax_rules: Iterable[ST_SyntaxRule]) -> SyntaxRuleCollection:
