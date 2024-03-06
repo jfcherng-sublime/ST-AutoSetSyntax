@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from AutoSetSyntax.plugin import AbstractConstraint
-from AutoSetSyntax.plugin.snapshot import ViewSnapshot
+from AutoSetSyntax.plugin import AbstractConstraint, ViewSnapshot
 
 
 class MyOwnConstraint(AbstractConstraint):

@@ -32,6 +32,7 @@ from .logger import (
 from .rules import AbstractConstraint, AbstractMatch, MatchableRule
 from .settings import AioSettings, extra_settings_producer, get_merged_plugin_setting
 from .shared import G
+from .snapshot import ViewSnapshot
 from .types import ListenerEvent
 
 __all__ = (
@@ -57,6 +58,7 @@ __all__ = (
     "AbstractConstraint",
     "AbstractMatch",
     "MatchableRule",
+    "ViewSnapshot",
 )
 
 
