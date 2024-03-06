@@ -64,6 +64,13 @@ def compile_regex(regex: str | Pattern[str], flags: int = 0) -> Pattern[str]:
     return re.compile(regex, flags)
 
 
+def get_fqcn(obj: Any) -> str:
+    if obj is None:
+        return "None"
+    cls = obj if isinstance(obj, type) else type(obj)
+    return f"{cls.__module__}.{cls.__qualname__}"
+
+
 def merge_literals_to_regex(literals: Iterable[str]) -> str:
     """
     Merge (non-regex) literal strings into an optimized regex string.

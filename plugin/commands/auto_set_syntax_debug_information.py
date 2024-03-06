@@ -10,7 +10,7 @@ from ..rules.constraint import get_constraints
 from ..rules.match import get_matches
 from ..settings import get_merged_plugin_settings
 from ..shared import G
-from ..utils import stringify
+from ..utils import get_fqcn, stringify
 
 TEMPLATE = f"""
 # === {PLUGIN_NAME} Debug Information === #
@@ -58,8 +58,8 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
             "sublime_text": f"{ST_VERSION} ({ST_PLATFORM_ARCH} {ST_CHANNEL} build) with Python {PY_VERSION}",
             "plugin": {
                 "version": VERSION,
-                "matches": get_matches(),
-                "constraints": get_constraints(),
+                "matches": tuple(map(get_fqcn, get_matches())),
+                "constraints": tuple(map(get_fqcn, get_constraints())),
             },
         }
         info["plugin_settings"] = get_merged_plugin_settings(window=self.window)
