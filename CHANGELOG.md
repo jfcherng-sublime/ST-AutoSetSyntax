@@ -1,5 +1,14 @@
 # AutoSetSyntax Changelog
 
+## 4.0.0
+
+- refactor: retire `ViewSnapshotCollection`
+
+  This is a breaking change since all `match`es and `constraint`es receives
+  `ViewSnapshot` rather than `View` now. But most of users won't be affected.
+
+- refactor: improve `magika` detection performance for unmodified files
+
 ## 3.1.2
 
 - chore: refine `requirements.txt` rule pattern
