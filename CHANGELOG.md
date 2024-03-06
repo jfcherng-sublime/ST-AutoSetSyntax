@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.0.1
+
+- refactor: expose `ViewSnapshot` in `AutoSetSyntax.plugin`
+
 ## 4.0.0
 
 - refactor: retire `ViewSnapshotCollection`
