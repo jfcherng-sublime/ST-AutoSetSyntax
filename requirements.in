@@ -1,2 +1,2 @@
 mypy
-ruff>=0.2
+ruff>=0.3
