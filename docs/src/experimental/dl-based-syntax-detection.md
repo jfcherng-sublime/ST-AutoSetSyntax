@@ -10,8 +10,11 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
 
 ## Prerequisites
 
-1.  If you are using MacOS, the minimum supported OS version is MacOS 11 (Big Sur).
-
+1.  If you are using MacOS, MacOS 11 (Big Sur) or later is required.
+    You can run `$ sw_vers` in terminal to check the OS version.
+1.  If you are using Linux, GLIBC 2.27 or later is required.
+    You can run `$ ldd --version` in terminal to check the GLIBC version on your system.
+ 
 1.  Install dependencies.
 
     Run `AutoSetSyntax: Download Dependencies` from the command palette.
