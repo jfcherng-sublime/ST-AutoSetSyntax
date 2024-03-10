@@ -15,7 +15,7 @@ from ..utils import get_fqcn, stringify
 TEMPLATE = f"""
 # === {PLUGIN_NAME} Debug Information === #
 # You may use the following website to format this debug information.
-# @link https://black.vercel.app
+# @link https://play.ruff.rs/?secondary=Format
 
 ###############
 # Environment #
