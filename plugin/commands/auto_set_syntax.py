@@ -199,7 +199,10 @@ def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerE
             return assign_syntax_to_view(
                 view,
                 syntax,
-                details={"event": event, "reason": f'syntax "first_line_match" by {checker.__name__}'},
+                details={
+                    "event": event,
+                    "reason": f'syntax "first_line_match" or "file_extensions" by {checker.__name__}',
+                },
             )
 
     return False
