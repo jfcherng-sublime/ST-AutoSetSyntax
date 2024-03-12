@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import UserDict
-from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Generator, KeysView, TypedDict, TypeVar, Union
 
@@ -116,41 +115,3 @@ else:
         @staticmethod
         def _to_window_id(value: WindowIdAble) -> WindowId:
             return value.id() if isinstance(value, sublime.Window) else value
-
-
-@dataclass
-class SemanticVersion:
-    major: int
-    minor: int
-    patch: int
-
-    def __str__(self) -> str:
-        return f"{self.major}.{self.minor}.{self.patch}"
-
-    def __repr__(self) -> str:
-        return f"<SemanticVersion {str(self)}>"
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, SemanticVersion):
-            return NotImplemented
-        return self.to_tuple() == other.to_tuple()
-
-    def __lt__(self, other: Any) -> bool:
-        if not isinstance(other, SemanticVersion):
-            return NotImplemented
-        return self.to_tuple() < other.to_tuple()
-
-    def __init__(self, major: int | str = 0, minor: int | str = 0, patch: int | str = 0) -> None:
-        self.major = int(major)
-        self.minor = int(minor)
-        self.patch = int(patch)
-
-    @classmethod
-    def from_str(cls, version: str) -> SemanticVersion | None:
-        try:
-            return cls(*version.split("."))
-        except Exception:
-            return None
-
-    def to_tuple(self) -> tuple[int, int, int]:
-        return (self.major, self.minor, self.patch)

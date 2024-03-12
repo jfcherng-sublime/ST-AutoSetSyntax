@@ -19,7 +19,7 @@ import sublime
 
 from .cache import clearable_lru_cache
 from .libs.trie import TrieNode
-from .types import SemanticVersion, SyntaxLike
+from .types import SyntaxLike
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")
@@ -394,39 +394,6 @@ def get_expand_variable_map() -> dict[str, str]:
         # from LSP
         "package_storage": cache_path.parent / "Package Storage",
     }
-
-    def find_latest_lsp_utils_node(package_storage: Path) -> tuple[Path, SemanticVersion] | None:
-        def list_node_versions(folder: Path) -> Generator[SemanticVersion, None, None]:
-            for path in folder.iterdir() if folder.is_dir() else []:
-                if (
-                    path.is_dir()
-                    and (m := re.fullmatch(r"\d+\.\d+\.\d+", path.name))
-                    and (version := SemanticVersion.from_str(m.group(0)))
-                ):
-                    yield version
-
-        base_dir = package_storage / "lsp_utils/node-runtime"
-        if not (version := max(list_node_versions(base_dir), default=None)):
-            return None
-
-        return (base_dir, version)
-
-    def get_node_path_candidates(node_version_dir: Path) -> Generator[Path, None, None]:
-        yield node_version_dir / "Electron.app/Contents/MacOS/Electron"  # Electron (Linux)
-        yield node_version_dir / "electron"  # Electron (Linux)
-        yield node_version_dir / "electron.exe"  # Electron (Windows)
-        yield node_version_dir / "node/bin/node"  # Node.js (Linux & Mac)
-        yield node_version_dir / "node/node.exe"  # Node.js (Windows)
-
-    def get_node_path(node_version_dir: Path) -> Path | None:
-        return first_true(
-            get_node_path_candidates(node_version_dir),
-            pred=lambda path: bool(path and path.is_file()),
-        )
-
-    if node_info := find_latest_lsp_utils_node(paths["package_storage"]):
-        node_version_dir = node_info[0] / str(node_info[1])
-        paths["lsp_utils_node_bin"] = get_node_path(node_version_dir) or Path("LSP_UTILS_NODE_NOT_FOUND")
 
     return {name: str(path.resolve()) for name, path in paths.items()}
 

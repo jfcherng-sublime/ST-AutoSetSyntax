@@ -6,6 +6,8 @@ from pathlib import Path
 
 import sublime
 
+assert __package__
+
 ################################################################################
 
 VERSION_INFO = (2, 11, 18)

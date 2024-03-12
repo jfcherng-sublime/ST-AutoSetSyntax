@@ -5,7 +5,6 @@
 [applysyntax-v1-idea]: https://forum.sublimetext.com/t/automatically-set-view-syntax-according-to-first-line/18629
 [autosetsyntax-new-issue]: https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/new
 [google-magika]: https://github.com/google/magika
-[node.js]: https://nodejs.org
 [package-control]: https://packagecontrol.io
 [pc-a-file-icon]: https://packagecontrol.io/packages/A%20File%20Icon
 [pc-applysyntax]: https://packagecontrol.io/packages/ApplySyntax
