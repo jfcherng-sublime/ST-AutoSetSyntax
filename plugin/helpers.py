@@ -29,6 +29,7 @@ def resolve_magika_label_with_syntax_map(label: str, syntax_map: dict[str, list[
             continue
         res[notation] = False  # visited
 
+        # notation is in the form of "scope:text.xml" or "=xml"
         scope, _, ref = notation.partition("=")
 
         if ref:

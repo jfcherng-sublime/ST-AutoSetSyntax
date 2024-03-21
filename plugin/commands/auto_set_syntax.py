@@ -280,7 +280,7 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
 
     syntax_map: dict[str, list[str]] = settings.get("magika.syntax_map", {})
     if not (syntax_likes := resolve_magika_label_with_syntax_map(result.output.ct_label, syntax_map)):
-        Logger.log(f'🤔 Unknown "label" from Magika: {result.output.ct_label}', window=window)
+        Logger.log(f"😢 Magika syntax map resolution failed for label: {result.output.ct_label}", window=window)
         return False
 
     if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
