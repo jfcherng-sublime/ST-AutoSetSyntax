@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 4.0.2
+
+- chore: add more Magika file types
+- chore: provide more precise matched reason
+- refactor: remove more Node.js related things
+
 ## 4.0.1
 
 - refactor: expose `ViewSnapshot` in `AutoSetSyntax.plugin`
