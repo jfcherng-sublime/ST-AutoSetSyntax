@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import tarfile
 import threading
 import urllib.request
@@ -43,10 +44,20 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
     def _prepare_dependencies() -> None:
         zip_path = PLUGIN_PY_LIBS_DIR.parent / PLUGIN_PY_LIBS_ZIP_NAME
         rmtree_ex(PLUGIN_PY_LIBS_DIR, ignore_errors=True)
+
         try:
-            download_file(PLUGIN_PY_LIBS_URL, zip_path)
+            content_bytes = simple_urlopen(PLUGIN_PY_LIBS_URL)
+            content_md5 = simple_urlopen(f"{PLUGIN_PY_LIBS_URL}.md5").decode("utf-8").strip()
         except Exception as e:
-            sublime.error_message(f"[{PLUGIN_NAME}] Error while downloading: {PLUGIN_PY_LIBS_URL} ({e})")
+            sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {PLUGIN_PY_LIBS_URL} ({e})")
+            return
+
+        if md5sum(content_bytes).casefold() != content_md5.casefold():
+            sublime.error_message(f"[{PLUGIN_NAME}] MD5 checksum mismatches: {PLUGIN_PY_LIBS_ZIP_NAME}")
+            return
+
+        save_content(content_md5, f"{zip_path}.md5")
+        save_content(content_bytes, zip_path)
         decompress_file(zip_path)
         zip_path.unlink(missing_ok=True)
 
@@ -100,21 +111,7 @@ def decompress_file(tarball: PathLike, dst_dir: PathLike | None = None) -> bool:
     return False
 
 
-def download_file(url: str, save_path: PathLike) -> None:
-    """
-    Downloads a file.
-
-    :param url:       The url
-    :param save_path: The path of the saved file
-    """
-
-    save_path = Path(save_path)
-    save_path.unlink(missing_ok=True)
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    save_path.write_bytes(simple_urlopen(url))
-
-
-def simple_urlopen(url: str, chunk_size: int = 512 * 1024) -> bytes:
+def simple_urlopen(url: str, *, chunk_size: int = 512 * 1024) -> bytes:
     response = urllib.request.urlopen(url)
     data = b""
     while chunk := response.read(chunk_size):
@@ -122,3 +119,25 @@ def simple_urlopen(url: str, chunk_size: int = 512 * 1024) -> bytes:
     if response.info().get("Content-Encoding") == "gzip":
         data = gzip.decompress(data)
     return data
+
+
+def save_content(content: str | bytes, path: PathLike, *, encoding: str = "utf-8") -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    if isinstance(content, str):
+        path.write_text(content, encoding=encoding)
+    else:
+        path.write_bytes(content)
+
+
+def md5sum(target: bytes | str | Path, *, encoding: str = "utf-8") -> str:
+    """Calculates the lowercase MD5 hash of the string, bytes or file."""
+    if isinstance(target, str):
+        target = target.encode(encoding)
+    elif isinstance(target, Path):
+        target = target.read_bytes()
+
+    hasher = hashlib.md5()
+    hasher.update(target)
+    return hasher.hexdigest()
