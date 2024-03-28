@@ -20,6 +20,12 @@ def is_syntaxable_view(view: sublime.View, *, must_plaintext: bool = False) -> b
 
 
 def resolve_magika_label_with_syntax_map(label: str, syntax_map: dict[str, list[str]]) -> list[str]:
+    """
+    Resolve a Magika label to a list of syntax like string.
+
+    :param      label:       The syntax label from Magika.
+    :param      syntax_map:  The syntax map. Key / value = Maigka label / list of syntax like string.
+    """
     # note that dict is insertion-ordered (since Python 3.7)
     res: dict[str, bool] = {}
 

@@ -8,7 +8,7 @@ from typing import Any
 import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE
+from ..constants import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_KEY_IS_ASSIGNED
 from ..helpers import is_syntaxable_view, resolve_magika_label_with_syntax_map
 from ..logger import Logger
 from ..rules import SyntaxRuleCollection
@@ -17,6 +17,7 @@ from ..shared import G
 from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent
 from ..utils import (
+    extract_prefixed_dict,
     find_syntax_by_syntax_like,
     find_syntax_by_syntax_likes,
     get_syntax_name,
@@ -278,7 +279,7 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
     if result.output.score < threadshold or result.output.ct_label in {"directory", "empty", "txt", "unknown"}:
         return False
 
-    syntax_map: dict[str, list[str]] = settings.get("magika.syntax_map", {})
+    syntax_map: dict[str, list[str]] = extract_prefixed_dict(settings, prefix="magika.syntax_map.")
     if not (syntax_likes := resolve_magika_label_with_syntax_map(result.output.ct_label, syntax_map)):
         Logger.log(f"😢 Magika syntax map resolution failed for label: {result.output.ct_label}", window=window)
         return False

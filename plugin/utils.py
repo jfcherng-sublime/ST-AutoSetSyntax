@@ -13,7 +13,7 @@ from collections.abc import Generator, Iterable
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from itertools import islice
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Pattern, Tuple, TypeVar, Union, cast, overload
+from typing import Any, Callable, Dict, List, Mapping, Pattern, Tuple, TypeVar, Union, cast, overload
 
 import sublime
 
@@ -313,6 +313,11 @@ def get_sorted_syntaxes() -> tuple[sublime.Syntax, ...]:
         return len(a.path) - len(b.path)
 
     return tuple(sorted(sublime.list_syntaxes(), key=cmp_to_key(syntax_cmp)))
+
+
+def extract_prefixed_dict(dict_: Mapping[str, _T], *, prefix: str) -> dict[str, _T]:
+    """Extract dict with a prefix. The prefix will be removed from the key."""
+    return {k[len(prefix) :]: v for k, v in dict_.items() if k.startswith(prefix)}
 
 
 def resolve_window(obj: Any) -> sublime.Window | None:

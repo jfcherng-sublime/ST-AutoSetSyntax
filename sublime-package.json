@@ -476,11 +476,16 @@
                   "description": "The minimum confidence to accept the magika detection result.",
                   "type": "number",
                   "default": 0.85
-                },
-                "magika.syntax_map": {
-                  "markdownDescription": "The relationship between `languageId`s in VSCode and syntaxes in ST.",
-                  "type": "object",
-                  "default": {}
+                }
+              },
+              "patternProperties": {
+                "^magika\\.syntax_map\\..*$": {
+                  "markdownDescription": "Syntaxes to be assigned for the Magika label.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": []
                 }
               }
             }
