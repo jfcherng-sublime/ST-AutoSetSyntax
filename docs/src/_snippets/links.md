@@ -27,7 +27,7 @@
 [plugin-configurations-exec_file_syntax]: configurations.md#exec_file_syntax
 [plugin-configurations]: configurations.md
 [plugin-debug]: debug.md
-[plugin-ml-based-syntax-detection]: experimental/ml-based-syntax-detection.md
+[plugin-dl-based-syntax-detection]: experimental/dl-based-syntax-detection.md
 [plugin-project-settings]: configurations.md#project-settings
 [plugin-syntax-representations]: configurations.md#syntax-representations
 [plugin-use-cases]: use-cases.md

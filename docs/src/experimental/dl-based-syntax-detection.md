@@ -18,7 +18,7 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
 1.  Install dependencies.
 
     Run `AutoSetSyntax: Download Dependencies` from the command palette.
-    The dependencies can be up to \~50 MB in size, so it may take a while.
+    The dependencies can be up to \~40 MB in size, so it may take a while.
     When it's done, there will be a popup dialogue.
 
     !!! tip "If your machine has no access to GitHub..."
