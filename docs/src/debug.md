@@ -22,8 +22,7 @@ Log messages are printed in the dedicated log panel. There are two ways to open 
 
 ## Debug Information
 
-1. Run `AutoSetSyntax: Debug Information` from the command palette[^1].
-1. The debug information will be copied to the clipboard.
+Just run `AutoSetSyntax: Debug Information` from the command palette[^1].
 
 !!! tip
 

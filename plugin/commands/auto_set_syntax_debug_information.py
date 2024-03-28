@@ -10,7 +10,7 @@ from ..rules.constraint import get_constraints
 from ..rules.match import get_matches
 from ..settings import get_merged_plugin_settings
 from ..shared import G
-from ..utils import get_fqcn, stringify
+from ..utils import find_syntax_by_syntax_like, get_fqcn, stringify
 
 TEMPLATE = f"""
 # === {PLUGIN_NAME} Debug Information === #
@@ -51,7 +51,7 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Debug Information"
 
-    def run(self) -> None:
+    def run(self, *, copy_only: bool = False) -> None:
         info: dict[str, Any] = {}
 
         info["env"] = {
@@ -66,7 +66,20 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
         info["syntax_rule_collection"] = G.syntax_rule_collections.get(self.window)
         info["dropped_rules"] = G.dropped_rules_collection.get(self.window, [])
 
-        msg = TEMPLATE.format_map(_pythonize(info))
+        content = TEMPLATE.format_map(_pythonize(info))
 
-        sublime.set_clipboard(msg)
-        sublime.message_dialog(f"{PLUGIN_NAME} debug information has been copied to the clipboard.")
+        if copy_only:
+            sublime.set_clipboard(content)
+            sublime.message_dialog(f"{PLUGIN_NAME} debug information has been copied to the clipboard.")
+            return
+
+        view = self.window.new_file()
+        view.set_name(f"{PLUGIN_NAME} Debug Information")
+        view.set_scratch(True)
+        view.run_command("append", {"characters": content})
+        view.settings().update({
+            "is_auto_set_syntax_template_buffer": True,
+        })
+
+        if syntax := find_syntax_by_syntax_like("scope:source.python"):
+            view.assign_syntax(syntax)
