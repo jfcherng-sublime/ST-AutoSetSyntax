@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 4.1.0
+
+- feat: check MD5 of downloaded `magika` dependencies
+- refactor: `auto_set_syntax_debug_information` command creates a new view
+- refactor: use flat dotted dict for Magika's syntax mapping
+
 ## 4.0.2
 
 - chore: add more Magika file types
