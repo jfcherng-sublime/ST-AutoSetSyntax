@@ -10,6 +10,7 @@ install:
 .PHONY: pip-compile
 pip-compile:
 	uv pip compile --upgrade requirements.in -o requirements.txt
+	make -C "docs/" pip-compile
 
 .PHONY: ci-check
 ci-check:
