@@ -36,8 +36,12 @@ PLUGIN_CUSTOM_MODULE_PATHS = {
 
 ################################################################################
 
-VIEW_RUN_ID_SETTINGS_KEY = f"{PLUGIN_NAME}/run_id"
-VIEW_IS_TRANSIENT_SETTINGS_KEY = f"{PLUGIN_NAME}/is_transient"
+VIEW_KEY_IS_CREATED = f"{PLUGIN_NAME}/is_created"
+"""This view setting indicates that this view is created by AutoSetSyntax."""
+VIEW_KEY_IS_ASSIGNED = f"{PLUGIN_NAME}/is_assigned"
+"""This view setting indicates that the syntax of this view is assigned by AutoSetSyntax."""
+VIEW_KEY_IS_TRANSIENT = f"{PLUGIN_NAME}/is_transient"
+"""This view setting is just a temporary flag during running AutoSetSyntax on a transient view."""
 
 ################################################################################
 
@@ -53,10 +57,4 @@ PLUGIN_PY_LIBS_URL = "https://github.com/{repo}/raw/{ref}/{file}".format(
     repo="jfcherng-sublime/ST-AutoSetSyntax",
     ref="dependencies",
     file=PLUGIN_PY_LIBS_ZIP_NAME,
-)
-
-GUESSLANG_SERVER_TAG = "server-0.1.7"
-GUESSLANG_SERVER_URL = "https://github.com/{repo}/archive/{ref}.zip".format(
-    repo="jfcherng-sublime/ST-AutoSetSyntax",
-    ref=f"refs/tags/{GUESSLANG_SERVER_TAG}",
 )

@@ -112,12 +112,12 @@ def decompress_file(tarball: PathLike, dst_dir: PathLike | None = None) -> bool:
 
 
 def simple_urlopen(url: str, *, chunk_size: int = 512 * 1024) -> bytes:
-    response = urllib.request.urlopen(url)
-    data = b""
-    while chunk := response.read(chunk_size):
-        data += chunk
-    if response.info().get("Content-Encoding") == "gzip":
-        data = gzip.decompress(data)
+    with urllib.request.urlopen(url) as resp:
+        data = b""
+        while chunk := resp.read(chunk_size):
+            data += chunk
+        if resp.info().get("Content-Encoding") == "gzip":
+            data = gzip.decompress(data)
     return data
 
 

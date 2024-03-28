@@ -356,6 +356,7 @@ def assign_syntax_to_view(
             continue
 
         _view.assign_syntax(syntax)
+        _view.settings().set(VIEW_KEY_IS_ASSIGNED, True)
         Logger.log(
             f"✔ Change {stringify(_view)} syntax"
             + f' from "{get_syntax_name(syntax_old)}" to "{get_syntax_name(syntax)}" because {stringify(details)}',

@@ -6,7 +6,7 @@ from pathlib import Path
 import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_CUSTOM_DIR, PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME
+from ..constants import PLUGIN_CUSTOM_DIR, PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME, VIEW_KEY_IS_CREATED
 from ..types import SyntaxLike
 from ..utils import find_syntax_by_syntax_like
 
@@ -64,7 +64,7 @@ def _clone_file_as_template(
     new.run_command("append", {"characters": template})
     new.settings().update({
         "default_dir": save_dir,
-        "is_auto_set_syntax_template_buffer": True,
+        VIEW_KEY_IS_CREATED: True,
     })
 
     if syntax and (syntax := find_syntax_by_syntax_like(syntax)):

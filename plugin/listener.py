@@ -9,15 +9,7 @@ import sublime
 import sublime_plugin
 
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
-from .constants import (
-    PLUGIN_NAME,
-    PY_VERSION,
-    ST_CHANNEL,
-    ST_PLATFORM_ARCH,
-    ST_VERSION,
-    VERSION,
-    VIEW_IS_TRANSIENT_SETTINGS_KEY,
-)
+from .constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION, VIEW_KEY_IS_TRANSIENT
 from .helpers import is_syntaxable_view
 from .logger import Logger
 from .rules import SyntaxRuleCollection, get_constraints, get_matches
@@ -121,7 +113,7 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
         G.startup_views |= set(views)
 
     def on_load(self, view: sublime.View) -> None:
-        view.settings().set(VIEW_IS_TRANSIENT_SETTINGS_KEY, is_transient_view(view))
+        view.settings().set(VIEW_KEY_IS_TRANSIENT, is_transient_view(view))
         run_auto_set_syntax_on_view(view, ListenerEvent.LOAD)
 
     def on_load_project(self, window: sublime.Window) -> None:
@@ -174,7 +166,7 @@ def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[s
 
 
 def _try_assign_syntax_when_view_untransientize(view: sublime.View) -> bool:
-    if (settings := view.settings()).get(VIEW_IS_TRANSIENT_SETTINGS_KEY):
-        settings.erase(VIEW_IS_TRANSIENT_SETTINGS_KEY)
+    if (settings := view.settings()).get(VIEW_KEY_IS_TRANSIENT):
+        settings.erase(VIEW_KEY_IS_TRANSIENT)
         return run_auto_set_syntax_on_view(view, ListenerEvent.UNTRANSIENTIZE)
     return False

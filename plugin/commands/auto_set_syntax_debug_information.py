@@ -5,7 +5,7 @@ from typing import Any, Mapping
 import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION
+from ..constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION, VIEW_KEY_IS_CREATED
 from ..rules.constraint import get_constraints
 from ..rules.match import get_matches
 from ..settings import get_merged_plugin_settings
@@ -14,7 +14,7 @@ from ..utils import find_syntax_by_syntax_like, get_fqcn, stringify
 
 TEMPLATE = f"""
 # === {PLUGIN_NAME} Debug Information === #
-# You may use the following website to format this debug information.
+# You may use the following website to beautify this debug information.
 # @link https://play.ruff.rs/?secondary=Format
 
 ###############
@@ -78,7 +78,7 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
         view.set_scratch(True)
         view.run_command("append", {"characters": content})
         view.settings().update({
-            "is_auto_set_syntax_template_buffer": True,
+            VIEW_KEY_IS_CREATED: True,
         })
 
         if syntax := find_syntax_by_syntax_like("scope:source.python"):
