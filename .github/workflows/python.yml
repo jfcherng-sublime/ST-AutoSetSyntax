@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -U uv
-          make UV_INSTALL_FLAGS="--system" install
+          make UV_INSTALL_FLAGS="--system" install-dev
 
       - name: Do linting
         run: |
