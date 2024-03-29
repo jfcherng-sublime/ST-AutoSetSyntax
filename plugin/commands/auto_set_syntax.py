@@ -134,13 +134,16 @@ def _assign_syntax_for_st_syntax_test(view_snapshot: ViewSnapshot, event: Listen
         and (not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax))
         and (m := RE_ST_SYNTAX_TEST_LINE.search(view_snapshot.first_line))
         and (new_syntax := m.group("syntax")).endswith(".sublime-syntax")
-        and (syntax := find_syntax_by_syntax_like(new_syntax, include_hidden=True, include_plaintext=True))
     ):
-        return assign_syntax_to_view(
-            view,
-            syntax,
-            details={"event": event, "reason": "Sublime Test syntax test file"},
-        )
+        if syntax := find_syntax_by_syntax_like(new_syntax, include_hidden=True, include_plaintext=True):
+            return assign_syntax_to_view(
+                view,
+                syntax,
+                details={"event": event, "reason": "Sublime Test syntax test file"},
+            )
+        else:
+            Logger.log(f"😢 Cannot find the syntax under test: {new_syntax}", window=view.window())
+
     return False
 
 
@@ -265,7 +268,7 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
     try:
         from magika import Magika
     except ImportError as e:
-        Logger.log(f"💣 Error occured when importing Magika: {e}", window=window)
+        Logger.log(f"💣 Error occured while importing Magika: {e}", window=window)
         return False
 
     classifier = Magika()
