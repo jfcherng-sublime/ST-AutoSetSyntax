@@ -19,6 +19,8 @@ class ViewSnapshot:
     """Pseudo file content."""
     first_line: str
     """Pseudo first line."""
+    encoding: str
+    """The encoding of the content."""
     line_count: int
     """Number of lines in the original content."""
     path_obj: Path | None
@@ -27,6 +29,11 @@ class ViewSnapshot:
     """The syntax object. Note that the value is as-is when it's cached."""
     caret_rowcol: tuple[int, int] = (-1, -1)
     """The 0-indexed `(row, column)` of the first caret visually. -1 if no caret."""
+
+    @property
+    def content_bytes(self) -> bytes:
+        """The content in bytes."""
+        return self.content.encode(self.encoding)
 
     @property
     def file_extensions(self) -> list[str]:
@@ -50,7 +57,7 @@ class ViewSnapshot:
 
     @property
     def file_size(self) -> int:
-        """The file size in bytes, -1 if file not on a disk."""
+        """The file size in bytes, `-1` if file not on a disk."""
         return self.path_obj.stat().st_size if self.path_obj else -1
 
     @property
@@ -74,6 +81,7 @@ class ViewSnapshot:
             char_count=view.size(),
             content=get_view_pseudo_content(view, window),
             first_line=get_view_pseudo_first_line(view, window),
+            encoding=view.encoding(),
             line_count=view.rowcol(view.size())[0] + 1,
             path_obj=path,
             syntax=view.syntax(),

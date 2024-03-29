@@ -34,6 +34,15 @@ PLUGIN_CUSTOM_MODULE_PATHS = {
     "match": PLUGIN_CUSTOM_DIR / "matches",
 }
 
+PLUGIN_PY_LIBS_DIR_NAME = f"libs-py38@{ST_PLATFORM_ARCH}"
+PLUGIN_PY_LIBS_DIR = PLUGIN_STORAGE_DIR / PLUGIN_PY_LIBS_DIR_NAME
+PLUGIN_PY_LIBS_ZIP_NAME = f"{PLUGIN_PY_LIBS_DIR_NAME}.zip"
+PLUGIN_PY_LIBS_URL = "https://github.com/{repo}/raw/{ref}/{file}".format(
+    repo="jfcherng-sublime/ST-AutoSetSyntax",
+    ref="dependencies",
+    file=PLUGIN_PY_LIBS_ZIP_NAME,
+)
+
 ################################################################################
 
 VIEW_KEY_IS_CREATED = f"{PLUGIN_NAME}/is_created"
@@ -47,14 +56,3 @@ VIEW_KEY_IS_TRANSIENT = f"{PLUGIN_NAME}/is_transient"
 
 RE_ST_SYNTAX_TEST_LINE = re.compile(r'\bSYNTAX\s+TEST\s+"(?P<syntax>[^"]+)"', re.IGNORECASE)
 RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|ft|syntax)=(?P<syntax>[^\s:]+):?(?=\s)", re.IGNORECASE)
-
-################################################################################
-
-PLUGIN_PY_LIBS_DIR_NAME = f"libs-py38@{ST_PLATFORM_ARCH}"
-PLUGIN_PY_LIBS_DIR = PLUGIN_STORAGE_DIR / PLUGIN_PY_LIBS_DIR_NAME
-PLUGIN_PY_LIBS_ZIP_NAME = f"{PLUGIN_PY_LIBS_DIR_NAME}.zip"
-PLUGIN_PY_LIBS_URL = "https://github.com/{repo}/raw/{ref}/{file}".format(
-    repo="jfcherng-sublime/ST-AutoSetSyntax",
-    ref="dependencies",
-    file=PLUGIN_PY_LIBS_ZIP_NAME,
-)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from functools import wraps
-from operator import methodcaller
 from typing import Any, Callable, TypeVar, cast
 
 import sublime
@@ -40,7 +39,7 @@ def tear_down_window(window: sublime.Window) -> None:
 
 def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     def names_as_str(items: Iterable[Any], *, sep: str = ", ") -> str:
-        return sep.join(map(methodcaller("name"), items))
+        return sep.join(item.name() for item in items)
 
     Logger.log(
         f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} BEGIN",

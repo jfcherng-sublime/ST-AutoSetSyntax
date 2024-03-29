@@ -266,16 +266,16 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
         return False
 
     try:
-        from magika import Magika
+        from magika import Magika, PredictionMode
     except ImportError as e:
         Logger.log(f"💣 Error occured while importing Magika: {e}", window=window)
         return False
 
-    classifier = Magika()
-    if not view.is_dirty() and view_snapshot.path_obj:
-        result = classifier.identify_path(view_snapshot.path_obj)
+    magika = Magika(prediction_mode=PredictionMode.BEST_GUESS)  # we have "magika.min_confidence" as the threshold
+    if view_snapshot.path_obj and not view.is_dirty():
+        result = magika.identify_path(view_snapshot.path_obj)
     else:
-        result = classifier.identify_bytes(view_snapshot.content.encode())
+        result = magika.identify_bytes(view_snapshot.content_bytes)
     # Logger.log(f"🐛 Magika's prediction: {result.output}", window=window)
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
