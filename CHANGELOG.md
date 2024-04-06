@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 4.1.1
+
+- chore: heuristically set JSON syntax only when file > 1KB
+- refactor: report unfound syntax for syntax test file
+
 ## 4.1.0
 
 - feat: check MD5 of downloaded `magika` dependencies
