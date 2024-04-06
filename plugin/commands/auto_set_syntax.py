@@ -297,8 +297,8 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
 
 
 def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
-    def is_large_file(view_snapshot: ViewSnapshot) -> bool:
-        return view_snapshot.char_count >= 10 * 1024  # 10KB
+    def is_small_file(view_snapshot: ViewSnapshot) -> bool:
+        return view_snapshot.char_count < 1 * 1024  # 1 KB
 
     def is_json(view_snapshot: ViewSnapshot) -> bool:
         text_begin = re.sub(r"^\s+", "", view_snapshot.content[:10])
@@ -308,7 +308,7 @@ def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerE
         if text_begin.startswith((")]}'\n", ")]}',\n")):
             return True
 
-        return is_large_file(view_snapshot) and bool(
+        return not is_small_file(view_snapshot) and bool(
             # map
             (re.search(r'^\{"', text_begin) and re.search(r'(?:[\d"\]}]|true|false|null)\}$', text_end))
             # array
