@@ -76,12 +76,16 @@ class ViewSnapshot:
         else:
             path = None
 
+        # for unsaved buffer, ST returns "Undefined" for its encoding
+        if (encoding := view.encoding()) == "Undefined":
+            encoding = "UTF-8"
+
         return cls(
             view=view,
             char_count=view.size(),
             content=get_view_pseudo_content(view, window),
             first_line=get_view_pseudo_first_line(view, window),
-            encoding=view.encoding(),
+            encoding=encoding,
             line_count=view.rowcol(view.size())[0] + 1,
             path_obj=path,
             syntax=view.syntax(),
