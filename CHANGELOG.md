@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.1.3
+
+- refactor: use `.tar.xz` format `magika` deps
+
 ## 4.1.2
 
 - fix: `UnicodeError` when running `magika` with unsaved buffer
