@@ -36,7 +36,7 @@ PLUGIN_CUSTOM_MODULE_PATHS = {
 
 PLUGIN_PY_LIBS_DIR_NAME = f"libs-py38@{ST_PLATFORM_ARCH}"
 PLUGIN_PY_LIBS_DIR = PLUGIN_STORAGE_DIR / PLUGIN_PY_LIBS_DIR_NAME
-PLUGIN_PY_LIBS_ZIP_NAME = f"{PLUGIN_PY_LIBS_DIR_NAME}.zip"
+PLUGIN_PY_LIBS_ZIP_NAME = f"{PLUGIN_PY_LIBS_DIR_NAME}.tar.xz"
 PLUGIN_PY_LIBS_URL = "https://github.com/{repo}/raw/{ref}/{file}".format(
     repo="jfcherng-sublime/ST-AutoSetSyntax",
     ref="dependencies",

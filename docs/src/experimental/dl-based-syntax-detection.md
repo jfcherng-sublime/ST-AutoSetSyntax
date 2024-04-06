@@ -18,7 +18,7 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
 1.  Install dependencies.
 
     Run `AutoSetSyntax: Download Dependencies` from the command palette.
-    The dependencies can be up to \~40 MB in size, so it may take a while.
+    The dependencies is about 15\~25 MB in size, so it may take a while.
     When it's done, there will be a popup dialogue.
 
     !!! tip "If your machine has no access to GitHub..."
@@ -31,7 +31,7 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
         import AutoSetSyntax; AutoSetSyntax.plugin.constants.PLUGIN_PY_LIBS_URL
         ```
         
-        Decompress the downloaded ZIP file into `Package Storage/AutoSetSyntax/`
+        Decompress the downloaded `.tar.xz` file into `Package Storage/AutoSetSyntax/`
         so that the directory structure looks like the following:
 
         ```text

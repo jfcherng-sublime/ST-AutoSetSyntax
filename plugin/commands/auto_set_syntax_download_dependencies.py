@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import re
 import tarfile
 import threading
 import urllib.request
@@ -92,19 +93,15 @@ def decompress_file(tarball: PathLike, dst_dir: PathLike | None = None) -> bool:
     filename = tarball.name
 
     try:
-        if filename.endswith(".tar.gz"):
-            with tarfile.open(tarball, "r:gz") as f_1:
-                tar_safe_extract(f_1, dst_dir)
-            return True
-
-        if filename.endswith(".tar"):
-            with tarfile.open(tarball, "r:") as f_2:
-                tar_safe_extract(f_2, dst_dir)
+        if m := re.search(r"\.tar(?:\.(bz2|gz|xz))?$", filename):
+            sub_ext = m.group(1) or ""
+            with tarfile.open(tarball, f"r:{sub_ext}") as tar_f:
+                tar_safe_extract(tar_f, dst_dir)
             return True
 
         if filename.endswith(".zip"):
-            with zipfile.ZipFile(tarball) as f_3:
-                f_3.extractall(dst_dir)
+            with zipfile.ZipFile(tarball) as zip_f:
+                zip_f.extractall(dst_dir)
             return True
     except Exception:
         pass
