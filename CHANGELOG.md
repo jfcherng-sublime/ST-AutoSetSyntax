@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.1.2
+
+- fix: `UnicodeError` when running `magika` with unsaved buffer
+
 ## 4.1.1
 
 - chore: heuristically set JSON syntax only when file > 1KB
