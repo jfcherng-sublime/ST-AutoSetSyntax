@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import io
 import re
 import tarfile
 import threading
@@ -9,7 +10,7 @@ import urllib.request
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Union
+from typing import IO, Union
 
 import sublime
 import sublime_plugin
@@ -43,9 +44,6 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
 
     @staticmethod
     def _prepare_dependencies() -> None:
-        zip_path = PLUGIN_PY_LIBS_DIR.parent / PLUGIN_PY_LIBS_ZIP_NAME
-        rmtree_ex(PLUGIN_PY_LIBS_DIR, ignore_errors=True)
-
         try:
             content_bytes = simple_urlopen(PLUGIN_PY_LIBS_URL)
             content_md5 = simple_urlopen(f"{PLUGIN_PY_LIBS_URL}.md5").decode("utf-8").strip()
@@ -54,21 +52,24 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
             return
 
         if md5sum(content_bytes).casefold() != content_md5.casefold():
-            sublime.error_message(f"[{PLUGIN_NAME}] MD5 checksum mismatches: {PLUGIN_PY_LIBS_ZIP_NAME}")
+            sublime.error_message(f"[{PLUGIN_NAME}] MD5 checksum mismatches: {PLUGIN_PY_LIBS_URL}")
             return
 
-        save_content(content_md5, f"{zip_path}.md5")
-        save_content(content_bytes, zip_path)
-        decompress_file(zip_path)
-        zip_path.unlink(missing_ok=True)
+        rmtree_ex(PLUGIN_PY_LIBS_DIR, ignore_errors=True)
+        decompress_buffer(
+            io.BytesIO(content_bytes),
+            filename=PLUGIN_PY_LIBS_ZIP_NAME,
+            dst_dir=PLUGIN_PY_LIBS_DIR.parent,
+        )
 
 
-def decompress_file(tarball: PathLike, dst_dir: PathLike | None = None) -> bool:
+def decompress_buffer(buffer: IO[bytes], *, filename: str, dst_dir: PathLike) -> bool:
     """
-    Decompress the tarball.
+    Decompress the tarball in the bytes IO object.
 
-    :param      tarball:  The tarball
-    :param      dst_dir:  The destination directory
+    :param      buffer:    The buffer bytes IO object
+    :param      filename:  The filename used to determine the decompression method
+    :param      dst_dir:   The destination dir
 
     :returns:   Successfully decompressed the tarball or not
     """
@@ -88,24 +89,37 @@ def decompress_file(tarball: PathLike, dst_dir: PathLike | None = None) -> bool:
 
         tar.extractall(path, members, numeric_owner=numeric_owner)
 
+    dst_dir = Path(dst_dir)
+    dst_dir.mkdir(parents=True, exist_ok=True)
+
+    if m := re.search(r"\.tar(?:\.(bz2|gz|xz))?$", filename):
+        sub_ext = m.group(1) or ""
+        with tarfile.open(fileobj=buffer, mode=f"r:{sub_ext}") as tar_f:
+            tar_safe_extract(tar_f, dst_dir)
+        return True
+
+    if filename.endswith(".zip"):
+        with zipfile.ZipFile(buffer) as zip_f:
+            zip_f.extractall(dst_dir)
+        return True
+
+    return False
+
+
+def decompress_file(tarball: PathLike, dst_dir: PathLike | None = None) -> bool:
+    """
+    Decompress the tarball file.
+
+    :param      tarball:  The tarball
+    :param      dst_dir:  The destination directory
+
+    :returns:   Successfully decompressed the tarball or not
+    """
     tarball = Path(tarball)
     dst_dir = Path(dst_dir) if dst_dir else tarball.parent
-    filename = tarball.name
 
-    try:
-        if m := re.search(r"\.tar(?:\.(bz2|gz|xz))?$", filename):
-            sub_ext = m.group(1) or ""
-            with tarfile.open(tarball, f"r:{sub_ext}") as tar_f:
-                tar_safe_extract(tar_f, dst_dir)
-            return True
-
-        if filename.endswith(".zip"):
-            with zipfile.ZipFile(tarball) as zip_f:
-                zip_f.extractall(dst_dir)
-            return True
-    except Exception:
-        pass
-    return False
+    with tarball.open("rb") as f:
+        return decompress_buffer(f, filename=tarball.name, dst_dir=dst_dir)
 
 
 def simple_urlopen(url: str, *, chunk_size: int = 512 * 1024) -> bytes:
