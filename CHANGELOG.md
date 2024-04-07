@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.1.4
+
+- refactor: do tarball decompression in memory
+
 ## 4.1.3
 
 - refactor: use `.tar.xz` format `magika` deps
