@@ -20,7 +20,7 @@ class ViewSnapshot:
     first_line: str
     """Pseudo first line."""
     encoding: str
-    """The encoding of the content."""
+    """The encoding name, in Sublime Text's definition, of the content."""
     line_count: int
     """Number of lines in the original content."""
     path_obj: Path | None
@@ -33,6 +33,7 @@ class ViewSnapshot:
     @property
     def content_bytes(self) -> bytes:
         """The content in bytes."""
+        # @todo Won't work for non-UTF-8 encodings because ST's encoding name doesn't fit Python's mostly.
         return self.content.encode(self.encoding)
 
     @property
