@@ -5,6 +5,7 @@ from pathlib import Path
 
 import sublime
 
+from .encodings import from_sublime as encoding_from_sublime
 from .settings import get_merged_plugin_setting
 from .utils import head_tail_content_st
 
@@ -30,11 +31,20 @@ class ViewSnapshot:
     caret_rowcol: tuple[int, int] = (-1, -1)
     """The 0-indexed `(row, column)` of the first caret visually. -1 if no caret."""
 
+    def __post_init__(self) -> None:
+        # for unsaved buffer, ST returns "Undefined" for its encoding
+        if self.encoding == "Undefined":
+            super().__setattr__("encoding", "UTF-8")
+
     @property
     def content_bytes(self) -> bytes:
-        """The content in bytes."""
-        # @todo Won't work for non-UTF-8 encodings because ST's encoding name doesn't fit Python's mostly.
-        return self.content.encode(self.encoding)
+        """The `bytes` representation of the content."""
+        return self.content.encode(self.encoding_py)
+
+    @property
+    def encoding_py(self) -> str:
+        """The encoding name in Python's definition."""
+        return encoding_from_sublime(self.encoding)
 
     @property
     def file_extensions(self) -> list[str]:
@@ -77,16 +87,12 @@ class ViewSnapshot:
         else:
             path = None
 
-        # for unsaved buffer, ST returns "Undefined" for its encoding
-        if (encoding := view.encoding()) == "Undefined":
-            encoding = "UTF-8"
-
         return cls(
             view=view,
             char_count=view.size(),
             content=get_view_pseudo_content(view, window),
             first_line=get_view_pseudo_first_line(view, window),
-            encoding=encoding,
+            encoding=view.encoding(),
             line_count=view.rowcol(view.size())[0] + 1,
             path_obj=path,
             syntax=view.syntax(),
