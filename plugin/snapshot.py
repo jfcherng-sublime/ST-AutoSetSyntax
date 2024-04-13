@@ -9,7 +9,7 @@ from .settings import get_merged_plugin_setting
 from .utils import head_tail_content_st
 
 
-@dataclass
+@dataclass(frozen=True)
 class ViewSnapshot:
     view: sublime.View
     """The view object."""
