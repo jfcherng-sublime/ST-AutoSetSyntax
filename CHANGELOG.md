@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 4.1.5
+
+- fix: ST's encoding name is different from Python's
+- refactor: freeze `ViewSnapshot` object after creation
+
 ## 4.1.4
 
 - refactor: do tarball decompression in memory
