@@ -44,15 +44,22 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
 
     @staticmethod
     def _prepare_dependencies() -> None:
+        url = PLUGIN_PY_LIBS_URL
         try:
-            content_bytes = simple_urlopen(PLUGIN_PY_LIBS_URL)
-            content_md5 = simple_urlopen(f"{PLUGIN_PY_LIBS_URL}.md5").decode("utf-8").strip()
+            content_bytes = simple_urlopen(url)
         except Exception as e:
-            sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {PLUGIN_PY_LIBS_URL} ({e})")
+            sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {url} ({e})")
             return
 
-        if md5sum(content_bytes).casefold() != content_md5.casefold():
-            sublime.error_message(f"[{PLUGIN_NAME}] MD5 checksum mismatches: {PLUGIN_PY_LIBS_URL}")
+        url = f"{PLUGIN_PY_LIBS_URL}.sha256"
+        try:
+            content_hash = simple_urlopen(url).decode("utf-8").strip()
+        except Exception as e:
+            print(f"[{PLUGIN_NAME}] Error while fetching: {url} ({e}; skip checksum validation)")
+            content_hash = ""
+
+        if content_hash and sha256sum(content_bytes).casefold() != content_hash.casefold():
+            sublime.error_message(f"[{PLUGIN_NAME}] SHA-256 checksum mismatches: {PLUGIN_PY_LIBS_URL}")
             return
 
         rmtree_ex(PLUGIN_PY_LIBS_DIR, ignore_errors=True)
@@ -142,13 +149,11 @@ def save_content(content: str | bytes, path: PathLike, *, encoding: str = "utf-8
         path.write_bytes(content)
 
 
-def md5sum(target: bytes | str | Path, *, encoding: str = "utf-8") -> str:
-    """Calculates the lowercase MD5 hash of the string, bytes or file."""
+def sha256sum(target: bytes | str | Path, *, encoding: str = "utf-8") -> str:
+    """Calculates the lowercase SHA-256 hash of the string, bytes or file."""
     if isinstance(target, str):
         target = target.encode(encoding)
     elif isinstance(target, Path):
         target = target.read_bytes()
 
-    hasher = hashlib.md5()
-    hasher.update(target)
-    return hasher.hexdigest()
+    return hashlib.sha256(target).hexdigest()
