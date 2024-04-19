@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.1.6
+
+- refactor: replace MD5 with SHA-256 validation for downloaded deps
+
 ## 4.1.5
 
 - fix: ST's encoding name is different from Python's
