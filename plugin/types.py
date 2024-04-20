@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import sys
 from abc import ABC, abstractmethod
-from collections import UserDict
+from collections import UserDict as BuiltinUserDict
+from collections.abc import Generator, Iterator, KeysView
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Generator, KeysView, TypedDict, TypeVar, Union
+from typing import Any, Generic, TypedDict, TypeVar, Union, overload
 
 import sublime
 
@@ -11,10 +13,51 @@ SyntaxLike = Union[str, sublime.Syntax]
 WindowId = int
 WindowIdAble = Union[WindowId, sublime.Window]
 
+_K = TypeVar("_K")
 _T = TypeVar("_T")
+_V = TypeVar("_V")
+
+if sys.version_info < (3, 9):
+
+    class UserDict(BuiltinUserDict, Generic[_K, _V]):
+        """Workaround class for the fact that `UserDict` is not subscriptable until Python 3.9..."""
+
+        def __init__(self, dict=None, /, **kwargs) -> None:
+            self.data: dict[_K, _V] = {}
+            super().__init__(dict, **kwargs)
+
+        def __getitem__(self, key: _K) -> _V:
+            return super().__getitem__(key)
+
+        def __setitem__(self, key: _K, item: _V) -> None:
+            super().__setitem__(key, item)
+
+        def __delitem__(self, key: _K) -> None:
+            super().__delitem__(key)
+
+        def __iter__(self) -> Iterator[_K]:
+            return super().__iter__()
+
+        @overload
+        def get(self, key: _K) -> _V | None: ...
+        @overload
+        def get(self, key: _K, default: _T) -> _V | _T: ...
+
+        def get(self, key: _K, default: _T | None = None) -> _V | _T | None:
+            return super().get(key, default)
+else:
+    UserDict = BuiltinUserDict  # noqa: F401
+
+if sys.version_info < (3, 11):
+
+    class StrEnum(str, Enum):
+        __format__ = str.__format__  # type: ignore
+        __str__ = str.__str__  # type: ignore
+else:
+    from enum import StrEnum  # noqa: F401
 
 
-class ListenerEvent(Enum):
+class ListenerEvent(StrEnum):
     """Events used in AutoSetSyntax."""
 
     COMMAND = "command"
@@ -28,9 +71,6 @@ class ListenerEvent(Enum):
     REVERT = "revert"
     SAVE = "save"
     UNTRANSIENTIZE = "untransientize"
-
-    def __str__(self) -> str:
-        return str(self.value)
 
     @classmethod
     def from_value(cls, value: Any) -> ListenerEvent | None:
@@ -68,7 +108,7 @@ class ST_MatchRule(TypedDict):
     match: str
     args: list[Any] | Any | None
     kwargs: dict[str, Any] | None
-    rules: list[ST_MatchRule | ST_ConstraintRule]  # type: ignore
+    rules: list[ST_MatchRule | ST_ConstraintRule]
 
 
 class ST_SyntaxRule(ST_MatchRule):
@@ -80,38 +120,22 @@ class ST_SyntaxRule(ST_MatchRule):
     on_events: str | list[str] | None
 
 
-# `UserDict` is not subscriptable until Python 3.9...
-if TYPE_CHECKING:
+class WindowKeyedDict(UserDict[WindowIdAble, _T]):
+    def __setitem__(self, key: WindowIdAble, value: _T) -> None:
+        key = self._to_window_id(key)
+        super().__setitem__(key, value)
 
-    class WindowKeyedDict(UserDict[WindowIdAble, _T]):
-        def __setitem__(self, key: WindowIdAble, value: _T) -> None: ...
+    def __getitem__(self, key: WindowIdAble) -> _T:
+        key = self._to_window_id(key)
+        return super().__getitem__(key)
 
-        def __getitem__(self, key: WindowIdAble) -> _T: ...
+    def __delitem__(self, key: WindowIdAble) -> None:
+        key = self._to_window_id(key)
+        super().__delitem__(key)
 
-        def __delitem__(self, key: WindowIdAble) -> None: ...
+    def keys(self) -> KeysView[WindowId]:
+        return super().keys()
 
-        def keys(self) -> KeysView[WindowId]: ...
-        @staticmethod
-        def _to_window_id(value: WindowIdAble) -> WindowId: ...
-
-else:
-
-    class WindowKeyedDict(UserDict):
-        def __setitem__(self, key: WindowIdAble, value: _T) -> None:
-            key = self._to_window_id(key)
-            super().__setitem__(key, value)
-
-        def __getitem__(self, key: WindowIdAble) -> _T:
-            key = self._to_window_id(key)
-            return super().__getitem__(key)
-
-        def __delitem__(self, key: WindowIdAble) -> None:
-            key = self._to_window_id(key)
-            super().__delitem__(key)
-
-        def keys(self) -> KeysView[WindowId]:
-            return super().keys()
-
-        @staticmethod
-        def _to_window_id(value: WindowIdAble) -> WindowId:
-            return value.id() if isinstance(value, sublime.Window) else value
+    @staticmethod
+    def _to_window_id(value: WindowIdAble) -> WindowId:
+        return value.id() if isinstance(value, sublime.Window) else value

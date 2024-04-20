@@ -37,7 +37,7 @@ class TriegexNode:
     def __delitem__(self, key):
         del self.children[key]
 
-    def to_regex(self):
+    def to_regex(self) -> str:
         """
         RECURSIVE IMPLEMENTATION FOR REFERENCE
         suffixes = [v.to_regex() for k, v in self.children.items()]

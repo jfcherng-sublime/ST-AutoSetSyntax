@@ -9,11 +9,11 @@ import shutil
 import sys
 import tempfile
 import threading
-from collections.abc import Generator, Iterable
+from collections.abc import Generator, Iterable, Mapping
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from itertools import islice
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Mapping, Pattern, Tuple, TypeVar, Union, cast, overload
+from typing import Any, Callable, Pattern, TypeVar, Union, cast, overload
 
 import sublime
 
@@ -25,7 +25,7 @@ _T = TypeVar("_T")
 _U = TypeVar("_U")
 
 _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
-_T_ExpandableVar = TypeVar("_T_ExpandableVar", bound=Union[None, bool, int, float, str, Dict, List, Tuple])
+_T_ExpandableVar = TypeVar("_T_ExpandableVar", bound=Union[None, bool, int, float, str, dict, list, tuple])
 
 
 def camel_to_snake(s: str) -> str:
@@ -33,7 +33,7 @@ def camel_to_snake(s: str) -> str:
     return "".join(f"_{c}" if c.isupper() else c for c in s).strip("_").lower()
 
 
-def snake_to_camel(s: str, upper_first: bool = True) -> str:
+def snake_to_camel(s: str, *, upper_first: bool = True) -> str:
     """Converts "snake_case" to "CamelCase"."""
     first, *others = s.split("_")
     return (first.title() if upper_first else first.lower()) + "".join(map(str.title, others))
@@ -80,20 +80,18 @@ def merge_literals_to_regex(literals: Iterable[str]) -> str:
     from .libs.triegex import Triegex
 
     # this regex is enclosed by "(?:)"
-    return (
-        Triegex(*map(re.escape, literals))  # type: ignore
-        .to_regex()
-        .replace(r"\b", "")  # type: ignore
-        .replace(r"|~^(?#match nothing)", "")
-    )
+    return Triegex(*map(re.escape, literals)).to_regex().replace(R"\b", "").replace(r"|~^(?#match nothing)", "")
 
 
 def merge_regexes(regexes: Iterable[str]) -> str:
     """Merge regex strings into a single regex string."""
-    if not (regexes := tuple(regexes)):
+    regexes = tuple(regexes)
+    if len(regexes) == 0:
         return ""
-
-    merged = "(?:" + ")|(?:".join(regexes) + ")" if len(regexes) > 1 else regexes[0]
+    if len(regexes) == 1:
+        merged = regexes[0]
+    else:
+        merged = "(?:" + ")|(?:".join(regexes) + ")"
     return f"(?:{merged})"
 
 
@@ -271,7 +269,7 @@ def find_syntaxes_by_syntax_like(
         # by name (case-insensitive)
         yield from filter(lambda syntax: like_cf == get_syntax_name(syntax).casefold(), all_syntaxes)
         # by partial path
-        yield from filter(lambda syntax: like in syntax.path, all_syntaxes)  # type: ignore
+        yield from filter(lambda syntax: like in syntax.path, all_syntaxes)
 
     def filter_like(syntax: sublime.Syntax) -> bool:
         return (include_hidden or not syntax.hidden) and (include_plaintext or not is_plaintext_syntax(syntax))

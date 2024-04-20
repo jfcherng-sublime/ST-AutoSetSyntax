@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Final, Generator
+from typing import Any, Final
 
 import sublime
 import sublime_plugin

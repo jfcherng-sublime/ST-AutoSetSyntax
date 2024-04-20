@@ -1,32 +1,21 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, List
+from typing import List
 
 import sublime
 
+from .rules import SyntaxRuleCollection
 from .settings import get_merged_plugin_settings
 from .types import Optimizable, WindowKeyedDict
 
-if TYPE_CHECKING:
-    from .rules import SyntaxRuleCollection
-
-DroppedRules = List[Optimizable]
-DroppedRulesArg = Iterable[Optimizable]
-
-# `UserDict` is not subscriptable until Python 3.9...
-if TYPE_CHECKING:
-    _WindowKeyedDict_DroppedRules = WindowKeyedDict[DroppedRules]
-    _WindowKeyedDict_SyntaxRuleCollection = WindowKeyedDict[SyntaxRuleCollection]
-else:
-    _WindowKeyedDict_DroppedRules = WindowKeyedDict
-    _WindowKeyedDict_SyntaxRuleCollection = WindowKeyedDict
+_DroppedRules = List[Optimizable]
 
 
-class DroppedRulesCollection(_WindowKeyedDict_DroppedRules):
+class DroppedRulesCollection(WindowKeyedDict[_DroppedRules]):
     pass
 
 
-class SyntaxRuleCollections(_WindowKeyedDict_SyntaxRuleCollection):
+class SyntaxRuleCollections(WindowKeyedDict[SyntaxRuleCollection]):
     pass
 
 

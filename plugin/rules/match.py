@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Generator
 from dataclasses import dataclass, field
-from typing import Any, Generator, Union, final
+from typing import Any, Union, final
 
 from ..cache import clearable_lru_cache
 from ..snapshot import ViewSnapshot

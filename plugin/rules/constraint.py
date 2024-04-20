@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import operator
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Generator, Iterable, Pattern, TypeVar, final
+from typing import Any, Pattern, TypeVar, final
 
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
@@ -167,9 +168,9 @@ class AbstractConstraint(ABC):
         if use_exists:
             checker = Path.exists
         elif sibling.endswith(("\\", "/")):
-            checker = Path.is_dir  # type: ignore
+            checker = Path.is_dir
         else:
-            checker = Path.is_file  # type: ignore
+            checker = Path.is_file
 
         return first_true(path.parents, pred=lambda p: checker(p / sibling))
 

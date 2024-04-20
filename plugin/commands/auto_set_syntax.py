@@ -51,7 +51,7 @@ def run_auto_set_syntax_on_view(
     if event is ListenerEvent.EXEC:
         return _assign_syntax_for_exec_output(view_snapshot, event)
 
-    # prerequsites
+    # prerequisites
     if not (
         (window := view.window())
         and is_syntaxable_view(view, must_plaintext=must_plaintext)
@@ -84,10 +84,11 @@ def run_auto_set_syntax_on_view(
         ListenerEvent.COMMAND,
         ListenerEvent.INIT,
         ListenerEvent.LOAD,
-        ListenerEvent.MODIFY,
-        ListenerEvent.PASTE,
         ListenerEvent.SAVE,
         ListenerEvent.UNTRANSIENTIZE,
+        # modify
+        ListenerEvent.MODIFY,
+        ListenerEvent.PASTE,
     } and _assign_syntax_with_magika(view_snapshot, event):
         return True
 
