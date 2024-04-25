@@ -35,6 +35,10 @@ ci-fix:
 	@echo "========== fix: ruff (format) =========="
 	ruff format .
 
+# ---- #
+# docs #
+# ---- #
+
 .PHONY: docs-serve
 docs-serve:
 	cd "docs/" && mkdocs serve
