@@ -4,11 +4,12 @@ from collections.abc import Generator, Iterable
 from dataclasses import dataclass
 
 import sublime
+from more_itertools import first_true
 
 from ..constants import VERSION
 from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
-from ..utils import find_syntax_by_syntax_likes, first_true
+from ..utils import find_syntax_by_syntax_likes
 from .match import MatchRule
 
 

@@ -7,19 +7,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Pattern, TypeVar, final
 
+from more_itertools import first_true
+
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_ConstraintRule
-from ..utils import (
-    camel_to_snake,
-    compile_regex,
-    first_true,
-    list_all_subclasses,
-    merge_regexes,
-    parse_regex_flags,
-    remove_suffix,
-)
+from ..utils import camel_to_snake, compile_regex, list_all_subclasses, merge_regexes, parse_regex_flags, remove_suffix
 
 T = TypeVar("T")
 

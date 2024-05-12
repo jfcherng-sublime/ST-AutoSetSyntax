@@ -5,10 +5,12 @@ from collections.abc import Generator
 from dataclasses import dataclass, field
 from typing import Any, Union, final
 
+from more_itertools import first_true
+
 from ..cache import clearable_lru_cache
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, ST_MatchRule
-from ..utils import camel_to_snake, first_true, list_all_subclasses, remove_suffix
+from ..utils import camel_to_snake, list_all_subclasses, remove_suffix
 from .constraint import ConstraintRule
 
 

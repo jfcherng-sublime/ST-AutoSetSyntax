@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Any, final
 
+from more_itertools import nth
+
 from ...snapshot import ViewSnapshot
-from ...utils import nth
 from ..match import AbstractMatch, MatchableRule
 
 

@@ -11,18 +11,17 @@ import tempfile
 import threading
 from collections.abc import Generator, Iterable, Mapping
 from functools import cmp_to_key, lru_cache, reduce, wraps
-from itertools import islice
 from pathlib import Path
-from typing import Any, Callable, Pattern, TypeVar, Union, cast, overload
+from typing import Any, Callable, Pattern, TypeVar, Union, cast
 
 import sublime
+from more_itertools import first_true
 
 from .cache import clearable_lru_cache
 from .libs.trie import TrieNode
 from .types import SyntaxLike
 
 _T = TypeVar("_T")
-_U = TypeVar("_U")
 
 _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
 _T_ExpandableVar = TypeVar("_T_ExpandableVar", bound=Union[None, bool, int, float, str, dict, list, tuple])
@@ -147,34 +146,6 @@ def debounce(time_s: float = 0.3) -> Callable[[_T_Callable], _T_Callable]:
     return decorator
 
 
-@overload
-def first_true(
-    items: Iterable[_T],
-    default: _U,
-    pred: Callable[[_T], bool] | None = None,
-) -> _T | _U: ...
-
-
-@overload
-def first_true(
-    items: Iterable[_T],
-    *,
-    pred: Callable[[_T], bool] | None = None,
-) -> _T | None: ...
-
-
-def first_true(
-    items: Iterable[_T],
-    default: _U | None = None,
-    pred: Callable[[_T], bool] | None = None,
-) -> _T | _U | None:
-    """
-    Gets the first item which satisfies the `pred`. Otherwise, `default`.
-    If `pred` is not given or `None`, the first truthy item will be returned.
-    """
-    return next(filter(pred, items), default)
-
-
 def list_all_subclasses(
     root: type[_T],
     skip_abstract: bool = False,
@@ -185,19 +156,6 @@ def list_all_subclasses(
         yield root
     for leaf in root.__subclasses__():
         yield from list_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)
-
-
-@overload
-def nth(items: Iterable[_T], n: int) -> _T | None: ...
-
-
-@overload
-def nth(items: Iterable[_T], n: int, default: _U) -> _T | _U: ...
-
-
-def nth(items: Iterable[_T], n: int, default: _U | None = None) -> _T | _U | None:
-    """Gets the `n`th item (started from 0th) in `items`. Returns `default` if no such item."""
-    return next(islice(iter(items), n, None), default)
 
 
 def stable_unique(items: Iterable[_T], *, key: Callable[[_T], Any] | None = None) -> Generator[_T, None, None]:
