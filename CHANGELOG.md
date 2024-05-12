@@ -1,5 +1,12 @@
 # AutoSetSyntax Changelog
 
+## 4.1.7
+
+Package Control v4 is required due to the use of `more-itertools` py38 dependency.
+
+- refactor: tidy codes
+- chore: add `more-itertools` as a dependency
+
 ## 4.1.6
 
 - refactor: replace MD5 with SHA-256 validation for downloaded deps
