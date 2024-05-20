@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Any, Generic, TypedDict, TypeVar, Union, overload
 
 import sublime
+from typing_extensions import Self
 
 SyntaxLike = Union[str, sublime.Syntax]
 WindowId = int
@@ -73,7 +74,7 @@ class ListenerEvent(StrEnum):
     UNTRANSIENTIZE = "untransientize"
 
     @classmethod
-    def from_value(cls, value: Any) -> ListenerEvent | None:
+    def from_value(cls, value: Any) -> Self | None:
         try:
             return cls(value)
         except ValueError:

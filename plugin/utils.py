@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Callable, Pattern, TypeVar, Union, cast
 
 import sublime
-from more_itertools import first_true
+from more_itertools import first_true, unique_everseen
 
 from .cache import clearable_lru_cache
 from .libs.trie import TrieNode
@@ -158,12 +158,6 @@ def list_all_subclasses(
         yield from list_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)
 
 
-def stable_unique(items: Iterable[_T], *, key: Callable[[_T], Any] | None = None) -> Generator[_T, None, None]:
-    """Lists unique items from the iterable, in their original order."""
-    key = key or (lambda x: x)
-    yield from {key(item): item for item in items}.values()
-
-
 @clearable_lru_cache()
 def find_syntax_by_syntax_like(
     like: SyntaxLike,
@@ -232,7 +226,7 @@ def find_syntaxes_by_syntax_like(
     def filter_like(syntax: sublime.Syntax) -> bool:
         return (include_hidden or not syntax.hidden) and (include_plaintext or not is_plaintext_syntax(syntax))
 
-    return tuple(filter(filter_like, stable_unique(find_like(like))))
+    return tuple(filter(filter_like, unique_everseen(find_like(like))))
 
 
 def find_syntaxes_by_syntax_likes(
@@ -276,10 +270,12 @@ def extract_prefixed_dict(dict_: Mapping[str, _T], *, prefix: str) -> dict[str, 
     return {k[len(prefix) :]: v for k, v in dict_.items() if k.startswith(prefix)}
 
 
-def resolve_window(obj: Any) -> sublime.Window | None:
+def resolve_window(obj: sublime.Buffer | sublime.View | sublime.Sheet | sublime.Window) -> sublime.Window | None:
     if isinstance(obj, sublime.Window):
         return obj
     window = None
+    if isinstance(obj, sublime.Buffer):
+        obj = obj.primary_view()
     if isinstance(obj, (sublime.View, sublime.Sheet)):
         window = obj.window()
     return window

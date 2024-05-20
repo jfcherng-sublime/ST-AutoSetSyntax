@@ -4,7 +4,7 @@ import math
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Final
+from typing import Final
 
 import sublime
 import sublime_plugin
@@ -24,7 +24,7 @@ def _editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
         view.set_read_only(is_read_only)
 
 
-def _find_log_panel(obj: Any) -> sublime.View | None:
+def _find_log_panel(obj: sublime.Buffer | sublime.View | sublime.Sheet | sublime.Window) -> sublime.View | None:
     return (resolve_window(obj) or sublime.active_window()).find_output_panel(PLUGIN_NAME)
 
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .auto_set_syntax import AutoSetSyntaxCommand, run_auto_set_syntax_on_view
 from .auto_set_syntax_create_new_implementation import (
     AutoSetSyntaxCreateNewConstraintCommand,

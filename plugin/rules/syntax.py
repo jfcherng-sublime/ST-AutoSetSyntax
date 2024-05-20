@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import sublime
 from more_itertools import first_true
+from typing_extensions import Self
 
 from ..constants import VERSION
 from ..snapshot import ViewSnapshot
@@ -52,7 +53,7 @@ class SyntaxRule(Optimizable):
         return self.root_rule.test(view_snapshot)
 
     @classmethod
-    def make(cls, syntax_rule: ST_SyntaxRule) -> SyntaxRule:
+    def make(cls, syntax_rule: ST_SyntaxRule) -> Self:
         """Build this object with the `syntax_rule`."""
         obj = cls()
 
@@ -106,7 +107,7 @@ class SyntaxRuleCollection(Optimizable):
         return first_true(self.rules, pred=lambda rule: rule.test(view_snapshot, event))
 
     @classmethod
-    def make(cls, syntax_rules: Iterable[ST_SyntaxRule]) -> SyntaxRuleCollection:
+    def make(cls, syntax_rules: Iterable[ST_SyntaxRule]) -> Self:
         """Build this object with the `syntax_rules`."""
         obj = cls()
         obj.rules = tuple(map(SyntaxRule.make, syntax_rules))

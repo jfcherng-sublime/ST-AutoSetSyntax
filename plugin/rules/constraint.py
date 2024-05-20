@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Pattern, TypeVar, final
 
 from more_itertools import first_true
+from typing_extensions import Self
 
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
@@ -62,7 +63,7 @@ class ConstraintRule(Optimizable):
         return not result if self.inverted else result
 
     @classmethod
-    def make(cls, constraint_rule: ST_ConstraintRule) -> ConstraintRule:
+    def make(cls, constraint_rule: ST_ConstraintRule) -> Self:
         """Build this object with the `constraint_rule`."""
         obj = cls()
 

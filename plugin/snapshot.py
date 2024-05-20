@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import sublime
+from typing_extensions import Self
 
 from .encodings import from_sublime as encoding_from_sublime
 from .settings import get_merged_plugin_setting
@@ -77,7 +78,7 @@ class ViewSnapshot:
         return self.view if self.view.is_valid() else None
 
     @classmethod
-    def from_view(cls, view: sublime.View) -> ViewSnapshot:
+    def from_view(cls, view: sublime.View) -> Self:
         """Create a `ViewSnapshot` object from a `sublime.View` object."""
         window = view.window() or sublime.active_window()
 

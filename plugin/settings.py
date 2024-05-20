@@ -6,9 +6,9 @@ from typing import Any, Callable, Mapping, MutableMapping
 
 import sublime
 import sublime_plugin
+from more_itertools import unique_everseen
 
 from .types import ST_SyntaxRule
-from .utils import stable_unique
 
 
 def get_merged_plugin_setting(
@@ -54,7 +54,7 @@ def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
     ret["trim_suffixes"] = tuple(
         filter(
             None,  # remove falsy values
-            stable_unique(
+            unique_everseen(
                 chain(
                     settings.get("project_trim_suffixes", []),
                     settings.get("user_trim_suffixes", []),

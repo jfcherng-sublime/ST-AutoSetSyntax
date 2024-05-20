@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Union, final
 
 from more_itertools import first_true
+from typing_extensions import Self
 
 from ..cache import clearable_lru_cache
 from ..snapshot import ViewSnapshot
@@ -58,7 +59,7 @@ class MatchRule(Optimizable):
         return self.match.test(view_snapshot, self.rules)
 
     @classmethod
-    def make(cls, match_rule: ST_MatchRule) -> MatchRule:
+    def make(cls, match_rule: ST_MatchRule) -> Self:
         """Build this object with the `match_rule`."""
         obj = cls()
 
