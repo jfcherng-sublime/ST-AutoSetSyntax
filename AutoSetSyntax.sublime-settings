@@ -265,7 +265,7 @@
             "rules": [
                 {
                     "constraint": "name_contains_regex",
-                    "args": ["^Jenkinsfile(?=\\b|_)"]
+                    "args": ["^Jenkinsfile(?=\\b)"]
                 }
             ]
         },
