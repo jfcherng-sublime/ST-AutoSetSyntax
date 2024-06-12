@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 4.1.8
+
+- chore: add `typing-extensions` as a dependency
+- chore: add a rule for `uv.lock`
+- chore: simplify `Jenkinsfile` rules
+
 ## 4.1.7
 
 Package Control v4 is required due to the use of `more-itertools` py38 dependency.
