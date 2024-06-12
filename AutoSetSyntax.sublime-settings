@@ -445,6 +445,16 @@
             ]
         },
         {
+            "syntaxes": "scope:source.toml",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "is_name",
+                    "args": ["uv.lock"]
+                }
+            ]
+        },
+        {
             "comment": "Django templates",
             "syntaxes": ["scope:text.jinja", "scope:text.html.jinja"],
             "selector": "text.html.basic",
