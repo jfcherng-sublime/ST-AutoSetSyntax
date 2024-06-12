@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
 from collections import UserDict as BuiltinUserDict
-from collections.abc import Generator, Iterator, KeysView
+from collections.abc import Generator, Hashable, Iterator, KeysView
 from enum import Enum
 from typing import Any, Generic, TypedDict, TypeVar, Union, overload
 
@@ -14,38 +14,38 @@ SyntaxLike = Union[str, sublime.Syntax]
 WindowId = int
 WindowIdAble = Union[WindowId, sublime.Window]
 
-_K = TypeVar("_K")
+_KT = TypeVar("_KT", bound=Hashable)
+_KV = TypeVar("_KV")
 _T = TypeVar("_T")
-_V = TypeVar("_V")
 
 if sys.version_info < (3, 9):
 
-    class UserDict(BuiltinUserDict, Generic[_K, _V]):
+    class UserDict(BuiltinUserDict, Generic[_KT, _KV]):
         """Workaround class for the fact that `UserDict` is not subscriptable until Python 3.9..."""
 
         def __init__(self, dict=None, /, **kwargs) -> None:
-            self.data: dict[_K, _V] = {}
+            self.data: dict[_KT, _KV] = {}
             super().__init__(dict, **kwargs)
 
-        def __getitem__(self, key: _K) -> _V:
+        def __getitem__(self, key: _KT) -> _KV:
             return super().__getitem__(key)
 
-        def __setitem__(self, key: _K, item: _V) -> None:
+        def __setitem__(self, key: _KT, item: _KV) -> None:
             super().__setitem__(key, item)
 
-        def __delitem__(self, key: _K) -> None:
+        def __delitem__(self, key: _KT) -> None:
             super().__delitem__(key)
 
-        def __iter__(self) -> Iterator[_K]:
+        def __iter__(self) -> Iterator[_KT]:
             return super().__iter__()
 
         @overload
-        def get(self, key: _K) -> _V | None: ...
+        def get(self, key: _KT) -> _KV | None: ...
         @overload
-        def get(self, key: _K, default: _T) -> _V | _T: ...
-
-        def get(self, key: _K, default: _T | None = None) -> _V | _T | None:
+        def get(self, key: _KT, default: _T) -> _KV | _T: ...
+        def get(self, key: _KT, default: _T | None = None) -> _KV | _T | None:
             return super().get(key, default)
+
 else:
     UserDict = BuiltinUserDict  # noqa: F401
 
@@ -54,6 +54,7 @@ if sys.version_info < (3, 11):
     class StrEnum(str, Enum):
         __format__ = str.__format__  # type: ignore
         __str__ = str.__str__  # type: ignore
+
 else:
     from enum import StrEnum  # noqa: F401
 
@@ -94,7 +95,7 @@ class Optimizable(ABC):
         """Does optimizations and returns a generator for dropped objects."""
 
 
-class ST_ConstraintRule(TypedDict):
+class StConstraintRule(TypedDict):
     """Typed dict for corresponding ST settings."""
 
     constraint: str
@@ -103,16 +104,16 @@ class ST_ConstraintRule(TypedDict):
     inverted: bool
 
 
-class ST_MatchRule(TypedDict):
+class StMatchRule(TypedDict):
     """Typed dict for corresponding ST settings."""
 
     match: str
     args: list[Any] | Any | None
     kwargs: dict[str, Any] | None
-    rules: list[ST_MatchRule | ST_ConstraintRule]
+    rules: list[StMatchRule | StConstraintRule]
 
 
-class ST_SyntaxRule(ST_MatchRule):
+class StSyntaxRule(StMatchRule):
     """Typed dict for corresponding ST settings."""
 
     comment: str

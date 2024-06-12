@@ -13,10 +13,18 @@ from typing_extensions import Self
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
 from ..snapshot import ViewSnapshot
-from ..types import Optimizable, ST_ConstraintRule
-from ..utils import camel_to_snake, compile_regex, list_all_subclasses, merge_regexes, parse_regex_flags, remove_suffix
+from ..types import Optimizable, StConstraintRule
+from ..utils import (
+    camel_to_snake,
+    compile_regex,
+    drop_falsy,
+    list_all_subclasses,
+    merge_regexes,
+    parse_regex_flags,
+    remove_suffix,
+)
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 
 def find_constraint(obj: Any) -> type[AbstractConstraint] | None:
@@ -63,7 +71,7 @@ class ConstraintRule(Optimizable):
         return not result if self.inverted else result
 
     @classmethod
-    def make(cls, constraint_rule: ST_ConstraintRule) -> Self:
+    def make(cls, constraint_rule: StConstraintRule) -> Self:
         """Build this object with the `constraint_rule`."""
         obj = cls()
 
@@ -114,9 +122,9 @@ class AbstractConstraint(ABC):
         """Tests whether the `view_snapshot` passes this constraint."""
 
     @final
-    def _handled_args(self, normalizer: Callable[[T], T] | None = None) -> tuple[T, ...]:
+    def _handled_args(self, normalizer: Callable[[_T], _T] | None = None) -> tuple[_T, ...]:
         """Filter falsy args and normalize them. Note that `0`, `""` and `None` are falsy."""
-        args: Iterable[T] = filter(None, self.args)
+        args: Iterable[_T] = drop_falsy(self.args)
         if normalizer:
             args = map(normalizer, args)
         return tuple(args)
@@ -158,7 +166,10 @@ class AbstractConstraint(ABC):
     @staticmethod
     def find_parent_with_sibling(base: str | Path, sibling: str, *, use_exists: bool = False) -> Path | None:
         """Find the first parent directory which contains `sibling`."""
-        path = Path(base).resolve()
+        try:
+            path = Path(base).resolve()
+        except Exception:
+            return None
 
         if use_exists:
             checker = Path.exists

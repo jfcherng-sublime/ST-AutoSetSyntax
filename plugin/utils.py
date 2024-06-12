@@ -63,6 +63,11 @@ def compile_regex(regex: str | Pattern[str], flags: int = 0) -> Pattern[str]:
     return re.compile(regex, flags)
 
 
+def drop_falsy(iterable: Iterable[_T | None]) -> Generator[_T, None, None]:
+    """Drops falsy values from the iterable."""
+    yield from filter(None, iterable)
+
+
 def get_fqcn(obj: Any) -> str:
     if obj is None:
         return "None"
@@ -86,7 +91,7 @@ def merge_regexes(regexes: Iterable[str]) -> str:
     """Merge regex strings into a single regex string."""
     regexes = tuple(regexes)
     if len(regexes) == 0:
-        return ""
+        return r"~^(?#match nothing)"
     if len(regexes) == 1:
         merged = regexes[0]
     else:

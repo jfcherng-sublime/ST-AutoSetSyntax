@@ -8,7 +8,8 @@ import sublime
 import sublime_plugin
 from more_itertools import unique_everseen
 
-from .types import ST_SyntaxRule
+from .types import StSyntaxRule
+from .utils import drop_falsy
 
 
 def get_merged_plugin_setting(
@@ -32,7 +33,7 @@ def get_st_settings() -> sublime.Settings:
     return sublime.load_settings("Preferences.sublime-settings")
 
 
-def pref_syntax_rules(*, window: sublime.Window | None = None) -> list[ST_SyntaxRule]:
+def pref_syntax_rules(*, window: sublime.Window | None = None) -> list[StSyntaxRule]:
     return get_merged_plugin_setting("syntax_rules", [], window=window)
 
 
@@ -52,8 +53,7 @@ def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
 
     # use tuple to freeze setting for better performance (cache-able)
     ret["trim_suffixes"] = tuple(
-        filter(
-            None,  # remove falsy values
+        drop_falsy(
             unique_everseen(
                 chain(
                     settings.get("project_trim_suffixes", []),

@@ -65,6 +65,7 @@ __all__ = (
 
 
 def plugin_loaded() -> None:
+    """Executed when this plugin is loaded."""
     # somehow "AutoSetSyntaxAppendLogCommand" won't be ready if we don't wait a bit
     sublime.set_timeout(_plugin_loaded)
 
@@ -86,6 +87,7 @@ def _plugin_loaded() -> None:
 
 
 def plugin_unloaded() -> None:
+    """Executed when this plugin is unloaded."""
     AioSettings.clear_on_change(PLUGIN_NAME)
     AioSettings.tear_down()
 

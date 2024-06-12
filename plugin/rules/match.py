@@ -10,7 +10,7 @@ from typing_extensions import Self
 
 from ..cache import clearable_lru_cache
 from ..snapshot import ViewSnapshot
-from ..types import Optimizable, ST_MatchRule
+from ..types import Optimizable, StMatchRule
 from ..utils import camel_to_snake, list_all_subclasses, remove_suffix
 from .constraint import ConstraintRule
 
@@ -59,7 +59,7 @@ class MatchRule(Optimizable):
         return self.match.test(view_snapshot, self.rules)
 
     @classmethod
-    def make(cls, match_rule: ST_MatchRule) -> Self:
+    def make(cls, match_rule: StMatchRule) -> Self:
         """Build this object with the `match_rule`."""
         obj = cls()
 

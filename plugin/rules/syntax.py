@@ -9,8 +9,8 @@ from typing_extensions import Self
 
 from ..constants import VERSION
 from ..snapshot import ViewSnapshot
-from ..types import ListenerEvent, Optimizable, ST_SyntaxRule
-from ..utils import find_syntax_by_syntax_likes
+from ..types import ListenerEvent, Optimizable, StSyntaxRule
+from ..utils import drop_falsy, find_syntax_by_syntax_likes
 from .match import MatchRule
 
 
@@ -53,7 +53,7 @@ class SyntaxRule(Optimizable):
         return self.root_rule.test(view_snapshot)
 
     @classmethod
-    def make(cls, syntax_rule: ST_SyntaxRule) -> Self:
+    def make(cls, syntax_rule: StSyntaxRule) -> Self:
         """Build this object with the `syntax_rule`."""
         obj = cls()
 
@@ -74,7 +74,7 @@ class SyntaxRule(Optimizable):
         if (on_events := syntax_rule.get("on_events")) is not None:
             if isinstance(on_events, str):
                 on_events = [on_events]
-            obj.on_events = set(filter(None, map(ListenerEvent.from_value, on_events)))
+            obj.on_events = set(drop_falsy(map(ListenerEvent.from_value, on_events)))
 
         if match_rule_compiled := MatchRule.make(syntax_rule):
             obj.root_rule = match_rule_compiled
@@ -107,7 +107,7 @@ class SyntaxRuleCollection(Optimizable):
         return first_true(self.rules, pred=lambda rule: rule.test(view_snapshot, event))
 
     @classmethod
-    def make(cls, syntax_rules: Iterable[ST_SyntaxRule]) -> Self:
+    def make(cls, syntax_rules: Iterable[StSyntaxRule]) -> Self:
         """Build this object with the `syntax_rules`."""
         obj = cls()
         obj.rules = tuple(map(SyntaxRule.make, syntax_rules))
