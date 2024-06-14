@@ -7,6 +7,9 @@ all:
 install:
 	uv pip install $(UV_INSTALL_FLAGS) -r requirements.txt
 
+.PHONY: install-all
+install-all: install-dev install-docs
+
 .PHONY: install-dev
 install-dev:
 	uv pip install $(UV_INSTALL_FLAGS) -r requirements-dev.txt
