@@ -265,7 +265,7 @@
             "rules": [
                 {
                     "constraint": "name_contains_regex",
-                    "args": ["^Jenkinsfile(?=\\b)"]
+                    "args": ["^Jenkinsfile(?=\\b|_)"]
                 }
             ]
         },
@@ -521,7 +521,7 @@
             "rules": [
                 {
                     "constraint": "path_contains_regex",
-                    "args": ["\\b(?i:apache|httpd)\\b.*/conf/.*\\.conf$"]
+                    "args": ["\\b(?i:apache|httpd)(?:\\b|_).*/conf/.*\\.conf$"]
                 },
                 {
                     "constraint": "contains_regex",
@@ -536,7 +536,7 @@
             "rules": [
                 {
                     "constraint": "path_contains_regex",
-                    "args": ["\\b(?i:nginx)\\b.*/conf/.*\\.conf$"]
+                    "args": ["\\b(?i:nginx)(?:\\b|_).*/conf/.*\\.conf$"]
                 },
                 {
                     "constraint": "contains_regex",
