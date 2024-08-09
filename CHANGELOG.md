@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.1.9
+
+- fix: some regex rules which use `\b`
+
 ## 4.1.8
 
 - chore: add `typing-extensions` as a dependency
