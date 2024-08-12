@@ -4,7 +4,7 @@ annotated-types==0.7.0
     # via pydantic
 more-itertools==10.5.0
     # via -r requirements.in
-pydantic==2.10.5
+pydantic==2.10.6
     # via -r requirements.in
 pydantic-core==2.27.2
     # via pydantic
