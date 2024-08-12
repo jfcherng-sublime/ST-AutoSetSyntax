@@ -274,26 +274,29 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
 
     magika = Magika(prediction_mode=PredictionMode.BEST_GUESS)  # we have "magika.min_confidence" as the threshold
     if view_snapshot.path_obj and not view.is_dirty():
-        result = magika.identify_path(view_snapshot.path_obj)
+        status_result = magika.identify_path(view_snapshot.path_obj)
     else:
-        result = magika.identify_bytes(view_snapshot.content_bytes)
-    # Logger.log(f"🐛 Magika's prediction: {result.output}", window=window)
+        status_result = magika.identify_bytes(view_snapshot.content_bytes)
+    # Logger.log(f"🐛 Magika's prediction: {status_result.output!r}", window=window)
+
+    magika_label = status_result.output.ct_label
+    magika_score = status_result.output.score  # range: 0.0 ~ 1.0
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
-    if result.output.score < threadshold or result.output.ct_label in {"directory", "empty", "txt", "unknown"}:
+    if magika_score < threadshold or magika_label in {"directory", "empty", "txt", "unknown"}:
         return False
 
     syntax_map: dict[str, list[str]] = extract_prefixed_dict(settings, prefix="magika.syntax_map.")
-    if not (syntax_likes := resolve_magika_label_with_syntax_map(result.output.ct_label, syntax_map)):
-        Logger.log(f"😢 Magika syntax map resolution failed for label: {result.output.ct_label}", window=window)
+    if not (syntax_likes := resolve_magika_label_with_syntax_map(magika_label, syntax_map)):
+        Logger.log(f"😢 Magika syntax map resolution failed for label: {magika_label}", window=window)
         return False
 
     if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
-        Logger.log(f"😢 Failed finding syntax from Magika: {syntax_likes}", window=window)
+        Logger.log(f"😢 Failed mapping the label from Magika: {syntax_likes}", window=window)
         return False
 
-    confidence = round(result.output.score * 100, 2)
-    sublime.status_message(f"Predicted syntax: {result.output.ct_label} ({confidence}% confidence)")
+    confidence = round(magika_score * 100, 2)
+    sublime.status_message(f"Predicted label: {magika_label} ({confidence}% confidence)")
     return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "Magika (Deep Learning)"})
 
 
