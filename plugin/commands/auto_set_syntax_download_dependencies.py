@@ -22,7 +22,7 @@ PathLike = Union[Path, str]
 
 
 class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand):
-    # Dependencies are published on https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tree/dependencies-v1-models
+    # Dependencies are published on https://github.com/jfcherng-sublime/ST-AutoSetSyntax/tree/dependencies-v3-models
 
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Download Dependencies"

@@ -266,23 +266,32 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
         return False
 
     try:
-        from magika import Magika, PredictionMode
+        from magika import ContentTypeLabel, Magika, PredictionMode
     except ImportError as e:
         Logger.log(f"💣 Error occured while importing Magika: {e}", window=window)
         return False
 
     magika = Magika(prediction_mode=PredictionMode.BEST_GUESS)  # we have "magika.min_confidence" as the threshold
     if view_snapshot.path_obj and not view.is_dirty():
-        status_result = magika.identify_path(view_snapshot.path_obj)
+        magika_result = magika.identify_path(view_snapshot.path_obj)
     else:
-        status_result = magika.identify_bytes(view_snapshot.content_bytes)
-    # Logger.log(f"🐛 Magika's prediction: {status_result.output!r}", window=window)
+        magika_result = magika.identify_bytes(view_snapshot.content_bytes)
+    if not magika_result.ok:
+        Logger.log(f"😢 Magika failed: {magika_result.status}", window=window)
+        return False
+    Logger.log(f"🐛 Magika's prediction: {magika_result!r}", window=window)
 
-    magika_label = status_result.output.ct_label
-    magika_score = status_result.output.score  # range: 0.0 ~ 1.0
+    magika_label = magika_result.output.label
+    magika_score = magika_result.score  # range: 0.0 ~ 1.0
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
-    if magika_score < threadshold or magika_label in {"directory", "empty", "txt", "unknown"}:
+    if magika_score < threadshold or magika_label in {
+        ContentTypeLabel.DIRECTORY,
+        ContentTypeLabel.EMPTY,
+        ContentTypeLabel.TXT,
+        ContentTypeLabel.UNDEFINED,
+        ContentTypeLabel.UNKNOWN,
+    }:
         return False
 
     syntax_map: dict[str, list[str]] = extract_prefixed_dict(settings, prefix="magika.syntax_map.")
