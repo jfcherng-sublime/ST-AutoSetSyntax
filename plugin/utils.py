@@ -90,13 +90,11 @@ def merge_literals_to_regex(literals: Iterable[str]) -> str:
 def merge_regexes(regexes: Iterable[str]) -> str:
     """Merge regex strings into a single regex string."""
     regexes = tuple(regexes)
-    if len(regexes) == 0:
+    if not regexes:
         return r"~^(?#match nothing)"
     if len(regexes) == 1:
-        merged = regexes[0]
-    else:
-        merged = "(?:" + ")|(?:".join(regexes) + ")"
-    return f"(?:{merged})"
+        return f"(?:{regexes[0]})"
+    return f"(?:{'|'.join(f'(?:{regex})' for regex in regexes)})"
 
 
 def parse_regex_flags(flags: Iterable[str]) -> int:
@@ -424,11 +422,7 @@ def get_syntax_name(syntax: sublime.Syntax) -> str:
 def stringify(obj: Any) -> str:
     """Custom object-to-string converter. Just used for debug messages."""
     if isinstance(obj, sublime.View):
-        if filepath := obj.file_name():
-            filepath = Path(filepath).as_posix()
-        else:
-            filepath = ""
-
+        filepath = Path(filepath).as_posix() if (filepath := obj.file_name()) else ""
         return f'View({obj.id()}, "{filepath}")'
 
     r = repr(obj)

@@ -355,7 +355,7 @@ def assign_syntax_to_view(
             continue
 
         if syntax == (syntax_old := view.syntax() or sublime.Syntax("", "", False, "")):
-            details["reason"] = f'[ALREADY] {details["reason"]}'
+            details["reason"] = f"[ALREADY] {details['reason']}"
             Logger.log(
                 f'💯 Remain {stringify(_view)} syntax "{get_syntax_name(syntax)}" because {stringify(details)}',
                 window=_window,
