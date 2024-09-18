@@ -1,0 +1,4 @@
+target = "plugin/_vendor"
+packages = [
+    "triegex",
+]

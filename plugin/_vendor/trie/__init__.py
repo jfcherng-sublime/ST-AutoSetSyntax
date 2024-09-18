@@ -1,16 +1,17 @@
+"""
+A Trie/Prefix Tree is a kind of search tree used to provide quick lookup
+of words/patterns in a set of words. A basic Trie however has O(n^2) space complexity
+making it impractical in practice. It however provides O(max(search_string, length of
+longest word)) lookup time making it an optimal approach when space is not an issue.
+
+@see https://github.com/TheAlgorithms/Python/blob/master/data_structures/trie/trie.py
+This file has been modified by @jfcherng to fit his own use.
+"""
+
 from typing import Dict, Generator, Iterable
 
 
 class TrieNode:
-    """
-    A Trie/Prefix Tree is a kind of search tree used to provide quick lookup
-    of words/patterns in a set of words. A basic Trie however has O(n^2) space complexity
-    making it impractical in practice. It however provides O(max(search_string, length of
-    longest word)) lookup time making it an optimal approach when space is not an issue.
-
-    This file has been modified by @jfcherng to fit his own use.
-    """
-
     def __init__(self) -> None:
         self.nodes: Dict[str, TrieNode] = dict()  # Mapping from char to TrieNode
         self.is_leaf = False

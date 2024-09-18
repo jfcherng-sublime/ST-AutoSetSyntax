@@ -17,8 +17,9 @@ from typing import Any, Callable, Pattern, TypeVar, Union, cast
 import sublime
 from more_itertools import first_true, unique_everseen
 
+from ._vendor.trie import TrieNode
+from ._vendor.triegex import Triegex
 from .cache import clearable_lru_cache
-from .libs.trie import TrieNode
 from .types import SyntaxLike
 
 _T = TypeVar("_T")
@@ -81,8 +82,6 @@ def merge_literals_to_regex(literals: Iterable[str]) -> str:
 
     The returned regex is enclosed as `(?:...)`.
     """
-    from .libs.triegex import Triegex
-
     # this regex is enclosed by "(?:)"
     return Triegex(*map(re.escape, literals)).to_regex().replace(R"\b", "").replace(r"|~^(?#match nothing)", "")
 

@@ -1,3 +1,4 @@
+*.dist-info/ export-ignore
 *.pyi export-ignore
 .dependabot export-ignore
 .editorconfig export-ignore

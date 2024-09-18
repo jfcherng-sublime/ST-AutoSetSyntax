@@ -4,6 +4,7 @@ Desktop.ini
 Thumbs.db
 
 # Python
+*.dist-info/
 *.py[cod]
 .mypy_cache/
 .ruff_cache/

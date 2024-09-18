@@ -24,6 +24,10 @@ pip-compile:
 	uv pip compile --upgrade requirements-dev.in -o requirements-dev.txt
 	uv pip compile --upgrade requirements-docs.in -o requirements-docs.txt
 
+.PHONY: vendorize
+vendorize:
+	python-vendorize
+
 .PHONY: ci-check
 ci-check:
 	@echo "========== check: mypy =========="
