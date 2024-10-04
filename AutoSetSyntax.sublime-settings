@@ -285,6 +285,28 @@
             ]
         },
         {
+            "syntaxes": "scope:source.ts",
+            "selector": "text.plain",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".cts", ".mts"]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.tsx",
+            "selector": "text.plain",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".ctsx", ".mtsx"]
+                }
+            ]
+        },
+        {
             "syntaxes": "scope:source.js",
             "selector": "text.plain",
             "match": "all",
@@ -299,6 +321,17 @@
                         "\\bconsole\\.(?:assert|debug|error|info|log|trace|warn)\\s*\\(",
                         "(?:^|\\s)export\\s+default\\s"
                     ]
+                }
+            ]
+        },
+        {
+            "syntaxes": "scope:source.jsx",
+            "selector": "text.plain",
+            "match": "all",
+            "rules": [
+                {
+                    "constraint": "is_extension",
+                    "args": [".cjsx", ".mjsx"]
                 }
             ]
         },
