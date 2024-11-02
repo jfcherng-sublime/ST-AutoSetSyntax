@@ -26,7 +26,16 @@ Just run `AutoSetSyntax: Debug Information` from the command palette[^1].
 
 !!! tip
 
-    The debug information is designed to be Python-compatible, thus you can format it
+    The output is designed to be Python-compatible, thus you can format it
+    with a Python formatter like [Ruff][ruff-formatter-online].
+
+## Syntax Rules Summary
+
+Run `AutoSetSyntax: Syntax Rules Summary` from the command palette[^1].
+
+!!! tip
+
+    The output is designed to be Python-compatible, thus you can format it
     with a Python formatter like [Ruff][ruff-formatter-online].
 
 [^1]: Command palette: ++ctrl+p++ for Windows/Linux. ++cmd+p++ for macOS.

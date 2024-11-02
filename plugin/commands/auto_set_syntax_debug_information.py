@@ -13,7 +13,7 @@ from ..shared import G
 from ..utils import find_syntax_by_syntax_like, get_fqcn, stringify
 
 TEMPLATE = f"""
-# === {PLUGIN_NAME} Debug Information === #
+# === [{PLUGIN_NAME}] Debug Information === #
 # You may use the following website to beautify this debug information.
 # @link https://play.ruff.rs/?secondary=Format
 
@@ -70,16 +70,16 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
 
         if copy_only:
             sublime.set_clipboard(content)
-            sublime.message_dialog(f"{PLUGIN_NAME} debug information has been copied to the clipboard.")
+            sublime.message_dialog(f"[{PLUGIN_NAME}] The result has been copied to the clipboard.")
             return
 
         view = self.window.new_file()
-        view.set_name(f"{PLUGIN_NAME} Debug Information")
+        view.set_name(self.description())
         view.set_scratch(True)
         view.run_command("append", {"characters": content})
         view.settings().update({
             VIEW_KEY_IS_CREATED: True,
         })
 
-        if syntax := find_syntax_by_syntax_like("scope:source.python"):
-            view.assign_syntax(syntax)
+        if syntax_ := find_syntax_by_syntax_like("scope:source.python"):
+            view.assign_syntax(syntax_)

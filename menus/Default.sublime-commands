@@ -20,6 +20,10 @@
         "command": "auto_set_syntax_debug_information",
     },
     {
+        "caption": "AutoSetSyntax: Syntax Rules Summary",
+        "command": "auto_set_syntax_syntax_rules_summary",
+    },
+    {
         "caption": "AutoSetSyntax: Document (Online)",
         "command": "open_url",
         "args": {

@@ -15,6 +15,7 @@ from .commands import (
     AutoSetSyntaxCreateNewMatchCommand,
     AutoSetSyntaxDebugInformationCommand,
     AutoSetSyntaxDownloadDependenciesCommand,
+    AutoSetSyntaxSyntaxRulesSummaryCommand,
     run_auto_set_syntax_on_view,
 )
 from .constants import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME, PLUGIN_PY_LIBS_DIR
@@ -52,6 +53,7 @@ __all__ = (
     "AutoSetSyntaxCreateNewMatchCommand",
     "AutoSetSyntaxDebugInformationCommand",
     "AutoSetSyntaxDownloadDependenciesCommand",
+    "AutoSetSyntaxSyntaxRulesSummaryCommand",
     # ST: listeners
     "AioSettings",
     "AutoSetSyntaxEventListener",

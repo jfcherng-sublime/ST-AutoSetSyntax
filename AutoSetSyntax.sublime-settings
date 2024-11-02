@@ -681,7 +681,7 @@
             "rules": [
                 {
                     "constraint": "first_line_contains_regex",
-                    "args": ["^# === AutoSetSyntax Debug Information === #"]
+                    "args": ["^# === [AutoSetSyntax] "]
                 }
             ]
         }
