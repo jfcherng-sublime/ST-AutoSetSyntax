@@ -24,6 +24,9 @@ class SyntaxRule(Optimizable):
     """`None` = no restriction, empty = no event = never triggered."""
     root_rule: MatchRule | None = None
 
+    src_setting: StSyntaxRule | None = None
+    """The source setting object."""
+
     def is_droppable(self) -> bool:
         return not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule)
 
@@ -56,24 +59,16 @@ class SyntaxRule(Optimizable):
     def make(cls, syntax_rule: StSyntaxRule) -> Self:
         """Build this object with the `syntax_rule`."""
         obj = cls()
+        obj.src_setting = syntax_rule
 
-        if comment := syntax_rule.get("comment"):
-            obj.comment = str(comment)
-
-        syntaxes = syntax_rule.get("syntaxes", [])
-        if isinstance(syntaxes, str):
-            syntaxes = [syntaxes]
-        obj.syntaxes_name = tuple(syntaxes)
-        if target_syntax := find_syntax_by_syntax_likes(syntaxes):
+        obj.syntaxes_name = tuple(syntax_rule.syntaxes)
+        if target_syntax := find_syntax_by_syntax_likes(syntax_rule.syntaxes):
             obj.syntax = target_syntax
 
         # note that an empty string selector should match any scope
-        if (selector := syntax_rule.get("selector")) is not None:
-            obj.selector = selector
+        obj.selector = syntax_rule.selector
 
-        if (on_events := syntax_rule.get("on_events")) is not None:
-            if isinstance(on_events, str):
-                on_events = [on_events]
+        if (on_events := syntax_rule.on_events) is not None:
             obj.on_events = set(drop_falsy(map(ListenerEvent.from_value, on_events)))
 
         if match_rule_compiled := MatchRule.make(syntax_rule):

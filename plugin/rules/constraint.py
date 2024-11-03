@@ -12,6 +12,7 @@ from typing_extensions import Self
 
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
+from ..logger import Logger
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, StConstraintRule
 from ..utils import (
@@ -46,7 +47,10 @@ class ConstraintRule(Optimizable):
     constraint_name: str = ""
     args: tuple[Any, ...] = tuple()
     kwargs: dict[str, Any] = field(default_factory=dict)
-    inverted: bool = False  # whether the test result should be inverted
+    inverted: bool = False
+
+    src_setting: StConstraintRule | None = None
+    """The source setting object."""
 
     def is_droppable(self) -> bool:
         return not (self.constraint and not self.constraint.is_droppable())
@@ -74,21 +78,18 @@ class ConstraintRule(Optimizable):
     def make(cls, constraint_rule: StConstraintRule) -> Self:
         """Build this object with the `constraint_rule`."""
         obj = cls()
+        obj.src_setting = constraint_rule
 
-        if args := constraint_rule.get("args"):
-            # make sure args is always a tuple
-            obj.args = tuple(args) if isinstance(args, list) else (args,)
+        obj.args = tuple(constraint_rule.args)
+        obj.kwargs = constraint_rule.kwargs
+        obj.inverted = constraint_rule.inverted
 
-        if kwargs := constraint_rule.get("kwargs"):
-            obj.kwargs = kwargs
-
-        if (inverted := constraint_rule.get("inverted")) is not None:
-            obj.inverted = bool(inverted)
-
-        if constraint := constraint_rule.get("constraint"):
+        if constraint := constraint_rule.constraint:
             obj.constraint_name = constraint
             if constraint_class := find_constraint(constraint):
                 obj.constraint = constraint_class(*obj.args, **obj.kwargs)
+            else:
+                Logger.log(f"Unsupported constraint rule: {constraint}")
 
         return obj
 

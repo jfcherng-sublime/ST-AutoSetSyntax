@@ -5,9 +5,10 @@ from abc import ABC, abstractmethod
 from collections import UserDict as BuiltinUserDict
 from collections.abc import Generator, Hashable, Iterator, KeysView
 from enum import Enum
-from typing import Any, Generic, TypedDict, TypeVar, Union, overload
+from typing import Any, Generic, TypeVar, Union, overload
 
 import sublime
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import Self
 
 SyntaxLike = Union[str, sublime.Syntax]
@@ -95,31 +96,48 @@ class Optimizable(ABC):
         """Does optimizations and returns a generator for dropped objects."""
 
 
-class StConstraintRule(TypedDict):
-    """Typed dict for corresponding ST settings."""
+class StConstraintRule(BaseModel):
+    """Model for a "constraint rule" in settings."""
 
     constraint: str
-    args: list[Any] | Any | None
-    kwargs: dict[str, Any] | None
-    inverted: bool
+    """The name of the "constraint"."""
+    args: list[Any] = Field(default_factory=list)
+    """Positional arguments for the "constraint"."""
+    kwargs: dict[str, Any] = Field(default_factory=dict)
+    """Keyword arguments for the "constraint"."""
+    inverted: bool = False
+    """Whether the test result should be inverted."""
 
 
-class StMatchRule(TypedDict):
-    """Typed dict for corresponding ST settings."""
+class StMatchRule(BaseModel):
+    """Model for a "match rule" in settings."""
 
-    match: str
-    args: list[Any] | Any | None
-    kwargs: dict[str, Any] | None
-    rules: list[StMatchRule | StConstraintRule]
+    match: str = "any"
+    """The name of the "match"."""
+    args: list[Any] = Field(default_factory=list)
+    """Positional arguments for the "match"."""
+    kwargs: dict[str, Any] = Field(default_factory=dict)
+    """Keyword arguments for the "match"."""
+    rules: list[StConstraintRule | StMatchRule] = Field(default_factory=list)
+    """Rules to match against."""
 
 
 class StSyntaxRule(StMatchRule):
-    """Typed dict for corresponding ST settings."""
+    """Model for a "syntax rule" in settings."""
 
-    comment: str
-    selector: str
-    syntaxes: str | list[str]
-    on_events: str | list[str] | None
+    comment: str = ""
+    """A comment for the rule."""
+    selector: str = "text.plain"
+    """To constrain the syntax scope of the current view. An empty string matches any scope."""
+    syntaxes: list[str] = Field(default_factory=list)
+    """Syntaxes to be used. The first available one will be used."""
+    on_events: list[str] | None = None
+    """Events to listen to, or `None` for all events."""
+
+    @field_validator("syntaxes", "on_events", mode="before")
+    @classmethod
+    def str_to_list_str(cls, v: Any) -> list[str]:
+        return [v] if isinstance(v, str) else v
 
 
 class WindowKeyedDict(UserDict[WindowIdAble, _T]):

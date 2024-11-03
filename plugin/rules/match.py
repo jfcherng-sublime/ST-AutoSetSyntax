@@ -9,8 +9,9 @@ from more_itertools import first_true
 from typing_extensions import Self
 
 from ..cache import clearable_lru_cache
+from ..logger import Logger
 from ..snapshot import ViewSnapshot
-from ..types import Optimizable, StMatchRule
+from ..types import Optimizable, StConstraintRule, StMatchRule
 from ..utils import camel_to_snake, list_all_subclasses, remove_suffix
 from .constraint import ConstraintRule
 
@@ -30,13 +31,14 @@ def list_matches() -> Generator[type[AbstractMatch], None, None]:
 
 @dataclass
 class MatchRule(Optimizable):
-    DEFAULT_MATCH_NAME = "any"
-
     match: AbstractMatch | None = None
     match_name: str = ""
     args: tuple[Any, ...] = tuple()
     kwargs: dict[str, Any] = field(default_factory=dict)
     rules: tuple[MatchableRule, ...] = tuple()
+
+    src_setting: StMatchRule | None = None
+    """The source setting object."""
 
     def is_droppable(self) -> bool:
         return not (self.rules and self.match and not self.match.is_droppable(self.rules))
@@ -62,25 +64,24 @@ class MatchRule(Optimizable):
     def make(cls, match_rule: StMatchRule) -> Self:
         """Build this object with the `match_rule`."""
         obj = cls()
+        obj.src_setting = match_rule
 
-        if args := match_rule.get("args"):
-            # make sure args is always a tuple
-            obj.args = tuple(args) if isinstance(args, list) else (args,)
+        obj.args = tuple(match_rule.args)
+        obj.kwargs = match_rule.kwargs
 
-        if kwargs := match_rule.get("kwargs"):
-            obj.kwargs = kwargs
-
-        match = match_rule.get("match", cls.DEFAULT_MATCH_NAME)
+        match = match_rule.match
         if match_class := find_match(match):
             obj.match_name = match
             obj.match = match_class(*obj.args, **obj.kwargs)
+        else:
+            Logger.log(f"Unsupported match rule: {match}")
 
         rules_compiled: list[MatchableRule] = []
-        for rule in match_rule.get("rules", []):
+        for rule in match_rule.rules:
             rule_class: type[MatchableRule] | None = None
-            if "constraint" in rule:
+            if isinstance(rule, StConstraintRule):
                 rule_class = ConstraintRule
-            elif "rules" in rule:  # nested MatchRule
+            elif isinstance(rule, StMatchRule):
                 rule_class = MatchRule
             if rule_class and (rule_compiled := rule_class.make(rule)):  # type: ignore
                 rules_compiled.append(rule_compiled)

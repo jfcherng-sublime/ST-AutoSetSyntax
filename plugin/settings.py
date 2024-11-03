@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from collections import ChainMap
 from itertools import chain
-from typing import Any, Callable, Mapping, MutableMapping
+from typing import Any, Callable, List, Mapping, MutableMapping
 
 import sublime
 import sublime_plugin
 from more_itertools import unique_everseen
+from pydantic import TypeAdapter
 
 from .types import StSyntaxRule
 from .utils import drop_falsy
@@ -34,7 +35,7 @@ def get_st_settings() -> sublime.Settings:
 
 
 def pref_syntax_rules(*, window: sublime.Window | None = None) -> list[StSyntaxRule]:
-    return get_merged_plugin_setting("syntax_rules", [], window=window)
+    return TypeAdapter(List[StSyntaxRule]).validate_python(get_merged_plugin_setting("syntax_rules", [], window=window))
 
 
 def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str]:
@@ -194,7 +195,7 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def _update_plugin_settings(cls) -> None:
         assert cls._plugin_settings_object
-        cls._plugin_settings = {"_comment": "plugin_settings"}
+        cls._plugin_settings = {"__comment": "plugin_settings"}
         cls._plugin_settings.update(cls._plugin_settings_object.to_dict())
         if cls._settings_normalizer:
             cls._settings_normalizer(cls._plugin_settings)
@@ -202,7 +203,7 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def _update_project_plugin_settings(cls, window: sublime.Window) -> None:
         window_id = window.id()
-        cls._project_plugin_settings[window_id] = {"_comment": "project_settings"}
+        cls._project_plugin_settings[window_id] = {"__comment": "project_settings"}
         cls._project_plugin_settings[window_id].update(
             (window.project_data() or {}).get("settings", {}).get(cls.plugin_name, {})
         )
@@ -218,7 +219,7 @@ class AioSettings(sublime_plugin.EventListener):
             cls._plugin_settings,
         )
 
-        produced = {"_comment": "produced_settings"}
+        produced = {"__comment": "produced_settings"}
         if cls._settings_producer:
             produced.update(cls._settings_producer(merged))
 

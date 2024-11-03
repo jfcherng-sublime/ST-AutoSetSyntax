@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from collections import deque
+from typing import Any
 
 import sublime
 
+from .constants import VIEW_KEY_IS_CREATED
 from .settings import get_st_setting
-from .utils import is_plaintext_syntax, is_transient_view
+from .utils import find_syntax_by_syntax_like, is_plaintext_syntax, is_transient_view
 
 
 def is_syntaxable_view(view: sublime.View, *, must_plaintext: bool = False) -> bool:
@@ -44,3 +46,34 @@ def resolve_magika_label_with_syntax_map(label: str, syntax_map: dict[str, list[
             res[scope] = True  # parsed
 
     return [scope for scope, is_parsed in res.items() if is_parsed]
+
+
+def create_new_view(
+    *,
+    name: str = "Untitled",
+    content: str = "",
+    syntax: str | sublime.Syntax | None = None,
+    include_hidden_syntax: bool = False,
+    scratch: bool = False,
+    read_only: bool = False,
+    settings: dict[str, Any] | None = None,
+    window: sublime.Window | None = None,
+) -> sublime.View:
+    """Copies the content to a new view."""
+    window = window or sublime.active_window()
+
+    view = window.new_file()
+    view.set_name(name)
+    view.set_scratch(scratch)
+    view.set_read_only(read_only)
+    view.settings().update(settings or {})
+    view.settings().update({
+        VIEW_KEY_IS_CREATED: True,
+    })
+
+    if syntax and (syntax := find_syntax_by_syntax_like(syntax, include_hidden=include_hidden_syntax)):
+        view.assign_syntax(syntax)
+
+    view.run_command("append", {"characters": content})
+
+    return view

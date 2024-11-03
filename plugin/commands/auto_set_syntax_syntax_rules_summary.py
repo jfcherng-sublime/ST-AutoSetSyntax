@@ -5,57 +5,35 @@ from collections import defaultdict
 import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_NAME, VIEW_KEY_IS_CREATED
-from ..rules import SyntaxRule
+from ..constants import PLUGIN_NAME
+from ..helpers import create_new_view
 from ..shared import G
-from ..utils import find_syntax_by_syntax_like, stringify
-
-TEMPLATE = f"""
-# === [{PLUGIN_NAME}] Syntax Rules Summary === #
-# You may use the following website to beautify this debug information.
-# @link https://play.ruff.rs/?secondary=Format
-
-########################
-# Syntax Rules Summary #
-########################
-
-{{content}}
-""".lstrip()
+from ..types import StSyntaxRule
 
 
 class AutoSetSyntaxSyntaxRulesSummaryCommand(sublime_plugin.WindowCommand):
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Syntax Rules Summary"
 
-    def run(self, *, copy_only: bool = False) -> None:
+    def run(self) -> None:
         if not (rule_collection := G.syntax_rule_collections.get(self.window)):
             return
 
-        summary: defaultdict[sublime.Syntax, list[SyntaxRule]] = defaultdict(list)
+        summary: defaultdict[sublime.Syntax, list[StSyntaxRule]] = defaultdict(list)
         for rule in rule_collection.rules:
-            if rule.syntax:
-                summary[rule.syntax].append(rule)
+            if rule.syntax and rule.src_setting:
+                summary[rule.syntax].append(rule.src_setting)
 
-        content = ""
-        for syntax_, rules in sorted(summary.items(), key=lambda x: x[0].name.casefold()):
-            content += f"# Syntax: {syntax_.name}\n"
-            for rule in rules:
-                content += f"{stringify(rule)}\n"
-            content += "\n"
-        content = TEMPLATE.format(content=content)
+        content = f"// [{PLUGIN_NAME}] Syntax Rules Summary\n\n"
+        for syntax, rules in sorted(summary.items(), key=lambda x: x[0].name.casefold()):
+            content += "/" * 80 + f"\n// Syntax: {syntax.name}\n" + "/" * 80 + "\n\n"
+            content += "\n".join(st_rule.model_dump_json(indent=4) for st_rule in rules) + "\n\n"
 
-        if copy_only:
-            sublime.set_clipboard(content)
-            sublime.message_dialog(f"[{PLUGIN_NAME}] The result has been copied to the clipboard.")
-            return
-
-        view = self.window.new_file()
-        view.set_name(self.description())
-        view.set_scratch(True)
-        view.run_command("append", {"characters": content})
-        view.settings().update({
-            VIEW_KEY_IS_CREATED: True,
-        })
-
-        if syntax := find_syntax_by_syntax_like("scope:source.python"):
-            view.assign_syntax(syntax)
+        create_new_view(
+            name=self.description(),
+            content=content,
+            syntax="scope:source.autosetsyntax.jsonc",
+            include_hidden_syntax=True,
+            scratch=True,
+            window=self.window,
+        )

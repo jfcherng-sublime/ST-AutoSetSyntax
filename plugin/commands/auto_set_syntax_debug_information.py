@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION, VIEW_KEY_IS_CREATED
+from ..constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION
+from ..helpers import create_new_view
 from ..rules.constraint import get_constraints
 from ..rules.match import get_matches
 from ..settings import get_merged_plugin_settings
 from ..shared import G
-from ..utils import find_syntax_by_syntax_like, get_fqcn, stringify
+from ..utils import get_fqcn, stringify
 
 TEMPLATE = f"""
 # === [{PLUGIN_NAME}] Debug Information === #
@@ -51,7 +51,7 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Debug Information"
 
-    def run(self, *, copy_only: bool = False) -> None:
+    def run(self) -> None:
         info: dict[str, Any] = {}
 
         info["env"] = {
@@ -68,18 +68,10 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
 
         content = TEMPLATE.format_map(_pythonize(info))
 
-        if copy_only:
-            sublime.set_clipboard(content)
-            sublime.message_dialog(f"[{PLUGIN_NAME}] The result has been copied to the clipboard.")
-            return
-
-        view = self.window.new_file()
-        view.set_name(self.description())
-        view.set_scratch(True)
-        view.run_command("append", {"characters": content})
-        view.settings().update({
-            VIEW_KEY_IS_CREATED: True,
-        })
-
-        if syntax_ := find_syntax_by_syntax_like("scope:source.python"):
-            view.assign_syntax(syntax_)
+        create_new_view(
+            name=self.description(),
+            content=content,
+            syntax="scope:source.python",
+            scratch=True,
+            window=self.window,
+        )

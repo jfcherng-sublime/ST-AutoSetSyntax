@@ -675,13 +675,24 @@
 
     "core_syntax_rules": [
         {
-            "comment": "AutoSetSyntax Debug Information",
+            "comment": "AutoSetSyntax Python-Like Views",
             "syntaxes": "scope:source.python",
             "selector": "text.plain",
             "rules": [
                 {
                     "constraint": "first_line_contains_regex",
                     "args": ["^# === [AutoSetSyntax] "]
+                }
+            ]
+        },
+        {
+            "comment": "AutoSetSyntax JSONC-Like Views",
+            "syntaxes": "scope:source.autosetsyntax.jsonc",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": ["^// [AutoSetSyntax] "]
                 }
             ]
         }
@@ -715,7 +726,9 @@
     "magika.syntax_map.html": ["scope:text.html.basic"],
     "magika.syntax_map.ini": ["scope:source.ini"],
     "magika.syntax_map.java": ["scope:source.java"],
-    "magika.syntax_map.javascript": ["scope:source.ts" /* magika can't distinguish between TypeScript and JavaScript */],
+    "magika.syntax_map.javascript": [
+        "scope:source.ts" /* magika can't distinguish between TypeScript and JavaScript */
+    ],
     "magika.syntax_map.json": ["scope:source.json"],
     "magika.syntax_map.latex": ["scope:text.tex.latex"],
     "magika.syntax_map.lisp": ["scope:source.lisp"],
