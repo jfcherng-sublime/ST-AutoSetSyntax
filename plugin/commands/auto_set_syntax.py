@@ -132,18 +132,17 @@ def _assign_syntax_for_new_view(view_snapshot: ViewSnapshot, event: ListenerEven
 def _assign_syntax_for_st_syntax_test(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
     if (
         (view := view_snapshot.valid_view)
-        and (not view_snapshot.syntax or is_plaintext_syntax(view_snapshot.syntax))
+        and view_snapshot.file_name.startswith("syntax_test_")
         and (m := RE_ST_SYNTAX_TEST_LINE.search(view_snapshot.first_line))
-        and (new_syntax := m.group("syntax")).endswith(".sublime-syntax")
     ):
+        new_syntax: str = m.group("syntax")
         if syntax := find_syntax_by_syntax_like(new_syntax, include_hidden=True, include_plaintext=True):
             return assign_syntax_to_view(
                 view,
                 syntax,
                 details={"event": event, "reason": "Sublime Test syntax test file"},
             )
-        else:
-            Logger.log(f"😢 Cannot find the syntax under test: {new_syntax}", window=view.window())
+        Logger.log(f"😢 Cannot find the syntax under test: {new_syntax}", window=view.window())
 
     return False
 
