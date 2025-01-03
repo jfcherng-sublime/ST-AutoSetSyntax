@@ -9,10 +9,10 @@ import shutil
 import sys
 import tempfile
 import threading
-from collections.abc import Generator, Iterable, Mapping
+from collections.abc import Callable, Generator, Iterable, Mapping
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from pathlib import Path
-from typing import Any, Callable, Pattern, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Pattern, TypeVar, Union, cast
 
 import sublime
 from more_itertools import first_true, unique_everseen
@@ -24,7 +24,11 @@ from .types import SyntaxLike
 
 _T = TypeVar("_T")
 
-_T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
+if TYPE_CHECKING:
+    _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
+else:
+    _T_Callable = TypeVar("_T_Callable", bound=Callable)
+
 _T_ExpandableVar = TypeVar("_T_ExpandableVar", bound=Union[None, bool, int, float, str, dict, list, tuple])
 
 
@@ -55,7 +59,7 @@ else:
 
 
 @clearable_lru_cache()
-def compile_regex(regex: str | Pattern[str], flags: int = 0) -> Pattern[str]:
+def compile_regex(regex: str | re.Pattern[str], flags: int = 0) -> re.Pattern[str]:
     """Compile the regex string/object into a object with the given flags."""
     if isinstance(regex, Pattern):
         if regex.flags == flags:

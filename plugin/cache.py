@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import _lru_cache_wrapper, lru_cache
-from typing import Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 _cached_functions: set[_lru_cache_wrapper] = set()
 
-_T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
+if TYPE_CHECKING:
+    _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
+else:
+    _T_Callable = TypeVar("_T_Callable", bound=Callable)
 
 
 def clearable_lru_cache(*args: Any, **kwargs: Any) -> Callable[[_T_Callable], _T_Callable]:

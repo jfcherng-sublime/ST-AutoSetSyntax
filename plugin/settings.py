@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from collections import ChainMap
+from collections.abc import Callable
 from itertools import chain
-from typing import Any, Callable, List, Mapping, MutableMapping
+from typing import Any, List, Mapping, MutableMapping
 
 import sublime
 import sublime_plugin

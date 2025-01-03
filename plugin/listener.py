@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from functools import wraps
-from typing import Any, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 import sublime
 import sublime_plugin
@@ -17,7 +17,10 @@ from .shared import G
 from .types import ListenerEvent
 from .utils import debounce, is_transient_view, stringify
 
-_T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
+if TYPE_CHECKING:
+    _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
+else:
+    _T_Callable = TypeVar("_T_Callable", bound=Callable)
 
 
 def set_up_window(window: sublime.Window) -> None:

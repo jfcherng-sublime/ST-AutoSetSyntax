@@ -6,7 +6,10 @@ mypy_path = 'typings:stubs'
 python_version = '3.8'
 
 [[tool.mypy.overrides]]
-module = ["plugin._vendor.*"]
+module = [
+  "magika.*",
+  "plugin._vendor.*",
+]
 ignore_errors = true
 ignore_missing_imports = true
 

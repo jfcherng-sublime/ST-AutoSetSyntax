@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Pattern, final
+import re
+from typing import Any, final
 
 from ...snapshot import ViewSnapshot
 from ...utils import compile_regex, merge_literals_to_regex, merge_regexes
@@ -19,7 +20,7 @@ class IsInterpreterConstraint(AbstractConstraint):
         if self.loosy_version:
             interpreters_regex = rf"(?:{interpreters_regex}(?:[\-_]?\d+(?:\.\d+)*)?)"
 
-        self.first_line_regex: Pattern[str] = compile_regex(
+        self.first_line_regex: re.Pattern[str] = compile_regex(
             merge_regexes((
                 # shebang
                 rf"^#!(?:.+)\b{interpreters_regex}\b",

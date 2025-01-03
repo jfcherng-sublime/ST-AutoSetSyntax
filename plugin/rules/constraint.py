@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import operator
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Pattern, TypeVar, final
+from typing import Any, TypeVar, final
 
 from more_itertools import first_true
 from typing_extensions import Self
@@ -150,7 +151,7 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def _handled_regex(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Pattern[str]:
+    def _handled_regex(args: tuple[Any, ...], kwargs: dict[str, Any]) -> re.Pattern[str]:
         """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
         return compile_regex(
             merge_regexes(args),
