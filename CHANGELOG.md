@@ -1,5 +1,19 @@
 # AutoSetSyntax Changelog
 
+## 4.2.1
+
+This is the last branch which uses Magika v1 models.
+
+- chore: adjust libs download branch
+- fix: improve setting syntax for ST syntax files
+- refactor: use `pydantic` to validate settings
+
+## 4.2.0
+
+- feat: new command: `auto_set_syntax_syntax_rules_summary_command`
+- chore: add rules for `.cjsx`, `.mjsx`, `.cts`, `.cmts`, `.ctsx`, `.mtsx`
+- refactor: use `python-vendorize` for 3rd-party libs
+
 ## 4.1.9
 
 - fix: some regex rules which use `\b`
