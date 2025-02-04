@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 4.3.0
+
+You will need to download the `magika` dependencies again and restart Sublime Text.
+
+- refactor: use `Magika` v3 model
+
 ## 4.2.1
 
 This is the last branch which uses Magika v1 models.
