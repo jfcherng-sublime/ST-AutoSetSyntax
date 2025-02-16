@@ -1,10 +1,8 @@
 # AutoSetSyntax Changelog
 
-## 4.3.0
+## 4.3.1
 
-You will need to download the `magika` dependencies again and restart Sublime Text.
-
-- refactor: use `Magika` v3 model
+- fix: make `magika` less aggressive which gives wrong result
 
 ## 4.2.1
 
