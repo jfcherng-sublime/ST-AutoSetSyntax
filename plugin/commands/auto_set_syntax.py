@@ -271,7 +271,7 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
         Logger.log(f"💣 Error occured while importing Magika: {e}", window=window)
         return False
 
-    magika = Magika(prediction_mode=PredictionMode.BEST_GUESS)  # we have "magika.min_confidence" as the threshold
+    magika = Magika(prediction_mode=PredictionMode.HIGH_CONFIDENCE)
     if view_snapshot.path_obj and not view.is_dirty():
         magika_result = magika.identify_path(view_snapshot.path_obj)
     else:
