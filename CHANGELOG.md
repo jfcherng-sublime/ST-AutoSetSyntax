@@ -4,6 +4,10 @@
 
 - fix: make `magika` less aggressive which gives wrong result
 
+## 4.3.0
+
+- refactor: use `Magika` v3 model
+
 ## 4.2.1
 
 This is the last branch which uses Magika v1 models.
