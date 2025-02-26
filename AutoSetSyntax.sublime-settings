@@ -137,13 +137,33 @@
                 },
                 {
                     "constraint": "name_contains_regex",
-                    "args": ["\\.(?:bash|z(?:shrc|shenv|profile|login|logout))(?:\\.[^/]*)?$"]
+                    "args": ["\\.bash(?:\\.[^/]*)?$"]
                 },
                 {
                     "constraint": "first_line_contains_regex",
                     "args": [
                         // @see https://www.shellcheck.net/wiki/SC2148
-                        "^\\s*#\\s+shellcheck\\s+shell=(?:bash|sh|zsh)"
+                        "^\\s*#\\s+shellcheck\\s+shell=(?:bash|sh)"
+                    ]
+                }
+            ]
+        },
+        {
+            "syntaxes": [
+                "scope:source.shell.zsh", // as of ST 4193, "zsh" has its own built-in syntax
+                "scope:source.shell.bash", // fallback
+            ],
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["\\.z(?:shrc|shenv|profile|login|logout)(?:\\.[^/]*)?$"]
+                },
+                {
+                    "constraint": "first_line_contains_regex",
+                    "args": [
+                        // @see https://www.shellcheck.net/wiki/SC2148
+                        "^\\s*#\\s+shellcheck\\s+shell=zsh"
                     ]
                 }
             ]
