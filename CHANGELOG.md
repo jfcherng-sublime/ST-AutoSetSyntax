@@ -1,5 +1,11 @@
 # AutoSetSyntax Changelog
 
+## 4.3.2
+
+- chore: split `zsh` syntax out from `bash`
+
+  As of ST 4193, `zsh` has its own built-in syntax.
+
 ## 4.3.1
 
 - fix: make `magika` less aggressive which gives wrong result
