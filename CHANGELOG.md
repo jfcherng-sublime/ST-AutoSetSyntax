@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.3
+
+Just test whether Package Control behaves normally.
+
 ## 4.3.2
 
 - chore: split `zsh` syntax out from `bash`
