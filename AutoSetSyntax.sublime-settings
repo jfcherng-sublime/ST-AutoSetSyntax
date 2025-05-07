@@ -627,6 +627,17 @@
             ]
         },
         {
+            "comment": "Linux Systemd files",
+            "syntaxes": "scope:source.ini",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "path_contains_regex",
+                    "args": ["/systemd/.*\\.(?:service|timer)$"]
+                }
+            ]
+        },
+        {
             "comment": "Sublime Text/Merge changelog",
             "syntaxes": "scope:text.html.basic",
             "selector": "text.plain",
