@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.4
+
+- chore: use INI syntax for systemd service/timer files
+
 ## 4.3.3
 
 Just test whether Package Control behaves normally.
