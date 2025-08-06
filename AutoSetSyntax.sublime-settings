@@ -509,7 +509,7 @@
         },
         {
             "comment": "Django templates",
-            "syntaxes": ["scope:text.jinja", "scope:text.html.jinja"],
+            "syntaxes": ["scope:text.html.jinja", "scope:text.jinja"],
             "selector": "text.html.basic",
             "match": "all",
             "rules": [
