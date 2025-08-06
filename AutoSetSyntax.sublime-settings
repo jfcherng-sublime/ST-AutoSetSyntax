@@ -524,7 +524,7 @@
         },
         {
             "comment": "Jinja2/Twig HTML files",
-            "syntaxes": ["scope:text.jinja", "scope:text.html.jinja", "scope:text.html.twig"],
+            "syntaxes": ["scope:text.html.jinja", "scope:text.html.twig", "scope:text.jinja"],
             "selector": "text.html.basic",
             "rules": [
                 {
