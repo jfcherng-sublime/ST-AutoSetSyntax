@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.5
+
+- fix: prefer Jinja html over Jinja plaintext
+
 ## 4.3.4
 
 - chore: use INI syntax for systemd service/timer files
