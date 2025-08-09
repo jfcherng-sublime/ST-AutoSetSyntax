@@ -44,6 +44,13 @@ ci-fix:
 	@echo "========== fix: ruff (format) =========="
 	ruff format .
 
+.PHONY: ci-fix-unsafe
+ci-fix-unsafe:
+	@echo "========== fix: ruff (lint unsafe) =========="
+	ruff check --fix --unsafe-fixes .
+	@echo "========== fix: ruff (format) =========="
+	ruff format .
+
 # ---- #
 # docs #
 # ---- #
