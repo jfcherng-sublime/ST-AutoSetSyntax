@@ -228,7 +228,7 @@ def _assign_syntax_with_trimmed_filename(view_snapshot: ViewSnapshot, event: Lis
 
     filenames = chain(
         list_trimmed_strings(original, trim_suffixes, skip_self=True),
-        list_trimmed_filenames(original, skip_self=True) if trim_suffixes_auto else tuple(),
+        list_trimmed_filenames(original, skip_self=True) if trim_suffixes_auto else (),
     )
 
     for filename in filenames:

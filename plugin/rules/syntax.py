@@ -18,7 +18,7 @@ from .match import MatchRule
 class SyntaxRule(Optimizable):
     comment: str = ""
     syntax: sublime.Syntax | None = None
-    syntaxes_name: tuple[str, ...] | None = tuple()
+    syntaxes_name: tuple[str, ...] | None = ()
     selector: str = "text.plain"
     on_events: set[ListenerEvent] | None = None
     """`None` = no restriction, empty = no event = never triggered."""
@@ -80,7 +80,7 @@ class SyntaxRule(Optimizable):
 @dataclass
 class SyntaxRuleCollection(Optimizable):
     version: str = VERSION
-    rules: tuple[SyntaxRule, ...] = tuple()
+    rules: tuple[SyntaxRule, ...] = ()
 
     def __len__(self) -> int:
         return len(self.rules)

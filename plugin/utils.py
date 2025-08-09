@@ -206,7 +206,7 @@ def find_syntaxes_by_syntax_like(
 ) -> tuple[sublime.Syntax, ...]:
     """Finds syntaxes by a "Syntax object" / "scope" / "name" / "partial path"."""
     if not like:
-        return tuple()
+        return ()
 
     all_syntaxes = get_sorted_syntaxes()
 

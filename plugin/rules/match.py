@@ -33,9 +33,9 @@ def list_matches() -> Generator[type[AbstractMatch], None, None]:
 class MatchRule(Optimizable):
     match: AbstractMatch | None = None
     match_name: str = ""
-    args: tuple[Any, ...] = tuple()
+    args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = field(default_factory=dict)
-    rules: tuple[MatchableRule, ...] = tuple()
+    rules: tuple[MatchableRule, ...] = ()
 
     src_setting: StMatchRule | None = None
     """The source setting object."""

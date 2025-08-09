@@ -46,7 +46,7 @@ def list_constraints() -> Generator[type[AbstractConstraint], None, None]:
 class ConstraintRule(Optimizable):
     constraint: AbstractConstraint | None = None
     constraint_name: str = ""
-    args: tuple[Any, ...] = tuple()
+    args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = field(default_factory=dict)
     inverted: bool = False
 
