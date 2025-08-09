@@ -281,7 +281,9 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
         return False
     Logger.log(f"🐛 Magika's prediction: {magika_result!r}", window=window)
 
-    magika_label = magika_result.output.label
+    # note that "magika_result.output" may be overridden due to low confidence,
+    # while "magika_result.dl" is the raw result
+    magika_label = magika_result.dl.label
     magika_score = magika_result.score  # range: 0.0 ~ 1.0
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
