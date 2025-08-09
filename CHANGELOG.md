@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 4.3.6
+
+- fix: magika may not work well for content without a trailing newline
+- fix: `magika.min_confidence` setting may not be used
+
 ## 4.3.5
 
 - fix: prefer Jinja html over Jinja plaintext
