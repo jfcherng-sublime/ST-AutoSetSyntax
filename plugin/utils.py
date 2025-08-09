@@ -12,7 +12,7 @@ import threading
 from collections.abc import Callable, Generator, Iterable, Mapping
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Pattern, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Pattern, TypeVar, Union, cast, overload
 
 import sublime
 from more_itertools import first_true, unique_everseen
@@ -41,6 +41,17 @@ def snake_to_camel(s: str, *, upper_first: bool = True) -> str:
     """Converts "snake_case" to "CamelCase"."""
     first, *others = s.split("_")
     return (first.title() if upper_first else first.lower()) + "".join(map(str.title, others))
+
+
+@overload
+def ensure_trailing_newline(content: str) -> str: ...
+@overload
+def ensure_trailing_newline(content: bytes) -> bytes: ...
+def ensure_trailing_newline(content: str | bytes) -> str | bytes:
+    """Ensures that the content ends with a newline."""
+    if isinstance(content, str):
+        return content if content.endswith("\n") else content + "\n"
+    return content if content.endswith(b"\n") else content + b"\n"
 
 
 if sys.version_info >= (3, 9):

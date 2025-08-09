@@ -17,6 +17,7 @@ from ..shared import G
 from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent
 from ..utils import (
+    ensure_trailing_newline,
     extract_prefixed_dict,
     find_syntax_by_syntax_like,
     find_syntax_by_syntax_likes,
@@ -275,7 +276,7 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
     if view_snapshot.path_obj and not view.is_dirty():
         magika_result = magika.identify_path(view_snapshot.path_obj)
     else:
-        magika_result = magika.identify_bytes(view_snapshot.content_bytes)
+        magika_result = magika.identify_bytes(ensure_trailing_newline(view_snapshot.content_bytes))
     if not magika_result.ok:
         Logger.log(f"😢 Magika failed: {magika_result.status}", window=window)
         return False
