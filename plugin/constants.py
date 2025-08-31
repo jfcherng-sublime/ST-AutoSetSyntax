@@ -55,4 +55,5 @@ VIEW_KEY_IS_TRANSIENT = f"{PLUGIN_NAME}/is_transient"
 ################################################################################
 
 RE_ST_SYNTAX_TEST_LINE = re.compile(r'\bSYNTAX\s+TEST\s+"(?P<syntax>[^"]+)"', re.IGNORECASE)
+RE_EMACS_SYNTAX_LINE = re.compile(r"^\s*\#.*?-\*-.*?\b(?P<syntax>[^\r\n]+)\b.*?-\*-", re.IGNORECASE | re.MULTILINE)
 RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|ft|syntax)=(?P<syntax>[^\s:]+):?(?=\s)", re.IGNORECASE)

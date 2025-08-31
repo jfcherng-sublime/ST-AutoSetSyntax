@@ -8,7 +8,13 @@ from typing import Any
 import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_NAME, RE_ST_SYNTAX_TEST_LINE, RE_VIM_SYNTAX_LINE, VIEW_KEY_IS_ASSIGNED
+from ..constants import (
+    PLUGIN_NAME,
+    RE_EMACS_SYNTAX_LINE,
+    RE_ST_SYNTAX_TEST_LINE,
+    RE_VIM_SYNTAX_LINE,
+    VIEW_KEY_IS_ASSIGNED,
+)
 from ..helpers import is_syntaxable_view, resolve_magika_label_with_syntax_map
 from ..logger import Logger
 from ..rules import SyntaxRuleCollection
@@ -176,6 +182,15 @@ def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerE
             return syntax
         return None
 
+    def _prefer_modeline(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
+        for match in chain(
+            RE_EMACS_SYNTAX_LINE.finditer(view_snapshot.content),
+            RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content),
+        ):
+            if syntax := find_syntax_by_syntax_like(match.group("syntax")):
+                return syntax
+        return None
+
     def _prefer_general_first_line(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
         if (
             not view_snapshot.file_extensions
@@ -183,12 +198,6 @@ def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerE
             and not is_plaintext_syntax(syntax)
         ):
             return syntax
-        return None
-
-    def _prefer_vim_modeline(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
-        for match in RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content):
-            if syntax := find_syntax_by_syntax_like(match.group("syntax")):
-                return syntax
         return None
 
     if not (view := view_snapshot.valid_view):
@@ -199,7 +208,7 @@ def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerE
     if event is ListenerEvent.MODIFY and view_snapshot.caret_rowcol[0] == 0:
         return False
 
-    for checker in (_prefer_shebang, _prefer_vim_modeline, _prefer_general_first_line):
+    for checker in (_prefer_shebang, _prefer_modeline, _prefer_general_first_line):
         if syntax := checker(view_snapshot):
             return assign_syntax_to_view(
                 view,
