@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.7
+
+- feat: try to auto set syntax with emacs modeline
+
 ## 4.3.6
 
 - fix: magika may not work well for content without a trailing newline
