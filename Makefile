@@ -1,72 +1,81 @@
-UV_INSTALL_FLAGS :=
-
 .PHONY: all
 all:
 
-.PHONY: install
-install:
-	uv pip install $(UV_INSTALL_FLAGS) -r requirements.txt
+# ---- #
+# deps #
+# ---- #
 
 .PHONY: install-all
-install-all: install-dev install-docs
+install-all:
+	uv sync --all-groups
+
+.PHONY: install
+install:
+	uv sync --no-dev
 
 .PHONY: install-dev
 install-dev:
-	uv pip install $(UV_INSTALL_FLAGS) -r requirements-dev.txt
+	uv sync --dev
 
 .PHONY: install-docs
 install-docs:
-	uv pip install $(UV_INSTALL_FLAGS) -r requirements-docs.txt
+	uv sync --only-group docs
 
-.PHONY: pip-compile
-pip-compile:
-	uv pip compile --upgrade requirements.in -o requirements.txt
-	uv pip compile --upgrade requirements-dev.in -o requirements-dev.txt
-	uv pip compile --upgrade requirements-docs.in -o requirements-docs.txt
+.PHONY: pip-upgrade
+pip-upgrade:
+	uv sync --all-groups --upgrade
 
 .PHONY: vendorize
 vendorize:
-	python-vendorize
+	uv run --dev python-vendorize
+
+# -- #
+# CI #
+# -- #
+
+ci-base-cmd = uv run --dev
 
 .PHONY: ci-check
 ci-check:
 	@echo "========== check: mypy =========="
-	mypy -p plugin
+	$(ci-base-cmd) mypy -p plugin
 	@echo "========== check: ruff (lint) =========="
-	ruff check --diff .
+	$(ci-base-cmd) ruff check --diff .
 	@echo "========== check: ruff (format) =========="
-	ruff format --diff .
+	$(ci-base-cmd) ruff format --diff .
 
 .PHONY: ci-fix
 ci-fix:
 	@echo "========== fix: ruff (lint) =========="
-	ruff check --fix .
+	$(ci-base-cmd) ruff check --fix .
 	@echo "========== fix: ruff (format) =========="
-	ruff format .
+	$(ci-base-cmd) ruff format .
 
 .PHONY: ci-fix-unsafe
 ci-fix-unsafe:
 	@echo "========== fix: ruff (lint unsafe) =========="
-	ruff check --fix --unsafe-fixes .
+	$(ci-base-cmd) ruff check --fix --unsafe-fixes .
 	@echo "========== fix: ruff (format) =========="
-	ruff format .
+	$(ci-base-cmd) ruff format .
 
 # ---- #
 # docs #
 # ---- #
 
+docs-base-cmd = uv run --only-group docs --directory "docs/"
+
 .PHONY: docs-serve
 docs-serve:
-	cd "docs/" && mkdocs serve
+	$(docs-base-cmd) mkdocs serve
 
 .PHONY: docs-build
 docs-build: docs-clean
-	cd "docs/" && mkdocs build
+	$(docs-base-cmd) mkdocs build
 
 .PHONY: docs-deploy
 docs-deploy:
-	cd "docs/" && mkdocs gh-deploy --force
+	$(docs-base-cmd) mkdocs gh-deploy --force
 
 .PHONY: docs-clean
 docs-clean:
-	cd "docs/" && rm -rf site/
+	rm -rf "docs/site/"
