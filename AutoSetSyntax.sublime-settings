@@ -137,13 +137,13 @@
                 },
                 {
                     "constraint": "name_contains_regex",
-                    "args": ["\\.bash(?:\\.[^/]*)?$"]
+                    "args": ["\\.bash(?=$|\\.)"]
                 },
                 {
                     "constraint": "first_line_contains_regex",
                     "args": [
                         // @see https://www.shellcheck.net/wiki/SC2148
-                        "^\\s*#\\s+shellcheck\\s+shell=(?:bash|sh)"
+                        "^\\s*#\\s+shellcheck\\s+[^\\r\\n]*shell=(?:bash|sh)"
                     ]
                 }
             ]
@@ -157,13 +157,13 @@
             "rules": [
                 {
                     "constraint": "name_contains_regex",
-                    "args": ["\\.z(?:shrc|shenv|profile|login|logout)(?:\\.[^/]*)?$"]
+                    "args": ["\\.z(?:shrc|shenv|profile|login|logout)(?=$|\\.)"]
                 },
                 {
                     "constraint": "first_line_contains_regex",
                     "args": [
                         // @see https://www.shellcheck.net/wiki/SC2148
-                        "^\\s*#\\s+shellcheck\\s+shell=zsh"
+                        "^\\s*#\\s+shellcheck\\s+[^\\r\\n]*shell=zsh"
                     ]
                 }
             ]
@@ -191,7 +191,7 @@
                         },
                         {
                             "constraint": "name_contains_regex",
-                            "args": ["\\.(?:env)(?:\\.[^/]*)?$"]
+                            "args": ["\\.env(?=$|\\.)"]
                         }
                     ]
                 }
@@ -376,7 +376,7 @@
             "rules": [
                 {
                     "constraint": "name_contains_regex",
-                    "args": ["^Makefile\\."],
+                    "args": ["^Makefile(?=$|\\.)"],
                     "kwargs": { "regex_flags": ["IGNORECASE"] }
                 },
                 {
