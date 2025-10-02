@@ -12,7 +12,7 @@ import threading
 from collections.abc import Callable, Generator, Iterable, Mapping
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Pattern, TypeVar, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Pattern, TypeVar, Union, cast
 
 import sublime
 from more_itertools import first_true, unique_everseen
@@ -30,6 +30,7 @@ else:
     _T_Callable = TypeVar("_T_Callable", bound=Callable)
 
 _T_ExpandableVar = TypeVar("_T_ExpandableVar", bound=Union[None, bool, int, float, str, dict, list, tuple])
+_T_StrOrByte = TypeVar("_T_StrOrByte", str, bytes)
 
 
 def camel_to_snake(s: str) -> str:
@@ -43,11 +44,7 @@ def snake_to_camel(s: str, *, upper_first: bool = True) -> str:
     return (first.title() if upper_first else first.lower()) + "".join(map(str.title, others))
 
 
-@overload
-def ensure_trailing_newline(content: str) -> str: ...
-@overload
-def ensure_trailing_newline(content: bytes) -> bytes: ...
-def ensure_trailing_newline(content: str | bytes) -> str | bytes:
+def ensure_trailing_newline(content: _T_StrOrByte) -> _T_StrOrByte:
     """Ensures that the content ends with a newline."""
     if isinstance(content, str):
         return content if content.endswith("\n") else content + "\n"
@@ -60,11 +57,11 @@ if sys.version_info >= (3, 9):
 else:
 
     def remove_prefix(s: str, prefix: str) -> str:
-        """Remove the prefix from the string. I.e., str.removeprefix in Python 3.9."""
+        """Remove the prefix from the string. I.e., `str.removeprefix` as of Python 3.9."""
         return s[len(prefix) :] if s.startswith(prefix) else s
 
     def remove_suffix(s: str, suffix: str) -> str:
-        """Remove the suffix from the string. I.e., str.removesuffix in Python 3.9."""
+        """Remove the suffix from the string. I.e., `str.removesuffix` as of Python 3.9."""
         # suffix="" should not call s[:-0]
         return s[: -len(suffix)] if suffix and s.endswith(suffix) else s
 
@@ -290,12 +287,11 @@ def extract_prefixed_dict(dict_: Mapping[str, _T], *, prefix: str) -> dict[str, 
 def resolve_window(obj: sublime.Buffer | sublime.View | sublime.Sheet | sublime.Window) -> sublime.Window | None:
     if isinstance(obj, sublime.Window):
         return obj
-    window = None
-    if isinstance(obj, sublime.Buffer):
-        obj = obj.primary_view()
     if isinstance(obj, (sublime.View, sublime.Sheet)):
-        window = obj.window()
-    return window
+        return obj.window()
+    if isinstance(obj, sublime.Buffer):
+        return obj.primary_view().window()
+    return None
 
 
 def list_all_views(*, include_transient: bool = False) -> Generator[sublime.View, None, None]:
@@ -351,7 +347,7 @@ def get_expand_variable_map() -> dict[str, str]:
     cache_path = Path(sublime.cache_path())
     packages_path = Path(sublime.packages_path())
 
-    paths = {
+    paths: dict[str, Path] = {
         # from OS
         "home": Path.home(),
         "temp_dir": Path(tempfile.gettempdir()),
