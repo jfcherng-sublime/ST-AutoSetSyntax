@@ -10,13 +10,11 @@ class ModelFeatures:
     offset_0x8800_0x8807: list[int]
     offset_0x9000_0x9007: list[int]
     offset_0x9800_0x9807: list[int]
-    def __init__(self, beg, mid, end, offset_0x8000_0x8007, offset_0x8800_0x8807, offset_0x9000_0x9007, offset_0x9800_0x9807) -> None: ...
 
 @dataclass(frozen=True)
 class ModelOutput:
-    ct_label: ContentTypeLabel
+    label: ContentTypeLabel
     score: float
-    def __init__(self, ct_label, score) -> None: ...
 
 @dataclass(frozen=True)
 class ModelConfig:
@@ -31,4 +29,3 @@ class ModelConfig:
     target_labels_space: list[ContentTypeLabel]
     thresholds: dict[ContentTypeLabel, float]
     overwrite_map: dict[ContentTypeLabel, ContentTypeLabel]
-    def __init__(self, beg_size, mid_size, end_size, use_inputs_at_offsets, medium_confidence_threshold, min_file_size_for_dl, padding_token, block_size, target_labels_space, thresholds, overwrite_map) -> None: ...

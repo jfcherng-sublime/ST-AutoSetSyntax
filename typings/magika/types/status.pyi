@@ -1,7 +1,7 @@
-from magika.types.strenum import StrEnum as StrEnum
+from magika.types.strenum import LowerCaseStrEnum as LowerCaseStrEnum
 
-class Status(StrEnum):
-    OK = 'ok'
-    FILE_NOT_FOUND_ERROR = 'file_not_found_error'
-    PERMISSION_ERROR = 'permission_error'
-    UNKNOWN = 'unknown'
+class Status(LowerCaseStrEnum):
+    OK = ...
+    FILE_NOT_FOUND_ERROR = ...
+    PERMISSION_ERROR = ...
+    UNKNOWN = ...

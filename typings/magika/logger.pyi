@@ -2,7 +2,14 @@ from _typeshed import Incomplete
 from magika import colors as colors
 from typing import TextIO
 
+_logger: SimpleLogger | None
+
 class SimpleLogger:
+    """
+    We implement a simple logger to not rely on additional python packages,
+    e.g., rich. This is written in way that, by default, log messages (e.g.,
+    debug/info/...) are sent to stderr.
+    """
     level: Incomplete
     use_colors: Incomplete
     def __init__(self, use_colors: bool = False) -> None: ...

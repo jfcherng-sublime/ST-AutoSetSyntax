@@ -8,12 +8,12 @@ longest word)) lookup time making it an optimal approach when space is not an is
 This file has been modified by @jfcherng to fit his own use.
 """
 
-from typing import Dict, Generator, Iterable
+from typing import Generator, Iterable
 
 
 class TrieNode:
     def __init__(self) -> None:
-        self.nodes: Dict[str, TrieNode] = dict()  # Mapping from char to TrieNode
+        self.nodes: dict[str, TrieNode] = {}  # Mapping from char to TrieNode
         self.is_leaf = False
 
     def insert_many(self, words: Iterable[str]) -> None:
@@ -56,6 +56,8 @@ class TrieNode:
         Tries to find all prefixes in a Trie for the word
         :param word: word to be matched
         :return: Yield a matched prefix
+
+        ⚠ Added by @jfcherng.
         """
         prefix = ""
         curr = self

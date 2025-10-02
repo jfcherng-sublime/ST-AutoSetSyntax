@@ -1,6 +1,11 @@
 from magika.types.strenum import StrEnum as StrEnum
 
 class ContentTypeLabel(StrEnum):
+    _3DS = '3ds'
+    _3DSM = '3dsm'
+    _3DSX = '3dsx'
+    _3GP = '3gp'
+    _3MF = '3mf'
     ABNF = 'abnf'
     ACE = 'ace'
     ADA = 'ada'
@@ -247,8 +252,10 @@ class ContentTypeLabel(StrEnum):
     R = 'r'
     RANDOMASCII = 'randomascii'
     RANDOMBYTES = 'randombytes'
+    RANDOMTXT = 'randomtxt'
     RAR = 'rar'
     RDF = 'rdf'
+    RDP = 'rdp'
     RIFF = 'riff'
     RLIB = 'rlib'
     RLL = 'rll'
@@ -347,3 +354,4 @@ class ContentTypeLabel(StrEnum):
     ZIP = 'zip'
     ZLIBSTREAM = 'zlibstream'
     ZST = 'zst'
+    def __repr__(self) -> str: ...
