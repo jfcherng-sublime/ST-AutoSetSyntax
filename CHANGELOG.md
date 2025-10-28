@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.8
+
+- fix: compatibility with ST 4201 (py313)
+
 ## 4.3.7
 
 - feat: try to auto set syntax with emacs modeline
