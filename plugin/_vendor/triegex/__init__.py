@@ -1,4 +1,4 @@
-import collections
+import collections.abc
 
 __all__ = ('Triegex',)
 
@@ -67,7 +67,7 @@ class TriegexNode:
         return ready[-1]
 
 
-class Triegex(collections.MutableSet):
+class Triegex(collections.abc.MutableSet):
 
     _root = None
 

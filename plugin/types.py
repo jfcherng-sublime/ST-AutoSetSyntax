@@ -141,6 +141,10 @@ class StSyntaxRule(StMatchRule):
 
 
 class WindowKeyedDict(UserDict[WindowIdAble, _T]):
+    def __contains__(self, key: Any) -> bool:
+        key = self._to_window_id(key)
+        return super().__contains__(key)
+
     def __setitem__(self, key: WindowIdAble, value: _T) -> None:
         key = self._to_window_id(key)
         super().__setitem__(key, value)

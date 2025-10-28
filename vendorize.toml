@@ -1,4 +1,4 @@
 target = "plugin/_vendor"
 packages = [
-    "triegex",
+    # "triegex", # edited for support py313
 ]

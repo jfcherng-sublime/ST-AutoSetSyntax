@@ -1,6 +1,14 @@
 {
     "*": {
-        "*": [
+        ">=4201": [
+            "annotated-types",
+            "more-itertools",
+            "pydantic",
+            "pydantic-core",
+            "typing-extensions",
+            "typing-inspection"
+        ],
+        "<4201": [
             "annotated-types",
             "eval-type-backport",
             "more-itertools",
