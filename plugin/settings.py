@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from collections import ChainMap
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, MutableMapping
 from itertools import chain
-from typing import Any, List, Mapping, MutableMapping
+from typing import Any
 
 import sublime
 import sublime_plugin
@@ -36,7 +36,7 @@ def get_st_settings() -> sublime.Settings:
 
 
 def pref_syntax_rules(*, window: sublime.Window | None = None) -> list[StSyntaxRule]:
-    return TypeAdapter(List[StSyntaxRule]).validate_python(get_merged_plugin_setting("syntax_rules", [], window=window))
+    return TypeAdapter(list[StSyntaxRule]).validate_python(get_merged_plugin_setting("syntax_rules", [], window=window))
 
 
 def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str]:

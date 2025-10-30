@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
 from functools import wraps
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import Any, cast
 
 import sublime
 import sublime_plugin
@@ -16,11 +16,6 @@ from .settings import get_merged_plugin_setting, pref_syntax_rules
 from .shared import G
 from .types import ListenerEvent
 from .utils import debounce, is_transient_view, stringify
-
-if TYPE_CHECKING:
-    _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
-else:
-    _T_Callable = TypeVar("_T_Callable", bound=Callable)
 
 
 def set_up_window(window: sublime.Window) -> None:
@@ -69,7 +64,7 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     )
 
 
-def _configured_debounce(func: _T_Callable) -> _T_Callable:
+def _configured_debounce[T: Callable](func: T) -> T:
     """Debounce a function so that it's called once in seconds."""
 
     def debounced(*args: Any, **kwargs: Any) -> Any:
@@ -77,11 +72,14 @@ def _configured_debounce(func: _T_Callable) -> _T_Callable:
             return debounce(time_s)(func)(*args, **kwargs)
         return func(*args, **kwargs)
 
-    return cast(_T_Callable, debounced)
+    return cast(T, debounced)
 
 
-def _guarantee_primary_view(*, must_plaintext: bool = False) -> Callable[[_T_Callable], _T_Callable]:
-    def decorator(func: _T_Callable) -> _T_Callable:
+def _guarantee_primary_view[T: Callable](
+    *,
+    must_plaintext: bool = False,
+) -> Callable[[T], T]:
+    def decorator(func: T) -> T:
         @wraps(func)
         def wrapped(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
             if (
@@ -92,7 +90,7 @@ def _guarantee_primary_view(*, must_plaintext: bool = False) -> Callable[[_T_Cal
             ):
                 func(self, view, *args, **kwargs)
 
-        return cast(_T_Callable, wrapped)
+        return cast(T, wrapped)
 
     return decorator
 

@@ -15,7 +15,7 @@ from .utils import resolve_window
 
 
 @contextmanager
-def _editable_view(view: sublime.View) -> Generator[sublime.View, None, None]:
+def _editable_view(view: sublime.View) -> Generator[sublime.View]:
     is_read_only = view.is_read_only()
     view.set_read_only(False)
     try:

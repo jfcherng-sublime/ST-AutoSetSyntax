@@ -10,7 +10,7 @@ import urllib.request
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
-from typing import IO, Union
+from typing import IO
 
 import sublime
 import sublime_plugin
@@ -18,7 +18,7 @@ import sublime_plugin
 from ..constants import PLUGIN_NAME, PLUGIN_PY_LIBS_DIR, PLUGIN_PY_LIBS_URL, PLUGIN_PY_LIBS_ZIP_NAME
 from ..utils import rmtree_ex
 
-PathLike = Union[Path, str]
+type PathLike = Path | str
 
 
 class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand):
@@ -101,7 +101,7 @@ def decompress_buffer(buffer: IO[bytes], *, filename: str, dst_dir: PathLike) ->
 
     if m := re.search(r"\.tar(?:\.(bz2|gz|xz))?$", filename):
         sub_ext = m.group(1) or ""
-        with tarfile.open(fileobj=buffer, mode=f"r:{sub_ext}") as tar_f:
+        with tarfile.open(fileobj=buffer, mode=f"r:{sub_ext}") as tar_f:  # type: ignore
             tar_safe_extract(tar_f, dst_dir)
         return True
 

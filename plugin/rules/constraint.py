@@ -6,27 +6,16 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, TypeVar, final
+from typing import Any, Self, final
 
 from more_itertools import first_true
-from typing_extensions import Self
 
 from ..cache import clearable_lru_cache
 from ..constants import PLUGIN_NAME, ST_PLATFORM
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, StConstraintRule
-from ..utils import (
-    camel_to_snake,
-    compile_regex,
-    drop_falsy,
-    list_all_subclasses,
-    merge_regexes,
-    parse_regex_flags,
-    remove_suffix,
-)
-
-_T = TypeVar("_T")
+from ..utils import camel_to_snake, compile_regex, drop_falsy, list_all_subclasses, merge_regexes, parse_regex_flags
 
 
 def find_constraint(obj: Any) -> type[AbstractConstraint] | None:
@@ -38,7 +27,7 @@ def get_constraints() -> tuple[type[AbstractConstraint], ...]:
     return tuple(sorted(list_constraints(), key=lambda cls: cls.name()))
 
 
-def list_constraints() -> Generator[type[AbstractConstraint], None, None]:
+def list_constraints() -> Generator[type[AbstractConstraint]]:
     yield from list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore
 
 
@@ -56,7 +45,7 @@ class ConstraintRule(Optimizable):
     def is_droppable(self) -> bool:
         return not (self.constraint and not self.constraint.is_droppable())
 
-    def optimize(self) -> Generator[Optimizable, None, None]:
+    def optimize(self) -> Generator[Optimizable]:
         return
         yield
 
@@ -104,7 +93,7 @@ class AbstractConstraint(ABC):
     @classmethod
     def name(cls) -> str:
         """The nickname of this class. Converts "FooBarConstraint" into "foo_bar" by default."""
-        return camel_to_snake(remove_suffix(cls.__name__, "Constraint"))
+        return camel_to_snake(cls.__name__.removesuffix("Constraint"))
 
     @final
     @classmethod
@@ -124,9 +113,9 @@ class AbstractConstraint(ABC):
         """Tests whether the `view_snapshot` passes this constraint."""
 
     @final
-    def _handled_args(self, normalizer: Callable[[_T], _T] | None = None) -> tuple[_T, ...]:
+    def _handled_args[T](self, normalizer: Callable[[T], T] | None = None) -> tuple[T, ...]:
         """Filter falsy args and normalize them. Note that `0`, `""` and `None` are falsy."""
-        args: Iterable[_T] = drop_falsy(self.args)
+        args: Iterable[T] = drop_falsy(self.args)
         if normalizer:
             args = map(normalizer, args)
         return tuple(args)

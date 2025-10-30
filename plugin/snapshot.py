@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Self
 
 import sublime
-from typing_extensions import Self
 
 from .encodings import from_sublime as encoding_from_sublime
 from .settings import get_merged_plugin_setting

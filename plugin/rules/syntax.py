@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Generator, Iterable
 from dataclasses import dataclass
+from typing import Self
 
 import sublime
 from more_itertools import first_true
-from typing_extensions import Self
 
 from ..constants import VERSION
 from ..snapshot import ViewSnapshot
@@ -30,7 +30,7 @@ class SyntaxRule(Optimizable):
     def is_droppable(self) -> bool:
         return not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule)
 
-    def optimize(self) -> Generator[Optimizable, None, None]:
+    def optimize(self) -> Generator[Optimizable]:
         if self.root_rule:
             if self.root_rule.is_droppable():
                 yield self.root_rule
@@ -85,7 +85,7 @@ class SyntaxRuleCollection(Optimizable):
     def __len__(self) -> int:
         return len(self.rules)
 
-    def optimize(self) -> Generator[Optimizable, None, None]:
+    def optimize(self) -> Generator[Optimizable]:
         rules: list[SyntaxRule] = []
         for rule in self.rules:
             if rule.is_droppable():

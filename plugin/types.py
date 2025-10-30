@@ -1,63 +1,17 @@
 from __future__ import annotations
 
-import sys
 from abc import ABC, abstractmethod
-from collections import UserDict as BuiltinUserDict
-from collections.abc import Generator, Hashable, Iterator, KeysView
-from enum import Enum
-from typing import Any, Generic, TypeVar, Union, overload
+from collections import UserDict
+from collections.abc import Generator, KeysView
+from enum import StrEnum
+from typing import Any, Self
 
 import sublime
 from pydantic import BaseModel, Field, field_validator
-from typing_extensions import Self
 
-SyntaxLike = Union[str, sublime.Syntax]
-WindowId = int
-WindowIdAble = Union[WindowId, sublime.Window]
-
-_KT = TypeVar("_KT", bound=Hashable)
-_KV = TypeVar("_KV")
-_T = TypeVar("_T")
-
-if sys.version_info < (3, 9):
-
-    class UserDict(BuiltinUserDict, Generic[_KT, _KV]):
-        """Workaround class for the fact that `UserDict` is not subscriptable until Python 3.9..."""
-
-        def __init__(self, dict=None, /, **kwargs) -> None:
-            self.data: dict[_KT, _KV] = {}
-            super().__init__(dict, **kwargs)
-
-        def __getitem__(self, key: _KT) -> _KV:
-            return super().__getitem__(key)
-
-        def __setitem__(self, key: _KT, item: _KV) -> None:
-            super().__setitem__(key, item)
-
-        def __delitem__(self, key: _KT) -> None:
-            super().__delitem__(key)
-
-        def __iter__(self) -> Iterator[_KT]:
-            return super().__iter__()
-
-        @overload
-        def get(self, key: _KT) -> _KV | None: ...
-        @overload
-        def get(self, key: _KT, default: _T) -> _KV | _T: ...
-        def get(self, key: _KT, default: _T | None = None) -> _KV | _T | None:
-            return super().get(key, default)
-
-else:
-    UserDict = BuiltinUserDict  # noqa: F401
-
-if sys.version_info < (3, 11):
-
-    class StrEnum(str, Enum):
-        __format__ = str.__format__  # type: ignore
-        __str__ = str.__str__  # type: ignore
-
-else:
-    from enum import StrEnum  # noqa: F401
+type SyntaxLike = str | sublime.Syntax
+type WindowId = int
+type WindowIdAble = WindowId | sublime.Window
 
 
 class ListenerEvent(StrEnum):
@@ -92,7 +46,7 @@ class Optimizable(ABC):
         return False
 
     @abstractmethod
-    def optimize(self) -> Generator[Any, None, None]:
+    def optimize(self) -> Generator[Any]:
         """Does optimizations and returns a generator for dropped objects."""
 
 
@@ -140,16 +94,16 @@ class StSyntaxRule(StMatchRule):
         return [v] if isinstance(v, str) else v
 
 
-class WindowKeyedDict(UserDict[WindowIdAble, _T]):
+class WindowKeyedDict[T](UserDict[WindowIdAble, T]):
     def __contains__(self, key: Any) -> bool:
         key = self._to_window_id(key)
         return super().__contains__(key)
 
-    def __setitem__(self, key: WindowIdAble, value: _T) -> None:
+    def __setitem__(self, key: WindowIdAble, value: T) -> None:
         key = self._to_window_id(key)
         super().__setitem__(key, value)
 
-    def __getitem__(self, key: WindowIdAble) -> _T:
+    def __getitem__(self, key: WindowIdAble) -> T:
         key = self._to_window_id(key)
         return super().__getitem__(key)
 
@@ -158,7 +112,7 @@ class WindowKeyedDict(UserDict[WindowIdAble, _T]):
         super().__delitem__(key)
 
     def keys(self) -> KeysView[WindowId]:
-        return super().keys()
+        return super().keys()  # type: ignore
 
     @staticmethod
     def _to_window_id(value: WindowIdAble) -> WindowId:

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import List
-
 import sublime
 
 from .rules import SyntaxRuleCollection
 from .settings import get_merged_plugin_settings
 from .types import Optimizable, WindowKeyedDict
 
-_DroppedRules = List[Optimizable]
+type _DroppedRules = list[Optimizable]
 
 
 class DroppedRulesCollection(WindowKeyedDict[_DroppedRules]):

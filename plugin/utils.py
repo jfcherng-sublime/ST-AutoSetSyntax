@@ -6,13 +6,13 @@ import operator
 import os
 import re
 import shutil
-import sys
 import tempfile
 import threading
 from collections.abc import Callable, Generator, Iterable, Mapping
 from functools import cmp_to_key, lru_cache, reduce, wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Pattern, TypeVar, Union, cast
+from re import Pattern
+from typing import Any, cast
 
 import sublime
 from more_itertools import first_true, unique_everseen
@@ -21,16 +21,6 @@ from ._vendor.trie import TrieNode
 from ._vendor.triegex import Triegex
 from .cache import clearable_lru_cache
 from .types import SyntaxLike
-
-_T = TypeVar("_T")
-
-if TYPE_CHECKING:
-    _T_Callable = TypeVar("_T_Callable", bound=Callable[..., Any])
-else:
-    _T_Callable = TypeVar("_T_Callable", bound=Callable)
-
-_T_ExpandableVar = TypeVar("_T_ExpandableVar", bound=Union[None, bool, int, float, str, dict, list, tuple])
-_T_StrOrByte = TypeVar("_T_StrOrByte", str, bytes)
 
 
 def camel_to_snake(s: str) -> str:
@@ -44,26 +34,11 @@ def snake_to_camel(s: str, *, upper_first: bool = True) -> str:
     return (first.title() if upper_first else first.lower()) + "".join(map(str.title, others))
 
 
-def ensure_trailing_newline(content: _T_StrOrByte) -> _T_StrOrByte:
+def ensure_trailing_newline[T: (str, bytes)](content: T) -> T:
     """Ensures that the content ends with a newline."""
     if isinstance(content, str):
         return content if content.endswith("\n") else content + "\n"
     return content if content.endswith(b"\n") else content + b"\n"
-
-
-if sys.version_info >= (3, 9):
-    remove_prefix = str.removeprefix
-    remove_suffix = str.removesuffix
-else:
-
-    def remove_prefix(s: str, prefix: str) -> str:
-        """Remove the prefix from the string. I.e., `str.removeprefix` as of Python 3.9."""
-        return s[len(prefix) :] if s.startswith(prefix) else s
-
-    def remove_suffix(s: str, suffix: str) -> str:
-        """Remove the suffix from the string. I.e., `str.removesuffix` as of Python 3.9."""
-        # suffix="" should not call s[:-0]
-        return s[: -len(suffix)] if suffix and s.endswith(suffix) else s
 
 
 @clearable_lru_cache()
@@ -76,7 +51,7 @@ def compile_regex(regex: str | re.Pattern[str], flags: int = 0) -> re.Pattern[st
     return re.compile(regex, flags)
 
 
-def drop_falsy(iterable: Iterable[_T | None]) -> Generator[_T, None, None]:
+def drop_falsy[T](iterable: Iterable[T | None]) -> Generator[T]:
     """Drops falsy values from the iterable."""
     yield from filter(None, iterable)
 
@@ -132,7 +107,7 @@ def build_reversed_trie(words: tuple[str]) -> TrieNode:
     return trie
 
 
-def debounce(time_s: float = 0.3) -> Callable[[_T_Callable], _T_Callable]:
+def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
     """
     Debounce a function so that it's called after `time_s` seconds.
     If it's called multiple times in the time frame, it will only run the last call.
@@ -140,7 +115,7 @@ def debounce(time_s: float = 0.3) -> Callable[[_T_Callable], _T_Callable]:
     Taken and modified from https://github.com/salesforce/decorator-operations
     """
 
-    def decorator(func: _T_Callable) -> _T_Callable:
+    def decorator(func: T) -> T:
         @wraps(func)
         def debounced(*args: Any, **kwargs: Any) -> None:
             def call_function() -> Any:
@@ -155,16 +130,16 @@ def debounce(time_s: float = 0.3) -> Callable[[_T_Callable], _T_Callable]:
             setattr(debounced, "_timer", timer)
 
         setattr(debounced, "_timer", None)
-        return cast(_T_Callable, debounced)
+        return cast(T, debounced)
 
     return decorator
 
 
-def list_all_subclasses(
-    root: type[_T],
+def list_all_subclasses[T](
+    root: type[T],
     skip_abstract: bool = False,
     skip_self: bool = False,
-) -> Generator[type[_T], None, None]:
+) -> Generator[type[T]]:
     """Gets all sub-classes of the root class."""
     if not skip_self and not (skip_abstract and inspect.isabstract(root)):
         yield root
@@ -218,7 +193,7 @@ def find_syntaxes_by_syntax_like(
 
     all_syntaxes = get_sorted_syntaxes()
 
-    def find_like(like: SyntaxLike) -> Generator[sublime.Syntax, None, None]:
+    def find_like(like: SyntaxLike) -> Generator[sublime.Syntax]:
         if isinstance(like, sublime.Syntax):
             yield like
             return
@@ -248,7 +223,7 @@ def find_syntaxes_by_syntax_likes(
     *,
     include_hidden: bool = False,
     include_plaintext: bool = True,
-) -> Generator[sublime.Syntax, None, None]:
+) -> Generator[sublime.Syntax]:
     """Finds syntaxes by an Iterable of "Syntax object" / "scope" / "name" / "partial path"."""
     for like in likes:
         yield from find_syntaxes_by_syntax_like(
@@ -279,7 +254,7 @@ def get_sorted_syntaxes() -> tuple[sublime.Syntax, ...]:
     return tuple(sorted(sublime.list_syntaxes(), key=cmp_to_key(syntax_cmp)))
 
 
-def extract_prefixed_dict(dict_: Mapping[str, _T], *, prefix: str) -> dict[str, _T]:
+def extract_prefixed_dict[T](dict_: Mapping[str, T], *, prefix: str) -> dict[str, T]:
     """Extract dict with a prefix. The prefix will be removed from the key."""
     return {k[len(prefix) :]: v for k, v in dict_.items() if k.startswith(prefix)}
 
@@ -294,7 +269,7 @@ def resolve_window(obj: sublime.Buffer | sublime.View | sublime.Sheet | sublime.
     return None
 
 
-def list_all_views(*, include_transient: bool = False) -> Generator[sublime.View, None, None]:
+def list_all_views(*, include_transient: bool = False) -> Generator[sublime.View]:
     for window in sublime.windows():
         yield from window.views(include_transient=include_transient)
 
@@ -368,11 +343,14 @@ def get_expand_variable_map() -> dict[str, str]:
     return {name: str(path.resolve()) for name, path in paths.items()}
 
 
-def expand_variables(value: _T_ExpandableVar, variables: dict[str, str] | None = None) -> _T_ExpandableVar:
-    return sublime.expand_variables(value, {**get_expand_variable_map(), **(variables or {})})
+def expand_variables[T: None | bool | int | float | str | dict | list | tuple](
+    value: T,
+    variables: dict[str, str] | None = None,
+) -> T:
+    return sublime.expand_variables(value, get_expand_variable_map() | (variables or {}))
 
 
-def list_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[str, None, None]:
+def list_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[str]:
     """Generates trimmed filenames."""
     end = len(filename)
     if skip_self:
@@ -382,11 +360,11 @@ def list_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[
         end = filename.rfind(".", 0, end)
 
 
-def list_trimmed_strings(string: str, suffixes: tuple[str], skip_self: bool = False) -> Generator[str, None, None]:
+def list_trimmed_strings(string: str, suffixes: tuple[str], skip_self: bool = False) -> Generator[str]:
     """Generates strings with suffixes trimmed."""
     trie = build_reversed_trie(suffixes)
 
-    def dfs(string_rev: str) -> Generator[str, None, None]:
+    def dfs(string_rev: str) -> Generator[str]:
         for prefix in trie.find_prefixes(string_rev):
             yield (trimmed := string_rev[len(prefix) :])
             yield from dfs(trimmed)
@@ -401,7 +379,7 @@ def list_trimmed_strings(string: str, suffixes: tuple[str], skip_self: bool = Fa
             yield trimmed[::-1]
 
 
-def str_finditer(content: str, substr: str) -> Generator[int, None, None]:
+def str_finditer(content: str, substr: str) -> Generator[int]:
     idx = 0
     while (idx := content.find(substr, idx)) != -1:
         yield idx

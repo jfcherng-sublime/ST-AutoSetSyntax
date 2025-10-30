@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Callable, final
+from collections.abc import Callable
+from typing import Any, final
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
 
-Comparator = Callable[[Any, Any], bool]
+type Comparator = Callable[[Any, Any], bool]
 
 
 @final

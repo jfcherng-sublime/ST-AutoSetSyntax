@@ -3,16 +3,15 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from typing import Any, Union, final
+from typing import Any, Self, final
 
 from more_itertools import first_true
-from typing_extensions import Self
 
 from ..cache import clearable_lru_cache
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, StConstraintRule, StMatchRule
-from ..utils import camel_to_snake, list_all_subclasses, remove_suffix
+from ..utils import camel_to_snake, list_all_subclasses
 from .constraint import ConstraintRule
 
 
@@ -25,7 +24,7 @@ def get_matches() -> tuple[type[AbstractMatch], ...]:
     return tuple(sorted(list_matches(), key=lambda cls: cls.name()))
 
 
-def list_matches() -> Generator[type[AbstractMatch], None, None]:
+def list_matches() -> Generator[type[AbstractMatch]]:
     yield from list_all_subclasses(AbstractMatch, skip_abstract=True)  # type: ignore
 
 
@@ -43,7 +42,7 @@ class MatchRule(Optimizable):
     def is_droppable(self) -> bool:
         return not (self.rules and self.match and not self.match.is_droppable(self.rules))
 
-    def optimize(self) -> Generator[Optimizable, None, None]:
+    def optimize(self) -> Generator[Optimizable]:
         rules: list[MatchableRule] = []
         for rule in self.rules:
             if rule.is_droppable():
@@ -91,7 +90,7 @@ class MatchRule(Optimizable):
 
 
 # rules that can be used in a match rule
-MatchableRule = Union[ConstraintRule, MatchRule]
+type MatchableRule = ConstraintRule | MatchRule
 
 
 class AbstractMatch(ABC):
@@ -103,7 +102,7 @@ class AbstractMatch(ABC):
     @classmethod
     def name(cls) -> str:
         """The nickname of this class. Converts "FooBarMatch" into "foo_bar" by default."""
-        return camel_to_snake(remove_suffix(cls.__name__, "Match"))
+        return camel_to_snake(cls.__name__.removesuffix("Match"))
 
     @final
     @classmethod
