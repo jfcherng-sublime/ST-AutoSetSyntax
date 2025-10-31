@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 5.0.0
+
+- refactor: requires py313 (ST >= 4201)
+
 ## 4.3.8
 
 - fix: compatibility with ST 4201 (py313)
