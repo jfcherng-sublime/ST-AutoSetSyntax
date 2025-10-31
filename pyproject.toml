@@ -3,17 +3,17 @@ name = "AutoSetSyntax"
 version = "0.0.0"
 description = "Automatically sets syntax based on various strategies."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.13"
 dependencies = [
   "more-itertools>=10,<11",
   "pydantic>=2,<3",
-  "typing-extensions>=4.11",
 ]
 
 [dependency-groups]
 dev = [
-  "mypy>=1.14",
+  "mypy>=1.18",
   "ruff>=0.14",
+  "typing-extensions>=4.15",
   "vendorize<1",
 ]
 docs = [
@@ -32,7 +32,7 @@ default-groups = ["dev"]
 check_untyped_defs = true
 strict_optional = true
 mypy_path = 'typings:stubs'
-python_version = '3.8'
+python_version = '3.13'
 
 [[tool.mypy.overrides]]
 module = [
@@ -54,12 +54,12 @@ exclude = [
 ]
 ignore = ['**/.venv', '**/_vendor']
 stubPath = 'typings'
-pythonVersion = '3.8'
+pythonVersion = '3.13'
 
 [tool.ruff]
 preview = true
 line-length = 120
-target-version = 'py38'
+target-version = 'py313'
 exclude = [
   "*/libs/*",
   ".git",

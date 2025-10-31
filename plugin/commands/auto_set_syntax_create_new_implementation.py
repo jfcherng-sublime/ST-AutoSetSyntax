@@ -31,7 +31,7 @@ class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
 
         save_dir = Path(self.save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
-        (PLUGIN_CUSTOM_DIR / ".python-version").write_text("3.8\n", encoding="utf-8")
+        (PLUGIN_CUSTOM_DIR / ".python-version").write_text("3.13\n", encoding="utf-8")
 
 
 class AutoSetSyntaxCreateNewConstraintCommand(AbstractCreateNewImplementationCommand):
