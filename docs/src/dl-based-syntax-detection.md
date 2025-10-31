@@ -2,7 +2,7 @@
 
 --8<-- "refs.md"
 
-!!! warning "This feature is experimental and disabled by default."
+!!! warning "This feature is optional and disabled by default."
 
 ## Overview
 
@@ -14,7 +14,7 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
     You can run `$ sw_vers` in terminal to check the OS version.
 1.  If you are using Linux, GLIBC 2.27 or later is required.
     You can run `$ ldd --version` in terminal to check the GLIBC version on your system.
- 
+
 1.  Install dependencies.
 
     Run `AutoSetSyntax: Download Dependencies` from the command palette.
