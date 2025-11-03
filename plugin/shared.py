@@ -6,15 +6,9 @@ from .rules import SyntaxRuleCollection
 from .settings import get_merged_plugin_settings
 from .types import Optimizable, WindowKeyedDict
 
-type _DroppedRules = list[Optimizable]
-
-
-class DroppedRulesCollection(WindowKeyedDict[_DroppedRules]):
-    pass
-
-
-class SyntaxRuleCollections(WindowKeyedDict[SyntaxRuleCollection]):
-    pass
+DroppedRules = list[Optimizable]
+DroppedRulesCollection = WindowKeyedDict[DroppedRules]
+SyntaxRuleCollections = WindowKeyedDict[SyntaxRuleCollection]
 
 
 class G:

@@ -75,10 +75,7 @@ def _configured_debounce[T: Callable](func: T) -> T:
     return cast(T, debounced)
 
 
-def _guarantee_primary_view[T: Callable](
-    *,
-    must_plaintext: bool = False,
-) -> Callable[[T], T]:
+def _guarantee_primary_view[T: Callable](*, must_plaintext: bool = False) -> Callable[[T], T]:
     def decorator(func: T) -> T:
         @wraps(func)
         def wrapped(self: sublime_plugin.TextChangeListener, *args: Any, **kwargs: Any) -> None:
@@ -152,14 +149,15 @@ def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[s
     if sum(len(change.str) for change in changes) >= 8:
         return run_auto_set_syntax_on_view(view, ListenerEvent.PASTE, must_plaintext=True)
 
+    v_size = view.size()
     historic_position = changes[0].b
     if (
         # content is short
-        view.size() <= 300
+        v_size <= 300
         # editing the first line
         or historic_position.row == 0
         # editing last few chars
-        or historic_position.pt >= view.size() - 2
+        or historic_position.pt >= v_size - 2
     ):
         return run_auto_set_syntax_on_view(view, ListenerEvent.MODIFY, must_plaintext=True)
     return False

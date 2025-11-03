@@ -60,16 +60,14 @@ def create_new_view(
     window: sublime.Window | None = None,
 ) -> sublime.View:
     """Copies the content to a new view."""
+    settings = settings or {}
     window = window or sublime.active_window()
 
     view = window.new_file()
     view.set_name(name)
     view.set_scratch(scratch)
     view.set_read_only(read_only)
-    view.settings().update(settings or {})
-    view.settings().update({
-        VIEW_KEY_IS_CREATED: True,
-    })
+    view.settings().update(settings | {VIEW_KEY_IS_CREATED: True})
 
     if syntax and (syntax := find_syntax_by_syntax_like(syntax, include_hidden=include_hidden_syntax)):
         view.assign_syntax(syntax)

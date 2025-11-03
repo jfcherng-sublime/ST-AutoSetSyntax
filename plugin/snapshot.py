@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cached_property
 from pathlib import Path
 from typing import Self
 
@@ -37,37 +38,37 @@ class ViewSnapshot:
         if self.encoding == "Undefined":
             super().__setattr__("encoding", "UTF-8")
 
-    @property
+    @cached_property
     def content_bytes(self) -> bytes:
         """The `bytes` representation of the content."""
         return self.content.encode(self.encoding_py)
 
-    @property
+    @cached_property
     def encoding_py(self) -> str:
         """The encoding name in Python's definition."""
         return encoding_from_sublime(self.encoding)
 
-    @property
+    @cached_property
     def file_extensions(self) -> list[str]:
         """The file extensions. Empty list if not on a disk."""
         return self.path_obj.suffixes if self.path_obj else []
 
-    @property
+    @cached_property
     def file_name(self) -> str:
         """The file name. Empty string if not on a disk."""
         return self.path_obj.name if self.path_obj else ""
 
-    @property
+    @cached_property
     def file_name_unhidden(self) -> str:
         """The file name without prefixed dots. Empty string if not on a disk."""
         return self.file_name.lstrip(".")
 
-    @property
+    @cached_property
     def file_path(self) -> str:
         """The full file path with `/` as the directory separator. Empty string if not on a disk."""
         return self.path_obj.as_posix() if self.path_obj else ""
 
-    @property
+    @cached_property
     def file_size(self) -> int:
         """The file size in bytes, `-1` if file not on a disk."""
         return self.path_obj.stat().st_size if self.path_obj else -1

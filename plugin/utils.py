@@ -6,10 +6,11 @@ import operator
 import os
 import re
 import shutil
+import stat
 import tempfile
 import threading
 from collections.abc import Callable, Generator, Iterable, Mapping
-from functools import cmp_to_key, lru_cache, reduce, wraps
+from functools import cache, cmp_to_key, reduce, wraps
 from pathlib import Path
 from re import Pattern
 from typing import Any, cast
@@ -247,8 +248,8 @@ def get_sorted_syntaxes() -> tuple[sublime.Syntax, ...]:
         """
         if (ext_a := Path(a.path).suffix) != Path(b.path).suffix:
             return -1 if ext_a == ".sublime-syntax" else 1
-        if (hidden_a := a.hidden) != b.hidden:
-            return 1 if hidden_a else -1
+        if a.hidden != b.hidden:
+            return 1 if a.hidden else -1
         return len(a.path) - len(b.path)
 
     return tuple(sorted(sublime.list_syntaxes(), key=cmp_to_key(syntax_cmp)))
@@ -286,7 +287,7 @@ def head_tail_content(content: str, partial: int) -> str:
     if (half := partial // 2) <= 0:
         return ""
 
-    if len(content) <= partial:
+    if len(content) <= half:
         return content
 
     return content[:half] + "\n\n" + content[-half:]
@@ -296,14 +297,14 @@ def head_tail_content_st(view: sublime.View, partial: int) -> str:
     if (half := partial // 2) <= 0:
         return ""
 
-    if (size := view.size()) <= partial:
+    if (size := view.size()) <= half:
         return view.substr(sublime.Region(0, size))
 
     return (
-        # for large files, most characteristics is in the starting
+        # for large files, most characteristics is at the beginning
         view.substr(sublime.Region(0, half))
         + "\n\n"
-        # but some may be in the ending...
+        # but some may be at the ending...
         + view.substr(sublime.Region(size - half, size))
     )
 
@@ -317,7 +318,7 @@ def is_transient_view(view: sublime.View) -> bool:
     return bool(view.is_valid() and (sheet := view.sheet()) and sheet.is_transient())
 
 
-@lru_cache
+@cache
 def get_expand_variable_map() -> dict[str, str]:
     cache_path = Path(sublime.cache_path())
     packages_path = Path(sublime.packages_path())
@@ -380,22 +381,39 @@ def list_trimmed_strings(string: str, suffixes: tuple[str], skip_self: bool = Fa
 
 
 def str_finditer(content: str, substr: str) -> Generator[int]:
-    idx = 0
-    while (idx := content.find(substr, idx)) != -1:
-        yield idx
-        idx += len(substr)
+    def _() -> Generator[int]:
+        idx = 0
+        while (idx := content.find(substr, idx)) != -1:
+            yield idx
+            idx += len(substr)
+
+    if substr == "":
+        raise ValueError("substr cannot be an empty string (infinite loop)")
+    yield from _()
 
 
-def rmtree_ex(path: str | Path, ignore_errors: bool = False, **kwargs: Any) -> None:
+def rmtree_ex(path: str | Path, ignore_errors: bool = False) -> None:
     """
-    Same with `shutil.rmtree` but with a workaround for long path on Windows.
+    Remove the given recursively.
 
-    @see https://stackoverflow.com/a/14076169/4643765
-    @see https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+    :note: we use shutil rmtree but adjust its behaviour to see whether files that
+        couldn't be deleted are read-only. Windows will not remove them in that case
+
+    @see https://github.com/gitpython-developers/GitPython/blob/ea43defd777a9c0751fc44a9c6a622fc2dbd18a0/git/util.py#L101-L118
     """
     if os.name == "nt" and (path := Path(path)).is_absolute():
-        path = Rf"\\?\{path}"
-    shutil.rmtree(path, ignore_errors, **kwargs)
+        path = Rf"\\?\{path}"  # use UNC path to resolve Windows long path issue
+
+    def onexc(func: Callable, path: str | Path, exec_info: Any) -> None:
+        # Is the error an access error ?
+        os.chmod(path, stat.S_IWUSR)
+        try:
+            func(path)  # Will scream if still not possible to delete.
+        except Exception:
+            if not ignore_errors:
+                raise
+
+    return shutil.rmtree(path, False, onexc=onexc)
 
 
 def get_syntax_name(syntax: sublime.Syntax) -> str:

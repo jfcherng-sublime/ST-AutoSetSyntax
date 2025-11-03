@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections import UserDict
 from collections.abc import Generator, KeysView
 from enum import StrEnum
-from typing import Any, Self
+from typing import Any, Self, overload
 
 import sublime
 from pydantic import BaseModel, Field, field_validator
@@ -12,6 +12,8 @@ from pydantic import BaseModel, Field, field_validator
 type SyntaxLike = str | sublime.Syntax
 type WindowId = int
 type WindowIdAble = WindowId | sublime.Window
+
+EMPTY_SYNTAX = sublime.Syntax("", "", False, "")
 
 
 class ListenerEvent(StrEnum):
@@ -94,25 +96,33 @@ class StSyntaxRule(StMatchRule):
         return [v] if isinstance(v, str) else v
 
 
-class WindowKeyedDict[T](UserDict[WindowIdAble, T]):
+class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):
     def __contains__(self, key: Any) -> bool:
         key = self._to_window_id(key)
-        return super().__contains__(key)
-
-    def __setitem__(self, key: WindowIdAble, value: T) -> None:
-        key = self._to_window_id(key)
-        super().__setitem__(key, value)
-
-    def __getitem__(self, key: WindowIdAble) -> T:
-        key = self._to_window_id(key)
-        return super().__getitem__(key)
+        return key in self.data
 
     def __delitem__(self, key: WindowIdAble) -> None:
         key = self._to_window_id(key)
-        super().__delitem__(key)
+        del self.data[key]
+
+    def __getitem__(self, key: WindowIdAble) -> VT:
+        key = self._to_window_id(key)
+        return self.data[key]
+
+    def __setitem__(self, key: WindowIdAble, value: VT) -> None:
+        key = self._to_window_id(key)
+        self.data[key] = value
 
     def keys(self) -> KeysView[WindowId]:
-        return super().keys()  # type: ignore
+        return self.data.keys()  # type: ignore
+
+    @overload
+    def get(self, key: WindowIdAble, default: None = None) -> VT | None: ...
+    @overload
+    def get[T](self, key: WindowIdAble, default: T) -> VT | T: ...
+    def get[T](self, key: WindowIdAble, default: T | VT | None = None) -> VT | T | None:
+        key = self._to_window_id(key)
+        return self.data.get(key, default)
 
     @staticmethod
     def _to_window_id(value: WindowIdAble) -> WindowId:

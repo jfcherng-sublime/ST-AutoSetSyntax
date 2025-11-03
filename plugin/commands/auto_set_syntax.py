@@ -21,7 +21,7 @@ from ..rules import SyntaxRuleCollection
 from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
-from ..types import ListenerEvent
+from ..types import EMPTY_SYNTAX, ListenerEvent
 from ..utils import (
     ensure_trailing_newline,
     extract_prefixed_dict,
@@ -374,7 +374,7 @@ def assign_syntax_to_view(
         if not (_window := _view.window()):
             continue
 
-        if syntax == (syntax_old := view.syntax() or sublime.Syntax("", "", False, "")):
+        if syntax == (syntax_old := view.syntax() or EMPTY_SYNTAX):
             details["reason"] = f"[ALREADY] {details['reason']}"
             Logger.log(
                 f'💯 Remain {stringify(_view)} syntax "{get_syntax_name(syntax)}" because {stringify(details)}',
