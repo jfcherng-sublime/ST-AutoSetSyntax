@@ -26,7 +26,7 @@ class IsInSvnRepoConstraint(AbstractConstraint):
         if any(map(lambda p: p in cls._success_dirs, file_path.parents)):
             return True
 
-        if _major_dir := self.find_parent_with_sibling(file_path, ".hg/"):
+        if _major_dir := self.find_parent_with_sibling(file_path, ".svn/"):
             cls._success_dirs.add(_major_dir)
             return True
 
