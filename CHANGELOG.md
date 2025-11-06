@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 5.0.1
+
+- feat: add a rule for RSpec files
+- fix: .svn dir name typo in IsInSvnRepoConstraint
+
 ## 5.0.0
 
 - refactor: requires py313 (ST >= 4201)
