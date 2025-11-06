@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 4.3.9
+
+- feat: add a rule for RSpec files
+- fix: .svn dir name typo in IsInSvnRepoConstraint
+
 ## 4.3.8
 
 - fix: compatibility with ST 4201 (py313)
