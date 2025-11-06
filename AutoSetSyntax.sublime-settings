@@ -469,6 +469,16 @@
             ]
         },
         {
+            "syntaxes": "scope:source.ruby.rspec",
+            "selector": "text.plain | source.ruby - source.ruby.rspec",
+            "rules": [
+                {
+                    "constraint": "name_contains_regex",
+                    "args": ["_spec\\.rb$"]
+                }
+            ]
+        },
+        {
             "comment": "SSH config from https://packagecontrol.io/packages/SSH%20Config",
             "syntaxes": ["scope:source.ssh_config", "scope:source.ssh-config"],
             // some syntaxes just aggresively set "config" filename as XML file
