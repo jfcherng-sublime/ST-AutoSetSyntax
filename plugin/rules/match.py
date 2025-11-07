@@ -11,7 +11,7 @@ from ..cache import clearable_lru_cache
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
 from ..types import Optimizable, StConstraintRule, StMatchRule
-from ..utils import camel_to_snake, list_all_subclasses
+from ..utils import camel_to_snake, drop_falsy, list_all_subclasses
 from .constraint import ConstraintRule
 
 
@@ -60,33 +60,28 @@ class MatchRule(Optimizable):
         return self.match.test(view_snapshot, self.rules)
 
     @classmethod
-    def make(cls, match_rule: StMatchRule) -> Self:
+    def make(cls, match_rule: StMatchRule) -> Self | None:
         """Build this object with the `match_rule`."""
-        obj = cls()
-        obj.src_setting = match_rule
-
-        obj.args = tuple(match_rule.args)
-        obj.kwargs = match_rule.kwargs
-
         match = match_rule.match
-        if match_class := find_match(match):
-            obj.match_name = match
-            obj.match = match_class(*obj.args, **obj.kwargs)
-        else:
-            Logger.log(f"Unsupported match rule: {match}")
+        if not (match_class := find_match(match)):
+            Logger.log(f"❌ Unsupported match rule: {match}")
+            return None
 
-        rules_compiled: list[MatchableRule] = []
-        for rule in match_rule.rules:
-            rule_class: type[MatchableRule] | None = None
-            if isinstance(rule, StConstraintRule):
-                rule_class = ConstraintRule
-            elif isinstance(rule, StMatchRule):
-                rule_class = MatchRule
-            if rule_class and (rule_compiled := rule_class.make(rule)):  # type: ignore
-                rules_compiled.append(rule_compiled)
-        obj.rules = tuple(rules_compiled)
+        def make_matchable_rule(rule: StConstraintRule | StMatchRule) -> MatchableRule | None:
+            match rule:
+                case StConstraintRule():
+                    return ConstraintRule.make(rule)
+                case StMatchRule():
+                    return MatchRule.make(rule)
 
-        return obj
+        return cls(
+            match=match_class(*match_rule.args, **match_rule.kwargs),
+            match_name=match,
+            args=tuple(match_rule.args),
+            kwargs=match_rule.kwargs,
+            rules=tuple(drop_falsy(map(make_matchable_rule, match_rule.rules))),
+            src_setting=match_rule,
+        )
 
 
 # rules that can be used in a match rule

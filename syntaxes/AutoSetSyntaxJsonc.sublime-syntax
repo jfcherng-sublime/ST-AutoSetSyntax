@@ -3,7 +3,7 @@
 # This is just a scope-modified version of the JSON syntax from the `Default` package.
 # Because I don't want LSP-json to be applied on generated JSON views.
 
-name: JSONC
+name: AutoSetSyntex JSONC
 scope: source.autosetsyntax.jsonc
 version: 2
 hidden: true

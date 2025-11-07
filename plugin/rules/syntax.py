@@ -58,23 +58,23 @@ class SyntaxRule(Optimizable):
     @classmethod
     def make(cls, syntax_rule: StSyntaxRule) -> Self:
         """Build this object with the `syntax_rule`."""
-        obj = cls()
-        obj.src_setting = syntax_rule
+        this = cls()
+        this.src_setting = syntax_rule
 
-        obj.syntaxes_name = tuple(syntax_rule.syntaxes)
+        this.syntaxes_name = tuple(syntax_rule.syntaxes)
         if target_syntax := find_syntax_by_syntax_likes(syntax_rule.syntaxes, include_hidden=True):
-            obj.syntax = target_syntax
+            this.syntax = target_syntax
 
         # note that an empty string selector should match any scope
-        obj.selector = syntax_rule.selector
+        this.selector = syntax_rule.selector
 
         if (on_events := syntax_rule.on_events) is not None:
-            obj.on_events = set(drop_falsy(map(ListenerEvent.from_value, on_events)))
+            this.on_events = set(drop_falsy(map(ListenerEvent.from_value, on_events)))
 
         if match_rule_compiled := MatchRule.make(syntax_rule):
-            obj.root_rule = match_rule_compiled
+            this.root_rule = match_rule_compiled
 
-        return obj
+        return this
 
 
 @dataclass

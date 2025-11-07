@@ -13,7 +13,8 @@ type SyntaxLike = str | sublime.Syntax
 type WindowId = int
 type WindowIdAble = WindowId | sublime.Window
 
-EMPTY_SYNTAX = sublime.Syntax("", "", False, "")
+NULL_SYNTAX = sublime.Syntax("", "", False, "")
+"""A "null" syntax object for writing cleaner codes."""
 
 
 class ListenerEvent(StrEnum):

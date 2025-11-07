@@ -54,10 +54,8 @@ class ConstraintRule(Optimizable):
 
         try:
             result = self.constraint.test(view_snapshot)
-        except AlwaysTruthyException:
-            return True
-        except AlwaysFalsyException:
-            return False
+        except AlwaysBoolException as e:
+            return e.value
         except Exception as e:
             print(f"[{PLUGIN_NAME}] ConstraintRule Exception: {e}")
             return False
@@ -65,23 +63,21 @@ class ConstraintRule(Optimizable):
         return not result if self.inverted else result
 
     @classmethod
-    def make(cls, constraint_rule: StConstraintRule) -> Self:
+    def make(cls, constraint_rule: StConstraintRule) -> Self | None:
         """Build this object with the `constraint_rule`."""
-        obj = cls()
-        obj.src_setting = constraint_rule
+        constraint = constraint_rule.constraint
+        if not (constraint_class := find_constraint(constraint)):
+            Logger.log(f"❌ Unsupported constraint rule: {constraint}")
+            return None
 
-        obj.args = tuple(constraint_rule.args)
-        obj.kwargs = constraint_rule.kwargs
-        obj.inverted = constraint_rule.inverted
-
-        if constraint := constraint_rule.constraint:
-            obj.constraint_name = constraint
-            if constraint_class := find_constraint(constraint):
-                obj.constraint = constraint_class(*obj.args, **obj.kwargs)
-            else:
-                Logger.log(f"Unsupported constraint rule: {constraint}")
-
-        return obj
+        return cls(
+            constraint=constraint_class(*constraint_rule.args, **constraint_rule.kwargs),
+            constraint_name=constraint,
+            args=tuple(constraint_rule.args),
+            kwargs=constraint_rule.kwargs,
+            inverted=constraint_rule.inverted,
+            src_setting=constraint_rule,
+        )
 
 
 class AbstractConstraint(ABC):
@@ -172,9 +168,19 @@ class AbstractConstraint(ABC):
         return first_true(path.parents, pred=lambda p: checker(p / sibling))
 
 
-class AlwaysTruthyException(Exception):
-    """Used to indicate that the constraint returns `True` no matter it's inverted or not."""
+class AlwaysValueException[T](Exception, ABC):
+    """Used to indicate that the constraint returns a fixed value no matter it's inverted or not."""
+
+    value: T = ...  # type: ignore
 
 
-class AlwaysFalsyException(Exception):
-    """Used to indicate that the constraint returns `False` no matter it's inverted or not."""
+class AlwaysBoolException(AlwaysValueException[bool], ABC):
+    pass
+
+
+class AlwaysTruthyException(AlwaysBoolException):
+    value = True
+
+
+class AlwaysFalsyException(AlwaysBoolException):
+    value = False

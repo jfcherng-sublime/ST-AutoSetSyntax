@@ -422,7 +422,7 @@ def get_syntax_name(syntax: sublime.Syntax) -> str:
 
     @see https://github.com/sublimehq/sublime_text/issues/5560
     """
-    return syntax.name or Path(syntax.path).stem
+    return syntax.name or (Path(syntax.path).stem if syntax.path else "")
 
 
 def stringify(obj: Any) -> str:

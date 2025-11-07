@@ -10,10 +10,6 @@ assert __package__
 
 ################################################################################
 
-PY_SHORT_VERSION = "".join(map(str, sys.version_info[:2]))  # like "38" or "313"
-
-################################################################################
-
 VERSION_INFO = (5, 0, 1)
 VERSION = ".".join(map(str, VERSION_INFO))
 
@@ -24,6 +20,7 @@ ST_CHANNEL = sublime.channel()  # like "dev"
 ST_PLATFORM = sublime.platform()  # like "windows"
 ST_PLATFORM_ARCH = f"{ST_PLATFORM}_{ST_ARCH}"  # like "windows_x64"
 ST_VERSION = int(sublime.version())  # like 4113
+PY_VERSION_ABBREVAITED = "".join(map(str, sys.version_info[:2]))  # like "38" or "313"
 PY_VERSION_FULL = sys.version  # like "3.8.8 (default, Mar 10 2021, 13:30:47) [MSC v.1915 64 bit (AMD64)]"
 PY_VERSION = PY_VERSION_FULL.partition(" ")[0]  # like "3.8.8"
 
@@ -38,7 +35,7 @@ PLUGIN_CUSTOM_MODULE_PATHS = {
     "match": PLUGIN_CUSTOM_DIR / "matches",
 }
 
-PLUGIN_PY_LIBS_DIR_NAME = f"libs-py{PY_SHORT_VERSION}@{ST_PLATFORM_ARCH}"
+PLUGIN_PY_LIBS_DIR_NAME = f"libs-py{PY_VERSION_ABBREVAITED}@{ST_PLATFORM_ARCH}"
 PLUGIN_PY_LIBS_DIR = PLUGIN_STORAGE_DIR / PLUGIN_PY_LIBS_DIR_NAME
 PLUGIN_PY_LIBS_ZIP_NAME = f"{PLUGIN_PY_LIBS_DIR_NAME}.tar.xz"
 PLUGIN_PY_LIBS_URL = "https://github.com/{repo}/raw/{ref}/{file}".format(
