@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 5.0.2
+
+- fix: hidden syntaxes are not chosen
+- fix: regexes of rules for internal custom syntaxes
+
 ## 5.0.1
 
 - feat: add a rule for RSpec files
