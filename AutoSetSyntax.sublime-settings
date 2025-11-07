@@ -722,7 +722,7 @@
             "rules": [
                 {
                     "constraint": "first_line_contains_regex",
-                    "args": ["^# === [AutoSetSyntax] "]
+                    "args": ["^# === \\[AutoSetSyntax\\]"]
                 }
             ]
         },
@@ -733,7 +733,7 @@
             "rules": [
                 {
                     "constraint": "first_line_contains_regex",
-                    "args": ["^// [AutoSetSyntax] "]
+                    "args": ["^// \\[AutoSetSyntax\\]"]
                 }
             ]
         }
