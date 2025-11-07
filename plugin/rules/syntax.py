@@ -62,7 +62,7 @@ class SyntaxRule(Optimizable):
         obj.src_setting = syntax_rule
 
         obj.syntaxes_name = tuple(syntax_rule.syntaxes)
-        if target_syntax := find_syntax_by_syntax_likes(syntax_rule.syntaxes):
+        if target_syntax := find_syntax_by_syntax_likes(syntax_rule.syntaxes, include_hidden=True):
             obj.syntax = target_syntax
 
         # note that an empty string selector should match any scope
