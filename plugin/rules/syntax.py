@@ -104,6 +104,4 @@ class SyntaxRuleCollection(Optimizable):
     @classmethod
     def make(cls, syntax_rules: Iterable[StSyntaxRule]) -> Self:
         """Build this object with the `syntax_rules`."""
-        obj = cls()
-        obj.rules = tuple(map(SyntaxRule.make, syntax_rules))
-        return obj
+        return cls(rules=tuple(map(SyntaxRule.make, syntax_rules)))
