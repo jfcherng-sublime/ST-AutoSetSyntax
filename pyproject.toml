@@ -11,7 +11,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "mypy>=1.18",
+  "mypy>=1.19",
   "ruff>=0.14",
   "typing-extensions>=4.15",
   "vendorize<1",
