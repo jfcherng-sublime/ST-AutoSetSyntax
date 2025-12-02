@@ -486,7 +486,10 @@
             "rules": [
                 {
                     "constraint": "path_contains_regex",
-                    "args": ["/\\.ssh/config$"]
+                    "args": [
+                        "/\\.ssh/config$",
+                        "/ssh_config/.+\\.conf$",
+                    ]
                 }
             ]
         },
