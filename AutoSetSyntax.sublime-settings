@@ -488,7 +488,7 @@
                     "constraint": "path_contains_regex",
                     "args": [
                         "/\\.ssh/config$",
-                        "/ssh_config/.+\\.conf$",
+                        "/ssh_config\\.d/.+\\.conf$",
                     ]
                 }
             ]
