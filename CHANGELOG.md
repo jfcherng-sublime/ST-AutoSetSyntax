@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 5.0.4
+
+- fix: Debian SSH Includes (#27)
+
 ## 5.0.3
 
 - chore: add Debian SSH include folder to SSH Config rules (#26)
