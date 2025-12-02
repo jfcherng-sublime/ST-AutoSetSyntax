@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.11
+
+- chore: add Debian SSH include folder to SSH Config rules (#26)
+
 ## 4.3.10
 
 - fix: hidden syntaxes are not chosen
