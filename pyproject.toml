@@ -79,11 +79,12 @@ exclude = [
 select = [
   "E",
   "F",
-  "W",
-  "I",
-  "UP",
   "FURB",
+  "I",
+  "PERF",
   "SIM",
+  "UP",
+  "W",
 ]
 ignore = ["E203"]
 
