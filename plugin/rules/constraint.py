@@ -171,7 +171,7 @@ class AbstractConstraint(ABC):
 class AlwaysValueException[T](Exception, ABC):
     """Used to indicate that the constraint returns a fixed value no matter it's inverted or not."""
 
-    value: T = ...  # type: ignore
+    value: T
 
 
 class AlwaysBoolException(AlwaysValueException[bool], ABC):

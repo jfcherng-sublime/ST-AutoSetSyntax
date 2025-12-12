@@ -11,6 +11,7 @@ from .commands.auto_set_syntax import run_auto_set_syntax_on_view
 from .constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION, VIEW_KEY_IS_TRANSIENT
 from .helpers import is_syntaxable_view
 from .logger import Logger
+from .magika import get_magika_object
 from .rules import SyntaxRuleCollection, get_constraints, get_matches
 from .settings import get_merged_plugin_setting, pref_syntax_rules
 from .shared import G
@@ -21,9 +22,14 @@ from .utils import debounce, is_transient_view, stringify
 def set_up_window(window: sublime.Window) -> None:
     Logger.log(f"🤠 Howdy! This is {PLUGIN_NAME} {VERSION}. (Panel for {window})", window=window)
     Logger.log(
-        f"🌱 Environment: ST {ST_VERSION} ({ST_PLATFORM_ARCH} {ST_CHANNEL} build) with Python {PY_VERSION}",
+        f"🌱 Environment: ST {ST_VERSION} {ST_CHANNEL} build with Python {PY_VERSION} ({ST_PLATFORM_ARCH})",
         window=window,
     )
+    if magika_obj := get_magika_object():
+        Logger.log(
+            f"🔮 Magika is available. (v{magika_obj.get_module_version()} / {magika_obj.get_model_name()})",
+            window=window,
+        )
     compile_rules(window)
     Logger.log("🎉 Plugin is ready now!", window=window)
 

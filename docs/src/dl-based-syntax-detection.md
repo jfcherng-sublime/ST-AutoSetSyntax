@@ -59,7 +59,8 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
 
     Set `"magika.enabled"` to `true` in AutoSetSyntax's settings.
 
-After finishing all steps above, it should just work without restarting Sublime Text.
+1.  Restart Sublime Text.
+
 You may go [here](https://doc.rust-lang.org/rust-by-example/hello.html) to copy some Rust codes
 and paste them into Sublime Text to test whether this feature works.
 

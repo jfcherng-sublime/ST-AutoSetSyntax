@@ -15,8 +15,9 @@ from ..constants import (
     RE_VIM_SYNTAX_LINE,
     VIEW_KEY_IS_ASSIGNED,
 )
-from ..helpers import is_syntaxable_view, resolve_magika_label_with_syntax_map
+from ..helpers import is_syntaxable_view
 from ..logger import Logger
+from ..magika import get_magika_ignored_labels, get_magika_object, resolve_magika_label_with_syntax_map
 from ..rules import SyntaxRuleCollection
 from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
 from ..shared import G
@@ -260,7 +261,8 @@ def _assign_syntax_with_trimmed_filename(view_snapshot: ViewSnapshot, event: Lis
 
 def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
     if not (
-        (view := view_snapshot.valid_view)
+        (magika_obj := get_magika_object())
+        and (view := view_snapshot.valid_view)
         and (window := view.window())
         and (settings := get_merged_plugin_settings(window=window))
         and settings.get("magika.enabled")
@@ -275,17 +277,10 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
     ):
         return False
 
-    try:
-        from magika import ContentTypeLabel, Magika, PredictionMode
-    except ImportError as e:
-        Logger.log(f"💣 Error occured while importing Magika: {e}", window=window)
-        return False
-
-    magika = Magika(prediction_mode=PredictionMode.HIGH_CONFIDENCE)
     if view_snapshot.path_obj and not view.is_dirty():
-        magika_result = magika.identify_path(view_snapshot.path_obj)
+        magika_result = magika_obj.identify_path(view_snapshot.path_obj)
     else:
-        magika_result = magika.identify_bytes(ensure_trailing_newline(view_snapshot.content_bytes))
+        magika_result = magika_obj.identify_bytes(ensure_trailing_newline(view_snapshot.content_bytes))
     if not magika_result.ok:
         Logger.log(f"😢 Magika failed: {magika_result.status}", window=window)
         return False
@@ -297,13 +292,7 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
     magika_score = magika_result.score  # range: 0.0 ~ 1.0
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
-    if magika_score < threadshold or magika_label in {
-        ContentTypeLabel.DIRECTORY,
-        ContentTypeLabel.EMPTY,
-        ContentTypeLabel.TXT,
-        ContentTypeLabel.UNDEFINED,
-        ContentTypeLabel.UNKNOWN,
-    }:
+    if magika_score < threadshold or magika_label in get_magika_ignored_labels():
         return False
 
     syntax_map: dict[str, list[str]] = extract_prefixed_dict(settings, prefix="magika.syntax_map.")
