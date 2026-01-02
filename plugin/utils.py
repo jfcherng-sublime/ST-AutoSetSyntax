@@ -405,10 +405,9 @@ def rmtree_ex(path: str | Path, ignore_errors: bool = False) -> None:
         path = Rf"\\?\{path}"  # use UNC path to resolve Windows long path issue
 
     def onexc(func: Callable, path: str | Path, exec_info: Any) -> None:
-        # Is the error an access error ?
-        os.chmod(path, stat.S_IWUSR)
         try:
-            func(path)  # Will scream if still not possible to delete.
+            os.chmod(path, stat.S_IWUSR)
+            func(path)  # will scream if still not possible to delete.
         except Exception:
             if not ignore_errors:
                 raise
