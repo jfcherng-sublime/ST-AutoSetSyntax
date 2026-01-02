@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 5.0.5
+
+- chore: sync `magika` supported syntaxes
+
 ## 5.0.4
 
 - fix: Debian SSH Includes (#27)
