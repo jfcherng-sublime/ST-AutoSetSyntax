@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 5.0.6
+
+- fix: `magika` downloading failed for the first time
+
 ## 5.0.5
 
 - chore: sync `magika` supported syntaxes
