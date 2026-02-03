@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...constants import ST_ARCH
 from ...snapshot import ViewSnapshot
@@ -15,8 +15,10 @@ class IsArchConstraint(AbstractConstraint):
         self.names = set(map(str.lower, self._handled_args()))
         self.result = ST_ARCH in self.names
 
+    @override
     def is_droppable(self) -> bool:
         return not self.names
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         return self.result

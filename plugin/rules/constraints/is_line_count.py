@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any, final
+from typing import Any, final, override
 
 from ...snapshot import ViewSnapshot
+from ...types import Comparator
 from ..constraint import AbstractConstraint
-
-type Comparator = Callable[[Any, Any], bool]
 
 
 @final
@@ -25,9 +23,11 @@ class IsLineCountConstraint(AbstractConstraint):
         self.comparator = self._handled_comparator(comparator)
         self.threshold = float(threshold)
 
+    @override
     def is_droppable(self) -> bool:
         return not (self.comparator and self.threshold is not None)
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.comparator
         return self.comparator(view_snapshot.line_count, self.threshold)

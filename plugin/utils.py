@@ -1,4 +1,5 @@
 # This file is more self-sustained and shouldn't use things from other higher-level modules.
+
 from __future__ import annotations
 
 import inspect
@@ -13,7 +14,7 @@ from collections.abc import Callable, Generator, Iterable, Mapping
 from functools import cache, cmp_to_key, reduce, wraps
 from pathlib import Path
 from re import Pattern
-from typing import Any, cast
+from typing import Any
 
 import sublime
 from more_itertools import first_true, unique_everseen
@@ -37,9 +38,11 @@ def snake_to_camel(s: str, *, upper_first: bool = True) -> str:
 
 def ensure_trailing_newline[T: (str, bytes)](content: T) -> T:
     """Ensures that the content ends with a newline."""
-    if isinstance(content, str):
-        return content if content.endswith("\n") else content + "\n"
-    return content if content.endswith(b"\n") else content + b"\n"
+    match content:
+        case str():
+            return content if content.endswith("\n") else content + "\n"
+        case bytes():
+            return content if content.endswith(b"\n") else content + b"\n"
 
 
 @clearable_lru_cache()
@@ -58,9 +61,13 @@ def drop_falsy[T](iterable: Iterable[T | None]) -> Generator[T]:
 
 
 def get_fqcn(obj: Any) -> str:
-    if obj is None:
-        return "None"
-    cls = obj if isinstance(obj, type) else type(obj)
+    match obj:
+        case None:
+            return "None"
+        case type():
+            cls = obj
+        case _:
+            cls = type(obj)
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
@@ -92,7 +99,7 @@ def parse_regex_flags(flags: Iterable[str]) -> int:
     `A`, `ASCII`, `DEBUG`, `I`, `IGNORECASE`, `L`, `LOCALE`, `M`, `MULTILINE`,
     `S`, `DOTALL`, `X`, `VERBOSE`, `U`, `UNICODE`.
 
-    @see https://docs.python.org/3.8/library/re.html#re.A
+    @see https://docs.python.org/3.13/library/re.html#re.A
     """
     if isinstance(flags, str):
         flags = (flags,)
@@ -131,7 +138,7 @@ def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
             setattr(debounced, "_timer", timer)
 
         setattr(debounced, "_timer", None)
-        return cast(T, debounced)
+        return debounced  # type: ignore[return-value]
 
     return decorator
 
@@ -195,23 +202,19 @@ def find_syntaxes_by_syntax_like(
     all_syntaxes = get_sorted_syntaxes()
 
     def find_like(like: SyntaxLike) -> Generator[sublime.Syntax]:
-        if isinstance(like, sublime.Syntax):
-            yield like
-            return
-
-        # by scope
-        if like.startswith("scope:"):
-            yield from sublime.find_syntax_by_scope(like[6:])
-            return
-
-        like_cf = like.casefold()
-
-        # by name
-        yield from sublime.find_syntax_by_name(like)
-        # by name (case-insensitive)
-        yield from filter(lambda syntax: like_cf == get_syntax_name(syntax).casefold(), all_syntaxes)
-        # by partial path
-        yield from filter(lambda syntax: like in syntax.path, all_syntaxes)
+        match like:
+            case sublime.Syntax():
+                yield like
+            case str() if like.startswith("scope:"):
+                yield from sublime.find_syntax_by_scope(like[6:])
+            case str():
+                like_cf = like.casefold()
+                # by name
+                yield from sublime.find_syntax_by_name(like)
+                # by name (case-insensitive)
+                yield from filter(lambda syntax: like_cf == get_syntax_name(syntax).casefold(), all_syntaxes)
+                # by partial path
+                yield from filter(lambda syntax: like in syntax.path, all_syntaxes)
 
     def filter_like(syntax: sublime.Syntax) -> bool:
         return (include_hidden or not syntax.hidden) and (include_plaintext or not is_plaintext_syntax(syntax))
@@ -261,13 +264,15 @@ def extract_prefixed_dict[T](dict_: Mapping[str, T], *, prefix: str) -> dict[str
 
 
 def resolve_window(obj: sublime.Buffer | sublime.View | sublime.Sheet | sublime.Window) -> sublime.Window | None:
-    if isinstance(obj, sublime.Window):
-        return obj
-    if isinstance(obj, (sublime.View, sublime.Sheet)):
-        return obj.window()
-    if isinstance(obj, sublime.Buffer):
-        return obj.primary_view().window()
-    return None
+    match obj:
+        case sublime.Window():
+            return obj
+        case sublime.View() | sublime.Sheet():
+            return obj.window()
+        case sublime.Buffer():
+            return obj.primary_view().window()
+        case _:
+            return None
 
 
 def list_all_views(*, include_transient: bool = False) -> Generator[sublime.View]:

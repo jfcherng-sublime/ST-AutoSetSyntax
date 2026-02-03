@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
@@ -13,5 +13,6 @@ class FirstLineContainsRegexConstraint(AbstractConstraint):
 
         self.regex = self._handled_regex(self.args, self.kwargs)
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         return bool(self.regex.search(view_snapshot.first_line))

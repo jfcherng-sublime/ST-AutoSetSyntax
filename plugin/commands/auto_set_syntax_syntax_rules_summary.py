@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import override
 
 import sublime
 import sublime_plugin
@@ -12,9 +13,11 @@ from ..types import StSyntaxRule
 
 
 class AutoSetSyntaxSyntaxRulesSummaryCommand(sublime_plugin.WindowCommand):
+    @override
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Syntax Rules Summary"
 
+    @override
     def run(self) -> None:
         if not (rule_collection := G.syntax_rule_collections.get(self.window)):
             return

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from more_itertools import nth
 
@@ -16,9 +16,11 @@ class ContainsRegexConstraint(AbstractConstraint):
         self.regex = self._handled_regex(self.args, self.kwargs)
         self.threshold: int = kwargs.get("threshold", 1)
 
+    @override
     def is_droppable(self) -> bool:
         return not isinstance(self.threshold, (int, float))
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if self.threshold <= 0:
             return True

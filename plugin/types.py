@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections import UserDict
-from collections.abc import Generator, KeysView
+from collections.abc import Callable, Generator, KeysView
 from enum import StrEnum
-from typing import Any, Self, overload
+from typing import Any, overload
 
 import sublime
+from more_itertools import always_iterable
 from pydantic import BaseModel, Field, field_validator
 
+type Comparator = Callable[[Any, Any], bool]
 type SyntaxLike = str | sublime.Syntax
 type WindowId = int
 type WindowIdAble = WindowId | sublime.Window
@@ -31,13 +33,6 @@ class ListenerEvent(StrEnum):
     REVERT = "revert"
     SAVE = "save"
     UNTRANSIENTIZE = "untransientize"
-
-    @classmethod
-    def from_value(cls, value: Any) -> Self | None:
-        try:
-            return cls(value)
-        except ValueError:
-            return None
 
 
 class Optimizable(ABC):
@@ -94,7 +89,7 @@ class StSyntaxRule(StMatchRule):
     @field_validator("syntaxes", "on_events", mode="before")
     @classmethod
     def str_to_list_str(cls, v: Any) -> list[str]:
-        return [v] if isinstance(v, str) else v
+        return list(always_iterable(v, base_type=str))
 
 
 class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):

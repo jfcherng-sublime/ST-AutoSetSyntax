@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
@@ -13,9 +13,11 @@ class PathContainsConstraint(AbstractConstraint):
 
         self.needles: tuple[str, ...] = self._handled_args()
 
+    @override
     def is_droppable(self) -> bool:
         return not self.needles
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not (file_path := view_snapshot.file_path):
             raise AlwaysFalsyException("file not on disk")

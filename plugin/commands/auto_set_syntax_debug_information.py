@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, override
 
 import sublime_plugin
 
@@ -49,9 +49,11 @@ def _pythonize(d: Mapping[str, Any]) -> dict[str, str]:
 
 
 class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
+    @override
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Debug Information"
 
+    @override
     def run(self) -> None:
         info: dict[str, Any] = {}
 

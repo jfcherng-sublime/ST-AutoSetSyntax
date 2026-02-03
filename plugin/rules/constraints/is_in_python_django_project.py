@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import final
+from typing import final, override
+
+from more_itertools import first_true
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
@@ -11,9 +13,10 @@ from ..constraint import AbstractConstraint, AlwaysFalsyException
 class IsInPythonDjangoProjectConstraint(AbstractConstraint):
     """Check whether this file is in a (Python) Django project."""
 
-    _success_dirs: set[Path] = set()
+    _successed_dirs: set[Path] = set()
     """Cached directories which make the result `True`."""
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         cls = self.__class__
 
@@ -23,7 +26,7 @@ class IsInPythonDjangoProjectConstraint(AbstractConstraint):
         file_path = Path(_file_path)
 
         # fast check from the cache
-        if any(map(lambda p: p in cls._success_dirs, file_path.parents)):
+        if first_true(file_path.parents, pred=lambda p: p in cls._successed_dirs):
             return True
 
         # [projectname]/         <- project root
@@ -39,7 +42,7 @@ class IsInPythonDjangoProjectConstraint(AbstractConstraint):
                 continue
             for sub_dir in filter(Path.is_dir, parent.glob("*")):
                 if all((sub_dir / file).is_file() for file in ("settings.py", "urls.py", "wsgi.py")):
-                    cls._success_dirs.add(parent)
+                    cls._successed_dirs.add(parent)
                     return True
 
         return False

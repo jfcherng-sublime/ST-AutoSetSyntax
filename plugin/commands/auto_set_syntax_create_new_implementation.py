@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
+from typing import override
 
 import sublime
 import sublime_plugin
@@ -17,9 +18,11 @@ class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
     template_syntax: str | None = None
     save_dir = ""
 
+    @override
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Create New {self.template_type}"
 
+    @override
     def run(self) -> None:
         if not _clone_file_as_template(
             self.window,

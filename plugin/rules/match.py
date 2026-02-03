@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from typing import Any, Self, final
+from typing import Any, Self, final, override
 
 from more_itertools import first_true
 
@@ -39,9 +39,11 @@ class MatchRule(Optimizable):
     src_setting: StMatchRule | None = None
     """The source setting object."""
 
+    @override
     def is_droppable(self) -> bool:
         return not (self.rules and self.match and not self.match.is_droppable(self.rules))
 
+    @override
     def optimize(self) -> Generator[Optimizable]:
         rules: list[MatchableRule] = []
         for rule in self.rules:

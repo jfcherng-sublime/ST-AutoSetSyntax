@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
@@ -16,9 +16,11 @@ class IsNameConstraint(AbstractConstraint):
         self.case_insensitive = self._handled_case_insensitive(kwargs)
         self.names = set(map(str.lower, names) if self.case_insensitive else names)
 
+    @override
     def is_droppable(self) -> bool:
         return not self.names
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not (file_name := view_snapshot.file_name):
             raise AlwaysFalsyException("file not on disk")

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import final
+from typing import final, override
 
 from ...snapshot import ViewSnapshot
 from ..match import AbstractMatch, MatchableRule
@@ -10,8 +10,10 @@ from ..match import AbstractMatch, MatchableRule
 class AnyMatch(AbstractMatch):
     """Matches when any rule is matched."""
 
+    @override
     def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         return len(rules) == 0
 
+    @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
         return any(rule.test(view_snapshot) for rule in rules)

@@ -13,6 +13,10 @@ from pydantic import TypeAdapter
 from .types import StSyntaxRule
 from .utils import drop_falsy
 
+type SettingsDict = MutableMapping[str, Any]
+type MergedSettingsDict = Mapping[str, Any]
+type WindowId = int
+
 
 def get_merged_plugin_setting(
     key: str,
@@ -67,11 +71,6 @@ def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
     )
 
     return ret
-
-
-SettingsDict = MutableMapping[str, Any]
-MergedSettingsDict = Mapping[str, Any]
-WindowId = int
 
 
 class AioSettings(sublime_plugin.EventListener):

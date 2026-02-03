@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...settings import pref_trim_suffixes
 from ...snapshot import ViewSnapshot
@@ -22,9 +22,11 @@ class IsExtensionConstraint(AbstractConstraint):
         self.exts: tuple[str, ...] = self._handled_args(_extensionize)
         self.exts = tuple(map(self.fix_case, self.exts))
 
+    @override
     def is_droppable(self) -> bool:
         return not self.exts
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not ((view := view_snapshot.valid_view) and (window := view.window())):
             raise AlwaysFalsyException("view has been closed")

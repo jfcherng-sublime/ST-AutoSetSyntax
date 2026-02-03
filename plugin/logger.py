@@ -4,7 +4,7 @@ import math
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Final
+from typing import Final, override
 
 import sublime
 import sublime_plugin
@@ -103,9 +103,11 @@ class Logger:
 class AutoSetSyntaxUpdateLogCommand(sublime_plugin.TextCommand):
     """Internal use only."""
 
+    @override
     def is_visible(self) -> bool:
         return False
 
+    @override
     def run(self, edit: sublime.Edit, region: list[int], msg: str) -> None:
         with _editable_view(self.view):
             self.view.replace(edit, sublime.Region(*region), msg)
@@ -114,9 +116,11 @@ class AutoSetSyntaxUpdateLogCommand(sublime_plugin.TextCommand):
 class AutoSetSyntaxAppendLogCommand(sublime_plugin.WindowCommand):
     """Internal use only."""
 
+    @override
     def is_visible(self) -> bool:
         return False
 
+    @override
     def run(self, msg: str, squash_history: bool = True) -> None:
         if not (panel := _find_log_panel(self.window)):
             panel = _create_log_panel(self.window)
@@ -138,12 +142,15 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.WindowCommand):
 class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.WindowCommand):
     """Clear the plugin log panel for the current window."""
 
+    @override
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Clear Log Panel"
 
+    @override
     def is_enabled(self) -> bool:
         return bool(_find_log_panel(self.window))
 
+    @override
     def run(self, *, from_logger: bool = False) -> None:
         # ensure command is triggered by the logger so that we can maintain internal states
         if not from_logger:
@@ -157,11 +164,14 @@ class AutoSetSyntaxClearLogPanelCommand(sublime_plugin.WindowCommand):
 class AutoSetSyntaxToggleLogPanelCommand(sublime_plugin.WindowCommand):
     """Toggle the visibility of the plugin log panel for the current window."""
 
+    @override
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Toggle Log Panel"
 
+    @override
     def is_enabled(self) -> bool:
         return bool(_find_log_panel(self.window))
 
+    @override
     def run(self) -> None:
         self.window.run_command("show_panel", {"panel": f"output.{PLUGIN_NAME}", "toggle": True})

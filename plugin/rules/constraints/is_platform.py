@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...constants import ST_PLATFORM
 from ...snapshot import ViewSnapshot
@@ -15,8 +15,10 @@ class IsPlatformConstraint(AbstractConstraint):
         self.names = set(map(str.lower, self._handled_args()))
         self.result = ST_PLATFORM in self.names
 
+    @override
     def is_droppable(self) -> bool:
         return not self.names
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         return self.result

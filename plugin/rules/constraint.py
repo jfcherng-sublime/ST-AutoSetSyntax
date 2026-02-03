@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Self, final
+from typing import Any, Self, final, override
 
 from more_itertools import first_true
 
@@ -42,9 +42,11 @@ class ConstraintRule(Optimizable):
     src_setting: StConstraintRule | None = None
     """The source setting object."""
 
+    @override
     def is_droppable(self) -> bool:
         return not (self.constraint and not self.constraint.is_droppable())
 
+    @override
     def optimize(self) -> Generator[Optimizable]:
         return
         yield
@@ -116,23 +118,41 @@ class AbstractConstraint(ABC):
             args = map(normalizer, args)
         return tuple(args)
 
+    _COMPARATORS: dict[str, Callable[[Any, Any], bool]] = {
+        "<": operator.lt,
+        "lt": operator.lt,
+        # ...
+        "<=": operator.le,
+        "le": operator.le,
+        "lte": operator.le,
+        # ...
+        ">=": operator.ge,
+        "ge": operator.ge,
+        "gte": operator.ge,
+        # ...
+        ">": operator.gt,
+        "gt": operator.gt,
+        # ...
+        "=": operator.eq,
+        "==": operator.eq,
+        "===": operator.eq,
+        "eq": operator.eq,
+        "is": operator.eq,
+        # ...
+        "!": operator.ne,
+        "!=": operator.ne,
+        "!==": operator.ne,
+        "<>": operator.ne,
+        "ne": operator.ne,
+        "neq": operator.ne,
+        "not": operator.ne,
+    }
+
     @final
     @staticmethod
     def _handled_comparator(comparator: str) -> Callable[[Any, Any], bool] | None:
         """Convert the comparator string into a callable."""
-        if comparator in {"<", "lt"}:
-            return operator.lt
-        if comparator in {"<=", "le", "lte"}:
-            return operator.le
-        if comparator in {">=", "ge", "gte"}:
-            return operator.ge
-        if comparator in {">", "gt"}:
-            return operator.gt
-        if comparator in {"=", "==", "===", "eq", "is"}:
-            return operator.eq
-        if comparator in {"!", "!=", "!==", "<>", "ne", "neq", "not"}:
-            return operator.ne
-        return None
+        return AbstractConstraint._COMPARATORS.get(comparator)
 
     @final
     @staticmethod
@@ -166,6 +186,29 @@ class AbstractConstraint(ABC):
             checker = Path.is_file
 
         return first_true(path.parents, pred=lambda p: checker(p / sibling))
+
+    @final
+    def find_parent_with_sibling_cached(
+        self,
+        view_snapshot: ViewSnapshot,
+        true_siblings: set[Path],
+        sibling: str,
+        *,
+        use_exists: bool = False,
+    ) -> bool:
+        """Test whether the view's file is under a parent directory containing `sibling`, with caching."""
+        if not (_file_path := view_snapshot.file_path):
+            raise AlwaysFalsyException("file not on disk")
+        file_path = Path(_file_path)
+
+        if first_true(file_path.parents, pred=lambda p: p in true_siblings):
+            return True
+
+        if _found_sibling := self.find_parent_with_sibling(file_path, sibling, use_exists=use_exists):
+            true_siblings.add(_found_sibling)
+            return True
+
+        return False
 
 
 class AlwaysValueException[T](Exception, ABC):

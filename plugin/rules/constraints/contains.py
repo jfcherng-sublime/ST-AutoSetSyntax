@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from more_itertools import nth
 
@@ -17,9 +17,11 @@ class ContainsConstraint(AbstractConstraint):
         self.needles: tuple[str, ...] = self._handled_args()
         self.threshold: int = kwargs.get("threshold", 1)
 
+    @override
     def is_droppable(self) -> bool:
         return not (self.needles and isinstance(self.threshold, (int, float)))
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if self.threshold <= 0:
             return True

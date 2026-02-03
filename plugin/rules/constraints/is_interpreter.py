@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...snapshot import ViewSnapshot
 from ...utils import compile_regex, merge_literals_to_regex, merge_regexes
@@ -28,8 +28,10 @@ class IsInterpreterConstraint(AbstractConstraint):
             ))
         )
 
+    @override
     def is_droppable(self) -> bool:
         return not self.first_line_regex
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         return bool(self.first_line_regex.search(view_snapshot.first_line))

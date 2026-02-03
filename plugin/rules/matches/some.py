@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from more_itertools import nth
 
@@ -17,8 +17,10 @@ class SomeMatch(AbstractMatch):
 
         self.count: float = nth(self.args, 0) or -1
 
+    @override
     def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         return not (0 <= self.count <= len(rules))
 
+    @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
         return self.test_count(view_snapshot, rules, self.count)

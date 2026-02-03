@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from collections.abc import Generator, Iterable
 from dataclasses import dataclass
-from typing import Self
+from typing import Self, override
 
 import sublime
-from more_itertools import first_true
+from more_itertools import first_true, map_except
 
 from ..constants import VERSION
 from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent, Optimizable, StSyntaxRule
-from ..utils import drop_falsy, find_syntax_by_syntax_likes
+from ..utils import find_syntax_by_syntax_likes
 from .match import MatchRule
 
 
@@ -27,9 +27,11 @@ class SyntaxRule(Optimizable):
     src_setting: StSyntaxRule | None = None
     """The source setting object."""
 
+    @override
     def is_droppable(self) -> bool:
         return not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule)
 
+    @override
     def optimize(self) -> Generator[Optimizable]:
         if self.root_rule:
             if self.root_rule.is_droppable():
@@ -69,7 +71,7 @@ class SyntaxRule(Optimizable):
         this.selector = syntax_rule.selector
 
         if (on_events := syntax_rule.on_events) is not None:
-            this.on_events = set(drop_falsy(map(ListenerEvent.from_value, on_events)))
+            this.on_events = set(map_except(ListenerEvent, on_events, ValueError))
 
         if match_rule_compiled := MatchRule.make(syntax_rule):
             this.root_rule = match_rule_compiled
@@ -85,6 +87,7 @@ class SyntaxRuleCollection(Optimizable):
     def __len__(self) -> int:
         return len(self.rules)
 
+    @override
     def optimize(self) -> Generator[Optimizable]:
         rules: list[SyntaxRule] = []
         for rule in self.rules:

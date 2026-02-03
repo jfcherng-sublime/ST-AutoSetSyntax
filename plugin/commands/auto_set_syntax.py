@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from itertools import chain
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 import sublime
 import sublime_plugin
@@ -37,9 +37,11 @@ from ..utils import (
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
+    @override
     def description(self) -> str:
         return f"{PLUGIN_NAME}: Auto Set Syntax"
 
+    @override
     def run(self, edit: sublime.Edit) -> None:
         run_auto_set_syntax_on_view(self.view, ListenerEvent.COMMAND, must_plaintext=False)
 

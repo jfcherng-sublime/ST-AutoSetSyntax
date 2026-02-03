@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, final
+from typing import Any, final, override
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
@@ -16,9 +16,11 @@ class RelativeExistsConstraint(AbstractConstraint):
         self.match: str = kwargs.get("match", "any").lower()
         self.matcher = all if self.match == "all" else any
 
+    @override
     def is_droppable(self) -> bool:
         return not self.relatives
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         # file not on disk, maybe just a buffer
         if not (file_path := view_snapshot.file_path):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint, AlwaysFalsyException
@@ -13,6 +13,7 @@ class NameContainsRegexConstraint(AbstractConstraint):
 
         self.regex = self._handled_regex(self.args, self.kwargs)
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not (file_name := view_snapshot.file_name):
             raise AlwaysFalsyException("file not on disk")

@@ -17,6 +17,7 @@ make install-dev    # install dev dependencies
 make ci-check       # run mypy + ruff lint + ruff format checks (read-only)
 make ci-fix         # auto-fix ruff lint and format issues
 make ci-fix-unsafe  # same but with ruff --unsafe-fixes
+make test           # unittest
 ```
 
 Individual tools:

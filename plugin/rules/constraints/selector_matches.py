@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 import sublime
 
@@ -38,9 +38,11 @@ class SelectorMatchesConstraint(AbstractConstraint):
 
         self.candidates: tuple[str, ...] = self._handled_args()
 
+    @override
     def is_droppable(self) -> bool:
         return not self.candidates
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not (syntax := view_snapshot.syntax):
             raise AlwaysFalsyException(f"{view_snapshot.view} has no syntax")

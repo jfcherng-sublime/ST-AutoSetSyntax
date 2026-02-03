@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, final
+from typing import Any, final, override
 
 from more_itertools import nth
 
@@ -19,8 +19,10 @@ class RatioMatch(AbstractMatch):
         self.denominator: float = nth(self.args, 1) or 0
         self.ratio: float = (self.numerator / self.denominator) if self.denominator else -1
 
+    @override
     def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
         return not (self.denominator > 0 and 0 <= self.ratio <= 1)
 
+    @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
         return self.test_count(view_snapshot, rules, self.ratio * len(rules))

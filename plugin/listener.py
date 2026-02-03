@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
 from functools import wraps
-from typing import Any, cast
+from typing import Any
 
 import sublime
 import sublime_plugin
@@ -78,7 +78,7 @@ def _configured_debounce[T: Callable](func: T) -> T:
             return debounce(time_s)(func)(*args, **kwargs)
         return func(*args, **kwargs)
 
-    return cast(T, debounced)
+    return debounced  # type: ignore[return-value]
 
 
 def _guarantee_primary_view[T: Callable](*, must_plaintext: bool = False) -> Callable[[T], T]:
@@ -93,7 +93,7 @@ def _guarantee_primary_view[T: Callable](*, must_plaintext: bool = False) -> Cal
             ):
                 func(self, view, *args, **kwargs)
 
-        return cast(T, wrapped)
+        return wrapped  # type: ignore[return-value]
 
     return decorator
 

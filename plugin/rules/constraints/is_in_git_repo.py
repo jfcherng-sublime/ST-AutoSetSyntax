@@ -1,34 +1,20 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import final
+from typing import final, override
 
 from ...snapshot import ViewSnapshot
-from ..constraint import AbstractConstraint, AlwaysFalsyException
+from ..constraint import AbstractConstraint
 
 
 @final
 class IsInGitRepoConstraint(AbstractConstraint):
     """Check whether this file is in a git repo."""
 
-    _success_dirs: set[Path] = set()
+    _successed_dirs: set[Path] = set()
     """Cached directories which make the result `True`."""
 
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        cls = self.__class__
-
-        # file not on disk, maybe just a buffer
-        if not (_file_path := view_snapshot.file_path):
-            raise AlwaysFalsyException("file not on disk")
-        file_path = Path(_file_path)
-
-        # fast check from the cache
-        if any(map(lambda p: p in cls._success_dirs, file_path.parents)):
-            return True
-
         # `.git/` directory for normal Git repo and `.git` file for Git worktree
-        if _major_dir := self.find_parent_with_sibling(file_path, ".git", use_exists=True):
-            cls._success_dirs.add(_major_dir)
-            return True
-
-        return False
+        return self.find_parent_with_sibling_cached(view_snapshot, self._successed_dirs, ".git", use_exists=True)

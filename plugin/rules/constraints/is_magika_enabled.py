@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import final
+from typing import final, override
 
 from ...settings import get_merged_plugin_setting
 from ...snapshot import ViewSnapshot
@@ -9,6 +9,7 @@ from ..constraint import AbstractConstraint
 
 @final
 class IsMagikaEnabledConstraint(AbstractConstraint):
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not ((view := view_snapshot.valid_view) and (window := view.window())):
             return False
