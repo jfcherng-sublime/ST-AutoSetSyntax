@@ -17,3 +17,6 @@ venv/
 # git worktrees
 br-*/
 branch-*/
+
+# others
+.claude/
