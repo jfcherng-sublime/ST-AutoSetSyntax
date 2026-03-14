@@ -12,7 +12,8 @@ dependencies = [
 [dependency-groups]
 dev = [
   "mypy>=1.19",
-  "ruff>=0.14",
+  "pytest>=9",
+  "ruff>=0.15",
   "typing-extensions>=4.15",
   "vendorize<1",
 ]
@@ -26,6 +27,10 @@ docs = [
 
 [tool.uv]
 default-groups = ["dev"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.mypy]
 # ignore_missing_imports = False

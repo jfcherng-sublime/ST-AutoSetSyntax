@@ -37,6 +37,10 @@ vendorize:
 
 ci-base-cmd = uv run --dev
 
+.PHONY: test
+test:
+	$(ci-base-cmd) pytest
+
 .PHONY: ci-check
 ci-check:
 	@echo "========== check: mypy =========="
