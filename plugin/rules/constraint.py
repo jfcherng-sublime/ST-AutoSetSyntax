@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import operator
 import re
 from abc import ABC, abstractmethod

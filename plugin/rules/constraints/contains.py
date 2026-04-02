@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, final, override
 
 from more_itertools import nth

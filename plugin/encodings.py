@@ -1,6 +1,5 @@
 # This file is taken from https://github.com/SublimeText/sublime_lib/blob/v1.5.2/st3/sublime_lib/encodings.py
 
-from __future__ import annotations
 
 from codecs import lookup
 

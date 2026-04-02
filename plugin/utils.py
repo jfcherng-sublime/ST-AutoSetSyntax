@@ -1,7 +1,5 @@
 # This file is more self-sustained and shouldn't use things from other higher-level modules.
 
-from __future__ import annotations
-
 import inspect
 import operator
 import os

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import final, override
 
 from ...settings import get_merged_plugin_setting

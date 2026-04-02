@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .all import AllMatch
 from .any import AnyMatch
 from .ratio import RatioMatch

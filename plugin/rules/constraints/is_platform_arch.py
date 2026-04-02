@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, final, override
 
 from ...constants import ST_PLATFORM_ARCH

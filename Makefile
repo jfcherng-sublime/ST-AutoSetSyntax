@@ -68,7 +68,7 @@ ci-fix-unsafe:
 # docs #
 # ---- #
 
-docs-base-cmd = UV_PROJECT_ENVIRONMENT="$(VENV_DOCS)" uv run --python cp313 --only-group docs --directory "docs/"
+docs-base-cmd = UV_PROJECT_ENVIRONMENT="$(VENV_DOCS)" uv run --python cp314 --only-group docs --directory "docs/"
 
 .PHONY: docs-serve
 docs-serve:

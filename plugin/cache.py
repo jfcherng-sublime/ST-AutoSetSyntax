@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from collections.abc import Callable
 from functools import _lru_cache_wrapper, lru_cache
 from typing import Any

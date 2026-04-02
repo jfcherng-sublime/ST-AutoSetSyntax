@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .constraint import AbstractConstraint, ConstraintRule, find_constraint, get_constraints
 from .constraints import *  # noqa: F401, F403
 from .match import AbstractMatch, MatchableRule, MatchRule, find_match, get_matches

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from collections import UserDict
 from collections.abc import Callable, Generator, KeysView
@@ -90,6 +88,9 @@ class StSyntaxRule(StMatchRule):
     @classmethod
     def str_to_list_str(cls, v: Any) -> list[str]:
         return list(always_iterable(v, base_type=str))
+
+
+StMatchRule.model_rebuild()
 
 
 class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .contains import ContainsConstraint
 from .contains_regex import ContainsRegexConstraint
 from .first_line_contains import FirstLineContainsConstraint
