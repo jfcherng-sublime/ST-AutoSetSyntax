@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 6.0.0
+
+- refactor: requires py314 (ST >= 4203)
+
 ## 5.0.6
 
 - fix: `magika` downloading failed for the first time
