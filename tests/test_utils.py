@@ -1,7 +1,5 @@
 """Tests for pure utility functions in plugin/utils.py."""
 
-from __future__ import annotations
-
 import re
 
 import pytest

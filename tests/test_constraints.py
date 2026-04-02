@@ -1,7 +1,5 @@
 """Tests for built-in constraint implementations."""
 
-from __future__ import annotations
-
 import pytest
 
 from plugin.rules.constraint import AlwaysFalsyException

@@ -1,7 +1,5 @@
 """Tests for match combinators (any, all, some, ratio) and the test_count algorithm."""
 
-from __future__ import annotations
-
 import pytest
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

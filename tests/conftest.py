@@ -3,8 +3,6 @@ Inject minimal sublime / sublime_plugin stubs into sys.modules before any
 plugin code is imported, so that unit tests can run outside Sublime Text.
 """
 
-from __future__ import annotations
-
 import importlib.machinery
 import importlib.util
 import sys
