@@ -69,3 +69,14 @@ Magika (Google's deep-learning file type detector) is an optional dependency dow
 ### Vendored Dependencies
 
 `plugin/_vendor/` contains vendored Python packages (managed via `vendorize.toml`). Ignored by mypy and ruff.
+
+## Approach
+
+- Think before acting. Read existing files before writing code.
+- Be concise in output but thorough in reasoning.
+- Prefer editing over rewriting whole files.
+- Do not re-read files you have already read unless the file may have changed.
+- Test your code before declaring done.
+- No sycophantic openers or closing fluff.
+- Keep solutions simple and direct.
+- User instructions always override this file.
