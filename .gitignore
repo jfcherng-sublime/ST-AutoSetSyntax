@@ -15,6 +15,7 @@ venv-*/
 venv/
 
 # git worktrees
+.worktrees/
 br-*/
 branch-*/
 
