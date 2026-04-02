@@ -5,7 +5,7 @@ description = "Automatically sets syntax based on various strategies."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-  "more-itertools>=10,<11",
+  "more-itertools==11.*",
   "pydantic>=2,<3",
 ]
 
