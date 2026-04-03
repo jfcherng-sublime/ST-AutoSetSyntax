@@ -57,7 +57,7 @@ class ConstraintRule(Optimizable):
         except AlwaysBoolException as e:
             return e.value
         except Exception as e:
-            print(f"[{PLUGIN_NAME}] ConstraintRule Exception: {e}")
+            Logger.log(f"[{PLUGIN_NAME}] ConstraintRule Exception: {e}")
             return False
 
         return not result if self.inverted else result
