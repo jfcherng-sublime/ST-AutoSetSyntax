@@ -42,7 +42,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Do unit test
         run: |
-          make test
+          make ci-test
       - name: Do linting
         run: |
           make ci-check

@@ -37,8 +37,8 @@ vendorize:
 
 ci-base-cmd = uv run --dev
 
-.PHONY: test
-test:
+.PHONY: ci-test
+ci-test:
 	$(ci-base-cmd) pytest
 
 .PHONY: ci-check
