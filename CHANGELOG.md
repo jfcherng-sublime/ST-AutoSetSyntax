@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 6.0.1
+
+- fix: use `Logger.log` rather than `print`
+- refactor: remove redundant future annotations import (PEP 749)
+
 ## 6.0.0
 
 - refactor: requires py314 (ST >= 4203)
