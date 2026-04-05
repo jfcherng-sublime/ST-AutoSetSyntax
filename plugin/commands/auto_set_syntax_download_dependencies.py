@@ -8,7 +8,7 @@ import threading
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import IO, override
+from typing import BinaryIO, override
 
 import sublime
 import sublime_plugin
@@ -70,7 +70,7 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
         )
 
 
-def decompress_buffer(buffer: IO[bytes], *, filename: str, dst_dir: PathLike) -> bool:
+def decompress_buffer(buffer: BinaryIO, *, filename: str, dst_dir: PathLike) -> bool:
     """
     Decompress the tarball in the bytes IO object.
 
