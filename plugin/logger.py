@@ -47,6 +47,8 @@ def _create_log_panel(window: sublime.Window) -> sublime.View:
 
 
 class Logger:
+    """This class is used to create/manage a per-window log panel for this plugin."""
+
     DELIMITER: Final[str] = "-" * 10
     SYNTAX_FILE: Final[str] = f"Packages/{PLUGIN_NAME}/syntaxes/AutoSetSyntaxLog.sublime-syntax"
 

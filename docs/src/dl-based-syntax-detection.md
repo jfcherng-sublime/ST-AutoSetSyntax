@@ -10,16 +10,15 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
 
 ## Prerequisites
 
-1.  If you are using MacOS, MacOS 11 (Big Sur) or later is required.
+1.  If you are using MacOS, MacOS 14 (Arm64) or later is required.
     You can run `$ sw_vers` in terminal to check the OS version.
-1.  If you are using Linux, GLIBC 2.27 or later is required.
+1.  If you are using Linux, GLIBC 2.28 or later is required.
     You can run `$ ldd --version` in terminal to check the GLIBC version on your system.
 
 1.  Install dependencies.
 
     Run `AutoSetSyntax: Download Dependencies` from the command palette.
-    The dependencies is about 15\~25 MB in size, so it may take a while.
-    When it's done, there will be a popup dialogue.
+    Downloading dependencies may take a while and when it's done, there will be a popup dialogue.
 
     !!! tip "If your machine has no access to GitHub..."
 
@@ -37,7 +36,7 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
         ```text
         Package Storage
         └─ AutoSetSyntax
-           └─ libs-py38@linux_x64
+           └─ libs-py314@linux_x64
               ├── click
               ├── click-8.1.7.dist-info
               ├── colorama
