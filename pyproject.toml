@@ -66,7 +66,6 @@ preview = true
 line-length = 120
 target-version = 'py314'
 exclude = [
-  "*/docs/*",
   "*/libs/*",
   ".git",
   ".mypy_cache",
@@ -80,6 +79,7 @@ exclude = [
   "venv",
   "venv-*",
 ]
+extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = [
