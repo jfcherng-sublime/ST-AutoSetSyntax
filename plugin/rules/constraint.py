@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Self, final, override
+from typing import Any, ClassVar, Self, final, override
 
 from more_itertools import first_true
 
@@ -116,7 +116,7 @@ class AbstractConstraint(ABC):
             args = map(normalizer, args)
         return tuple(args)
 
-    _COMPARATORS: dict[str, Callable[[Any, Any], bool]] = {
+    _COMPARATORS: ClassVar[dict[str, Callable[[Any, Any], bool]]] = {
         "<": operator.lt,
         "lt": operator.lt,
         # ...
