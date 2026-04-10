@@ -1,5 +1,6 @@
 *.dist-info/ export-ignore
 *.pyi export-ignore
+.claude/ export-ignore
 .dependabot export-ignore
 .editorconfig export-ignore
 .flake8 export-ignore
