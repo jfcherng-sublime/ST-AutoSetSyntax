@@ -1,15 +1,22 @@
 from collections.abc import Mapping
-from typing import Any, override
+from typing import Any
+from typing import override
 
 import sublime_plugin
 
-from ..constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION
+from ..constants import PLUGIN_NAME
+from ..constants import PY_VERSION
+from ..constants import ST_CHANNEL
+from ..constants import ST_PLATFORM_ARCH
+from ..constants import ST_VERSION
+from ..constants import VERSION
 from ..helpers import create_new_view
 from ..rules.constraint import get_constraints
 from ..rules.match import get_matches
 from ..settings import get_merged_plugin_settings
 from ..shared import G
-from ..utils import get_fqcn, stringify
+from ..utils import get_fqcn
+from ..utils import stringify
 
 TEMPLATE = f"""
 # === [{PLUGIN_NAME}] Debug Information === #

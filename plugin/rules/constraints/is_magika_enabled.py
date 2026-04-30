@@ -1,4 +1,5 @@
-from typing import final, override
+from typing import final
+from typing import override
 
 from ...settings import get_merged_plugin_setting
 from ...snapshot import ViewSnapshot

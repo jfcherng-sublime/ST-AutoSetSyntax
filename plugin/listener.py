@@ -1,4 +1,6 @@
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Sequence
 from functools import wraps
 from typing import Any
 
@@ -6,15 +8,26 @@ import sublime
 import sublime_plugin
 
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
-from .constants import PLUGIN_NAME, PY_VERSION, ST_CHANNEL, ST_PLATFORM_ARCH, ST_VERSION, VERSION, VIEW_KEY_IS_TRANSIENT
+from .constants import PLUGIN_NAME
+from .constants import PY_VERSION
+from .constants import ST_CHANNEL
+from .constants import ST_PLATFORM_ARCH
+from .constants import ST_VERSION
+from .constants import VERSION
+from .constants import VIEW_KEY_IS_TRANSIENT
 from .helpers import is_syntaxable_view
 from .logger import Logger
 from .magika import get_magika_object
-from .rules import SyntaxRuleCollection, get_constraints, get_matches
-from .settings import get_merged_plugin_setting, pref_syntax_rules
+from .rules import SyntaxRuleCollection
+from .rules import get_constraints
+from .rules import get_matches
+from .settings import get_merged_plugin_setting
+from .settings import pref_syntax_rules
 from .shared import G
 from .types import ListenerEvent
-from .utils import debounce, is_transient_view, stringify
+from .utils import debounce
+from .utils import is_transient_view
+from .utils import stringify
 
 
 def set_up_window(window: sublime.Window) -> None:

@@ -1,13 +1,18 @@
-from collections.abc import Generator, Iterable
+from collections.abc import Generator
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Self, override
+from typing import Self
+from typing import override
 
 import sublime
-from more_itertools import first_true, map_except
+from more_itertools import first_true
+from more_itertools import map_except
 
 from ..constants import VERSION
 from ..snapshot import ViewSnapshot
-from ..types import ListenerEvent, Optimizable, StSyntaxRule
+from ..types import ListenerEvent
+from ..types import Optimizable
+from ..types import StSyntaxRule
 from ..utils import find_syntax_by_syntax_likes
 from .match import MatchRule
 

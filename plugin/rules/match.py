@@ -1,15 +1,24 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Generator
-from dataclasses import dataclass, field
-from typing import Any, Self, final, override
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Self
+from typing import final
+from typing import override
 
 from more_itertools import first_true
 
 from ..cache import clearable_lru_cache
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
-from ..types import Optimizable, StConstraintRule, StMatchRule
-from ..utils import camel_to_snake, drop_falsy, list_all_subclasses
+from ..types import Optimizable
+from ..types import StConstraintRule
+from ..types import StMatchRule
+from ..utils import camel_to_snake
+from ..utils import drop_falsy
+from ..utils import list_all_subclasses
 from .constraint import ConstraintRule
 
 

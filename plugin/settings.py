@@ -1,5 +1,7 @@
 from collections import ChainMap
-from collections.abc import Callable, Mapping, MutableMapping
+from collections.abc import Callable
+from collections.abc import Mapping
+from collections.abc import MutableMapping
 from itertools import chain
 from typing import Any
 

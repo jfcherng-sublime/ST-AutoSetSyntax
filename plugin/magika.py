@@ -29,7 +29,8 @@ def get_magika_ignored_labels() -> set[magika.ContentTypeLabel]:
 def get_magika_object() -> magika.Magika | None:
     """Get the Magika object if available. `None` otherwise."""
     try:
-        from magika import Magika, PredictionMode
+        from magika import Magika
+        from magika import PredictionMode
     except ImportError:
         return None
     return Magika(prediction_mode=PredictionMode.HIGH_CONFIDENCE)

@@ -1,5 +1,6 @@
 from collections.abc import Callable
-from functools import _lru_cache_wrapper, lru_cache
+from functools import _lru_cache_wrapper
+from functools import lru_cache
 from typing import Any
 
 _cached_functions: set[_lru_cache_wrapper] = set()

@@ -1,9 +1,12 @@
-from typing import Any, final, override
+from typing import Any
+from typing import final
+from typing import override
 
 from ...settings import pref_trim_suffixes
 from ...snapshot import ViewSnapshot
 from ...utils import list_trimmed_strings
-from ..constraint import AbstractConstraint, AlwaysFalsyException
+from ..constraint import AbstractConstraint
+from ..constraint import AlwaysFalsyException
 
 
 def _extensionize(ext: str) -> str:

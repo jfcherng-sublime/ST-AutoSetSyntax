@@ -1,4 +1,5 @@
-from AutoSetSyntax.plugin import AbstractConstraint, ViewSnapshot
+from AutoSetSyntax.plugin import AbstractConstraint
+from AutoSetSyntax.plugin import ViewSnapshot
 
 
 class MyOwnConstraint(AbstractConstraint):

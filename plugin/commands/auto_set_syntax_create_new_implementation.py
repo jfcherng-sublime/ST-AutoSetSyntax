@@ -5,7 +5,10 @@ from typing import override
 import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_CUSTOM_DIR, PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME, VIEW_KEY_IS_CREATED
+from ..constants import PLUGIN_CUSTOM_DIR
+from ..constants import PLUGIN_CUSTOM_MODULE_PATHS
+from ..constants import PLUGIN_NAME
+from ..constants import VIEW_KEY_IS_CREATED
 from ..types import SyntaxLike
 from ..utils import find_syntax_by_syntax_like
 

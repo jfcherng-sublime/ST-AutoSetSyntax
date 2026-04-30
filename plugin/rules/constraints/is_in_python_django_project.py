@@ -1,10 +1,12 @@
 from pathlib import Path
-from typing import final, override
+from typing import final
+from typing import override
 
 from more_itertools import first_true
 
 from ...snapshot import ViewSnapshot
-from ..constraint import AbstractConstraint, AlwaysFalsyException
+from ..constraint import AbstractConstraint
+from ..constraint import AlwaysFalsyException
 
 
 @final

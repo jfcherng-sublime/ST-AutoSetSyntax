@@ -2,13 +2,15 @@ import math
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Final, override
+from typing import Final
+from typing import override
 
 import sublime
 import sublime_plugin
 
 from .constants import PLUGIN_NAME
-from .settings import get_merged_plugin_setting, get_st_setting
+from .settings import get_merged_plugin_setting
+from .settings import get_st_setting
 from .utils import resolve_window
 
 

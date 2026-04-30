@@ -1,7 +1,11 @@
-from typing import Any, final, override
+from typing import Any
+from typing import final
+from typing import override
 
 from ...snapshot import ViewSnapshot
-from ...utils import compile_regex, merge_literals_to_regex, merge_regexes
+from ...utils import compile_regex
+from ...utils import merge_literals_to_regex
+from ...utils import merge_regexes
 from ..constraint import AbstractConstraint
 
 

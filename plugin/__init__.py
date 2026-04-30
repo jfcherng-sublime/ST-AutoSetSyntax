@@ -7,31 +7,31 @@ from pathlib import Path
 import sublime
 
 from .cache import clear_all_cached_functions
-from .commands import (
-    AutoSetSyntaxCommand,
-    AutoSetSyntaxCreateNewConstraintCommand,
-    AutoSetSyntaxCreateNewMatchCommand,
-    AutoSetSyntaxDebugInformationCommand,
-    AutoSetSyntaxDownloadDependenciesCommand,
-    AutoSetSyntaxSyntaxRulesSummaryCommand,
-    run_auto_set_syntax_on_view,
-)
-from .constants import PLUGIN_CUSTOM_MODULE_PATHS, PLUGIN_NAME, PLUGIN_PY_LIBS_DIR
-from .listener import (
-    AutoSetSyntaxEventListener,
-    AutoSetSyntaxTextChangeListener,
-    compile_rules,
-    set_up_window,
-    tear_down_window,
-)
-from .logger import (
-    AutoSetSyntaxAppendLogCommand,
-    AutoSetSyntaxClearLogPanelCommand,
-    AutoSetSyntaxToggleLogPanelCommand,
-    AutoSetSyntaxUpdateLogCommand,
-)
-from .rules import AbstractConstraint, AbstractMatch, MatchableRule
-from .settings import AioSettings, extra_settings_producer, get_merged_plugin_setting
+from .commands import AutoSetSyntaxCommand
+from .commands import AutoSetSyntaxCreateNewConstraintCommand
+from .commands import AutoSetSyntaxCreateNewMatchCommand
+from .commands import AutoSetSyntaxDebugInformationCommand
+from .commands import AutoSetSyntaxDownloadDependenciesCommand
+from .commands import AutoSetSyntaxSyntaxRulesSummaryCommand
+from .commands import run_auto_set_syntax_on_view
+from .constants import PLUGIN_CUSTOM_MODULE_PATHS
+from .constants import PLUGIN_NAME
+from .constants import PLUGIN_PY_LIBS_DIR
+from .listener import AutoSetSyntaxEventListener
+from .listener import AutoSetSyntaxTextChangeListener
+from .listener import compile_rules
+from .listener import set_up_window
+from .listener import tear_down_window
+from .logger import AutoSetSyntaxAppendLogCommand
+from .logger import AutoSetSyntaxClearLogPanelCommand
+from .logger import AutoSetSyntaxToggleLogPanelCommand
+from .logger import AutoSetSyntaxUpdateLogCommand
+from .rules import AbstractConstraint
+from .rules import AbstractMatch
+from .rules import MatchableRule
+from .settings import AioSettings
+from .settings import extra_settings_producer
+from .settings import get_merged_plugin_setting
 from .shared import G
 from .snapshot import ViewSnapshot
 from .types import ListenerEvent

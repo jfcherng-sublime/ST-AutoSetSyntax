@@ -4,7 +4,9 @@ import sublime
 
 from .constants import VIEW_KEY_IS_CREATED
 from .settings import get_st_setting
-from .utils import find_syntax_by_syntax_like, is_plaintext_syntax, is_transient_view
+from .utils import find_syntax_by_syntax_like
+from .utils import is_plaintext_syntax
+from .utils import is_transient_view
 
 
 def is_syntaxable_view(view: sublime.View, *, must_plaintext: bool = False) -> bool:

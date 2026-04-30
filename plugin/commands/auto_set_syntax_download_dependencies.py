@@ -8,12 +8,16 @@ import threading
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import BinaryIO, override
+from typing import BinaryIO
+from typing import override
 
 import sublime
 import sublime_plugin
 
-from ..constants import PLUGIN_NAME, PLUGIN_PY_LIBS_DIR, PLUGIN_PY_LIBS_URL, PLUGIN_PY_LIBS_ZIP_NAME
+from ..constants import PLUGIN_NAME
+from ..constants import PLUGIN_PY_LIBS_DIR
+from ..constants import PLUGIN_PY_LIBS_URL
+from ..constants import PLUGIN_PY_LIBS_ZIP_NAME
 from ..utils import rmtree_ex
 
 type PathLike = Path | str

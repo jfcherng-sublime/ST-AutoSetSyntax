@@ -1,7 +1,9 @@
-from typing import final, override
+from typing import final
+from typing import override
 
 from ...snapshot import ViewSnapshot
-from ..match import AbstractMatch, MatchableRule
+from ..match import AbstractMatch
+from ..match import MatchableRule
 
 
 @final

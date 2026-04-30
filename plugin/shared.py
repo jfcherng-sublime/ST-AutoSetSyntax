@@ -2,7 +2,8 @@ import sublime
 
 from .rules import SyntaxRuleCollection
 from .settings import get_merged_plugin_settings
-from .types import Optimizable, WindowKeyedDict
+from .types import Optimizable
+from .types import WindowKeyedDict
 
 type DroppedRules = list[Optimizable]
 

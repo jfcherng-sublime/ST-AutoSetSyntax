@@ -1,37 +1,39 @@
 import re
 from itertools import chain
 from pathlib import Path
-from typing import Any, override
+from typing import Any
+from typing import override
 
 import sublime
 import sublime_plugin
 
-from ..constants import (
-    PLUGIN_NAME,
-    RE_EMACS_SYNTAX_LINE,
-    RE_ST_SYNTAX_TEST_LINE,
-    RE_VIM_SYNTAX_LINE,
-    VIEW_KEY_IS_ASSIGNED,
-)
+from ..constants import PLUGIN_NAME
+from ..constants import RE_EMACS_SYNTAX_LINE
+from ..constants import RE_ST_SYNTAX_TEST_LINE
+from ..constants import RE_VIM_SYNTAX_LINE
+from ..constants import VIEW_KEY_IS_ASSIGNED
 from ..helpers import is_syntaxable_view
 from ..logger import Logger
-from ..magika import get_magika_ignored_labels, get_magika_object, resolve_magika_label_with_syntax_map
+from ..magika import get_magika_ignored_labels
+from ..magika import get_magika_object
+from ..magika import resolve_magika_label_with_syntax_map
 from ..rules import SyntaxRuleCollection
-from ..settings import get_merged_plugin_setting, get_merged_plugin_settings, pref_trim_suffixes
+from ..settings import get_merged_plugin_setting
+from ..settings import get_merged_plugin_settings
+from ..settings import pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
-from ..types import NULL_SYNTAX, ListenerEvent
-from ..utils import (
-    ensure_trailing_newline,
-    extract_prefixed_dict,
-    find_syntax_by_syntax_like,
-    find_syntax_by_syntax_likes,
-    get_syntax_name,
-    is_plaintext_syntax,
-    list_trimmed_filenames,
-    list_trimmed_strings,
-    stringify,
-)
+from ..types import NULL_SYNTAX
+from ..types import ListenerEvent
+from ..utils import ensure_trailing_newline
+from ..utils import extract_prefixed_dict
+from ..utils import find_syntax_by_syntax_like
+from ..utils import find_syntax_by_syntax_likes
+from ..utils import get_syntax_name
+from ..utils import is_plaintext_syntax
+from ..utils import list_trimmed_filenames
+from ..utils import list_trimmed_strings
+from ..utils import stringify
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):

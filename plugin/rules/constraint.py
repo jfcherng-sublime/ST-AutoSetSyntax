@@ -1,19 +1,34 @@
 import operator
 import re
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Generator, Iterable
-from dataclasses import dataclass, field
+from abc import ABC
+from abc import abstractmethod
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
-from typing import Any, ClassVar, Self, final, override
+from typing import Any
+from typing import ClassVar
+from typing import Self
+from typing import final
+from typing import override
 
 from more_itertools import first_true
 
 from ..cache import clearable_lru_cache
-from ..constants import PLUGIN_NAME, ST_PLATFORM
+from ..constants import PLUGIN_NAME
+from ..constants import ST_PLATFORM
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
-from ..types import Optimizable, StConstraintRule
-from ..utils import camel_to_snake, compile_regex, drop_falsy, list_all_subclasses, merge_regexes, parse_regex_flags
+from ..types import Optimizable
+from ..types import StConstraintRule
+from ..utils import camel_to_snake
+from ..utils import compile_regex
+from ..utils import drop_falsy
+from ..utils import list_all_subclasses
+from ..utils import merge_regexes
+from ..utils import parse_regex_flags
 
 
 def find_constraint(obj: Any) -> type[AbstractConstraint] | None:

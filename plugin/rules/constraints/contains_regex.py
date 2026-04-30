@@ -1,4 +1,6 @@
-from typing import Any, final, override
+from typing import Any
+from typing import final
+from typing import override
 
 from more_itertools import nth
 

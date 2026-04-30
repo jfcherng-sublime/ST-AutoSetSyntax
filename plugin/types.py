@@ -1,12 +1,18 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from collections import UserDict
-from collections.abc import Callable, Generator, KeysView
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import KeysView
 from enum import StrEnum
-from typing import Any, overload
+from typing import Any
+from typing import overload
 
 import sublime
 from more_itertools import always_iterable
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import field_validator
 
 type Comparator = Callable[[Any, Any], bool]
 type SyntaxLike = str | sublime.Syntax

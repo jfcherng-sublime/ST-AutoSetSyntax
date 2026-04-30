@@ -1,7 +1,10 @@
-from typing import Any, final, override
+from typing import Any
+from typing import final
+from typing import override
 
 from ...snapshot import ViewSnapshot
-from ..constraint import AbstractConstraint, AlwaysFalsyException
+from ..constraint import AbstractConstraint
+from ..constraint import AlwaysFalsyException
 
 
 @final

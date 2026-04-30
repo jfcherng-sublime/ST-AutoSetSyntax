@@ -8,14 +8,21 @@ import shutil
 import stat
 import tempfile
 import threading
-from collections.abc import Callable, Generator, Iterable, Mapping
-from functools import cache, cmp_to_key, reduce, wraps
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Iterable
+from collections.abc import Mapping
+from functools import cache
+from functools import cmp_to_key
+from functools import reduce
+from functools import wraps
 from pathlib import Path
 from re import Pattern
 from typing import Any
 
 import sublime
-from more_itertools import first_true, unique_everseen
+from more_itertools import first_true
+from more_itertools import unique_everseen
 
 from ._vendor.trie import TrieNode
 from ._vendor.triegex import Triegex

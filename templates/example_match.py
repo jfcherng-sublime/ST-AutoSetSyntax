@@ -1,4 +1,6 @@
-from AutoSetSyntax.plugin import AbstractMatch, MatchableRule, ViewSnapshot
+from AutoSetSyntax.plugin import AbstractMatch
+from AutoSetSyntax.plugin import MatchableRule
+from AutoSetSyntax.plugin import ViewSnapshot
 
 
 class MyOwnMatch(AbstractMatch):
