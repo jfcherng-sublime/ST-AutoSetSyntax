@@ -3,7 +3,7 @@ name = "AutoSetSyntax"
 version = "0.0.0"
 description = "Automatically sets syntax based on various strategies."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.14.4,<3.15"
 dependencies = [
   "more-itertools==11.*",
   "pydantic>=2,<3",
