@@ -13,12 +13,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v8.1.0
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
       - run: |
+          make install-docs
           make docs-build
   job_deploy:
     # deploy only on the "stable" branch
@@ -26,10 +24,8 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v8.1.0
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
       - run: |
+          make install-docs
           make docs-deploy

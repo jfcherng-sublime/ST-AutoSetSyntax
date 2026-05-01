@@ -31,8 +31,10 @@ jobs:
         os: ['ubuntu-latest']
         python-version: ['3.14']
 
+    env:
+      UV_SYSTEM_PYTHON: 1
     steps:
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v8.1.0
       - uses: actions/checkout@v5
         with:
           submodules: recursive
@@ -41,8 +43,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Do unit test
-        run: |
-          make ci-test
+        run: make ci-test
       - name: Do linting
-        run: |
-          make ci-check
+        run: make ci-check
