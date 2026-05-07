@@ -83,10 +83,14 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
 
 def _configured_debounce[T: Callable](func: T) -> T:
     """Debounce a function so that it's called once in seconds."""
+    _cache: dict[float, Any] = {}
 
     def debounced(*args: Any, **kwargs: Any) -> Any:
         if (time_s := get_merged_plugin_setting("debounce", 0)) > 0:
-            return debounce(time_s)(func)(*args, **kwargs)
+            if time_s not in _cache:
+                _cache.clear()  # discard stale wrapper when time_s changes
+                _cache[time_s] = debounce(time_s)(func)
+            return _cache[time_s](*args, **kwargs)
         return func(*args, **kwargs)
 
     return debounced  # type: ignore[return-value]
