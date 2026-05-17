@@ -61,8 +61,9 @@ class ConstraintRule(Optimizable):
 
     @override
     def optimize(self) -> Generator[Optimizable]:
+        """Leaf constraint has no sub-rules to optimize."""
         return
-        yield
+        yield  # noqa  # required by Generator protocol for abstract Optimizable
 
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.constraint
