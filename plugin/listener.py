@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
+from functools import lru_cache
 from functools import wraps
 from typing import Any
 
@@ -81,16 +82,18 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     )
 
 
+@lru_cache(maxsize=2)
+def _make_debounced[T: Callable](func: T, time_s: float) -> T:
+    return debounce(time_s)(func)  # type: ignore[return-value]
+
+
 def _configured_debounce[T: Callable](func: T) -> T:
     """Debounce a function so that it's called once in seconds."""
-    _cache: dict[float, Any] = {}
 
+    @wraps(func)
     def debounced(*args: Any, **kwargs: Any) -> Any:
         if (time_s := get_merged_plugin_setting("debounce", 0)) > 0:
-            if time_s not in _cache:
-                _cache.clear()  # discard stale wrapper when time_s changes
-                _cache[time_s] = debounce(time_s)(func)
-            return _cache[time_s](*args, **kwargs)
+            return _make_debounced(func, time_s)(*args, **kwargs)
         return func(*args, **kwargs)
 
     return debounced  # type: ignore[return-value]
