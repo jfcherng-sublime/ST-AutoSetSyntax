@@ -18,7 +18,7 @@ from ._optimize import sift_optimizable
 from .match import MatchRule
 
 
-@dataclass
+@dataclass(slots=True)
 class SyntaxRule(Optimizable):
     comment: str = ""
     syntax: sublime.Syntax | None = None
@@ -83,7 +83,7 @@ class SyntaxRule(Optimizable):
         return this
 
 
-@dataclass
+@dataclass(slots=True)
 class SyntaxRuleCollection(Optimizable):
     version: str = VERSION
     rules: tuple[SyntaxRule, ...] = ()

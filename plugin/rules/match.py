@@ -36,7 +36,7 @@ def list_matches() -> Generator[type[AbstractMatch]]:
     yield from list_all_subclasses(AbstractMatch, skip_abstract=True)  # type: ignore
 
 
-@dataclass
+@dataclass(slots=True)
 class MatchRule(Optimizable):
     match: AbstractMatch | None = None
     match_name: str = ""

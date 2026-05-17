@@ -44,7 +44,7 @@ def list_constraints() -> Generator[type[AbstractConstraint]]:
     yield from list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class ConstraintRule(Optimizable):
     constraint: AbstractConstraint | None = None
     constraint_name: str = ""
