@@ -19,6 +19,7 @@ from ..types import StMatchRule
 from ..utils import camel_to_snake
 from ..utils import drop_falsy
 from ..utils import list_all_subclasses
+from ._optimize import sift_optimizable
 from .constraint import ConstraintRule
 
 
@@ -52,17 +53,8 @@ class MatchRule(Optimizable):
 
     @override
     def optimize(self) -> Generator[Optimizable]:
-        rules: list[MatchableRule] = []
-        for rule in self.rules:
-            if rule.is_droppable():
-                yield rule
-                continue
-            yield from rule.optimize()
-            if rule.is_droppable():
-                yield rule
-                continue
-            rules.append(rule)
-        self.rules = tuple(rules)
+        dropped, self.rules = sift_optimizable(self.rules)
+        yield from dropped
 
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.match

@@ -14,6 +14,7 @@ from ..types import ListenerEvent
 from ..types import Optimizable
 from ..types import StSyntaxRule
 from ..utils import find_syntax_by_syntax_likes
+from ._optimize import sift_optimizable
 from .match import MatchRule
 
 
@@ -92,17 +93,8 @@ class SyntaxRuleCollection(Optimizable):
 
     @override
     def optimize(self) -> Generator[Optimizable]:
-        rules: list[SyntaxRule] = []
-        for rule in self.rules:
-            if rule.is_droppable():
-                yield rule
-                continue
-            yield from rule.optimize()
-            if rule.is_droppable():
-                yield rule
-                continue
-            rules.append(rule)
-        self.rules = tuple(rules)
+        dropped, self.rules = sift_optimizable(self.rules)
+        yield from dropped
 
     def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> SyntaxRule | None:
         return first_true(self.rules, pred=lambda rule: rule.test(view_snapshot, event))
