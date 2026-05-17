@@ -1,9 +1,8 @@
 from collections.abc import Callable
-from functools import _lru_cache_wrapper
 from functools import lru_cache
 from typing import Any
 
-_cached_functions: set[_lru_cache_wrapper] = set()
+_cached_functions: set[Callable] = set()
 
 
 def clearable_lru_cache[T: Callable](*args: Any, **kwargs: Any) -> Callable[[T], T]:
@@ -17,4 +16,4 @@ def clearable_lru_cache[T: Callable](*args: Any, **kwargs: Any) -> Callable[[T],
 
 def clear_all_cached_functions() -> None:
     for func in _cached_functions:
-        func.cache_clear()
+        func.cache_clear()  # type: ignore[attr-defined]

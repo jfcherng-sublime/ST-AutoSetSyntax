@@ -100,8 +100,8 @@ StMatchRule.model_rebuild()
 
 
 class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):
-    def __contains__(self, key: Any) -> bool:
-        key = self._to_window_id(key)
+    def __contains__(self, key: object) -> bool:
+        key = self._to_window_id(key)  # type: ignore[arg-type]
         return key in self.data
 
     def __delitem__(self, key: WindowIdAble) -> None:
