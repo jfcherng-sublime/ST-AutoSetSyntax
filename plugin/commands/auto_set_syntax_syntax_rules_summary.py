@@ -17,6 +17,8 @@ class AutoSetSyntaxSyntaxRulesSummaryCommand(sublime_plugin.WindowCommand):
 
     @override
     def run(self) -> None:
+        tab_size = 2
+
         if not (rule_collection := G.syntax_rule_collections.get(self.window)):
             return
 
@@ -27,8 +29,12 @@ class AutoSetSyntaxSyntaxRulesSummaryCommand(sublime_plugin.WindowCommand):
 
         content = f"// [{PLUGIN_NAME}] Syntax Rules Summary\n\n"
         for syntax, rules in sorted(summary.items(), key=lambda x: x[0].name.casefold()):
-            content += "/" * 80 + f"\n// Syntax: {syntax.name}\n" + "/" * 80 + "\n\n"
-            content += "\n".join(st_rule.model_dump_json(indent=4) for st_rule in rules) + "\n\n"
+            content += "/" * 80 + "\n"
+            content += f"// Syntax : {syntax.name}\n"
+            content += f"// Path   : {syntax.path}\n"
+            content += f"// Hidden : {syntax.hidden}\n"
+            content += "/" * 80 + "\n"
+            content += "\n".join(st_rule.model_dump_json(indent=tab_size) for st_rule in rules) + "\n\n"
 
         create_new_view(
             name=self.description(),
@@ -36,5 +42,6 @@ class AutoSetSyntaxSyntaxRulesSummaryCommand(sublime_plugin.WindowCommand):
             syntax="scope:source.autosetsyntax.jsonc",
             include_hidden_syntax=True,
             scratch=True,
+            settings={"tab_size": tab_size, "translate_tabs_to_spaces": True},
             window=self.window,
         )
