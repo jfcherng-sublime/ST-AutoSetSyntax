@@ -21,3 +21,4 @@ branch-*/
 
 # others
 .claude/
+.codegraph/
