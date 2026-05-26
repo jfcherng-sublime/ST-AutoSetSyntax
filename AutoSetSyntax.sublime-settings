@@ -99,7 +99,7 @@
             "rules": [
                 {
                     "constraint": "is_extension",
-                    "args": [".css.map", ".geojson", ".js.map", ".jsonc", ".webmanifest", ".excalidraw"]
+                    "args": [".css.map", ".geojson", ".js.map", ".jsonc", ".jsonl", ".webmanifest", ".excalidraw"]
                 },
                 {
                     "constraint": "is_name",
