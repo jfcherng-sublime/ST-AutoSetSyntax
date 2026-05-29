@@ -1,5 +1,13 @@
 # AutoSetSyntax Changelog
 
+## 6.0.2
+
+- feat: add `.jsonl` to JSON syntax rule extensions
+- feat: `syntax_rules_summary` includes syntax path and hidden status
+- fix: debounce was not firing due to missing wrapper caching
+- perf: add `slots=True` to dataclasses, `frozen=True` on `ConstraintRule`
+- chore: set `.excalidraw` file to JSON syntax
+
 ## 6.0.1
 
 - fix: use `Logger.log` rather than `print`
