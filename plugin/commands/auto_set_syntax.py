@@ -18,9 +18,8 @@ from ..magika import get_magika_ignored_labels
 from ..magika import get_magika_object
 from ..magika import resolve_magika_label_with_syntax_map
 from ..rules import SyntaxRuleCollection
-from ..settings import get_merged_plugin_setting
+from ..settings import MergedSettingsDict
 from ..settings import get_merged_plugin_settings
-from ..settings import pref_trim_suffixes
 from ..shared import G
 from ..snapshot import ViewSnapshot
 from ..types import NULL_SYNTAX
@@ -58,8 +57,12 @@ def run_auto_set_syntax_on_view(
 
     view_snapshot = ViewSnapshot.from_view(view)
 
+    # Resolve settings once and reuse across all strategy functions.
+    # This avoids repeated ChainMap lookups per strategy.
+    settings = get_merged_plugin_settings(window=window)
+
     if event is ListenerEvent.EXEC:
-        return _assign_syntax_for_exec_output(view_snapshot, event)
+        return _assign_syntax_for_exec_output(view_snapshot, event, settings)
 
     # prerequisites
     if not (
@@ -70,7 +73,7 @@ def run_auto_set_syntax_on_view(
         return False
 
     if event is ListenerEvent.NEW:
-        return _assign_syntax_for_new_view(view_snapshot, event)
+        return _assign_syntax_for_new_view(view_snapshot, event, settings)
 
     if _assign_syntax_for_st_syntax_test(view_snapshot, event):
         return True
@@ -87,7 +90,7 @@ def run_auto_set_syntax_on_view(
         ListenerEvent.LOAD,
         ListenerEvent.SAVE,
         ListenerEvent.UNTRANSIENTIZE,
-    } and _assign_syntax_with_trimmed_filename(view_snapshot, event):
+    } and _assign_syntax_with_trimmed_filename(view_snapshot, event, settings):
         return True
 
     if event in {
@@ -99,7 +102,7 @@ def run_auto_set_syntax_on_view(
         # modify
         ListenerEvent.MODIFY,
         ListenerEvent.PASTE,
-    } and _assign_syntax_with_magika(view_snapshot, event):
+    } and _assign_syntax_with_magika(view_snapshot, event, settings):
         return True
 
     if _assign_syntax_with_heuristics(view_snapshot, event):
@@ -108,12 +111,16 @@ def run_auto_set_syntax_on_view(
     return _sorry_cannot_help(view, event)
 
 
-def _assign_syntax_for_exec_output(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
+def _assign_syntax_for_exec_output(
+    view_snapshot: ViewSnapshot,
+    event: ListenerEvent | None = None,
+    settings: MergedSettingsDict | None = None,
+) -> bool:
     if (
         (view := view_snapshot.valid_view)
         and (window := view.window())
         and (not (syntax_old := view.syntax()) or syntax_old.scope == "text.plain")
-        and (exec_file_syntax := get_merged_plugin_setting("exec_file_syntax", window=window))
+        and (exec_file_syntax := (settings or get_merged_plugin_settings(window=window)).get("exec_file_syntax"))
         and (syntax := find_syntax_by_syntax_like(exec_file_syntax, include_hidden=True))
     ):
         return assign_syntax_to_view(
@@ -124,11 +131,15 @@ def _assign_syntax_for_exec_output(view_snapshot: ViewSnapshot, event: ListenerE
     return False
 
 
-def _assign_syntax_for_new_view(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
+def _assign_syntax_for_new_view(
+    view_snapshot: ViewSnapshot,
+    event: ListenerEvent | None = None,
+    settings: MergedSettingsDict | None = None,
+) -> bool:
     if (
         (view := view_snapshot.valid_view)
         and (window := view.window())
-        and (new_file_syntax := get_merged_plugin_setting("new_file_syntax", window=window))
+        and (new_file_syntax := (settings or get_merged_plugin_settings(window=window)).get("new_file_syntax"))
         and (syntax := find_syntax_by_syntax_like(new_file_syntax, include_plaintext=False))
     ):
         return assign_syntax_to_view(
@@ -225,7 +236,11 @@ def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerE
     return False
 
 
-def _assign_syntax_with_trimmed_filename(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
+def _assign_syntax_with_trimmed_filename(
+    view_snapshot: ViewSnapshot,
+    event: ListenerEvent | None = None,
+    settings: MergedSettingsDict | None = None,
+) -> bool:
     if not (
         (view := view_snapshot.valid_view)
         and (filepath := view.file_name())
@@ -235,9 +250,10 @@ def _assign_syntax_with_trimmed_filename(view_snapshot: ViewSnapshot, event: Lis
     ):
         return False
 
+    settings = settings or get_merged_plugin_settings(window=window)
     original = Path(filepath).name
-    trim_suffixes = pref_trim_suffixes(window=window)
-    trim_suffixes_auto = get_merged_plugin_setting("trim_suffixes_auto", window=window)
+    trim_suffixes = settings.get("trim_suffixes", ())
+    trim_suffixes_auto = settings.get("trim_suffixes_auto", False)
 
     filenames = chain(
         list_trimmed_strings(original, trim_suffixes, skip_self=True),
@@ -261,12 +277,16 @@ def _assign_syntax_with_trimmed_filename(view_snapshot: ViewSnapshot, event: Lis
     return False
 
 
-def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
+def _assign_syntax_with_magika(
+    view_snapshot: ViewSnapshot,
+    event: ListenerEvent | None = None,
+    settings: MergedSettingsDict | None = None,
+) -> bool:
     if not (
         (magika_obj := get_magika_object())
         and (view := view_snapshot.valid_view)
         and (window := view.window())
-        and (settings := get_merged_plugin_settings(window=window))
+        and (settings := settings or get_merged_plugin_settings(window=window))
         and settings.get("magika.enabled")
         # don't apply on those have an extension
         and (event == ListenerEvent.COMMAND or "." not in view_snapshot.file_name_unhidden)
