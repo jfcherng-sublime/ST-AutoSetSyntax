@@ -455,3 +455,142 @@ class TestAbstractConstraintClassMethods:
         from plugin.rules.constraints.contains import ContainsConstraint
 
         assert ContainsConstraint.can_support("contains_regex") is False
+
+
+# ── IsArchConstraint ────────────────────────────────────────────────────────
+
+
+class TestIsArchConstraint:
+    def test_matching_arch(self, make_snapshot):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        snap = make_snapshot()
+        # ST_ARCH is resolved at import time; in the test mock it's "x64"
+        assert IsArchConstraint("x64").test(snap) is True
+
+    def test_non_matching_arch(self, make_snapshot):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        snap = make_snapshot()
+        assert IsArchConstraint("x32").test(snap) is False
+
+    def test_one_of_multiple(self, make_snapshot):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        snap = make_snapshot()
+        assert IsArchConstraint("x32", "x64").test(snap) is True
+
+    def test_case_insensitive(self, make_snapshot):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        snap = make_snapshot()
+        assert IsArchConstraint("X64").test(snap) is True
+
+    def test_empty_is_droppable(self):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        assert IsArchConstraint().is_droppable() is True
+
+    def test_name(self):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        assert IsArchConstraint.name() == "is_arch"
+
+
+# ── IsPlatformArchConstraint ────────────────────────────────────────────────
+
+
+class TestIsPlatformArchConstraint:
+    def test_matching_platform_arch(self, make_snapshot):
+        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
+
+        snap = make_snapshot()
+        # ST_PLATFORM_ARCH is resolved at import time; mock returns "linux_x64"
+        assert IsPlatformArchConstraint("linux_x64").test(snap) is True
+
+    def test_non_matching(self, make_snapshot):
+        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
+
+        snap = make_snapshot()
+        assert IsPlatformArchConstraint("windows_x64").test(snap) is False
+
+    def test_empty_is_droppable(self):
+        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
+
+        assert IsPlatformArchConstraint().is_droppable() is True
+
+    def test_name(self):
+        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
+
+        assert IsPlatformArchConstraint.name() == "is_platform_arch"
+
+
+# ── IsHiddenSyntaxConstraint ────────────────────────────────────────────────
+
+
+class TestIsHiddenSyntaxConstraint:
+    def test_hidden_syntax(self, make_snapshot):
+        from unittest.mock import MagicMock
+
+        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
+
+        snap = make_snapshot()
+        # Inject a mock syntax with hidden=True
+        mock_syntax = MagicMock()
+        mock_syntax.hidden = True
+        object.__setattr__(snap, "syntax", mock_syntax)
+
+        assert IsHiddenSyntaxConstraint().test(snap) is True
+
+    def test_visible_syntax(self, make_snapshot):
+        from unittest.mock import MagicMock
+
+        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
+
+        snap = make_snapshot()
+        mock_syntax = MagicMock()
+        mock_syntax.hidden = False
+        object.__setattr__(snap, "syntax", mock_syntax)
+
+        assert IsHiddenSyntaxConstraint().test(snap) is False
+
+    def test_no_syntax_raises(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
+
+        snap = make_snapshot()  # syntax=None
+        with pytest.raises(AlwaysFalsyException):
+            IsHiddenSyntaxConstraint().test(snap)
+
+    def test_name(self):
+        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
+
+        assert IsHiddenSyntaxConstraint.name() == "is_hidden_syntax"
+
+
+# ── SelectorMatchesConstraint ───────────────────────────────────────────────
+
+
+class TestSelectorMatchesConstraint:
+    def test_no_candidates_is_droppable(self):
+        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
+
+        assert SelectorMatchesConstraint().is_droppable() is True
+
+    def test_with_candidates_not_droppable(self):
+        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
+
+        assert SelectorMatchesConstraint("source.python").is_droppable() is False
+
+    def test_no_syntax_raises(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
+
+        snap = make_snapshot()  # syntax=None
+        with pytest.raises(AlwaysFalsyException):
+            SelectorMatchesConstraint("source.python").test(snap)
+
+    def test_name(self):
+        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
+
+        assert SelectorMatchesConstraint.name() == "selector_matches"
