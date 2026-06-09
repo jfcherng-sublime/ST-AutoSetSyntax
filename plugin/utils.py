@@ -13,7 +13,6 @@ from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Mapping
 from functools import cache
-from functools import cmp_to_key
 from functools import reduce
 from functools import wraps
 from pathlib import Path
@@ -246,7 +245,7 @@ def find_syntaxes_by_syntax_likes(
 def get_sorted_syntaxes() -> tuple[sublime.Syntax, ...]:
     """Gets all syntaxes, which are sorted by conventions."""
 
-    def syntax_cmp(a: sublime.Syntax, b: sublime.Syntax) -> int:
+    def syntax_key(syntax: sublime.Syntax) -> tuple[int, ...]:
         """
         Compares syntaxes by
 
@@ -254,13 +253,11 @@ def get_sorted_syntaxes() -> tuple[sublime.Syntax, ...]:
         - prefer non-hidden
         - prefer shorter path
         """
-        if (ext_a := Path(a.path).suffix) != Path(b.path).suffix:
-            return -1 if ext_a == ".sublime-syntax" else 1
-        if a.hidden != b.hidden:
-            return 1 if a.hidden else -1
-        return len(a.path) - len(b.path)
+        ext = 0 if syntax.path.endswith(".sublime-syntax") else 1
+        hidden = 1 if syntax.hidden else 0
+        return (ext, hidden, len(syntax.path))
 
-    return tuple(sorted(sublime.list_syntaxes(), key=cmp_to_key(syntax_cmp)))
+    return tuple(sorted(sublime.list_syntaxes(), key=syntax_key))
 
 
 def extract_prefixed_dict[T](dict_: Mapping[str, T], *, prefix: str) -> dict[str, T]:
@@ -294,6 +291,9 @@ def get_window_by_id(id: int) -> sublime.Window | None:
 
 
 def head_tail_content(content: str, partial: int) -> str:
+    if partial < 0:
+        return content
+
     if (half := partial // 2) <= 0:
         return ""
 
@@ -304,6 +304,9 @@ def head_tail_content(content: str, partial: int) -> str:
 
 
 def head_tail_content_st(view: sublime.View, partial: int) -> str:
+    if partial < 0:
+        return view.substr(sublime.Region(0, view.size()))
+
     if (half := partial // 2) <= 0:
         return ""
 
