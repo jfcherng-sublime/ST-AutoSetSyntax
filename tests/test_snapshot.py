@@ -16,10 +16,9 @@ class TestViewSnapshotConstruction:
         assert snap.caret_rowcol == (-1, -1)
 
     def test_lazy_content_default_empty(self, make_snapshot):
-        """When not pre-populated via __dict__, content is the cached_property value."""
+        """Content is a regular dataclass field, always present."""
         snap = make_snapshot()
-        # Factory pre-populates it, but test the property exists
-        assert hasattr(type(snap), "content")
+        assert snap.content == ""
 
     def test_lazy_first_line_default(self, make_snapshot):
         snap = make_snapshot(content="line1\nline2")
@@ -56,12 +55,12 @@ class TestViewSnapshotConstruction:
 
     def test_encoding_undefined_normalized(self):
         """Encoding 'Undefined' should be normalized to 'UTF-8'."""
-        # Can't use factory since it defaults to "UTF-8"
-
         MockView = sys.modules["sublime"].View
         snap = ViewSnapshot(
             view=MockView(),
             char_count=0,
+            content="",
+            first_line="",
             encoding="Undefined",
             line_count=0,
             path_obj=None,

@@ -16,6 +16,10 @@ class ViewSnapshot:
     """The view object."""
     char_count: int
     """Character count."""
+    content: str
+    """Pseudo file content."""
+    first_line: str
+    """Pseudo first line."""
     encoding: str
     """The encoding name, in Sublime Text's definition, of the content."""
     line_count: int
@@ -27,33 +31,10 @@ class ViewSnapshot:
     caret_rowcol: tuple[int, int] = (-1, -1)
     """The 0-indexed `(row, column)` of the first caret visually. -1 if no caret."""
 
-    # Settings captured at snapshot time; used for lazy content/first_line.
-    # Defined as fields so the frozen dataclass init sets them, but marked repr=False
-    # to keep debug output clean.
-    _trim_file_size: int = 0
-    """Snapshot of the `trim_file_size` setting."""
-    _trim_first_line_length: int = -1
-    """Snapshot of the `trim_first_line_length` setting."""
-
     def __post_init__(self) -> None:
         # for unsaved buffer, ST returns "Undefined" for its encoding
         if self.encoding == "Undefined":
             super().__setattr__("encoding", "UTF-8")
-
-    # ── Lazily-computed fields ─────────────────────────────────────
-
-    @cached_property
-    def content(self) -> str:
-        """Pseudo file content, computed lazily on first access."""
-        return head_tail_content_st(self.view, self._trim_file_size)
-
-    @cached_property
-    def first_line(self) -> str:
-        """Pseudo first line, computed lazily on first access."""
-        region = self.view.line(0)
-        if self._trim_first_line_length >= 0:
-            region.b = min(region.b, self._trim_first_line_length)
-        return self.view.substr(region)
 
     # ── Derived cached properties ──────────────────────────────────
 
@@ -109,11 +90,22 @@ class ViewSnapshot:
         return cls(
             view=view,
             char_count=view.size(),
+            content=get_view_pseudo_content(view, window),
+            first_line=get_view_pseudo_first_line(view, window),
             encoding=view.encoding(),
             line_count=view.rowcol(view.size())[0] + 1,
             path_obj=path,
             syntax=view.syntax(),
             caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
-            _trim_file_size=get_merged_plugin_setting("trim_file_size", window=window),
-            _trim_first_line_length=get_merged_plugin_setting("trim_first_line_length", window=window),
         )
+
+
+def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:
+    return head_tail_content_st(view, get_merged_plugin_setting("trim_file_size", window=window))
+
+
+def get_view_pseudo_first_line(view: sublime.View, window: sublime.Window) -> str:
+    region = view.line(0)
+    if (max_length := get_merged_plugin_setting("trim_first_line_length", window=window)) >= 0:
+        region.b = min(region.b, max_length)
+    return view.substr(region)

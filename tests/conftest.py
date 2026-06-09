@@ -217,6 +217,8 @@ def make_snapshot():
         snap = ViewSnapshot(
             view=MockView(),
             char_count=char_count if char_count is not None else len(content),
+            content=content,
+            first_line=first_line or (content.split("\n")[0] if content else ""),
             encoding=encoding,
             line_count=line_count,
             path_obj=Path(path) if path else None,
