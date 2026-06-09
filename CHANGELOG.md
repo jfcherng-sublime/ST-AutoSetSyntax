@@ -1,5 +1,23 @@
 # AutoSetSyntax Changelog
 
+## 6.0.3
+
+- perf: resolve merged settings once per event dispatch
+- perf: improve performance of syntax sorting
+- perf: extract regex constants at module level
+- refactor: tighten type annotations and reduce overhead in core modules
+- refactor: fix `extensionize` edge case and convert recursion to iteration
+- refactor: replace `type: ignore` with `cast()`, remove `model_rebuild`
+- fix: prevent float threshold bug in `RatioMatch.test_count`
+- test: add `AioSettings` test suite
+- test: add `ViewSnapshot` test suite for lazy field access
+- test: add 30 tests for filesystem-dependent constraints
+- test: add 27 tests for untested utility functions
+- test: add 22 tests for Sublime-to-Python encoding translation
+- test: add 16 tests for arch, platform, hidden syntax, and selector constraints
+- test: add 5 tests for `clearable_lru_cache`
+- chore: update dependencies
+
 ## 6.0.2
 
 - feat: add `.jsonl` to JSON syntax rule extensions
