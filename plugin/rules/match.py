@@ -130,7 +130,7 @@ class AbstractMatch(ABC):
                 return False
             if rule.test(view_snapshot):
                 goal -= 1
-                if goal == 0:
+                if goal <= 0:
                     return True
             else:
                 tolerance -= 1

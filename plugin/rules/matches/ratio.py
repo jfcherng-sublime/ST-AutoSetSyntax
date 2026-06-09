@@ -1,3 +1,4 @@
+import math
 from typing import Any
 from typing import final
 from typing import override
@@ -26,4 +27,4 @@ class RatioMatch(AbstractMatch):
 
     @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
-        return self.test_count(view_snapshot, rules, self.ratio * len(rules))
+        return self.test_count(view_snapshot, rules, math.ceil(self.ratio * len(rules)))
