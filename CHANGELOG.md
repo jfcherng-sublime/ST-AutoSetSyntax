@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 6.0.4
+
+- perf: defer snapshot construction, harden rule compilation, fix clone bug
+
 ## 6.0.3
 
 - perf: resolve merged settings once per event dispatch
