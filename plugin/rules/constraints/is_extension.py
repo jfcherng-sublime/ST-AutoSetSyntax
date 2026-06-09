@@ -11,7 +11,7 @@ from ..constraint import AlwaysFalsyException
 
 def _extensionize(ext: str) -> str:
     """Ensure extensions are prefixed with a dot."""
-    return f".{ext}" if ext[0].isalpha() else ext
+    return f".{ext}" if not ext.startswith(".") else ext
 
 
 @final

@@ -41,6 +41,7 @@ pythonpath = ["."]
 [tool.mypy]
 # ignore_missing_imports = False
 check_untyped_defs = true
+disallow_untyped_defs = true
 strict_optional = true
 mypy_path = 'typings:stubs'
 python_version = '3.14'

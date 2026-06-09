@@ -378,19 +378,19 @@ def list_trimmed_strings(string: str, suffixes: tuple[str], skip_self: bool = Fa
     """Generates strings with suffixes trimmed."""
     trie = build_reversed_trie(suffixes)
 
-    def dfs(string_rev: str) -> Generator[str]:
-        for prefix in trie.find_prefixes(string_rev):
-            yield (trimmed := string_rev[len(prefix) :])
-            yield from dfs(trimmed)
-
     if not skip_self:
         yield string
 
-    results: set[str] = set()
-    for trimmed in dfs(string[::-1]):
-        if trimmed not in results:
-            results.add(trimmed)
-            yield trimmed[::-1]
+    seen: set[str] = set()
+    stack = [string[::-1]]
+    while stack:
+        string_rev = stack.pop()
+        for prefix in trie.find_prefixes(string_rev):
+            trimmed = string_rev[len(prefix) :]
+            if trimmed not in seen:
+                seen.add(trimmed)
+                yield trimmed[::-1]
+                stack.append(trimmed)
 
 
 def str_finditer(content: str, substr: str) -> Generator[int]:
