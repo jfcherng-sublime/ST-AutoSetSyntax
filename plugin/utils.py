@@ -18,6 +18,7 @@ from functools import wraps
 from pathlib import Path
 from re import Pattern
 from typing import Any
+from typing import cast
 
 import sublime
 from more_itertools import first_true
@@ -142,7 +143,7 @@ def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
             setattr(debounced, "_timer", timer)
 
         setattr(debounced, "_timer", None)
-        return debounced  # type: ignore[return-value]
+        return cast(T, debounced)
 
     return decorator
 

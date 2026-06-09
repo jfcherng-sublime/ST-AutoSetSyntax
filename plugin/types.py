@@ -96,9 +96,6 @@ class StSyntaxRule(StMatchRule):
         return list(always_iterable(v, base_type=str))
 
 
-StMatchRule.model_rebuild()
-
-
 class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):
     def __contains__(self, key: object) -> bool:
         key = self._to_window_id(key)  # type: ignore[arg-type]

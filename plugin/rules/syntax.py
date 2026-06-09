@@ -71,6 +71,7 @@ class SyntaxRule(Optimizable):
         if target_syntax := find_syntax_by_syntax_likes(syntax_rule.syntaxes, include_hidden=True):
             this.syntax = target_syntax
 
+        this.comment = syntax_rule.comment
         # note that an empty string selector should match any scope
         this.selector = syntax_rule.selector
 

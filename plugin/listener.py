@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from functools import lru_cache
 from functools import wraps
 from typing import Any
+from typing import cast
 
 import sublime
 import sublime_plugin
@@ -84,7 +85,7 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
 
 @lru_cache(maxsize=2)
 def _make_debounced[T: Callable](func: T, time_s: float) -> T:
-    return debounce(time_s)(func)  # type: ignore[return-value]
+    return cast(T, debounce(time_s)(func))
 
 
 def _configured_debounce[T: Callable](func: T) -> T:
@@ -96,7 +97,7 @@ def _configured_debounce[T: Callable](func: T) -> T:
             return _make_debounced(func, time_s)(*args, **kwargs)
         return func(*args, **kwargs)
 
-    return debounced  # type: ignore[return-value]
+    return cast(T, debounced)
 
 
 def _guarantee_primary_view[T: Callable](*, must_plaintext: bool = False) -> Callable[[T], T]:
@@ -111,7 +112,7 @@ def _guarantee_primary_view[T: Callable](*, must_plaintext: bool = False) -> Cal
             ):
                 func(self, view, *args, **kwargs)
 
-        return wrapped  # type: ignore[return-value]
+        return cast(T, wrapped)
 
     return decorator
 

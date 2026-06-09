@@ -23,25 +23,18 @@ on:
 
 jobs:
   job_lint:
-    name: ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: ['ubuntu-latest']
-        python-version: ['3.14']
+    name: CI
+    runs-on: ubuntu-latest
 
     env:
       UV_SYSTEM_PYTHON: 1
     steps:
       - uses: astral-sh/setup-uv@v8.1.0
       - uses: actions/checkout@v5
-        with:
-          submodules: recursive
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.14
         uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.14'
       - name: Do unit test
         run: make ci-test
       - name: Do linting
