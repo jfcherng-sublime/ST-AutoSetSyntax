@@ -28,7 +28,12 @@ uv run --dev ruff check --diff .     # lint
 uv run --dev ruff format --diff .    # format check
 ```
 
-There is no automated test runner (the `tests/` directory only contains fixture files). Testing requires loading the plugin in Sublime Text.
+The project has a pytest-based test suite under `tests/` with 300+ tests and a `conftest.py` that provides a `sublime`/`sublime_plugin` stub layer so tests run under plain pytest without Sublime Text. The `make_snapshot` fixture is the standard pattern for writing new tests. Run the suite with:
+
+```bash
+make ci-test          # runs pytest
+make ci-test-cov      # runs pytest with coverage reporting
+```
 
 ## Code Style
 

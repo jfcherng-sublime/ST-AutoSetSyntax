@@ -8,7 +8,7 @@
     // User Settings //
     ///////////////////
 
-    // The time (in secondes) to wait for the next event to be triggered.
+    // The time (in seconds) to wait for the next event to be triggered.
     "debounce": 0.3,
     // Enable plugin log (in a dedicated panel)
     "enable_log": true,

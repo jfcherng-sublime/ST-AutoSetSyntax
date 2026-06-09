@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import ClassVar
 from typing import final
 from typing import override
 
@@ -13,7 +14,7 @@ from ..constraint import AlwaysFalsyException
 class IsInPythonDjangoProjectConstraint(AbstractConstraint):
     """Check whether this file is in a (Python) Django project."""
 
-    _successed_dirs: set[Path] = set()
+    _successed_dirs: ClassVar[set[Path]] = set()
     """Cached directories which make the result `True`."""
 
     @override
@@ -21,9 +22,9 @@ class IsInPythonDjangoProjectConstraint(AbstractConstraint):
         cls = self.__class__
 
         # file not on disk, maybe just a buffer
-        if not (_file_path := view_snapshot.file_path):
+        if not (file_path_ := view_snapshot.file_path):
             raise AlwaysFalsyException("no filename")
-        file_path = Path(_file_path)
+        file_path = Path(file_path_)
 
         # fast check from the cache
         if first_true(file_path.parents, pred=lambda p: p in cls._successed_dirs):

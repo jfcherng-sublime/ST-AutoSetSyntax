@@ -21,7 +21,7 @@
             "root_plugin_settings": {
               "properties": {
                 "debounce": {
-                  "description": "The time (in secondes) to wait for the next event to be triggered.",
+                  "description": "The time (in seconds) to wait for the next event to be triggered.",
                   "type": "number",
                   "default": 0.3
                 },
@@ -61,15 +61,15 @@
                   "default": false
                 },
                 "default_syntax_rules": {
-                  "description": "(Default Global) Rules which tell AutoSetSyntax how to behvae.",
+                  "description": "(Default Global) Rules which tell AutoSetSyntax how to behave.",
                   "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
                 },
                 "project_syntax_rules": {
-                  "description": "(Project Only) Rules which tell AutoSetSyntax how to behvae.",
+                  "description": "(Project Only) Rules which tell AutoSetSyntax how to behave.",
                   "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
                 },
                 "user_syntax_rules": {
-                  "description": "(User Global) Rules which tell AutoSetSyntax how to behvae.",
+                  "description": "(User Global) Rules which tell AutoSetSyntax how to behave.",
                   "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
                 },
                 "default_trim_suffixes": {
@@ -99,17 +99,24 @@
                 "-optional",
                 "-prod",
                 "-production",
+                "-qa",
                 "-test",
                 ".backup",
                 ".bak",
+                ".common",
                 ".default",
+                ".dev",
                 ".dist",
                 ".example",
+                ".in",
                 ".inc",
                 ".include",
                 ".local",
                 ".orig",
+                ".out",
+                ".qa",
                 ".sample",
+                ".shared",
                 ".temp",
                 ".test",
                 ".tmp",
@@ -138,10 +145,12 @@
                         "$comment": "The targeted event names.",
                         "enum": [
                           "command",
+                          "exec",
                           "init",
                           "load",
                           "modify",
                           "new",
+                          "paste",
                           "reload",
                           "revert",
                           "save",
@@ -347,6 +356,7 @@
                         "properties": {
                           "case_insensitive": {
                             "type": "boolean",
+                            "markdownDescription": "Case-insensitive matching. Defaults to `true` on Windows and macOS, `false` on Linux.",
                             "default": false
                           }
                         },
@@ -475,7 +485,7 @@
                 "magika.min_confidence": {
                   "description": "The minimum confidence to accept the magika detection result.",
                   "type": "number",
-                  "default": 0.85
+                  "default": 0.45
                 }
               },
               "patternProperties": {

@@ -112,7 +112,7 @@ def parse_regex_flags(flags: Iterable[str]) -> int:
 
 
 @clearable_lru_cache()
-def build_reversed_trie(words: tuple[str]) -> TrieNode:
+def build_reversed_trie(words: tuple[str, ...]) -> TrieNode:
     """Returns a trie with all words reversed. It can be used to match suffixes with reversed input string."""
     trie = TrieNode()
     for word in words:
@@ -132,7 +132,7 @@ def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
         @wraps(func)
         def debounced(*args: Any, **kwargs: Any) -> None:
             def call_function() -> Any:
-                delattr(debounced, "_timer")
+                del debounced._timer  # type: ignore[attr-defined]
                 return func(*args, **kwargs)
 
             if timer := getattr(debounced, "_timer", None):
@@ -140,9 +140,9 @@ def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
 
             timer = threading.Timer(time_s, call_function)
             timer.start()
-            setattr(debounced, "_timer", timer)
+            debounced._timer = timer  # type: ignore[attr-defined]
 
-        setattr(debounced, "_timer", None)
+        debounced._timer = None  # type: ignore[attr-defined]
         return cast(T, debounced)
 
     return decorator
@@ -358,7 +358,7 @@ def get_expand_variable_map() -> dict[str, str]:
     return {name: str(path.resolve()) for name, path in paths.items()}
 
 
-def expand_variables[T: None | bool | int | float | str | dict | list | tuple](
+def expand_variables[T: bool | int | float | str | dict | list | tuple | None](
     value: T,
     variables: dict[str, str] | None = None,
 ) -> T:
@@ -375,7 +375,7 @@ def list_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[
         end = filename.rfind(".", 0, end)
 
 
-def list_trimmed_strings(string: str, suffixes: tuple[str], skip_self: bool = False) -> Generator[str]:
+def list_trimmed_strings(string: str, suffixes: tuple[str, ...], skip_self: bool = False) -> Generator[str]:
     """Generates strings with suffixes trimmed."""
     trie = build_reversed_trie(suffixes)
 
@@ -452,6 +452,4 @@ def stringify(obj: Any) -> str:
     r = repr(obj)
     r = _RE_STRINGIFY_CLASS.sub(r'"\1"', r)  # class
     r = _RE_STRINGIFY_ENUM.sub(r'"<\1(\2)>"', r)  # enum
-    r = _RE_STRINGIFY_OBJ.sub(r'"<\1>"', r)  # object
-
-    return r
+    return _RE_STRINGIFY_OBJ.sub(r'"<\1>"', r)  # object

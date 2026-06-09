@@ -1,7 +1,9 @@
 import math
 import re
+from collections.abc import Callable
 from collections.abc import Generator
 from contextlib import contextmanager
+from typing import ClassVar
 from typing import Final
 from typing import override
 
@@ -54,20 +56,22 @@ class Logger:
     DELIMITER: Final[str] = "-" * 10
     SYNTAX_FILE: Final[str] = f"Packages/{PLUGIN_NAME}/syntaxes/AutoSetSyntaxLog.sublime-syntax"
 
-    history_counts: dict[int, int] = {}
+    history_counts: ClassVar[dict[int, int]] = {}
     """per-window, WindowId => history count"""
 
     @classmethod
-    def log(cls, msg: str, *, window: sublime.Window | None = None, enabled: bool = True) -> None:
+    def log(cls, msg: str | Callable[[], str], *, window: sublime.Window | None = None, enabled: bool = True) -> None:
         window = window or sublime.active_window()
         if not (enabled and get_merged_plugin_setting("enable_log", window=window)):
             return
+
+        msg_str = msg() if callable(msg) else msg
 
         max_lines = get_st_setting("console_max_history_lines", math.inf) / 8
         if cls._get_history_count(window) >= max_lines:
             cls.clear(window=window)
 
-        window.run_command("auto_set_syntax_append_log", {"msg": msg})
+        window.run_command("auto_set_syntax_append_log", {"msg": msg_str})
         cls._increase_history_count(window)
         cls._clear_undo_stack(window)
 

@@ -1,5 +1,9 @@
 name: Syntax Tests
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:
@@ -26,7 +30,7 @@ jobs:
             packages: master
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: SublimeText/syntax-test-action@v2
         with:
           build: ${{ matrix.build }}

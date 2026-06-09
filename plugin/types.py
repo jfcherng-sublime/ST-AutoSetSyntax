@@ -98,7 +98,8 @@ class StSyntaxRule(StMatchRule):
 
 class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):
     def __contains__(self, key: object) -> bool:
-        key = self._to_window_id(key)  # type: ignore[arg-type]
+        if isinstance(key, sublime.Window):
+            key = key.id()
         return key in self.data
 
     def __delitem__(self, key: WindowIdAble) -> None:
@@ -114,7 +115,7 @@ class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):
         self.data[key] = value
 
     def keys(self) -> KeysView[WindowId]:
-        return self.data.keys()  # type: ignore
+        return self.data.keys()  # type: ignore[return-value]
 
     @overload
     def get(self, key: WindowIdAble, default: None = None) -> VT | None: ...

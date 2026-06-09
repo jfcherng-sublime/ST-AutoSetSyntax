@@ -91,7 +91,7 @@ def _make_debounced[T: Callable](func: T, time_s: float) -> T:
     ``maxsize=2`` covers the common case (one debounced function with one
     setting-driven delay). Bump when more debounced callbacks are added.
     """
-    return cast(T, debounce(time_s)(func))
+    return debounce(time_s)(func)
 
 
 def _configured_debounce[T: Callable](func: T) -> T:

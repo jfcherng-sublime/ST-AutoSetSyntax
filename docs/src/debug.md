@@ -11,10 +11,11 @@ hide:
 Log messages are printed in the dedicated log panel. There are two ways to open the log panel:
 
 1. Right click on the bottom-left corner of ST and then select `Output: AutoSetSyntax`.
-   Or, run `AutoSetSyntax: Show Log Panel` from the command palette[^1].
-1. (Re-)save your plugin/project settings.
-1. See whether your rules are in those dropped rules.
-   In that case, it's likely that your rules have wrong name or args.
+1. Run `AutoSetSyntax: Toggle Log Panel` from the command palette[^1].
+
+To check whether your rules are being dropped during optimization (e.g., due to wrong names
+or arguments), (re-)save your plugin/project settings and inspect the log panel for dropped
+rules messages.
 
 !!! note
 

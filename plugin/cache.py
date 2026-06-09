@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
+from typing import cast
 
 _cached_functions: set[Callable] = set()
 
@@ -9,7 +10,7 @@ def clearable_lru_cache[T: Callable](*args: Any, **kwargs: Any) -> Callable[[T],
     def decorator(func: T) -> T:
         wrapped = lru_cache(*args, **kwargs)(func)
         _cached_functions.add(wrapped)
-        return wrapped  # type: ignore[return-value]
+        return cast(T, wrapped)
 
     return decorator
 

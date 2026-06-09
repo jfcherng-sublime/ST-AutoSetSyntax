@@ -3,6 +3,10 @@
 
 name: Python
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:
@@ -12,6 +16,9 @@ on:
       - '**.py'
       - '**.pyi'
       - 'Makefile'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'tests/**'
   pull_request:
     branches:
       - '**'
@@ -20,21 +27,18 @@ on:
       - '**.py'
       - '**.pyi'
       - 'Makefile'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'tests/**'
 
 jobs:
   job_lint:
     name: CI
     runs-on: ubuntu-latest
 
-    env:
-      UV_SYSTEM_PYTHON: 1
     steps:
-      - uses: astral-sh/setup-uv@v8.1.0
-      - uses: actions/checkout@v5
-      - name: Set up Python 3.14
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8.2.0
       - name: Do unit test
         run: make ci-test
       - name: Do linting

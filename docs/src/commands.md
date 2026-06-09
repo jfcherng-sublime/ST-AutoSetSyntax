@@ -31,7 +31,7 @@
 
     ```js
     {
-        "caption": "AutoSetSyntax: Create New Constrant",
+        "caption": "AutoSetSyntax: Create New Constraint",
         "command": "auto_set_syntax_create_new_constraint",
     },
     ```
@@ -51,9 +51,38 @@
 
     This command creates a template for a new `Match` implementation.
 
+## Utilities
+
+### `auto_set_syntax_download_dependencies`
+
+!!! example
+
+    ```js
+    {
+        "caption": "AutoSetSyntax: Download Dependencies",
+        "command": "auto_set_syntax_download_dependencies",
+    },
+    ```
+
+    This command downloads the Magika deep-learning detection dependencies.
+    It is the first step of the [Magika setup guide][plugin-magika].
+
+### `auto_set_syntax_syntax_rules_summary`
+
+!!! example
+
+    ```js
+    {
+        "caption": "AutoSetSyntax: Syntax Rules Summary",
+        "command": "auto_set_syntax_syntax_rules_summary",
+    },
+    ```
+
+    This command outputs a summary of all compiled syntax rules for debugging.
+
 ## Logging
 
-### `auto_set_syntax_toogle_log_panel`
+### `auto_set_syntax_toggle_log_panel`
 
 !!! example
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import ClassVar
 from typing import final
 from typing import override
 
@@ -10,7 +11,7 @@ from ..constraint import AbstractConstraint
 class IsInGitRepoConstraint(AbstractConstraint):
     """Check whether this file is in a git repo."""
 
-    _successed_dirs: set[Path] = set()
+    _successed_dirs: ClassVar[set[Path]] = set()
     """Cached directories which make the result `True`."""
 
     @override

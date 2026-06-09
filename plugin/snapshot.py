@@ -84,7 +84,7 @@ class ViewSnapshot:
         window = view.window() or sublime.active_window()
 
         # is real file on a disk?
-        if not (_path := view.file_name()) or not (path := Path(_path).resolve()).is_file():
+        if not (path_ := view.file_name()) or not (path := Path(path_).resolve()).is_file():
             path = None
 
         return cls(

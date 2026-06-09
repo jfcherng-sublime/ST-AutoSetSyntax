@@ -63,6 +63,35 @@ It uses Google's [Magika](https://github.com/google/magika) library to detect th
 You may go [here](https://doc.rust-lang.org/rust-by-example/hello.html) to copy some Rust codes
 and paste them into Sublime Text to test whether this feature works.
 
+## Settings Reference
+
+### `magika.enabled`
+
+| Type      | Default |
+| --------- | ------- |
+| `boolean` | `false` |
+
+Globally enables or disables Magika-based detection.
+
+### `magika.min_confidence`
+
+| Type     | Default |
+| -------- | ------- |
+| `number` | `0.45`  |
+
+The minimum confidence threshold (0.0 to 1.0) required to accept a Magika detection result.
+
+### `magika.syntax_map.*`
+
+Settings with the prefix `magika.syntax_map.` map a Magika output label to one or more syntaxes.
+
+For example, `"magika.syntax_map.python": ["scope:source.python"]` assigns the Python syntax
+when Magika detects Python content.
+
+You may also use `"=label"` to reference another label's mapping, preserving that entry's
+syntax evaluation order. For example, `"magika.syntax_map.rust": ["=cpp"]` routes all content
+detected as Rust through the same syntaxes configured for the `cpp` label.
+
 ## Demo
 
 <video controls="controls" style="max-width:100%">

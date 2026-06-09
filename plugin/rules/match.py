@@ -33,7 +33,7 @@ def get_matches() -> tuple[type[AbstractMatch], ...]:
 
 
 def list_matches() -> Generator[type[AbstractMatch]]:
-    yield from list_all_subclasses(AbstractMatch, skip_abstract=True)  # type: ignore
+    yield from list_all_subclasses(AbstractMatch, skip_abstract=True)  # type: ignore[type-abstract]
 
 
 @dataclass(slots=True)
@@ -75,8 +75,14 @@ class MatchRule(Optimizable):
                 case StMatchRule():
                     return MatchRule.make(rule)
 
+        try:
+            match_obj = match_class(*match_rule.args, **match_rule.kwargs)
+        except Exception as e:
+            Logger.log(f"❌ Failed to create match {match}({match_rule.args}, {match_rule.kwargs}): {e}")
+            return None
+
         return cls(
-            match=match_class(*match_rule.args, **match_rule.kwargs),
+            match=match_obj,
             match_name=match,
             args=tuple(match_rule.args),
             kwargs=match_rule.kwargs,

@@ -19,6 +19,7 @@ Changelog = "https://github.com/jfcherng-sublime/ST-AutoSetSyntax/blob/st4/CHANG
 dev = [
   "mypy>=2",
   "pytest>=9",
+  "pytest-cov>=6",
   "ruff>=0.15",
   "typing-extensions>=4.15",
   "vendorize<1",
@@ -43,6 +44,10 @@ pythonpath = ["."]
 check_untyped_defs = true
 disallow_untyped_defs = true
 strict_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+strict_equality = true
+enable_error_code = ["ignore-without-code"]
 mypy_path = 'typings:stubs'
 python_version = '3.14'
 
@@ -90,16 +95,25 @@ extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 select = [
+  "B",
+  "C4",
   "E",
   "F",
   "FURB",
   "I",
   "PERF",
+  "PIE",
+  "RET",
+  "RUF",
   "SIM",
   "UP",
   "W",
 ]
-ignore = ["E203"]
+ignore = [
+  "B903",  # test stubs may not be dataclasses
+  "E203",
+  "RUF067",  # ST plugins need plugin_loaded/unloaded in __init__.py
+]
 
 [tool.ruff.lint.isort]
 force-single-line = true

@@ -42,7 +42,7 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
         cls._prepare_dependencies()
 
         if not (magika_dir := PLUGIN_PY_LIBS_DIR / "magika").is_dir():
-            sublime.error_message(f"[{PLUGIN_NAME}] Cannot find magika: {str(magika_dir)}")
+            sublime.error_message(f"[{PLUGIN_NAME}] Cannot find magika: {magika_dir!s}")
 
         sublime.message_dialog(f"[{PLUGIN_NAME}] Finish downloading dependencies!")
 

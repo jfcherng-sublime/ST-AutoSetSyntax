@@ -44,7 +44,7 @@ def pref_syntax_rules(*, window: sublime.Window | None = None) -> list[StSyntaxR
     return TypeAdapter(list[StSyntaxRule]).validate_python(get_merged_plugin_setting("syntax_rules", [], window=window))
 
 
-def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str]:
+def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str, ...]:
     return get_merged_plugin_setting("trim_suffixes", [], window=window)
 
 
@@ -109,8 +109,8 @@ class AioSettings(sublime_plugin.EventListener):
 
     @classmethod
     def tear_down(cls) -> None:
-        assert cls._plugin_settings_object
-        cls._plugin_settings_object.clear_on_change(cls.__name__)
+        if cls._plugin_settings_object is not None:
+            cls._plugin_settings_object.clear_on_change(cls.__name__)
 
     @classmethod
     def add_on_change(cls, key: str, callback: Callable) -> None:
@@ -159,7 +159,7 @@ class AioSettings(sublime_plugin.EventListener):
         window_id = window.id()
         cls._merged_plugin_settings.pop(window_id, None)
         cls._project_plugin_settings.pop(window_id, None)
-        cls._tracked_windows.remove(window_id)
+        cls._tracked_windows.discard(window_id)
 
     def on_load_project_async(self, window: sublime.Window) -> None:
         """

@@ -50,27 +50,29 @@ def run_auto_set_syntax_on_view(
     event: ListenerEvent | None = None,
     *,
     must_plaintext: bool = False,
+    skip_syntaxable_check: bool = False,
 ) -> bool:
     if not ((window := view.window()) and G.is_plugin_ready(window) and view.is_valid()):
         Logger.log("⏳ Calm down! View has gone or the plugin is not ready yet.")
         return False
 
-    view_snapshot = ViewSnapshot.from_view(view)
-
     # Resolve settings once and reuse across all strategy functions.
     # This avoids repeated ChainMap lookups per strategy.
     settings = get_merged_plugin_settings(window=window)
 
+    # Cheap EXEC short-circuit: no snapshot needed
     if event is ListenerEvent.EXEC:
-        return _assign_syntax_for_exec_output(view_snapshot, event, settings)
+        return _assign_syntax_for_exec_output(view, event, settings)
 
-    # prerequisites
+    # Cheap prerequisites: reject before building expensive snapshot
     if not (
-        (window := view.window())
-        and is_syntaxable_view(view, must_plaintext=must_plaintext)
+        (skip_syntaxable_check or is_syntaxable_view(view, must_plaintext=must_plaintext))
         and (syntax_rule_collection := G.syntax_rule_collections.get(window))
     ):
         return False
+
+    # Build expensive snapshot only after all cheap guards pass
+    view_snapshot = ViewSnapshot.from_view(view)
 
     if event is ListenerEvent.NEW:
         return _assign_syntax_for_new_view(view_snapshot, event, settings)
@@ -112,12 +114,12 @@ def run_auto_set_syntax_on_view(
 
 
 def _assign_syntax_for_exec_output(
-    view_snapshot: ViewSnapshot,
+    view: sublime.View,
     event: ListenerEvent | None = None,
     settings: MergedSettingsDict | None = None,
 ) -> bool:
     if (
-        (view := view_snapshot.valid_view)
+        view.is_valid()
         and (window := view.window())
         and (not (syntax_old := view.syntax()) or syntax_old.scope == "text.plain")
         and (exec_file_syntax := (settings or get_merged_plugin_settings(window=window)).get("exec_file_syntax"))
@@ -374,8 +376,8 @@ def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerE
 
 
 def _sorry_cannot_help(view: sublime.View, event: ListenerEvent | None = None) -> bool:
-    details = {"event": event, "reason": "no matching rule"}
-    Logger.log(f"❌ Cannot help {stringify(view)} because {stringify(details)}", window=view.window())
+    details: dict[str, Any] = {"event": event, "reason": "no matching rule"}
+    Logger.log(lambda: f"❌ Cannot help {stringify(view)} because {stringify(details)}", window=view.window())
     return False
 
 
@@ -392,25 +394,31 @@ def assign_syntax_to_view(
     details = details or {}
     details["syntax"] = syntax
 
-    _views = view.buffer().views() if same_buffer else (view,)
-    for _view in _views:
-        if not (_window := _view.window()):
+    views = view.buffer().views() if same_buffer else (view,)
+    for view_ in views:
+        if not (window := view_.window()):
             continue
 
-        if syntax == (syntax_old := view.syntax() or NULL_SYNTAX):
-            details["reason"] = f"[ALREADY] {details['reason']}"
+        if syntax == (syntax_old := view_.syntax() or NULL_SYNTAX):
+            # use lambda for lazy evaluation: stringify is skipped if logging is off
             Logger.log(
-                f'💯 Remain {stringify(_view)} syntax "{get_syntax_name(syntax)}" because {stringify(details)}',
-                window=_window,
+                lambda d=details, s=syntax, v=view_: (  # type: ignore[misc]
+                    f'💯 Remain {stringify(v)} syntax "{get_syntax_name(s)}"'
+                    f" because {stringify({**d, 'reason': f'[ALREADY] {d["reason"]}'})}"
+                ),
+                window=window,
             )
             continue
 
-        _view.assign_syntax(syntax)
-        _view.settings().set(VIEW_KEY_IS_ASSIGNED, True)
+        view_.assign_syntax(syntax)
+        view_.settings().set(VIEW_KEY_IS_ASSIGNED, True)
         Logger.log(
-            f"✔ Change {stringify(_view)} syntax"
-            + f' from "{get_syntax_name(syntax_old)}" to "{get_syntax_name(syntax)}" because {stringify(details)}',
-            window=_window,
+            lambda d=details, s=syntax, so=syntax_old, v=view_: (  # type: ignore[misc]
+                f"✔ Change {stringify(v)} syntax"
+                f' from "{get_syntax_name(so)}" to "{get_syntax_name(s)}"'
+                f" because {stringify(d)}"
+            ),
+            window=window,
         )
 
     return True

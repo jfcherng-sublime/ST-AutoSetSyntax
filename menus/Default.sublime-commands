@@ -8,7 +8,7 @@
         "command": "auto_set_syntax_clear_log_panel",
     },
     {
-        "caption": "AutoSetSyntax: Create New Constrant",
+        "caption": "AutoSetSyntax: Create New Constraint",
         "command": "auto_set_syntax_create_new_constraint",
     },
     {

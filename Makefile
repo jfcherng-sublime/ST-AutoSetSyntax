@@ -41,12 +41,16 @@ ci-base-cmd = uv run --dev
 ci-test:
 	$(ci-base-cmd) pytest
 
+.PHONY: ci-test-cov
+ci-test-cov:
+	$(ci-base-cmd) pytest --cov=plugin --cov-report=term-missing
+
 .PHONY: ci-check
 ci-check:
 	@echo "========== check: mypy =========="
 	$(ci-base-cmd) mypy -p plugin
 	@echo "========== check: ruff (lint) =========="
-	$(ci-base-cmd) ruff check --diff .
+	$(ci-base-cmd) ruff check .
 	@echo "========== check: ruff (format) =========="
 	$(ci-base-cmd) ruff format --diff .
 

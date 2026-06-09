@@ -1,4 +1,9 @@
 name: Docs
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     paths:
@@ -13,8 +18,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v8.2.0
       - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8.2.0
       - run: |
           make install-docs
           make docs-build
@@ -24,8 +29,8 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v8.2.0
       - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8.2.0
       - run: |
           make install-docs
           make docs-deploy

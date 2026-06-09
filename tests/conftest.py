@@ -33,8 +33,8 @@ def _make_sublime_stub() -> ModuleType:
 
     # Common API helpers
     mod.active_window = lambda: MagicMock()
-    mod.windows = lambda: []
-    mod.list_syntaxes = lambda: []
+    mod.windows = list
+    mod.list_syntaxes = list
     mod.find_syntax_by_scope = lambda scope: []
     mod.find_syntax_by_name = lambda name: []
     mod.expand_variables = lambda value, variables=None: value

@@ -37,30 +37,30 @@ from .snapshot import ViewSnapshot
 from .types import ListenerEvent
 
 __all__ = (
-    # ST: core
-    "plugin_loaded",
-    "plugin_unloaded",
+    # public interfaces
+    "AbstractConstraint",
+    "AbstractMatch",
+    # ST: listeners
+    "AioSettings",
     # ST: commands (logging)
     "AutoSetSyntaxAppendLogCommand",
     "AutoSetSyntaxClearLogPanelCommand",
-    "AutoSetSyntaxToggleLogPanelCommand",
-    "AutoSetSyntaxUpdateLogCommand",
     # ST: commands
     "AutoSetSyntaxCommand",
     "AutoSetSyntaxCreateNewConstraintCommand",
     "AutoSetSyntaxCreateNewMatchCommand",
     "AutoSetSyntaxDebugInformationCommand",
     "AutoSetSyntaxDownloadDependenciesCommand",
-    "AutoSetSyntaxSyntaxRulesSummaryCommand",
-    # ST: listeners
-    "AioSettings",
     "AutoSetSyntaxEventListener",
+    "AutoSetSyntaxSyntaxRulesSummaryCommand",
     "AutoSetSyntaxTextChangeListener",
-    # public interfaces
-    "AbstractConstraint",
-    "AbstractMatch",
+    "AutoSetSyntaxToggleLogPanelCommand",
+    "AutoSetSyntaxUpdateLogCommand",
     "MatchableRule",
     "ViewSnapshot",
+    # ST: core
+    "plugin_loaded",
+    "plugin_unloaded",
 )
 
 

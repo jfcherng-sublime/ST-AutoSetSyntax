@@ -41,7 +41,7 @@ def get_constraints() -> tuple[type[AbstractConstraint], ...]:
 
 
 def list_constraints() -> Generator[type[AbstractConstraint]]:
-    yield from list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore
+    yield from list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore[type-abstract]
 
 
 @dataclass(slots=True, frozen=True)
@@ -63,7 +63,7 @@ class ConstraintRule(Optimizable):
     def optimize(self) -> Generator[Optimizable]:
         """Leaf constraint has no sub-rules to optimize."""
         return
-        yield  # noqa  # required by Generator protocol for abstract Optimizable
+        yield  # required by Generator protocol for abstract Optimizable
 
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.constraint
@@ -86,8 +86,16 @@ class ConstraintRule(Optimizable):
             Logger.log(f"❌ Unsupported constraint rule: {constraint}")
             return None
 
+        try:
+            constraint_obj = constraint_class(*constraint_rule.args, **constraint_rule.kwargs)
+        except Exception as e:
+            Logger.log(
+                f"❌ Failed to create constraint {constraint}({constraint_rule.args}, {constraint_rule.kwargs}): {e}"
+            )
+            return None
+
         return cls(
-            constraint=constraint_class(*constraint_rule.args, **constraint_rule.kwargs),
+            constraint=constraint_obj,
             constraint_name=constraint,
             args=tuple(constraint_rule.args),
             kwargs=constraint_rule.kwargs,
@@ -211,15 +219,15 @@ class AbstractConstraint(ABC):
         use_exists: bool = False,
     ) -> bool:
         """Test whether the view's file is under a parent directory containing `sibling`, with caching."""
-        if not (_file_path := view_snapshot.file_path):
+        if not (file_path_ := view_snapshot.file_path):
             raise AlwaysFalsyException("file not on disk")
-        file_path = Path(_file_path)
+        file_path = Path(file_path_)
 
         if first_true(file_path.parents, pred=lambda p: p in true_siblings):
             return True
 
-        if _found_sibling := self.find_parent_with_sibling(file_path, sibling, use_exists=use_exists):
-            true_siblings.add(_found_sibling)
+        if found_sibling := self.find_parent_with_sibling(file_path, sibling, use_exists=use_exists):
+            true_siblings.add(found_sibling)
             return True
 
         return False

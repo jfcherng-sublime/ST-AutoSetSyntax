@@ -12,6 +12,16 @@ Sometimes, a good way to learn about settings is reading an existing one.
     --8<-- "../../../AutoSetSyntax.sublime-settings"
     ```
 
+### `debounce`
+
+| Type     | Default |
+| -------- | ------- |
+| `number` | `0.3`   |
+
+The time (in seconds) to wait before triggering syntax detection after a view modification.
+This coalesces rapid modifications (e.g., continuous typing) into a single detection pass.
+Set to `0` to disable debouncing entirely.
+
 ### `enable_log`
 
 | Type      | Default |
@@ -167,10 +177,12 @@ Syntax rules are the key part of AutoSetSyntax.
                     | Event Name | Meaning |
                     | ---------- | ------- |
                     | `"command"` | This run is triggered by the `auto_set_syntax` command. |
+                    | `"exec"` | This run is triggered by build output (exec command). |
                     | `"init"` | This run is triggered by startup views. |
                     | `"load"` | This run is triggered because a file gets loaded. |
                     | `"modify"` | This run is triggered because of a buffer modification. |
                     | `"new"` | This run is triggered because of a newly created window. |
+                    | `"paste"` | This run is triggered when plaintext is pasted into an empty view. |
                     | `"reload"` | This run is triggered because a file has been reloaded. |
                     | `"revert"` | This run is triggered because of the `revert` command. |
                     | `"save"` | This run is triggered because of the buffer gets saved. |
@@ -477,7 +489,7 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     !!! info
 
-        Available platforms are: `x32`, `x64`, and `arm64`.
+        Available architectures are: `x32`, `x64`, and `arm64`.
 
 #### `is_extension`
 
@@ -495,7 +507,7 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     !!! info
 
-        If `case_insensitive` is not provided, it will be `true` on Windows but `false` on other OSes.
+        If `case_insensitive` is not provided, it will be `true` on Windows and macOS (case-insensitive filesystems) but `false` on Linux.
 
 #### `is_hidden_syntax`
 
@@ -638,7 +650,7 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     !!! info
 
-        If `case_insensitive` is not provided, it will be `true` on Windows but `false` on other OSes.
+        If `case_insensitive` is not provided, it will be `true` on Windows and macOS (case-insensitive filesystems) but `false` on Linux.
 
 #### `is_platform`
 
@@ -675,19 +687,6 @@ To edit project settings, go to `Project` » `Edit Project`.
         Available `platform_arch` are combinations of (`linux`, `osx`, `windows`) and (`x32`, `x64`, `arm64`)
         using a `_` as the delimiter.
 
-#### `is_rails_file`
-
-!!! example
-
-    ```js
-    {
-        "constraint": "is_rails_file",
-    }
-    ```
-
-    Test whether the file is a `Ruby on Rails` file.
-
-#### `is_size`
 
 !!! example
 
