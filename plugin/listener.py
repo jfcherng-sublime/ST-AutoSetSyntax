@@ -85,6 +85,12 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
 
 @lru_cache(maxsize=2)
 def _make_debounced[T: Callable](func: T, time_s: float) -> T:
+    """
+    Cache the debounced wrapper so the same (func, time_s) pair reuses one timer.
+
+    ``maxsize=2`` covers the common case (one debounced function with one
+    setting-driven delay). Bump when more debounced callbacks are added.
+    """
     return cast(T, debounce(time_s)(func))
 
 

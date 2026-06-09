@@ -3,8 +3,6 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 from plugin.snapshot import ViewSnapshot
 
 
@@ -59,7 +57,6 @@ class TestViewSnapshotConstruction:
     def test_encoding_undefined_normalized(self):
         """Encoding 'Undefined' should be normalized to 'UTF-8'."""
         # Can't use factory since it defaults to "UTF-8"
-        from unittest.mock import MagicMock
 
         MockView = sys.modules["sublime"].View
         snap = ViewSnapshot(
