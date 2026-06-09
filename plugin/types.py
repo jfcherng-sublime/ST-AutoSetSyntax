@@ -48,7 +48,7 @@ class Optimizable(ABC):
         return False
 
     @abstractmethod
-    def optimize(self) -> Generator[Any]:
+    def optimize(self) -> Generator[Optimizable]:
         """Does optimizations and returns a generator for dropped objects."""
 
 

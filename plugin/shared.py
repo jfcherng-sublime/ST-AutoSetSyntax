@@ -14,7 +14,7 @@ DroppedRulesCollection = WindowKeyedDict[DroppedRules]
 SyntaxRuleCollections = WindowKeyedDict[SyntaxRuleCollection]
 
 
-@dataclass
+@dataclass(slots=True)
 class _GlobalState:
     startup_views: set[sublime.View] = field(default_factory=set)
     """Views exist before this plugin is loaded when Sublime Text just starts."""

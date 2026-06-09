@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from collections.abc import MutableMapping
 from itertools import chain
 from typing import Any
+from typing import ClassVar
 
 import sublime
 import sublime_plugin
@@ -83,18 +84,18 @@ class AioSettings(sublime_plugin.EventListener):
     plugin_name: str = ""
     """The plugin name. This should be set before using this plugin."""
 
-    _on_settings_change_callbacks: dict[str, Callable[[sublime.Window], None]] = {}
-    _plugin_settings_object: sublime.Settings | None = None
-    _settings_normalizer: Callable[[SettingsDict], None] | None = None
-    _settings_producer: Callable[[MergedSettingsDict], dict[str, Any]] | None = None
-    _tracked_windows: set[int] = set()
+    _on_settings_change_callbacks: ClassVar[dict[str, Callable[[sublime.Window], None]]] = {}
+    _plugin_settings_object: ClassVar[sublime.Settings | None] = None
+    _settings_normalizer: ClassVar[Callable[[SettingsDict], None] | None] = None
+    _settings_producer: ClassVar[Callable[[MergedSettingsDict], dict[str, Any]] | None] = None
+    _tracked_windows: ClassVar[set[int]] = set()
 
     # application-level
-    _plugin_settings: SettingsDict = {}
+    _plugin_settings: ClassVar[SettingsDict] = {}
 
     # window-level
-    _project_plugin_settings: dict[WindowId, SettingsDict] = {}
-    _merged_plugin_settings: dict[WindowId, MergedSettingsDict] = {}
+    _project_plugin_settings: ClassVar[dict[WindowId, SettingsDict]] = {}
+    _merged_plugin_settings: ClassVar[dict[WindowId, MergedSettingsDict]] = {}
 
     # ----------- #
     # public APIs #

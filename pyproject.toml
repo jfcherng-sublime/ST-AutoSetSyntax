@@ -9,6 +9,12 @@ dependencies = [
   "pydantic>=2,<3",
 ]
 
+[project.urls]
+Homepage = "https://github.com/jfcherng-sublime/ST-AutoSetSyntax"
+Repository = "https://github.com/jfcherng-sublime/ST-AutoSetSyntax"
+"Bug Tracker" = "https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues"
+Changelog = "https://github.com/jfcherng-sublime/ST-AutoSetSyntax/blob/st4/CHANGELOG.md"
+
 [dependency-groups]
 dev = [
   "mypy>=2",

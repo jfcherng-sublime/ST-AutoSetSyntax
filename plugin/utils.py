@@ -437,6 +437,11 @@ def get_syntax_name(syntax: sublime.Syntax) -> str:
     return syntax.name or (Path(syntax.path).stem if syntax.path else "")
 
 
+_RE_STRINGIFY_CLASS = re.compile(r"(<class '[^']+'>)")
+_RE_STRINGIFY_ENUM = re.compile(r"<([._a-zA-Z]+): ('[^']+')>")
+_RE_STRINGIFY_OBJ = re.compile(r"<([._a-zA-Z]+ [._a-zA-Z]+) at 0x[\dA-F]+>")
+
+
 def stringify(obj: Any) -> str:
     """Custom object-to-string converter. Just used for debug messages."""
     if isinstance(obj, sublime.View):
@@ -444,8 +449,8 @@ def stringify(obj: Any) -> str:
         return f'View({obj.id()}, "{filepath}")'
 
     r = repr(obj)
-    r = compile_regex(r"(<class '[^']+'>)").sub(r'"\1"', r)  # class
-    r = compile_regex(r"<([._a-zA-Z]+): ('[^']+')>").sub(r'"<\1(\2)>"', r)  # enum
-    r = compile_regex(r"<([._a-zA-Z]+ [._a-zA-Z]+) at 0x[\dA-F]+>").sub(r'"<\1>"', r)  # object
+    r = _RE_STRINGIFY_CLASS.sub(r'"\1"', r)  # class
+    r = _RE_STRINGIFY_ENUM.sub(r'"<\1(\2)>"', r)  # enum
+    r = _RE_STRINGIFY_OBJ.sub(r'"<\1>"', r)  # object
 
     return r
