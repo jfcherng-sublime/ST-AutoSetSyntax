@@ -163,6 +163,14 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
             run_auto_set_syntax_on_view(view, ListenerEvent.EXEC)
 
 
+_PASTE_CHANGE_THRESHOLD = 8
+"""Minimum total change size to be considered a paste operation."""
+_SHORT_CONTENT_THRESHOLD = 300
+"""Content size below which any modification triggers re-evaluation."""
+_EDIT_END_PROXIMITY = 2
+"""Distance from end of content within which edits trigger re-evaluation."""
+
+
 @_configured_debounce
 def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[sublime.TextChange]) -> bool:
     # don't use `len(changes) <= 1` here because it has a length of 3
@@ -171,18 +179,18 @@ def _try_assign_syntax_when_text_changed(view: sublime.View, changes: Sequence[s
         return False
 
     # paste = added change is too large
-    if sum(len(change.str) for change in changes) >= 8:
+    if sum(len(change.str) for change in changes) >= _PASTE_CHANGE_THRESHOLD:
         return run_auto_set_syntax_on_view(view, ListenerEvent.PASTE, must_plaintext=True)
 
     v_size = view.size()
     historic_position = changes[0].b
     if (
         # content is short
-        v_size <= 300
+        v_size <= _SHORT_CONTENT_THRESHOLD
         # editing the first line
         or historic_position.row == 0
         # editing last few chars
-        or historic_position.pt >= v_size - 2
+        or historic_position.pt >= v_size - _EDIT_END_PROXIMITY
     ):
         return run_auto_set_syntax_on_view(view, ListenerEvent.MODIFY, must_plaintext=True)
     return False

@@ -311,23 +311,35 @@ def _assign_syntax_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent
     return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "Magika (Deep Learning)"})
 
 
+_RE_JSON_MAP_BEGIN = re.compile(r'^\{"')
+_RE_JSON_MAP_END = re.compile(r'(?:[\d"\]}]|true|false|null)\}$')
+_RE_JSON_ARRAY_BEGIN = re.compile(r'^\["')
+_RE_JSON_ARRAY_END = re.compile(r'(?:[\d"\]}]|true|false|null)\]$')
+_RE_LEADING_WS = re.compile(r"^\s+")
+_RE_TRAILING_WS = re.compile(r"\s+$")
+
+_SMALL_FILE_SIZE = 1 * 1024  # 1 KB
+
+_XSSI_PREFIXES = (")]}'\n", ")]}',\n")
+
+
 def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
     def is_small_file(view_snapshot: ViewSnapshot) -> bool:
-        return view_snapshot.char_count < 1 * 1024  # 1 KB
+        return view_snapshot.char_count < _SMALL_FILE_SIZE
 
     def is_json(view_snapshot: ViewSnapshot) -> bool:
-        text_begin = re.sub(r"^\s+", "", view_snapshot.content[:10])
-        text_end = re.sub(r"\s+$", "", view_snapshot.content[-10:])
+        text_begin = _RE_LEADING_WS.sub("", view_snapshot.content[:10])
+        text_end = _RE_TRAILING_WS.sub("", view_snapshot.content[-10:])
 
         # XSSI protection prefix (https://security.stackexchange.com/q/110539)
-        if text_begin.startswith((")]}'\n", ")]}',\n")):
+        if text_begin.startswith(_XSSI_PREFIXES):
             return True
 
         return not is_small_file(view_snapshot) and bool(
             # map
-            (re.search(r'^\{"', text_begin) and re.search(r'(?:[\d"\]}]|true|false|null)\}$', text_end))
+            (_RE_JSON_MAP_BEGIN.search(text_begin) and _RE_JSON_MAP_END.search(text_end))
             # array
-            or (re.search(r'^\["', text_begin) and re.search(r'(?:[\d"\]}]|true|false|null)\]$', text_end))
+            or (_RE_JSON_ARRAY_BEGIN.search(text_begin) and _RE_JSON_ARRAY_END.search(text_end))
             or (text_begin.startswith("[[") and text_end.endswith("]]"))
             or (text_begin.startswith("[{") and text_end.endswith("}]"))
         )
