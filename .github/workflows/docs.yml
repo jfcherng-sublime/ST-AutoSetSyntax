@@ -13,8 +13,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v8.1.0
-      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: actions/checkout@v6
       - run: |
           make install-docs
           make docs-build
@@ -24,8 +24,8 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: astral-sh/setup-uv@v8.1.0
-      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: actions/checkout@v6
       - run: |
           make install-docs
           make docs-deploy
