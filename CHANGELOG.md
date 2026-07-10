@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 6.0.5
+
+- feat: add `modeline_lines` setting to limit Vim/Emacs modeline detection to first/last lines (fixes #30)
+- refactor: use `yield from ()` for cleaner empty generator
+
 ## 6.0.4
 
 - perf: defer snapshot construction, harden rule compilation, fix clone bug
