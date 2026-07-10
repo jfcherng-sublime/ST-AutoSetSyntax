@@ -193,6 +193,126 @@ class TestHeadTailContent:
         assert head_tail_content("abcde", 4) == "ab\n\nde"
 
 
+# ── head_tail_lines ───────────────────────────────────────────────────────────
+
+
+class TestHeadTailLines:
+    def test_short_content_returned_as_is(self):
+        from plugin.utils import head_tail_lines
+
+        content = "line1\nline2\nline3"
+        assert head_tail_lines(content, 5) == content
+
+    def test_negative_n_returns_as_is(self):
+        from plugin.utils import head_tail_lines
+
+        content = "line1\nline2\nline3"
+        assert head_tail_lines(content, -1) == content
+
+    def test_zero_n_returns_empty(self):
+        from plugin.utils import head_tail_lines
+
+        assert head_tail_lines("line1\nline2\nline3", 0) == ""
+
+    def test_long_content_keeps_only_head_and_tail_lines(self):
+        from plugin.utils import head_tail_lines
+
+        content = "\n".join(f"line{i}" for i in range(1, 11))  # line1..line10
+        result = head_tail_lines(content, 2)
+        assert result == "line1\nline2\n\nline9\nline10"
+
+    def test_modeline_in_the_middle_is_dropped(self):
+        from plugin.utils import head_tail_lines
+
+        # A "vim:" line that only appears deep inside the body (e.g., inside a fenced code
+        # block in a Markdown file) must not survive the head/tail trim.
+        content = "\n".join([
+            "# Title",
+            "",
+            "Some text",
+            "",
+            "```yaml",
+            "# vim: set ft=yaml:",
+            "key: value",
+            "```",
+            "",
+            "More text",
+        ])
+        result = head_tail_lines(content, 2)
+        assert "vim:" not in result
+
+    def test_empty_content_returns_empty(self):
+        from plugin.utils import head_tail_lines
+
+        assert head_tail_lines("", 1) == ""
+
+    def test_single_blank_line_returned_as_is(self):
+        from plugin.utils import head_tail_lines
+
+        assert head_tail_lines("\n", 1) == "\n"
+
+    def test_exact_n_lines_no_trailing_newline_returned_as_is(self):
+        from plugin.utils import head_tail_lines
+
+        content = "a\nb\nc"
+        assert head_tail_lines(content, 3) == content
+
+
+# ── first_last_n_lines ────────────────────────────────────────────────────────
+
+
+class TestFirstLastNLines:
+    def test_non_positive_n_returns_empty(self):
+        from plugin.utils import first_last_n_lines
+
+        assert first_last_n_lines("a\nb\nc", 0) == ([], [], 0)
+        assert first_last_n_lines("a\nb\nc", -1) == ([], [], 0)
+
+    def test_empty_text_returns_empty(self):
+        from plugin.utils import first_last_n_lines
+
+        assert first_last_n_lines("", 3) == ([], [], 0)
+
+    def test_single_blank_line_fully_overlaps(self):
+        # A lone trailing newline is one empty line, not two: `last` must not drop it.
+        from plugin.utils import first_last_n_lines
+
+        assert first_last_n_lines("\n", 1) == ([""], [""], 1)
+
+    def test_fewer_lines_than_n_fully_overlaps(self):
+        from plugin.utils import first_last_n_lines
+
+        first, last, overlapped = first_last_n_lines("line1\nline2\nline3", 5)
+        assert first == last == ["line1", "line2", "line3"]
+        assert overlapped == 3
+
+    def test_exact_n_lines_no_trailing_newline_fully_overlaps(self):
+        # Regression: the last line has no trailing "\n", so the forward scan must still
+        # mark the whole text as consumed instead of leaving the overlap boundary stale.
+        from plugin.utils import first_last_n_lines
+
+        first, last, overlapped = first_last_n_lines("a\nb\nc", 3)
+        assert first == last == ["a", "b", "c"]
+        assert overlapped == 3
+
+    def test_no_overlap_when_lines_exceed_2n(self):
+        from plugin.utils import first_last_n_lines
+
+        content = "\n".join(f"line{i}" for i in range(1, 11))  # line1..line10
+        first, last, overlapped = first_last_n_lines(content, 2)
+        assert first == ["line1", "line2"]
+        assert last == ["line9", "line10"]
+        assert overlapped == 0
+
+    def test_no_overlap_at_exact_2n_boundary(self):
+        from plugin.utils import first_last_n_lines
+
+        first, last, overlapped = first_last_n_lines("l1\nl2\nl3\nl4", 2)
+        assert first == ["l1", "l2"]
+        assert last == ["l3", "l4"]
+        assert overlapped == 0
+
+
 # ── list_trimmed_filenames ────────────────────────────────────────────────────
 
 

@@ -19,6 +19,14 @@
     //   - The name of the syntax: "Markdown" (which is shown in the bottom-right corner of ST)
     //   - An empty string, which does nothing
     "exec_file_syntax": "Packages/AutoSetSyntax/syntaxes/ExecOutput.sublime-syntax",
+    // The number of lines, counted from the beginning and the end of the file, in which
+    // a VIM/Emacs modeline (e.g., "# vim: syntax=python" or "-*- mode: python -*-") is
+    // recognized. This mimics VIM's "modelines" option (which also defaults to 5) so that,
+    // for example, a "vim:" line shown inside a Markdown fenced code block in the middle of
+    // a file is not mistaken for a real modeline.
+    // A negative number means no limit, which may cause false positives on such lines
+    // appearing anywhere in the file.
+    "modeline_lines": 5,
     // Set default syntax for new files. You can use multiple formats as described above.
     "new_file_syntax": "",
     // Run "auto_set_syntax" command on views which exist before the plugin is loaded?

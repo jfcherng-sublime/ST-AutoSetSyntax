@@ -291,17 +291,44 @@ def get_window_by_id(id: int) -> sublime.Window | None:
     return window if (window := sublime.Window(id)).is_valid() else None
 
 
-def head_tail_content(content: str, partial: int) -> str:
-    if partial < 0:
+def head_tail_content(content: str, n: int) -> str:
+    """
+    Return the first `n // 2` and the last `n // 2` characters of `content`,
+    joined by a blank line. A negative `n` means no limit, in which case `content` is
+    returned as-is.
+    """
+    if n < 0:
         return content
 
-    if (half := partial // 2) <= 0:
+    if (half := n // 2) <= 0:
         return ""
 
     if len(content) <= half:
         return content
 
     return content[:half] + "\n\n" + content[-half:]
+
+
+def head_tail_lines(content: str, n: int) -> str:
+    """
+    Return the first `n` lines and the last `n` lines of `content`, joined by a blank line.
+
+    This is used to emulate how Vim/Emacs modelines are only recognized within the first/last
+    few lines of a file rather than anywhere in the whole file content. A negative `n` means no
+    limit, in which case `content` is returned as-is.
+    """
+    if n < 0:
+        return content
+
+    if n == 0:
+        return ""
+
+    first, last, overlapped = first_last_n_lines(content, n)
+
+    if overlapped or not first:
+        return content
+
+    return "\n".join(first) + "\n\n" + "\n".join(last)
 
 
 def head_tail_content_st(view: sublime.View, partial: int) -> str:
@@ -321,6 +348,57 @@ def head_tail_content_st(view: sublime.View, partial: int) -> str:
         # but some may be at the ending...
         + view.substr(sublime.Region(size - half, size))
     )
+
+
+def first_last_n_lines(text: str, n: int) -> tuple[list[str], list[str], int]:
+    """
+    Get first/last n lines without materializing all lines.
+    Assumes '\n' as the line separator (not universal newlines).
+
+    Returns `(first, last, overlapped)`, where `overlapped` is how many lines are
+    counted in both `first` and `last` (i.e., `text` has `2 * n` or fewer lines).
+    """
+    if n <= 0:
+        return [], [], 0
+    length = len(text)
+
+    # First n lines (scan forward)
+    first: list[str] = []
+    pos = 0
+    for _ in range(n):
+        if pos >= length:
+            break
+        idx = text.find("\n", pos)
+        if idx == -1:
+            first.append(text[pos:])
+            pos = length  # the trailing partial line consumed the rest of `text`
+            break
+        first.append(text[pos:idx])
+        pos = idx + 1
+
+    # Last n lines (scan backward). A line's start offset below `pos` means the
+    # forward scan above already counted it, so tally that overlap on the fly
+    # instead of collecting all offsets just to intersect them afterwards.
+    last: list[str] = []
+    overlapped = 0
+    end = length
+    has_more = length > 0
+    if has_more and text[end - 1] == "\n":
+        end -= 1
+    for _ in range(n):
+        if not has_more:
+            break
+        idx = text.rfind("\n", 0, end)
+        if idx + 1 < pos:
+            overlapped += 1
+        last.append(text[idx + 1 : end])
+        if idx == -1:
+            has_more = False
+        else:
+            end = idx
+    last.reverse()
+
+    return first, last, overlapped
 
 
 def is_plaintext_syntax(syntax: sublime.Syntax) -> bool:

@@ -35,6 +35,11 @@
                   "type": "string",
                   "default": "Packages/AutoSetSyntax/syntaxes/ExecOutput.sublime-syntax"
                 },
+                "modeline_lines": {
+                  "markdownDescription": "The number of lines, counted from the beginning and the end of the file, in which a VIM/Emacs modeline (e.g., `# vim: syntax=python` or `-*- mode: python -*-`) is recognized. This mimics VIM's `modelines` option (which also defaults to `5`) so that, for example, a `vim:` line shown inside a Markdown fenced code block in the middle of a file is not mistaken for a real modeline.\n\n---\n\nA negative number means no limit, which may cause false positives on such lines appearing anywhere in the file.",
+                  "type": "integer",
+                  "default": 5
+                },
                 "new_file_syntax": {
                   "markdownDescription": "The syntax used for a newly created file.\n\n---\n\nCan be one of following formats:\n\n- Syntax top scope: `\"scope:text.html.markdown\"`\n- Partial/full syntax file path: `\"Markdown/Markdown.\"`\n- The name of the syntax: `\"Markdown\"` (which is shown in the bottom-right corner of ST)\n- An empty string, which does nothing",
                   "type": "string",

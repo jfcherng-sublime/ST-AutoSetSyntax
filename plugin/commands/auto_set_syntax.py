@@ -29,6 +29,7 @@ from ..utils import extract_prefixed_dict
 from ..utils import find_syntax_by_syntax_like
 from ..utils import find_syntax_by_syntax_likes
 from ..utils import get_syntax_name
+from ..utils import head_tail_lines
 from ..utils import is_plaintext_syntax
 from ..utils import list_trimmed_filenames
 from ..utils import list_trimmed_strings
@@ -83,7 +84,7 @@ def run_auto_set_syntax_on_view(
     if _assign_syntax_with_plugin_rules(view_snapshot, syntax_rule_collection, event):
         return True
 
-    if _assign_syntax_with_first_line(view_snapshot, event):
+    if _assign_syntax_with_first_line(view_snapshot, event, settings):
         return True
 
     if event in {
@@ -185,7 +186,11 @@ def _assign_syntax_with_plugin_rules(
     return False
 
 
-def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
+def _assign_syntax_with_first_line(
+    view_snapshot: ViewSnapshot,
+    event: ListenerEvent | None = None,
+    settings: MergedSettingsDict | None = None,
+) -> bool:
     # Note that this only works for files under some circumstances.
     # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
@@ -199,9 +204,16 @@ def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerE
         return None
 
     def _prefer_modeline(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
+        # Real Vim/Emacs only look for modelines within the first/last few lines of a file
+        # (Vim's "modelines" option defaults to 5). If we search the whole (trimmed) file
+        # content instead, a "# vim: ..." or "-*- ... -*-" line that merely appears inside a
+        # code block somewhere in the document (e.g., a Markdown fenced code example) would be
+        # wrongly treated as a real modeline. See https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/30
+        modeline_lines = int((settings or get_merged_plugin_settings(window=window)).get("modeline_lines", 5))
+        modeline_content = head_tail_lines(view_snapshot.content, modeline_lines)
         for match in chain(
-            RE_EMACS_SYNTAX_LINE.finditer(view_snapshot.content),
-            RE_VIM_SYNTAX_LINE.finditer(view_snapshot.content),
+            RE_EMACS_SYNTAX_LINE.finditer(modeline_content),
+            RE_VIM_SYNTAX_LINE.finditer(modeline_content),
         ):
             if syntax := find_syntax_by_syntax_like(match.group("syntax")):
                 return syntax
@@ -216,7 +228,7 @@ def _assign_syntax_with_first_line(view_snapshot: ViewSnapshot, event: ListenerE
             return syntax
         return None
 
-    if not (view := view_snapshot.valid_view):
+    if not ((view := view_snapshot.valid_view) and (window := view.window())):
         return False
 
     # It's potentially that a first line of a syntax is a prefix of another syntax's.
