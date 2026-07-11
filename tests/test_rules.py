@@ -252,6 +252,76 @@ class TestSyntaxRule:
         rule = SyntaxRule.make(src)
         assert rule.src_setting is src
 
+    def test_optimize_no_root_rule_yields_nothing(self):
+        """Unsupported match → root_rule is None → optimize() is a no-op."""
+        _ensure_rules_imported()
+        from plugin.rules.syntax import SyntaxRule
+
+        rule = SyntaxRule.make(StSyntaxRule(match="nonexistent_match", syntaxes=["Python"]))
+        assert rule.root_rule is None
+        assert list(rule.optimize()) == []
+
+    def test_optimize_drops_immediately_droppable_root_rule(self):
+        """root_rule is already droppable (no child rules) → dropped whole, without recursing."""
+        _ensure_rules_imported()
+        from plugin.rules.syntax import SyntaxRule
+
+        rule = SyntaxRule.make(StSyntaxRule(syntaxes=["Python"], rules=[]))
+        root_rule = rule.root_rule
+        assert root_rule is not None
+        assert root_rule.is_droppable() is True
+
+        dropped = list(rule.optimize())
+
+        assert dropped == [root_rule]
+        assert rule.root_rule is None
+
+    def test_optimize_prunes_children_but_keeps_survivable_root(self):
+        """One droppable child is pruned; root_rule still has a survivor and stays attached."""
+        _ensure_rules_imported()
+        from plugin.rules.syntax import SyntaxRule
+
+        rule = SyntaxRule.make(
+            StSyntaxRule(
+                syntaxes=["Python"],
+                rules=[
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                    StConstraintRule(constraint="is_extension"),  # no exts → droppable
+                ],
+            )
+        )
+        root_rule = rule.root_rule
+        assert root_rule is not None
+        assert len(root_rule.rules) == 2
+        assert root_rule.is_droppable() is False
+
+        dropped = list(rule.optimize())
+
+        assert len(dropped) == 1  # only the droppable constraint
+        assert rule.root_rule is root_rule  # root_rule survives, stays attached
+        assert len(root_rule.rules) == 1
+
+    def test_optimize_drops_root_rule_that_becomes_droppable_after_pruning(self):
+        """root_rule's only child is droppable; after pruning it root_rule itself is now droppable too."""
+        _ensure_rules_imported()
+        from plugin.rules.syntax import SyntaxRule
+
+        rule = SyntaxRule.make(
+            StSyntaxRule(
+                syntaxes=["Python"],
+                rules=[StConstraintRule(constraint="is_extension")],  # no exts → droppable
+            )
+        )
+        root_rule = rule.root_rule
+        assert root_rule is not None
+        assert root_rule.is_droppable() is False  # still has a (droppable) child, so not droppable yet
+        child_rule = root_rule.rules[0]
+
+        dropped = list(rule.optimize())
+
+        assert dropped == [child_rule, root_rule]
+        assert rule.root_rule is None
+
 
 # ── SyntaxRuleCollection ───────────────────────────────────────────────────────
 
