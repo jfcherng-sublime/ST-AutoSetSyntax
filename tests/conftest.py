@@ -131,6 +131,9 @@ def _make_sublime_plugin_stub() -> ModuleType:
     class ViewEventListener:
         pass
 
+    class TextChangeListener:
+        pass
+
     class TextInputHandler:
         pass
 
@@ -142,6 +145,7 @@ def _make_sublime_plugin_stub() -> ModuleType:
     mod.ApplicationCommand = ApplicationCommand
     mod.EventListener = EventListener
     mod.ViewEventListener = ViewEventListener
+    mod.TextChangeListener = TextChangeListener
     mod.TextInputHandler = TextInputHandler
     mod.ListInputHandler = ListInputHandler
     return mod

@@ -83,6 +83,15 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     )
 
 
+def _ensure_window_set_up(window: sublime.Window) -> None:
+    """
+    ST fires `on_new(view)` before `on_new_window(window)` for a brand new window's first tab,
+    so `on_new` must make sure the window's rules are compiled before evaluating that view.
+    """
+    if window not in G.syntax_rule_collections:
+        set_up_window(window)
+
+
 @lru_cache(maxsize=2)
 def _make_debounced[T: Callable](func: T, time_s: float) -> T:
     """
@@ -153,10 +162,12 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
         pass
 
     def on_new(self, view: sublime.View) -> None:
+        if window := view.window():
+            _ensure_window_set_up(window)
         run_auto_set_syntax_on_view(view, ListenerEvent.NEW)
 
     def on_new_window(self, window: sublime.Window) -> None:
-        set_up_window(window)
+        _ensure_window_set_up(window)
 
     def on_post_save(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.SAVE)
