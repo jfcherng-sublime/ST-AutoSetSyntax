@@ -17,7 +17,7 @@ make install-dev    # install dev dependencies
 make ci-check       # run mypy + ruff lint + ruff format checks (read-only)
 make ci-fix         # auto-fix ruff lint and format issues
 make ci-fix-unsafe  # same but with ruff --unsafe-fixes
-make test           # unittest
+make ci-test        # run the pytest suite
 ```
 
 Individual tools:
@@ -38,8 +38,8 @@ make ci-test-cov      # runs pytest with coverage reporting
 ## Code Style
 
 - **Line length**: 120 characters
-- **Ruff**: runs in `preview = true` mode; selected rules: `E, F, FURB, I, PERF, SIM, UP, W`
-- **Indentation**: 4 spaces for `.py` and `.json`; 2 spaces for `.md`, `.toml`, Sublime configs; tabs for `Makefile`
+- **Ruff**: runs in `preview = true` mode; selected rules: `B, C4, E, F, FURB, I, PERF, PIE, RET, RUF, SIM, UP, W`
+- **Indentation**: 4 spaces for `.py`, `.json`, and most `.sublime-*` config files (`sublime-commands`, `sublime-keymap`, `sublime-menu`, `sublime-mousemap`, `sublime-settings`, `.tmPreferences`); 2 spaces for `.md`, `.toml`, `.sublime-syntax`, `sublime-package.json`; tabs for `Makefile`
 - `_vendor/`, `typings/`, `stubs/`, `tests/files/`, and `branch-*` directories are excluded from ruff and mypy
 
 ## Git Conventions
