@@ -123,3 +123,4 @@ def _load_custom_implementations() -> None:
 def _run_on_startup_views() -> None:
     for view in G.startup_views:
         run_auto_set_syntax_on_view(view, ListenerEvent.INIT)
+    G.startup_views.clear()
