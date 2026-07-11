@@ -1,6 +1,7 @@
 """Tests for pure utility functions in plugin/utils.py."""
 
 import re
+import time
 
 import pytest
 
@@ -606,3 +607,54 @@ class TestListTrimmedStrings:
         assert "file.min.js" in result
         assert "file.min" in result
         assert "file" in result
+
+
+# ── debounce ─────────────────────────────────────────────────────────────────
+
+
+class TestDebounce:
+    def test_calls_after_delay(self):
+        from plugin.utils import debounce
+
+        calls = []
+
+        @debounce(0.05)
+        def record(x):
+            calls.append(x)
+
+        record("a")
+        assert calls == []
+        time.sleep(0.2)
+        assert calls == ["a"]
+
+    def test_rapid_calls_for_same_key_only_run_last(self):
+        from plugin.utils import debounce
+
+        calls = []
+
+        @debounce(0.05)
+        def record(key, value):
+            calls.append((key, value))
+
+        record("view1", 1)
+        record("view1", 2)
+        record("view1", 3)
+        time.sleep(0.2)
+        assert calls == [("view1", 3)]
+
+    def test_different_first_arg_debounces_independently(self):
+        """A call for one key must not cancel a pending call scheduled for a different key."""
+        from plugin.utils import debounce
+
+        calls = []
+
+        @debounce(0.05)
+        def record(key, value):
+            calls.append((key, value))
+
+        record("view1", "a")
+        time.sleep(0.02)  # well within the debounce window
+        record("view2", "b")  # different key -- must not cancel view1's pending call
+        time.sleep(0.2)
+        assert ("view1", "a") in calls
+        assert ("view2", "b") in calls

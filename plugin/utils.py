@@ -123,26 +123,31 @@ def build_reversed_trie(words: tuple[str, ...]) -> TrieNode:
 def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
     """
     Debounce a function so that it's called after `time_s` seconds.
-    If it's called multiple times in the time frame, it will only run the last call.
+    If it's called multiple times in the time frame for the same first argument (the "key"),
+    only the last call for that key runs; calls for a different key are debounced independently
+    and don't cancel each other.
 
     Taken and modified from https://github.com/salesforce/decorator-operations
     """
 
     def decorator(func: T) -> T:
+        timers: dict[Any, threading.Timer] = {}
+
         @wraps(func)
         def debounced(*args: Any, **kwargs: Any) -> None:
+            key = args[0] if args else None
+
             def call_function() -> Any:
-                del debounced._timer  # type: ignore[attr-defined]
+                timers.pop(key, None)
                 return func(*args, **kwargs)
 
-            if timer := getattr(debounced, "_timer", None):
+            if timer := timers.get(key):
                 timer.cancel()
 
             timer = threading.Timer(time_s, call_function)
+            timers[key] = timer
             timer.start()
-            debounced._timer = timer  # type: ignore[attr-defined]
 
-        debounced._timer = None  # type: ignore[attr-defined]
         return cast(T, debounced)
 
     return decorator
