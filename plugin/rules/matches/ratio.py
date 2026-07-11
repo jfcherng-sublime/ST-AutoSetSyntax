@@ -27,14 +27,23 @@ class RatioMatch(AbstractMatch):
 
     @override
     def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
-        """With no rules the goal is always 0 (always satisfied); an invalid/negative ratio is too."""
+        """
+        With zero rules the goal `ceil(ratio * 0)` is always `0` (constant True) no matter the
+        ratio. Otherwise, an invalid/negative ratio (bad denominator, or a negative numerator)
+        also means `goal <= 0` (constant True); a ratio above `1` means the goal exceeds
+        `len(rules)`, which can never be satisfied (constant False).
+        """
         return not rules or self.ratio < 0
 
     @override
     def prunable_child_value(self) -> bool | None:
         """
-        The goal is `ceil(ratio * len(rules))`, recomputed from the *current* rule count, so removing
-        any child -- even a constant one -- would shift the effective threshold. Never safe to prune.
+        `None`: no child is ever safely prunable here. Unlike `all`/`any`/`some`, this match's
+        goal (`ceil(ratio * len(rules))`) is recomputed from the *current* rule count on every
+        `test()`, so removing any child -- constant or not -- shifts the effective threshold
+        rather than leaving the result unchanged. Pruning is left entirely to
+        `SyntaxRule.optimize()`/`MatchRule.optimize()` collapsing this whole match instead, via
+        `is_droppable()`/`droppable_value()`, once/if the match itself becomes provably constant.
         """
         return None
 

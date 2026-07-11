@@ -48,7 +48,24 @@ class Optimizable(ABC):
         return False
 
     def droppable_value(self) -> bool:
-        """The fixed boolean value this object always evaluates to. Only meaningful when `is_droppable()` is `True`."""
+        """
+        The fixed boolean value this object always evaluates to, once it's known to be droppable.
+        Only meaningful when `is_droppable()` is `True` -- ignore it otherwise.
+
+        A droppable object is one whose test-like result no longer depends on runtime data (e.g.
+        a leaf constraint with no arguments, or an empty `any`/`all` match); this is *what that
+        fixed result is*.
+
+        This is a separate method from `is_droppable()` because "droppable" alone is ambiguous:
+        it can mean the object always evaluates to `True` (e.g. an empty `all`, since
+        `all([]) == True`) or always to `False` (e.g. an empty `any`, since `any([]) == False`).
+        Whoever holds this object needs to know *which* constant it collapses to before deciding
+        whether it's safe to discard -- see `AbstractMatch.prunable_child_value()` for why that
+        distinction matters.
+
+        Defaults to `False`, which matches every built-in leaf constraint (a droppable
+        constraint -- e.g. `is_extension` with no extensions given -- always fails its `test()`).
+        """
         return False
 
     @abstractmethod

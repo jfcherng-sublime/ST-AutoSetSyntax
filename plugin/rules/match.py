@@ -52,6 +52,7 @@ class MatchRule(Optimizable):
 
     @override
     def droppable_value(self) -> bool:
+        """Delegates to the underlying `match`'s `droppable_value()`, evaluated against `self.rules`."""
         return self.match.droppable_value(self.rules) if self.match else False
 
     @override
@@ -139,14 +140,45 @@ class AbstractMatch(ABC):
         return False
 
     def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
-        """The fixed boolean value this match always evaluates to. Only meaningful when `is_droppable()` is `True`."""
+        """
+        The fixed boolean value this match always evaluates to, once it's known to be droppable
+        (see `Optimizable.droppable_value()` for the general contract).
+
+        Override this whenever `is_droppable()` can report `True` for a case where `test()`
+        would actually resolve to `True` rather than `False`. For example `all([])` is a
+        constant `True` (see `AllMatch`), and `some(n)` is a constant `True` when `n <= 0` (see
+        `SomeMatch`) -- both override this. A plain `any` never needs to, since `any([])` is
+        `False`, matching the inherited default.
+        """
         return False
 
     def prunable_child_value(self) -> bool | None:
         """
-        The `droppable_value()` a child rule must have to be safely removable from `rules` without changing
-        this match's result. `None` means no child -- even a droppable/constant one -- can ever be safely
-        removed (e.g. ratio-based matches, whose result depends on how many rules they have).
+        Which `droppable_value()` a droppable child rule must have to be safely removable from
+        `rules` without changing this match's own result -- i.e. this combinator's identity
+        element.
+
+        `MatchRule.optimize()` calls this to decide what it may prune from a `MatchRule`'s
+        children: a droppable child is removed only when its `droppable_value()` equals this
+        value. A droppable child with the *other* value must stay in `rules` so it keeps
+        contributing its fixed result at test time -- dropping it would silently change what
+        this match evaluates to.
+
+        For example, `True` is safe to drop from `all(...)` (AND's identity element:
+        `all(True, is_extension("py")) == all(is_extension("py"))`), but `False` is not
+        (`all(False, is_extension("py"))` is always `False`, unlike `all(is_extension("py"))`,
+        which depends on the file). Silently deleting a constant-`False` child from an `all` --
+        rather than leaving it in place or collapsing the whole match to `False` -- is exactly
+        the bug this method exists to prevent.
+
+        Return `None` when NO child can ever be safely removed, regardless of its value -- i.e.
+        this match's result depends on how many children it has, not just their individual
+        values. `RatioMatch` returns `None`: its goal is `ceil(ratio * len(rules))`, so removing
+        any child -- constant or not -- shifts that goal.
+
+        Defaults to `False` (safe to drop a constant-`False` child), which is correct for `any`
+        (OR: `False` is the identity element) and for a fixed-goal `some(n)` (removing a rule
+        that could never contribute toward reaching `n` doesn't change whether `n` is reachable).
         """
         return False
 

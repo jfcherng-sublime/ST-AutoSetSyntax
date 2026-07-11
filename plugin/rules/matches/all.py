@@ -16,12 +16,16 @@ class AllMatch(AbstractMatch):
 
     @override
     def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
-        """`all([])` is `True`, so an empty `all` is a constant True, not False."""
+        """`all([])` is `True`, so an empty `all` is a constant True -- unlike an empty `any`, which is False."""
         return True
 
     @override
     def prunable_child_value(self) -> bool | None:
-        """Only a constant-True child is safe to drop (`True` is AND's identity element)."""
+        """
+        Only a constant-True child is safe to drop: `True` is AND's identity element, so
+        `all(True, x) == all(x)`. A constant-False child must stay (or force this whole `all`
+        to `False`), since `all(False, x)` is always `False` regardless of `x`.
+        """
         return True
 
     @override

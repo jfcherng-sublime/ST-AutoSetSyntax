@@ -24,8 +24,14 @@ class SomeMatch(AbstractMatch):
 
     @override
     def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
-        """A negative count is always satisfied (`goal <= 0`); count > len(rules) can never be satisfied."""
+        """A negative count always satisfies `goal <= 0` (constant True); count > len(rules) can never be satisfied."""
         return self.count <= 0
+
+    # prunable_child_value() is intentionally NOT overridden. `some(n)`'s goal `n` is a fixed
+    # literal, independent of how many rules it has (unlike `ratio`), so dropping a
+    # constant-False child -- one that could never contribute toward reaching `n` -- never
+    # changes whether `n` is reachable. The inherited default (only constant-False is prunable)
+    # is exactly right here.
 
     @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:

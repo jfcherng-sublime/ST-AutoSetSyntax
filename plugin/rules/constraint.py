@@ -61,7 +61,12 @@ class ConstraintRule(Optimizable):
 
     @override
     def droppable_value(self) -> bool:
-        """A droppable constraint always fails (`False`), unless `inverted` flips it to `True`."""
+        """
+        A droppable constraint's underlying `AbstractConstraint.test()` always fails (`False`) --
+        see `AbstractConstraint.is_droppable()`, whose contract is "droppable implies always
+        fails". `inverted` flips that result, so a droppable *inverted* `ConstraintRule` is
+        actually a constant `True`, not `False`.
+        """
         return self.inverted
 
     @override
@@ -129,6 +134,13 @@ class AbstractConstraint(ABC):
         """
         Determines whether this object is droppable.
         If it's droppable, then it may be dropped by who holds it during optimizing.
+
+        Contract for subclasses: droppable must mean `test()` always fails (`False`), not always
+        passes. Unlike `AbstractMatch`, constraints have no `droppable_value()` -- `ConstraintRule`
+        assumes a droppable constraint is a constant `False` pre-inversion (see
+        `ConstraintRule.droppable_value()`, which only flips that via `inverted`). A custom
+        constraint whose `is_droppable()` reports `True` for a case where `test()` would actually
+        return `True` breaks that assumption and will be pruned incorrectly.
         """
         return False
 
