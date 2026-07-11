@@ -23,5 +23,10 @@ class SomeMatch(AbstractMatch):
         return not (0 <= self.count <= len(rules))
 
     @override
+    def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
+        """A negative count is always satisfied (`goal <= 0`); count > len(rules) can never be satisfied."""
+        return self.count <= 0
+
+    @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
         return self.test_count(view_snapshot, rules, self.count)

@@ -39,11 +39,14 @@ class SyntaxRule(Optimizable):
     def optimize(self) -> Generator[Optimizable]:
         if self.root_rule:
             if self.root_rule.is_droppable():
-                yield self.root_rule
-                self.root_rule = None
+                # a constant-True root_rule always matches (given selector/events); only a
+                # constant-False one can be discarded without changing this rule's behavior
+                if not self.root_rule.droppable_value():
+                    yield self.root_rule
+                    self.root_rule = None
             else:
                 yield from self.root_rule.optimize()
-                if self.root_rule.is_droppable():
+                if self.root_rule.is_droppable() and not self.root_rule.droppable_value():
                     yield self.root_rule
                     self.root_rule = None
 

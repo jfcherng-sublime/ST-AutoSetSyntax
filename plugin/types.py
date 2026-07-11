@@ -47,6 +47,10 @@ class Optimizable(ABC):
         """
         return False
 
+    def droppable_value(self) -> bool:
+        """The fixed boolean value this object always evaluates to. Only meaningful when `is_droppable()` is `True`."""
+        return False
+
     @abstractmethod
     def optimize(self) -> Generator[Optimizable]:
         """Does optimizations and returns a generator for dropped objects."""

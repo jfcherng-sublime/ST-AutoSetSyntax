@@ -60,6 +60,11 @@ class ConstraintRule(Optimizable):
         return not (self.constraint and not self.constraint.is_droppable())
 
     @override
+    def droppable_value(self) -> bool:
+        """A droppable constraint always fails (`False`), unless `inverted` flips it to `True`."""
+        return self.inverted
+
+    @override
     def optimize(self) -> Generator[Optimizable]:
         """Leaf constraint has no sub-rules to optimize."""
         yield from ()

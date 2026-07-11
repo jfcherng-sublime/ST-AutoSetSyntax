@@ -19,7 +19,6 @@ from ..types import StMatchRule
 from ..utils import camel_to_snake
 from ..utils import drop_falsy
 from ..utils import list_all_subclasses
-from ._optimize import sift_optimizable
 from .constraint import ConstraintRule
 
 
@@ -52,9 +51,29 @@ class MatchRule(Optimizable):
         return not (self.rules and self.match and not self.match.is_droppable(self.rules))
 
     @override
+    def droppable_value(self) -> bool:
+        return self.match.droppable_value(self.rules) if self.match else False
+
+    @override
     def optimize(self) -> Generator[Optimizable]:
-        dropped, self.rules = sift_optimizable(self.rules)
-        yield from dropped
+        assert self.match
+
+        for rule in self.rules:
+            yield from rule.optimize()
+
+        prunable_value = self.match.prunable_child_value()
+        if prunable_value is None:
+            # this combinator's result depends on how many rules it has (e.g. ratio), so no
+            # child -- even a droppable/constant one -- can ever be safely removed from `rules`
+            return
+
+        survivors: list[MatchableRule] = []
+        for rule in self.rules:
+            if rule.is_droppable() and rule.droppable_value() == prunable_value:
+                yield rule
+            else:
+                survivors.append(rule)
+        self.rules = tuple(survivors)
 
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert self.match
@@ -116,6 +135,18 @@ class AbstractMatch(ABC):
         """
         Determines whether this object is droppable.
         If it's droppable, then it may be dropped by who holds it during optimizing.
+        """
+        return False
+
+    def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
+        """The fixed boolean value this match always evaluates to. Only meaningful when `is_droppable()` is `True`."""
+        return False
+
+    def prunable_child_value(self) -> bool | None:
+        """
+        The `droppable_value()` a child rule must have to be safely removable from `rules` without changing
+        this match's result. `None` means no child -- even a droppable/constant one -- can ever be safely
+        removed (e.g. ratio-based matches, whose result depends on how many rules they have).
         """
         return False
 

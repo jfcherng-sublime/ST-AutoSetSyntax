@@ -85,6 +85,26 @@ class TestConstraintRule:
         dropped = list(rule.optimize())
         assert dropped == []
 
+    def test_droppable_value_false_when_not_inverted(self):
+        """A droppable (always-fails) constraint that isn't inverted is constant False."""
+        _ensure_rules_imported()
+        from plugin.rules.constraint import ConstraintRule
+
+        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension"))  # empty args -> droppable
+        assert rule is not None
+        assert rule.is_droppable() is True
+        assert rule.droppable_value() is False
+
+    def test_droppable_value_true_when_inverted(self):
+        """A droppable (always-fails) constraint that's inverted is constant True, not False."""
+        _ensure_rules_imported()
+        from plugin.rules.constraint import ConstraintRule
+
+        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", inverted=True))
+        assert rule is not None
+        assert rule.is_droppable() is True
+        assert rule.droppable_value() is True
+
 
 # ── MatchRule ──────────────────────────────────────────────────────────────────
 
@@ -177,6 +197,142 @@ class TestMatchRule:
         rule = MatchRule.make(src)
         assert rule is not None
         assert rule.src_setting is src
+
+
+# ── AbstractMatch.droppable_value / prunable_child_value ────────────────────────
+
+
+class TestMatchDroppableValueAndPrunability:
+    def test_any_match_droppable_value_is_false(self):
+        _ensure_rules_imported()
+        from plugin.rules.matches.any import AnyMatch
+
+        assert AnyMatch().droppable_value(()) is False
+        assert AnyMatch().prunable_child_value() is False
+
+    def test_all_match_droppable_value_is_true(self):
+        """`all([])` is `True`, so an empty `all` is constant True, not False."""
+        _ensure_rules_imported()
+        from plugin.rules.matches.all import AllMatch
+
+        assert AllMatch().droppable_value(()) is True
+        assert AllMatch().prunable_child_value() is True
+
+    def test_some_match_droppable_value_true_when_goal_unreachable_low(self):
+        """A negative count means the goal is always satisfied (`goal <= 0` -> constant True)."""
+        _ensure_rules_imported()
+        from plugin.rules.matches.some import SomeMatch
+
+        assert SomeMatch(-1).droppable_value(()) is True
+
+    def test_some_match_droppable_value_false_when_goal_unreachable_high(self):
+        """count > len(rules) can never be satisfied -> constant False."""
+        _ensure_rules_imported()
+        from plugin.rules.matches.some import SomeMatch
+
+        assert SomeMatch(3).droppable_value((_FixedRule(True), _FixedRule(True))) is False
+
+    def test_ratio_match_never_allows_child_pruning(self):
+        """Ratio's goal is recomputed from `len(rules)`, so pruning any child would corrupt it."""
+        _ensure_rules_imported()
+        from plugin.rules.matches.ratio import RatioMatch
+
+        assert RatioMatch(2, 3).prunable_child_value() is None
+
+
+# ── MatchRule.optimize() semantics (AND/OR-correctness of pruning) ──────────────
+
+
+class _FixedRule:
+    """Fake leaf rule: fixed test() result and droppability, for isolating optimizer logic."""
+
+    def __init__(self, result: bool, *, droppable: bool = False, droppable_value: bool = False) -> None:
+        self._result = result
+        self._droppable = droppable
+        self._droppable_value = droppable_value
+
+    def is_droppable(self) -> bool:
+        return self._droppable
+
+    def droppable_value(self) -> bool:
+        return self._droppable_value
+
+    def optimize(self):
+        return iter(())
+
+    def test(self, view_snapshot) -> bool:
+        return self._result
+
+
+class TestMatchRuleOptimizeSemantics:
+    def test_all_does_not_prune_constant_false_child(self):
+        """all(True, any()) is always False; pruning the constant-False any() must not flip it to True."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+        from plugin.rules.matches.all import AllMatch
+        from plugin.rules.matches.any import AnyMatch
+
+        leaf = _FixedRule(True)  # a genuine (non-droppable) rule, not itself a candidate for pruning
+        inner_any = MatchRule(match=AnyMatch(), match_name="any", rules=())
+        outer_all = MatchRule(match=AllMatch(), match_name="all", rules=(leaf, inner_any))
+
+        assert outer_all.test(None) is False
+
+        dropped = list(outer_all.optimize())
+
+        assert outer_all.test(None) is False
+        assert outer_all.rules == (leaf, inner_any)  # inner_any (constant False) must not be pruned from `all`
+        assert dropped == []
+
+    def test_any_does_not_prune_constant_true_child(self):
+        """any(False, all()) is always True; pruning the constant-True all() must not make it conditional."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+        from plugin.rules.matches.all import AllMatch
+        from plugin.rules.matches.any import AnyMatch
+
+        leaf = _FixedRule(False)  # a genuine (non-droppable) rule, not itself a candidate for pruning
+        inner_all = MatchRule(match=AllMatch(), match_name="all", rules=())
+        outer_any = MatchRule(match=AnyMatch(), match_name="any", rules=(leaf, inner_all))
+
+        assert outer_any.test(None) is True
+
+        dropped = list(outer_any.optimize())
+
+        assert outer_any.test(None) is True
+        assert outer_any.rules == (leaf, inner_all)  # inner_all (constant True) must not be pruned from `any`
+        assert dropped == []
+
+    def test_all_prunes_constant_true_leaf(self):
+        """A constant-True leaf is safe to drop from `all` (True is its identity element)."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+        from plugin.rules.matches.all import AllMatch
+
+        const_true_leaf = _FixedRule(True, droppable=True, droppable_value=True)
+        rule = MatchRule(match=AllMatch(), match_name="all", rules=(_FixedRule(True), const_true_leaf))
+
+        dropped = list(rule.optimize())
+
+        assert const_true_leaf in dropped
+        assert const_true_leaf not in rule.rules
+
+    def test_ratio_never_prunes_children_even_when_droppable(self):
+        """Ratio's own goal depends on len(rules), so no child pruning is ever safe."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+        from plugin.rules.matches.ratio import RatioMatch
+
+        droppable_leaf = _FixedRule(False, droppable=True, droppable_value=False)
+        rule = MatchRule(
+            match=RatioMatch(2, 3),
+            match_name="ratio",
+            rules=(_FixedRule(True), _FixedRule(True), droppable_leaf),
+        )
+
+        list(rule.optimize())
+
+        assert len(rule.rules) == 3
 
 
 # ── SyntaxRule ─────────────────────────────────────────────────────────────────
@@ -275,6 +431,22 @@ class TestSyntaxRule:
 
         assert dropped == [root_rule]
         assert rule.root_rule is None
+
+    def test_optimize_keeps_root_rule_that_collapses_to_constant_true(self):
+        """An empty `all` root_rule is constant True — it must stay attached, not be discarded like a false one."""
+        _ensure_rules_imported()
+        from plugin.rules.syntax import SyntaxRule
+
+        rule = SyntaxRule.make(StSyntaxRule(syntaxes=["Python"], match="all", rules=[]))
+        root_rule = rule.root_rule
+        assert root_rule is not None
+        assert root_rule.is_droppable() is True
+        assert root_rule.droppable_value() is True
+
+        dropped = list(rule.optimize())
+
+        assert dropped == []  # always matches (given selector/events) -- must not be discarded
+        assert rule.root_rule is root_rule
 
     def test_optimize_prunes_children_but_keeps_survivable_root(self):
         """One droppable child is pruned; root_rule still has a survivor and stays attached."""
