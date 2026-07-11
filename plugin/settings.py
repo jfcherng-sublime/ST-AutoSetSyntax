@@ -111,6 +111,11 @@ class AioSettings(sublime_plugin.EventListener):
     def tear_down(cls) -> None:
         if cls._plugin_settings_object is not None:
             cls._plugin_settings_object.clear_on_change(cls.__name__)
+            cls._plugin_settings_object = None
+        cls._tracked_windows.clear()
+        cls._plugin_settings.clear()
+        cls._project_plugin_settings.clear()
+        cls._merged_plugin_settings.clear()
 
     @classmethod
     def add_on_change(cls, key: str, callback: Callable) -> None:

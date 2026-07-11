@@ -65,6 +65,30 @@ class TestAioSettingsLifecycle:
 
         mock_settings.clear_on_change.assert_called_once()
 
+    def test_tear_down_clears_per_window_state(self):
+        """A window closed during a plugin unload/reload cycle (no on_pre_close_window) must not leak."""
+        AioSettings.plugin_name = "TestPlugin"
+        mock_settings = MagicMock()
+        mock_settings.to_dict.return_value = {}
+
+        mock_window = MagicMock()
+        mock_window.id.return_value = 777
+        mock_window.project_data.return_value = None
+
+        with patch("sublime.load_settings", return_value=mock_settings):
+            AioSettings.set_up()
+            AioSettings._on_settings_change([mock_window], run_callbacks=False)
+
+        assert AioSettings._tracked_windows == {777}
+        assert 777 in AioSettings._merged_plugin_settings
+        assert 777 in AioSettings._project_plugin_settings
+
+        AioSettings.tear_down()
+
+        assert AioSettings._tracked_windows == set()
+        assert AioSettings._merged_plugin_settings == {}
+        assert AioSettings._project_plugin_settings == {}
+
     def test_add_on_change_callback_is_stored(self):
         def callback(w):
             return None
