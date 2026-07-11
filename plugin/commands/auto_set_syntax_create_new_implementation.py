@@ -1,3 +1,4 @@
+import sys
 from abc import ABC
 from pathlib import Path
 from typing import override
@@ -11,6 +12,9 @@ from ..constants import PLUGIN_NAME
 from ..constants import VIEW_KEY_IS_CREATED
 from ..types import SyntaxLike
 from ..utils import find_syntax_by_syntax_like
+
+_PYTHON_VERSION_SHORT = f"{sys.version_info.major}.{sys.version_info.minor}"
+"""The running interpreter's `major.minor` version, for the scaffolded `.python-version` file."""
 
 
 class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
@@ -35,7 +39,7 @@ class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
 
         save_dir = Path(self.save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
-        (PLUGIN_CUSTOM_DIR / ".python-version").write_text("3.13\n", encoding="utf-8")
+        (PLUGIN_CUSTOM_DIR / ".python-version").write_text(f"{_PYTHON_VERSION_SHORT}\n", encoding="utf-8")
 
 
 class AutoSetSyntaxCreateNewConstraintCommand(AbstractCreateNewImplementationCommand):
