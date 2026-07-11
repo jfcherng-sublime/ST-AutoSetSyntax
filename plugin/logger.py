@@ -135,7 +135,7 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.WindowCommand):
             squash_history
             and (last_line_region := panel.full_line(panel.size() - 1))
             and (last_line := panel.substr(last_line_region).rstrip()).startswith(msg)
-            and (m := re.match(r"(?: +\(x(\d+)\))?", last_line[len(msg) :]))
+            and (m := re.fullmatch(r"(?: +\(x(\d+)\))?", last_line[len(msg) :]))
         ):
             msg = f"{msg} (x{int(m.group(1) or 1) + 1})"
             replace_region = last_line_region
