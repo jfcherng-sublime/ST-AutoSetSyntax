@@ -1,5 +1,14 @@
 # AutoSetSyntax Changelog
 
+## 6.0.6
+
+- fix: rule optimization could silently flip `all()`/`any()` results when pruning droppable children
+- fix: `debounce()` shared one timer across all views, causing lost re-checks when switching tabs quickly
+- fix: dependency downloading could report success after failure and corrupt an existing install on a bad download
+- fix: view snapshot's `file_size` was captured lazily instead of at snapshot time
+- fix: a brand new window's first tab could miss `new_file_syntax`
+- fix: per-window state wasn't cleared when the plugin was unloaded, leaking memory across unload/window-churn cycles
+
 ## 6.0.5
 
 - feat: add `modeline_lines` setting to limit Vim/Emacs modeline detection to first/last lines (fixes #30)
