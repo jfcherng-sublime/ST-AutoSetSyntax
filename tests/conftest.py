@@ -211,7 +211,7 @@ def make_snapshot():
         line_count: int = 1,
         path: str | None = None,
         char_count: int | None = None,
-        # Override the cached file_size property directly (use -1 for "not on disk")
+        # file size captured "at snapshot time" (use -1, the default, for "not on disk")
         file_size: int | None = None,
     ) -> ViewSnapshot:
         snap = ViewSnapshot(
@@ -223,13 +223,11 @@ def make_snapshot():
             line_count=line_count,
             path_obj=Path(path) if path else None,
             syntax=None,
+            file_size=file_size if file_size is not None else -1,
         )
         # Pre-populate lazy cached properties so tests don't need a real view
         snap.__dict__["content"] = content
         snap.__dict__["first_line"] = first_line or (content.split("\n")[0] if content else "")
-        # frozen dataclass: cached_property stores in __dict__ bypassing __setattr__
-        if file_size is not None:
-            snap.__dict__["file_size"] = file_size
         return snap
 
     return _factory

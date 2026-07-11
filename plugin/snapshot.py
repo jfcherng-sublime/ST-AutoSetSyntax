@@ -30,6 +30,8 @@ class ViewSnapshot:
     """The syntax object. Note that the value is as-is when it's cached."""
     caret_rowcol: tuple[int, int] = (-1, -1)
     """The 0-indexed `(row, column)` of the first caret visually. -1 if no caret."""
+    file_size: int = -1
+    """The file size in bytes, captured at snapshot time. `-1` if not on a disk."""
 
     def __post_init__(self) -> None:
         # for unsaved buffer, ST returns "Undefined" for its encoding
@@ -68,11 +70,6 @@ class ViewSnapshot:
         """The full file path with `/` as the directory separator. Empty string if not on a disk."""
         return self.path_obj.as_posix() if self.path_obj else ""
 
-    @cached_property
-    def file_size(self) -> int:
-        """The file size in bytes, `-1` if file not on a disk."""
-        return self.path_obj.stat().st_size if self.path_obj else -1
-
     @property
     def valid_view(self) -> sublime.View | None:
         """The `view` object if it's still valid, otherwise `None`."""
@@ -87,6 +84,12 @@ class ViewSnapshot:
         if not (path_ := view.file_name()) or not (path := Path(path_).resolve()).is_file():
             path = None
 
+        try:
+            file_size = path.stat().st_size if path else -1
+        except OSError:
+            # the file may have been deleted/moved between the `is_file()` check above and here
+            file_size = -1
+
         return cls(
             view=view,
             char_count=view.size(),
@@ -97,6 +100,7 @@ class ViewSnapshot:
             path_obj=path,
             syntax=view.syntax(),
             caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
+            file_size=file_size,
         )
 
 

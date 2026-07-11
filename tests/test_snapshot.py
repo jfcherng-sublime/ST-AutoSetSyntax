@@ -91,6 +91,51 @@ class TestViewSnapshotConstruction:
         assert snap.file_size == -1
 
 
+class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
+    """`file_size` must be captured once at `from_view()` time, not lazily re-read from disk later."""
+
+    @staticmethod
+    def _make_view(monkeypatch, file_path):
+        from unittest.mock import MagicMock
+
+        import plugin.snapshot as snapshot_mod
+
+        monkeypatch.setattr(snapshot_mod, "get_view_pseudo_content", lambda view, window: "")
+        monkeypatch.setattr(snapshot_mod, "get_view_pseudo_first_line", lambda view, window: "")
+
+        view = MagicMock()
+        view.file_name.return_value = str(file_path)
+        view.window.return_value = MagicMock()
+        view.size.return_value = 0
+        view.rowcol.return_value = (0, 0)
+        view.sel.return_value = []
+        view.encoding.return_value = "UTF-8"
+        view.syntax.return_value = None
+        return view
+
+    def test_file_size_does_not_reflect_later_disk_changes(self, tmp_path, monkeypatch):
+        file_path = tmp_path / "test.txt"
+        file_path.write_text("hello")  # 5 bytes
+        view = self._make_view(monkeypatch, file_path)
+
+        snap = ViewSnapshot.from_view(view)
+
+        # mutate the file BEFORE ever reading `file_size` -- a lazily-computed value would
+        # pick up this new size on first access; a properly captured one must not
+        file_path.write_text("hello world, this is now much longer than before")
+
+        assert snap.file_size == 5  # reflects size at snapshot time, not the live file
+
+    def test_file_size_is_minus_one_when_file_disappears_before_stat(self, tmp_path, monkeypatch):
+        """Simulates a TOCTOU race: `is_file()` sees the file, but it's gone by the time we `stat()` it."""
+        missing_path = tmp_path / "gone.txt"  # never created on disk
+        view = self._make_view(monkeypatch, missing_path)
+        monkeypatch.setattr(Path, "is_file", lambda self: True)
+
+        snap = ViewSnapshot.from_view(view)
+        assert snap.file_size == -1
+
+
 class TestViewSnapshotContentBytes:
     def test_simple_utf8(self, make_snapshot):
         snap = make_snapshot(content="hello")
