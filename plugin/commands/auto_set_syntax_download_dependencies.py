@@ -4,7 +4,9 @@ import io
 import re
 import shutil
 import tarfile
+import tempfile
 import threading
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -39,39 +41,68 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
     def _worker(cls) -> None:
         sublime.message_dialog(f"[{PLUGIN_NAME}] Start downloading dependencies...")
 
-        cls._prepare_dependencies()
+        if not cls._prepare_dependencies():
+            return
 
         if not (magika_dir := PLUGIN_PY_LIBS_DIR / "magika").is_dir():
             sublime.error_message(f"[{PLUGIN_NAME}] Cannot find magika: {magika_dir!s}")
+            return
 
         sublime.message_dialog(f"[{PLUGIN_NAME}] Finish downloading dependencies!")
 
     @staticmethod
-    def _prepare_dependencies() -> None:
+    def _prepare_dependencies() -> bool:
+        """Download, verify and install dependencies. Returns whether it succeeded."""
         url = PLUGIN_PY_LIBS_URL
         try:
             content_bytes = simple_urlopen(url)
         except Exception as e:
             sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {url} ({e})")
-            return
+            return False
 
-        url = f"{PLUGIN_PY_LIBS_URL}.sha256"
+        sha256_url = f"{PLUGIN_PY_LIBS_URL}.sha256"
         try:
-            content_hash = simple_urlopen(url).decode("utf-8").strip()
-        except Exception as e:
-            print(f"[{PLUGIN_NAME}] Error while fetching: {url} ({e}; skip checksum validation)")
+            content_hash = simple_urlopen(sha256_url).decode("utf-8").strip()
+        except urllib.error.HTTPError as e:
+            if e.code != 404:
+                sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {sha256_url} ({e})")
+                return False
+            print(f"[{PLUGIN_NAME}] Error while fetching: {sha256_url} ({e}; skip checksum validation)")
             content_hash = ""
+        except Exception as e:
+            sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {sha256_url} ({e})")
+            return False
 
         if content_hash and sha256sum(content_bytes).casefold() != content_hash.casefold():
             sublime.error_message(f"[{PLUGIN_NAME}] SHA-256 checksum mismatches: {PLUGIN_PY_LIBS_URL}")
-            return
+            return False
 
-        rmtree_ex(PLUGIN_PY_LIBS_DIR, ignore_errors=True)
-        decompress_buffer(
-            io.BytesIO(content_bytes),
-            filename=PLUGIN_PY_LIBS_ZIP_NAME,
-            dst_dir=PLUGIN_PY_LIBS_DIR.parent,
-        )
+        # extract into a scratch parent dir first so a corrupt/incomplete archive never destroys a
+        # working install; the archive's own top-level entry is named like `PLUGIN_PY_LIBS_DIR`
+        tmp_parent = Path(tempfile.mkdtemp(prefix=f"{PLUGIN_NAME}-deps-"))
+        try:
+            try:
+                ok = decompress_buffer(io.BytesIO(content_bytes), filename=PLUGIN_PY_LIBS_ZIP_NAME, dst_dir=tmp_parent)
+                if not ok:
+                    sublime.error_message(f"[{PLUGIN_NAME}] Unrecognized archive format: {PLUGIN_PY_LIBS_ZIP_NAME}")
+                    return False
+            except Exception as e:
+                sublime.error_message(f"[{PLUGIN_NAME}] Error while extracting dependencies: {e}")
+                return False
+
+            extracted_dir = tmp_parent / PLUGIN_PY_LIBS_DIR.name
+            if not extracted_dir.is_dir():
+                sublime.error_message(
+                    f"[{PLUGIN_NAME}] Archive didn't contain the expected {PLUGIN_PY_LIBS_DIR.name!r} directory"
+                )
+                return False
+
+            rmtree_ex(PLUGIN_PY_LIBS_DIR, ignore_errors=True)
+            shutil.move(str(extracted_dir), str(PLUGIN_PY_LIBS_DIR))
+        finally:
+            rmtree_ex(tmp_parent, ignore_errors=True)
+
+        return True
 
 
 def decompress_buffer(buffer: BinaryIO, *, filename: str, dst_dir: PathLike) -> bool:
