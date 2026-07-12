@@ -5,6 +5,7 @@ coverage (0% per `make ci-test-cov`), unlike almost everything else in the codeb
 """
 
 import sys
+from unittest.mock import MagicMock
 
 import sublime
 
@@ -13,6 +14,15 @@ from plugin.snapshot import ViewSnapshot
 from plugin.types import ListenerEvent
 
 MockView = sys.modules["sublime"].View
+
+
+def _make_view(*, valid: bool = True, syntax: sublime.Syntax | None = None) -> MagicMock:
+    view = MagicMock()
+    view.is_valid.return_value = valid
+    view.syntax.return_value = syntax
+    view.window.return_value = MagicMock()
+    view.settings.return_value = MagicMock()
+    return view
 
 
 def _make_snapshot(content: str, *, char_count: int | None = None, syntax_name: str = "Plain Text") -> ViewSnapshot:
@@ -160,3 +170,83 @@ class TestAssignSyntaxWithFirstLineEmacsModeline:
         """A "key: value" list with no "mode" key has no mode name to use -- must not fall back
         to treating the whole list (e.g. "coding: utf-8") as if it were one."""
         assert self._queried_mode_name(monkeypatch, "# -*- coding: utf-8 -*-") is None
+
+
+class TestAssignSyntaxToView:
+    def test_invalid_view_returns_false_without_mutation(self):
+        view = _make_view(valid=False)
+        new_syntax = sublime.Syntax(name="Python")
+
+        assert mod.assign_syntax_to_view(view, new_syntax) is False
+        view.assign_syntax.assert_not_called()
+
+    def test_assigns_syntax_and_marks_view(self):
+        old_syntax = sublime.Syntax(name="Plain Text")
+        view = _make_view(syntax=old_syntax)
+        view.buffer.return_value.views.return_value = [view]
+        new_syntax = sublime.Syntax(name="Python")
+
+        assert mod.assign_syntax_to_view(view, new_syntax) is True
+
+        view.assign_syntax.assert_called_once_with(new_syntax)
+        view.settings.return_value.set.assert_called_once_with(mod.VIEW_KEY_IS_ASSIGNED, True)
+
+    def test_already_matching_syntax_is_not_reassigned(self):
+        """The "already assigned" branch must still be a no-op mutation-wise -- only the log
+        message differs, not the actual view state."""
+        syntax = sublime.Syntax(name="Python")
+        view = _make_view(syntax=syntax)
+        view.buffer.return_value.views.return_value = [view]
+
+        assert mod.assign_syntax_to_view(view, syntax) is True
+        view.assign_syntax.assert_not_called()
+        view.settings.return_value.set.assert_not_called()
+
+    def test_view_with_no_syntax_is_treated_as_null_syntax_not_a_crash(self):
+        view = _make_view(syntax=None)
+        view.buffer.return_value.views.return_value = [view]
+        new_syntax = sublime.Syntax(name="Python")
+
+        assert mod.assign_syntax_to_view(view, new_syntax) is True
+        view.assign_syntax.assert_called_once_with(new_syntax)
+
+    def test_propagates_to_all_views_sharing_the_buffer(self):
+        """same_buffer=True (the default) is meant to keep clones/split-views of the same buffer
+        in sync -- a syntax change to one clone must apply to every view of that buffer."""
+        old_syntax = sublime.Syntax(name="Plain Text")
+        view1 = _make_view(syntax=old_syntax)
+        view2 = _make_view(syntax=old_syntax)
+        view1.buffer.return_value.views.return_value = [view1, view2]
+        new_syntax = sublime.Syntax(name="Python")
+
+        assert mod.assign_syntax_to_view(view1, new_syntax) is True
+
+        view1.assign_syntax.assert_called_once_with(new_syntax)
+        view2.assign_syntax.assert_called_once_with(new_syntax)
+
+    def test_same_buffer_false_only_touches_the_given_view(self):
+        old_syntax = sublime.Syntax(name="Plain Text")
+        view1 = _make_view(syntax=old_syntax)
+        view2 = _make_view(syntax=old_syntax)
+        view1.buffer.return_value.views.return_value = [view1, view2]
+        new_syntax = sublime.Syntax(name="Python")
+
+        assert mod.assign_syntax_to_view(view1, new_syntax, same_buffer=False) is True
+
+        view1.assign_syntax.assert_called_once_with(new_syntax)
+        view2.assign_syntax.assert_not_called()
+
+    def test_view_without_a_window_is_skipped(self):
+        """A view that briefly has no window (e.g. mid-teardown) must be skipped, not crash.
+        Documents current (accepted) behavior: the function still returns True even though
+        nothing was actually assigned, since every candidate view lacked a window -- this only
+        means run_auto_set_syntax_on_view() won't retry other strategies for *this* event; the
+        view keeps whatever syntax it already had, and the next event re-evaluates it fresh."""
+        old_syntax = sublime.Syntax(name="Plain Text")
+        view = _make_view(syntax=old_syntax)
+        view.window.return_value = None
+        view.buffer.return_value.views.return_value = [view]
+        new_syntax = sublime.Syntax(name="Python")
+
+        assert mod.assign_syntax_to_view(view, new_syntax) is True
+        view.assign_syntax.assert_not_called()
