@@ -439,6 +439,22 @@ class TestIsPlatformConstraint:
 
         assert IsPlatformConstraint().is_droppable() is True
 
+    def test_guaranteed_false_is_droppable(self):
+        """The platform is fixed at install time, so a constraint that can never match given the
+        current platform is just as much a compile-time constant as one with no names at all --
+        the optimizer should be able to prune it the same way."""
+        from plugin.rules.constraints.is_platform import IsPlatformConstraint
+
+        assert IsPlatformConstraint("windows").is_droppable() is True
+
+    def test_guaranteed_true_is_not_droppable(self):
+        """A constraint that always matches must NOT report droppable: `AbstractConstraint`'s
+        contract is "droppable implies test() always False" (see `ConstraintRule.droppable_value`
+        docs) -- there's no mechanism to propagate "always True" for a bare constraint."""
+        from plugin.rules.constraints.is_platform import IsPlatformConstraint
+
+        assert IsPlatformConstraint("linux").is_droppable() is False
+
 
 # ── AbstractConstraint class methods ──────────────────────────────────────────
 
@@ -499,6 +515,16 @@ class TestIsArchConstraint:
 
         assert IsArchConstraint().is_droppable() is True
 
+    def test_guaranteed_false_is_droppable(self):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        assert IsArchConstraint("x32").is_droppable() is True
+
+    def test_guaranteed_true_is_not_droppable(self):
+        from plugin.rules.constraints.is_arch import IsArchConstraint
+
+        assert IsArchConstraint("x64").is_droppable() is False
+
     def test_name(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
 
@@ -526,6 +552,16 @@ class TestIsPlatformArchConstraint:
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
 
         assert IsPlatformArchConstraint().is_droppable() is True
+
+    def test_guaranteed_false_is_droppable(self):
+        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
+
+        assert IsPlatformArchConstraint("windows_x64").is_droppable() is True
+
+    def test_guaranteed_true_is_not_droppable(self):
+        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
+
+        assert IsPlatformArchConstraint("linux_x64").is_droppable() is False
 
     def test_name(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint

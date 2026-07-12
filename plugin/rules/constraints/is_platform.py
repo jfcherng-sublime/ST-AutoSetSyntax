@@ -17,7 +17,9 @@ class IsPlatformConstraint(AbstractConstraint):
 
     @override
     def is_droppable(self) -> bool:
-        return not self.names
+        # the platform is fixed at install time, so a guaranteed non-match (self.result is
+        # False) is just as much a constant as having no names at all
+        return not self.names or not self.result
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
