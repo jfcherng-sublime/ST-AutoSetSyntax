@@ -68,6 +68,68 @@ class TestRelativeExistsConstraint:
         assert RelativeExistsConstraint.name() == "relative_exists"
 
 
+class TestFindParentWithSiblingCached:
+    """find_parent_with_sibling_cached() is the shared implementation behind
+    IsInGitRepoConstraint/IsInHgRepoConstraint/IsInSvnRepoConstraint/
+    IsInRubyOnRailsProjectConstraint's test() methods. The constraint-specific test classes below
+    only exercise the underlying find_parent_with_sibling() static helper, not this wrapper's own
+    behavior (the AlwaysFalsyException guard and the cache hit/miss/populate logic), so it's
+    covered directly here once instead of duplicating it four times."""
+
+    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
+
+        snap = make_snapshot()  # no path
+        with pytest.raises(AlwaysFalsyException):
+            IsInGitRepoConstraint().find_parent_with_sibling_cached(snap, set(), ".git", use_exists=True)
+
+    def test_cache_hit_short_circuits_without_filesystem_match(self, make_snapshot, tmp_path):
+        """A parent directory already in the cache set must return True even though the sibling
+        doesn't actually exist on disk -- proving the cache path, not a fresh scan, was taken."""
+        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
+
+        test_file = tmp_path / "sub" / "main.py"
+        test_file.parent.mkdir()
+        test_file.write_text("")
+        snap = make_snapshot(path=str(test_file))
+
+        cache = {tmp_path}
+        result = IsInGitRepoConstraint().find_parent_with_sibling_cached(
+            snap, cache, "this-sibling-does-not-exist", use_exists=True
+        )
+        assert result is True
+
+    def test_cache_miss_with_match_populates_the_cache(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
+
+        (tmp_path / ".git").mkdir()
+        test_file = tmp_path / "sub" / "main.py"
+        test_file.parent.mkdir()
+        test_file.write_text("")
+        snap = make_snapshot(path=str(test_file))
+
+        cache: set = set()
+        result = IsInGitRepoConstraint().find_parent_with_sibling_cached(snap, cache, ".git", use_exists=True)
+
+        assert result is True
+        assert tmp_path in cache
+
+    def test_cache_miss_without_match_leaves_cache_empty(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
+
+        test_file = tmp_path / "sub" / "main.py"
+        test_file.parent.mkdir()
+        test_file.write_text("")
+        snap = make_snapshot(path=str(test_file))
+
+        cache: set = set()
+        result = IsInGitRepoConstraint().find_parent_with_sibling_cached(snap, cache, ".git", use_exists=True)
+
+        assert result is False
+        assert cache == set()
+
+
 class TestIsInGitRepoConstraint:
     def test_dot_git_directory(self, make_snapshot, tmp_path):
         from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
