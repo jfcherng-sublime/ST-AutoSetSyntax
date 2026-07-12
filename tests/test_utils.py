@@ -314,6 +314,53 @@ class TestFirstLastNLines:
         assert overlapped == 0
 
 
+class TestFirstLastNLinesRandomized:
+    """Cross-check first_last_n_lines() against a naive str.split("\\n")-based reference across
+    many random texts/n, instead of relying only on hand-picked examples. This function
+    deliberately avoids materializing all lines for performance (it backs VIM/Emacs modeline
+    detection, where getting the line-counting semantics wrong silently breaks the feature --
+    see the `modeline_lines` bug this was built for)."""
+
+    @staticmethod
+    def _naive_lines(text: str) -> list:
+        """Same "line" semantics first_last_n_lines() implements: empty text has zero lines,
+        and a trailing "\\n" doesn't add a phantom empty final line."""
+        if text == "":
+            return []
+        return text.removesuffix("\n").split("\n")
+
+    def test_matches_naive_reference(self):
+        import random
+
+        from plugin.utils import first_last_n_lines
+
+        for seed in range(30):
+            rng = random.Random(seed)
+            line_count = rng.randint(0, 8)
+            lines = ["".join(rng.choices("ab", k=rng.randint(0, 3))) for _ in range(line_count)]
+            text = "\n".join(lines)
+            if lines and rng.random() < 0.5:
+                text += "\n"
+
+            naive = self._naive_lines(text)
+            total = len(naive)
+
+            for n in range(6):
+                first, last, overlapped = first_last_n_lines(text, n)
+
+                if n == 0:
+                    assert (first, last, overlapped) == ([], [], 0), (seed, text, n)
+                    continue
+
+                assert first == naive[:n], (seed, text, n, "first")
+                assert last == naive[max(0, total - n) :], (seed, text, n, "last")
+
+                first_idxs = set(range(min(n, total)))
+                last_idxs = set(range(max(0, total - n), total))
+                expected_overlap = len(first_idxs & last_idxs)
+                assert overlapped == expected_overlap, (seed, text, n, "overlap")
+
+
 # ── list_trimmed_filenames ────────────────────────────────────────────────────
 
 
