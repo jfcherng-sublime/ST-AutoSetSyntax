@@ -27,7 +27,7 @@ class ContainsRegexConstraint(AbstractConstraint):
         """
         if not isinstance(self.threshold, (int, float)):
             return True
-        return self.threshold > 0 and not self.args
+        return self.threshold > 0 and not any(self.args)
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

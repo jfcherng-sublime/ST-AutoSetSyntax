@@ -146,6 +146,40 @@ class TestContainsRegexConstraint:
         constraint = ContainsRegexConstraint("foo", regex_flags=[])
         assert not (constraint.regex.flags & re.MULTILINE)
 
+    def test_empty_pattern_falls_through_to_match_nothing(self, make_snapshot):
+        """Regression: `_handled_regex` didn't drop falsy args, so `contains_regex("")`
+        compiled `(?:)` (matches at every position, constant True). Now falsy entries are
+        dropped like `_handled_args` does, yielding the 'match nothing' sentinel instead."""
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        constraint = ContainsRegexConstraint("")
+        assert constraint.is_droppable() is True
+        snap = make_snapshot(content="anything")
+        assert constraint.test(snap) is False
+
+    def test_none_pattern_falls_through_to_match_nothing(self, make_snapshot):
+        """Same as above but with a JSON `null` in args, which becomes Python None."""
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        constraint = ContainsRegexConstraint(None)
+        assert constraint.is_droppable() is True
+        snap = make_snapshot(content="anything")
+        assert constraint.test(snap) is False
+
+    def test_mixed_valid_and_empty_patterns_use_only_valid(self, make_snapshot):
+        """When some patterns are valid and some are falsy, the falsy ones are dropped and
+        the valid ones are used. Previously an empty-string-first arg like ("", "foo") caused
+        the whole merged regex to become a constant-True sub-pattern."""
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        constraint = ContainsRegexConstraint("", "foo")
+        # has a valid pattern "foo", so NOT droppable
+        assert constraint.is_droppable() is False
+        snap = make_snapshot(content="foo")
+        assert constraint.test(snap) is True
+        snap = make_snapshot(content="bar")
+        assert constraint.test(snap) is False
+
 
 # ── FirstLineContainsConstraint ───────────────────────────────────────────────
 
@@ -206,6 +240,13 @@ class TestFirstLineContainsRegexConstraint:
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
         assert FirstLineContainsRegexConstraint("python").is_droppable() is False
+
+    def test_empty_pattern_droppable(self, make_snapshot):
+        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
+
+        assert FirstLineContainsRegexConstraint("").is_droppable() is True
+        snap = make_snapshot(first_line="anything")
+        assert FirstLineContainsRegexConstraint("").test(snap) is False
 
 
 # ── IsInterpreterConstraint ───────────────────────────────────────────────────
@@ -383,6 +424,13 @@ class TestNameContainsRegexConstraint:
 
         assert NameContainsRegexConstraint("script").is_droppable() is False
 
+    def test_empty_pattern_droppable(self, make_snapshot):
+        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
+
+        assert NameContainsRegexConstraint("").is_droppable() is True
+        snap = make_snapshot(path="file.py")
+        assert NameContainsRegexConstraint("").test(snap) is False
+
 
 # ── PathContainsConstraint ────────────────────────────────────────────────────
 
@@ -451,6 +499,13 @@ class TestPathContainsRegexConstraint:
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
         assert PathContainsRegexConstraint("projects").is_droppable() is False
+
+    def test_empty_pattern_droppable(self, make_snapshot):
+        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
+
+        assert PathContainsRegexConstraint("").is_droppable() is True
+        snap = make_snapshot(path="/home/file.py")
+        assert PathContainsRegexConstraint("").test(snap) is False
 
 
 # ── IsLineCountConstraint ─────────────────────────────────────────────────────

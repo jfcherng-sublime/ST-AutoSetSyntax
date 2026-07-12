@@ -195,14 +195,22 @@ class AbstractConstraint(ABC):
     @final
     @staticmethod
     def _handled_regex(args: tuple[Any, ...], kwargs: dict[str, Any]) -> re.Pattern[str]:
-        """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
+        """Returns compiled regex object from `args` and `kwargs.regex_flags`.
+
+        ``drop_falsy`` is applied to ``args`` for consistency with ``_handled_args``:
+        a falsy pattern like ``""`` or ``None`` in user settings would otherwise produce a
+        surprising compiled regex: ``merge_regexes(("",))`` yields the empty group ``(?:)``
+        (a zero-width match at every position, i.e. constant-True), and ``merge_regexes((None,))``
+        yields ``(?:None)`` matching the literal string ``"None"``. Dropping falsy entries first
+        makes these degenerate cases fall through to the "match nothing" sentinel instead.
+        """
         # "regex_flags": null is present with value None, not absent, so .get(..., [...])'s
         # default doesn't cover it -- parse_regex_flags(None) would raise TypeError. Check for
         # None explicitly rather than falsy: "regex_flags": [] is a distinct, valid "no flags at
         # all, not even the usual MULTILINE" setting and must not be coerced into the default.
         regex_flags = kwargs.get("regex_flags")
         return compile_regex(
-            merge_regexes(args),
+            merge_regexes(drop_falsy(args)),
             parse_regex_flags(regex_flags if regex_flags is not None else ["MULTILINE"]),
         )
 

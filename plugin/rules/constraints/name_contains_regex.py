@@ -18,7 +18,7 @@ class NameContainsRegexConstraint(AbstractConstraint):
     def is_droppable(self) -> bool:
         """With no patterns, `merge_regexes(())` compiles a "match nothing" regex, so `test()`
         always fails."""
-        return not self.args
+        return not any(self.args)
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
