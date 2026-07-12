@@ -26,7 +26,7 @@ class IsInterpreterConstraint(AbstractConstraint):
                 # shebang
                 rf"^#!(?:.+)\b{interpreters_regex}\b",
                 # VIM's syntax line
-                rf"\bsyntax={interpreters_regex}(?=$|\\s)",
+                rf"\bsyntax={interpreters_regex}(?=$|\s)",
             ))
         )
 

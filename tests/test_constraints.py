@@ -177,6 +177,14 @@ class TestIsInterpreterConstraint:
         snap = make_snapshot(first_line="# vim: syntax=python")
         assert IsInterpreterConstraint("python").test(snap) is True
 
+    def test_vim_modeline_with_trailing_options(self, make_snapshot):
+        """A real VIM modeline usually continues with more options after `syntax=`, e.g.
+        `syntax=python ts=4`, not just `syntax=python` at the very end of the line."""
+        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
+
+        snap = make_snapshot(first_line="# vim: syntax=python ts=4:")
+        assert IsInterpreterConstraint("python").test(snap) is True
+
     def test_loosy_version_matches_numbered(self, make_snapshot):
         from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
 
