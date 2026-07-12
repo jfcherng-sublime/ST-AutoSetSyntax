@@ -173,6 +173,52 @@ class TestAssignSyntaxWithFirstLineEmacsModeline:
         assert self._queried_mode_name(monkeypatch, "# -*- coding: utf-8 -*-") is None
 
 
+class TestAssignSyntaxWithFirstLineVimModeline:
+    """`_prefer_modeline`'s VIM branch, same isolation approach as the Emacs test class above."""
+
+    @staticmethod
+    def _queried_mode_name(monkeypatch, first_line: str) -> str | None:
+        monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
+
+        queried: list[str] = []
+
+        def _fake_find(syntax_like, **kwargs):
+            queried.append(str(syntax_like))
+            return sublime.Syntax(name=str(syntax_like))
+
+        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", _fake_find)
+        monkeypatch.setattr(mod, "assign_syntax_to_view", lambda *a, **kw: True)
+
+        snap = ViewSnapshot(
+            view=MockView(),
+            char_count=len(first_line),
+            content=first_line,
+            first_line=first_line,
+            encoding="UTF-8",
+            line_count=1,
+            path_obj=None,
+            syntax=sublime.Syntax(name="Plain Text"),
+        )
+        mod._assign_syntax_with_first_line(snap, ListenerEvent.LOAD, {"modeline_lines": 5})
+        return queried[0] if queried else None
+
+    def test_syntax_key_followed_by_more_options(self, monkeypatch):
+        assert self._queried_mode_name(monkeypatch, "# vim: syntax=python ts=4") == "python"
+
+    def test_ft_alias(self, monkeypatch):
+        assert self._queried_mode_name(monkeypatch, "# vim: ft=python") == "python"
+
+    def test_modeline_as_last_line_with_no_trailing_newline(self, monkeypatch):
+        """Regression: the old regex required a whitespace character after the syntax value
+        (`(?=\\s)`), so a modeline on the file's last line with no trailing newline (a common
+        "no newline at end of file" case) had nothing after it to satisfy that lookahead and
+        silently failed to match."""
+        assert self._queried_mode_name(monkeypatch, "# some code\n# vim: syntax=python") == "python"
+
+    def test_modeline_as_last_line_with_trailing_newline(self, monkeypatch):
+        assert self._queried_mode_name(monkeypatch, "# some code\n# vim: syntax=python\n") == "python"
+
+
 class TestAssignSyntaxToView:
     def test_invalid_view_returns_false_without_mutation(self):
         view = _make_view(valid=False)
