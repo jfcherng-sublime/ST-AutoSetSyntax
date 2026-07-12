@@ -25,7 +25,6 @@ from more_itertools import first_true
 from more_itertools import unique_everseen
 
 from ._vendor.trie import TrieNode
-from ._vendor.triegex import Triegex
 from .cache import clearable_lru_cache
 from .types import SyntaxLike
 
@@ -81,9 +80,14 @@ def merge_literals_to_regex(literals: Iterable[str]) -> str:
     Merge (non-regex) literal strings into an optimized regex string.
 
     The returned regex is enclosed as `(?:...)`.
+
+    :note: this used to delegate to the vendored `Triegex` for a trie-compressed alternation, but
+        `TriegexNode.to_regex()` silently drops words that are a strict prefix of another word in
+        the same set (e.g. `["sh", "shell"]` loses "shell" and can even emit a spurious
+        unintended alternative). Plain escaped alternation via `merge_regexes()` has no such
+        hazard.
     """
-    # this regex is enclosed by "(?:)"
-    return Triegex(*map(re.escape, literals)).to_regex().replace(R"\b", "").replace(r"|~^(?#match nothing)", "")
+    return merge_regexes(map(re.escape, literals))
 
 
 def merge_regexes(regexes: Iterable[str]) -> str:

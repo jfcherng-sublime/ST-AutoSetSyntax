@@ -520,6 +520,30 @@ class TestMergeLiteralsToRegex:
         # Empty list produces a never-match pattern
         assert "match nothing" in result
 
+    def test_one_literal_is_prefix_of_another(self):
+        """A trie-compressed alternation (e.g. the vendored Triegex) can silently drop the
+        longer word when one literal is a strict prefix of another -- both must still match."""
+        import re
+
+        from plugin.utils import merge_literals_to_regex
+
+        result = merge_literals_to_regex(["sh", "shell"])
+        assert re.search(result, "shell")
+        assert re.search(result, "sh")
+        assert not re.search(result, "python")
+
+    def test_three_literals_with_shared_prefix(self):
+        import re
+
+        from plugin.utils import merge_literals_to_regex
+
+        result = merge_literals_to_regex(["cc", "aab", "ccc"])
+        assert re.search(result, "cc")
+        assert re.search(result, "ccc")
+        assert re.search(result, "aab")
+        # a bare "c" must never match on its own -- it's not one of the literals
+        assert not re.search(result, "cbabbc")
+
     def test_wrapped_in_non_capturing_group(self):
         from plugin.utils import merge_literals_to_regex
 
