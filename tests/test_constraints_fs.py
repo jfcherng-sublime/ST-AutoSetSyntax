@@ -222,6 +222,102 @@ class TestIsInPythonDjangoProjectConstraint:
         assert IsInPythonDjangoProjectConstraint.name() == "is_in_python_django_project"
 
 
+class TestIsInPythonDjangoProjectConstraintRealTest:
+    """The constraint's own `test()` is materially different from (stricter than) the shared
+    `find_parent_with_sibling` helper exercised above: it requires *both* a `manage.py` in a
+    parent directory *and* a sibling subdirectory of that parent containing all three of
+    settings.py/urls.py/wsgi.py (the actual Django-root layout), not just `manage.py` alone.
+    None of the tests above actually call this method, so it had no real coverage."""
+
+    @staticmethod
+    def _make_django_project(tmp_path, *, django_root_name: str = "myproject"):
+        (tmp_path / "manage.py").write_text("")
+        django_root = tmp_path / django_root_name
+        django_root.mkdir()
+        (django_root / "settings.py").write_text("")
+        (django_root / "urls.py").write_text("")
+        (django_root / "wsgi.py").write_text("")
+        return django_root
+
+    def test_full_django_layout_matches(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
+
+        self._make_django_project(tmp_path)
+        app_file = tmp_path / "myapp" / "models.py"
+        app_file.parent.mkdir()
+        app_file.write_text("")
+
+        snap = make_snapshot(path=str(app_file))
+        assert IsInPythonDjangoProjectConstraint().test(snap) is True
+
+    def test_manage_py_without_django_root_subdir_does_not_match(self, make_snapshot, tmp_path):
+        """manage.py alone (no subdirectory with settings/urls/wsgi.py) isn't a real Django
+        project as far as this constraint is concerned -- unlike the simpler git/hg/svn/rails
+        constraints, which only check for one marker file/dir."""
+        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
+
+        (tmp_path / "manage.py").write_text("")
+        app_file = tmp_path / "myapp" / "models.py"
+        app_file.parent.mkdir()
+        app_file.write_text("")
+
+        snap = make_snapshot(path=str(app_file))
+        assert IsInPythonDjangoProjectConstraint().test(snap) is False
+
+    def test_partial_django_root_missing_wsgi_does_not_match(self, make_snapshot, tmp_path):
+        """All three of settings.py/urls.py/wsgi.py are required -- two out of three isn't
+        enough."""
+        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
+
+        (tmp_path / "manage.py").write_text("")
+        django_root = tmp_path / "myproject"
+        django_root.mkdir()
+        (django_root / "settings.py").write_text("")
+        (django_root / "urls.py").write_text("")
+        # wsgi.py intentionally missing
+
+        app_file = tmp_path / "myapp" / "models.py"
+        app_file.parent.mkdir()
+        app_file.write_text("")
+
+        snap = make_snapshot(path=str(app_file))
+        assert IsInPythonDjangoProjectConstraint().test(snap) is False
+
+    def test_no_manage_py_anywhere_does_not_match(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
+
+        app_file = tmp_path / "myapp" / "models.py"
+        app_file.parent.mkdir()
+        app_file.write_text("")
+
+        snap = make_snapshot(path=str(app_file))
+        assert IsInPythonDjangoProjectConstraint().test(snap) is False
+
+    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
+
+        snap = make_snapshot()  # no path -> not on disk
+        with pytest.raises(AlwaysFalsyException):
+            IsInPythonDjangoProjectConstraint().test(snap)
+
+    def test_successful_match_is_cached_for_a_second_file_in_the_same_project(self, make_snapshot, tmp_path):
+        """A second file under the same project root should hit the `_successed_dirs` fast-path
+        cache rather than re-scanning the filesystem."""
+        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
+
+        self._make_django_project(tmp_path)
+        first_file = tmp_path / "myapp" / "models.py"
+        first_file.parent.mkdir()
+        first_file.write_text("")
+        second_file = tmp_path / "myapp" / "views.py"
+        second_file.write_text("")
+
+        assert IsInPythonDjangoProjectConstraint().test(make_snapshot(path=str(first_file))) is True
+        assert tmp_path in IsInPythonDjangoProjectConstraint._successed_dirs
+        assert IsInPythonDjangoProjectConstraint().test(make_snapshot(path=str(second_file))) is True
+
+
 class TestIsInRubyOnRailsProjectConstraint:
     def test_gemfile_exists(self, make_snapshot, tmp_path):
         from plugin.rules.constraint import AbstractConstraint
