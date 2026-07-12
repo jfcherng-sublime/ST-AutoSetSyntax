@@ -181,8 +181,8 @@ Syntax rules are the key part of AutoSetSyntax.
                     | `"init"` | This run is triggered by startup views. |
                     | `"load"` | This run is triggered because a file gets loaded. |
                     | `"modify"` | This run is triggered because of a buffer modification. |
-                    | `"new"` | This run is triggered because of a newly created window. |
-                    | `"paste"` | This run is triggered when plaintext is pasted into an empty view. |
+                    | `"new"` | This run is triggered because of a newly created file (e.g. `Ctrl+N`), not a window. |
+                    | `"paste"` | This run is triggered when a large enough chunk of text is pasted into a `Plain Text` view. |
                     | `"reload"` | This run is triggered because a file has been reloaded. |
                     | `"revert"` | This run is triggered because of the `revert` command. |
                     | `"save"` | This run is triggered because of the buffer gets saved. |
@@ -687,6 +687,7 @@ To edit project settings, go to `Project` » `Edit Project`.
         Available `platform_arch` are combinations of (`linux`, `osx`, `windows`) and (`x32`, `x64`, `arm64`)
         using a `_` as the delimiter.
 
+#### `is_size`
 
 !!! example
 

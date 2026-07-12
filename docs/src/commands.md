@@ -121,5 +121,5 @@
     },
     ```
 
-    This command copies information for debugging to the clipboard.
+    This command opens a new view with information for debugging.
     Check "[Debug][plugin-debug]" for more details.

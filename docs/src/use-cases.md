@@ -18,7 +18,8 @@ For example, you may want a new file[^1] to be auto set to
 This method works only under following circumstances:
 
 - The view's syntax is currently `Plain Text`.
-- And the user is modifying either the first line or the last few chars of the file.
+- And the user is modifying either the first line or the last few chars of the file,
+  or the file is short enough (under 300 characters) that any edit anywhere qualifies.
 
 A typical use case is that if you create a new file and type `<?php`, the file will automatically
 be set to `PHP` syntax because the `PHP` syntax claims it handles files whose first line is `<?php`.
