@@ -207,6 +207,20 @@ class TestPrefTrimSuffixes:
             result = pref_trim_suffixes(window=mock_window)
             assert result == []
 
+    def test_default_is_a_hashable_tuple_when_key_absent(self):
+        """Regression: this flows into is_extension's build_reversed_trie(), which is
+        lru_cache-decorated and requires a hashable argument. A window with no merged settings
+        yet (key genuinely absent, unlike the mocked-return_value tests above) must fall through
+        to pref_trim_suffixes()'s own default -- that default has to be a tuple, not a list, or
+        build_reversed_trie() raises `TypeError: unhashable type: 'list'`."""
+        mock_window = MagicMock()
+        mock_window.id.return_value = 123456789
+        AioSettings._merged_plugin_settings.pop(123456789, None)
+
+        result = pref_trim_suffixes(window=mock_window)
+        assert result == ()
+        hash(result)
+
 
 # ── AioSettings settings normalizer ──────────────────────────────────────────
 

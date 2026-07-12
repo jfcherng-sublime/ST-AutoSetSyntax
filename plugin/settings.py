@@ -45,7 +45,9 @@ def pref_syntax_rules(*, window: sublime.Window | None = None) -> list[StSyntaxR
 
 
 def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str, ...]:
-    return get_merged_plugin_setting("trim_suffixes", [], window=window)
+    # default must be a tuple, not a list: this flows into build_reversed_trie(), which is
+    # lru_cache-decorated and requires a hashable argument
+    return get_merged_plugin_setting("trim_suffixes", (), window=window)
 
 
 def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
