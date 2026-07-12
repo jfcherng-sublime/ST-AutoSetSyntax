@@ -654,3 +654,112 @@ class TestRuleIntegration:
         dropped = list(col.optimize())
         assert len(col) == 0, "All rules should be dropped after optimization"
         assert len(dropped) >= 2
+
+
+# ── Randomized invariant: optimize() must never change test() ─────────────────
+#
+# Every real bug found in this optimizer so far (droppable rules getting pruned
+# from the wrong side of all()/any(), a constant-True root_rule getting discarded
+# like a constant-False one, is_droppable() missing a constant-False case) was a
+# violation of the same invariant: running optimize() on a rule tree must never
+# change what test() returns for it. Rather than hand-writing one example per bug
+# shape, generate many random trees (honoring the is_droppable()/droppable_value()
+# contract) and check the invariant holds across all of them.
+
+
+class _ConsistentFixedRule:
+    """Fake leaf that honors the is_droppable()/droppable_value()/test() contract: when
+    droppable, test() always equals droppable_value() (see Optimizable.droppable_value docs).
+    An inconsistent fake would make optimize() *correctly* look buggy against a contract
+    violation that isn't the optimizer's fault, so this is deliberately always self-consistent."""
+
+    def __init__(self, result: bool, *, droppable: bool = False) -> None:
+        self._result = result
+        self._droppable = droppable
+
+    def is_droppable(self) -> bool:
+        return self._droppable
+
+    def droppable_value(self) -> bool:
+        return self._result
+
+    def optimize(self):
+        return iter(())
+
+    def test(self, view_snapshot) -> bool:
+        return self._result
+
+
+def _random_child(rng, depth: int):
+    """A node usable as a MatchRule child: either a leaf or a nested MatchRule."""
+    if depth <= 0 or rng.random() < 0.35:
+        return _ConsistentFixedRule(rng.random() < 0.5, droppable=rng.random() < 0.4)
+    return _random_match_rule(rng, depth - 1)
+
+
+def _random_match_rule(rng, depth: int):
+    from plugin.rules.match import MatchRule
+    from plugin.rules.matches.all import AllMatch
+    from plugin.rules.matches.any import AnyMatch
+    from plugin.rules.matches.ratio import RatioMatch
+    from plugin.rules.matches.some import SomeMatch
+
+    children = tuple(_random_child(rng, depth - 1) for _ in range(rng.randint(0, 4)))
+    kind = rng.choice(("all", "any", "some", "ratio"))
+
+    if kind == "all":
+        match_obj, match_name = AllMatch(), "all"
+    elif kind == "any":
+        match_obj, match_name = AnyMatch(), "any"
+    elif kind == "some":
+        match_obj, match_name = SomeMatch(rng.randint(-1, len(children) + 1)), "some"
+    else:
+        match_obj, match_name = RatioMatch(rng.randint(0, 3), rng.randint(0, 3)), "ratio"
+
+    return MatchRule(match=match_obj, match_name=match_name, rules=children)
+
+
+class TestMatchRuleOptimizeInvariant:
+    def test_optimize_never_changes_test_result(self):
+        import random
+
+        _ensure_rules_imported()
+
+        for seed in range(20):
+            rng = random.Random(seed)
+            for _ in range(50):
+                rule = _random_match_rule(rng, depth=4)
+                pre = rule.test(None)
+                list(rule.optimize())
+                post = rule.test(None)
+                assert pre == post, f"seed={seed}: optimize() changed test() result {pre} -> {post}"
+
+    def test_optimize_never_changes_syntax_rule_test_result(self):
+        """Same invariant one level up: SyntaxRule.optimize() must not change whether the rule
+        matches, even when its root_rule collapses to a droppable constant during optimization."""
+        import random
+
+        from plugin.rules.syntax import SyntaxRule
+
+        _ensure_rules_imported()
+
+        for seed in range(20):
+            rng = random.Random(seed)
+            for _ in range(50):
+                root_rule = _random_match_rule(rng, depth=3)
+                syntax_rule = SyntaxRule(syntax=object(), root_rule=root_rule)
+
+                # SyntaxRule.test() short-circuits on selector/syntax checks before reaching
+                # root_rule, so exercise root_rule's own test() directly -- that's the part
+                # SyntaxRule.optimize() is allowed to touch.
+                pre = root_rule.test(None)
+                list(syntax_rule.optimize())
+                post = (syntax_rule.root_rule.test(None)) if syntax_rule.root_rule else syntax_rule.root_rule
+                # if root_rule was dropped entirely, it must only be because it was constant
+                # False (SyntaxRule.optimize()'s own droppable_value() check enforces this);
+                # a constant-True root_rule must be kept (or represented as an unconditional
+                # match), never silently turned into "no match".
+                if syntax_rule.root_rule is None:
+                    assert pre is False, f"seed={seed}: root_rule discarded despite testing {pre}"
+                else:
+                    assert pre == post, f"seed={seed}: optimize() changed root_rule test() result {pre} -> {post}"
