@@ -157,6 +157,38 @@ class TestPrepareDependencies:
         assert (libs_dir / "sentinel.txt").exists()
 
 
+class TestSimpleUrlopen:
+    def test_passes_a_timeout_to_urlopen(self, monkeypatch):
+        """A hung/black-holed connection must not block the download thread forever -- urlopen()
+        has no timeout by default, so one must be passed explicitly."""
+        mod = _import_module()
+
+        calls = []
+
+        class _FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def read(self, n=-1):
+                return b""
+
+            def info(self):
+                return {}
+
+        def _fake_urlopen(url, **kwargs):
+            calls.append(kwargs)
+            return _FakeResponse()
+
+        monkeypatch.setattr(mod.urllib.request, "urlopen", _fake_urlopen)
+
+        mod.simple_urlopen("https://example.invalid/whatever")
+
+        assert calls and calls[0].get("timeout") is not None
+
+
 class TestWorker:
     def test_worker_does_not_show_success_dialog_after_failure(self, monkeypatch):
         mod = _import_module()

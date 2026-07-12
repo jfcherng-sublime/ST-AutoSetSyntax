@@ -55,7 +55,7 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
         """Download, verify and install dependencies. Returns whether it succeeded."""
         url = PLUGIN_PY_LIBS_URL
         try:
-            content_bytes = simple_urlopen(url)
+            content_bytes = simple_urlopen(url, timeout=1800)
         except Exception as e:
             sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {url} ({e})")
             return False
@@ -131,8 +131,8 @@ def decompress_buffer(buffer: BinaryIO, *, filename: str, dst_dir: PathLike) -> 
     return False
 
 
-def simple_urlopen(url: str, *, chunk_size: int = 512 * 1024) -> bytes:
-    with urllib.request.urlopen(url) as resp:
+def simple_urlopen(url: str, *, chunk_size: int = 512 * 1024, timeout: float = 30) -> bytes:
+    with urllib.request.urlopen(url, timeout=timeout) as resp:
         buffer = io.BytesIO()
         shutil.copyfileobj(resp, buffer, length=chunk_size)
         data = buffer.getvalue()
