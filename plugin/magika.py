@@ -43,10 +43,18 @@ def resolve_magika_label_with_syntax_map(label: str, syntax_map: Mapping[str, li
     :param      label:       The syntax label from Magika.
     :param      syntax_map:  The syntax map. Key / value = Maigka label / list of syntax like string.
     """
+
+    def notations_of(key: str) -> list[str]:
+        # a key present in settings with an explicit `null` value (e.g. a user trying to "unset"
+        # an override) comes back as None here, not the [] default -- `.get(key, [])`'s default
+        # only applies when `key` is absent. deque()/reversed() would raise on None.
+        value = syntax_map.get(key)
+        return value if isinstance(value, list) else []
+
     # note that dict is insertion-ordered as of Python 3.7
     res: dict[str, bool] = {}
 
-    deq = deque(syntax_map.get(label, []))
+    deq = deque(notations_of(label))
     while deq:
         if (notation := deq.popleft()) in res:
             continue
@@ -56,7 +64,7 @@ def resolve_magika_label_with_syntax_map(label: str, syntax_map: Mapping[str, li
         scope, _, ref = notation.partition("=")
 
         if ref:
-            deq.extendleft(reversed(syntax_map.get(ref, [])))
+            deq.extendleft(reversed(notations_of(ref)))
         else:
             res[scope] = True  # parsed
 

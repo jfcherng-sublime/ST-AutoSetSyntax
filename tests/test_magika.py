@@ -72,3 +72,14 @@ class TestResolveMagikaLabelWithSyntaxMap:
             "shared": ["scope:text.shared"],
         }
         assert resolve_magika_label_with_syntax_map("a", syntax_map) == ["scope:text.shared"]
+
+    def test_null_value_for_label_resolves_empty_instead_of_raising(self):
+        """Regression: a settings key present with an explicit `null` value (e.g. a user trying
+        to "unset" an override) comes back as None from `.get(key, [])` -- `deque(None)` used to
+        raise `TypeError: 'NoneType' object is not iterable`."""
+        syntax_map = {"python": None}
+        assert resolve_magika_label_with_syntax_map("python", syntax_map) == []
+
+    def test_null_value_for_referenced_label_resolves_empty_instead_of_raising(self):
+        syntax_map = {"a": ["=b"], "b": None}
+        assert resolve_magika_label_with_syntax_map("a", syntax_map) == []
