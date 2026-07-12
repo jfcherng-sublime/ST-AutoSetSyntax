@@ -350,7 +350,7 @@
                   "if": {
                     "properties": {
                       "constraint": {
-                        "pattern": "^is_name|is_extension$"
+                        "pattern": "^(?:is_name|is_extension)$"
                       }
                     }
                   },
@@ -375,7 +375,7 @@
                   "if": {
                     "properties": {
                       "constraint": {
-                        "pattern": "^is_size|is_line_count$"
+                        "pattern": "^(?:is_size|is_line_count)$"
                       }
                     }
                   },

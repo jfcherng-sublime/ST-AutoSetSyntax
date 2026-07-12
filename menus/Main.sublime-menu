@@ -47,7 +47,7 @@
                                 "caption": "-",
                             },
                             {
-                                "caption": "New Constrant…",
+                                "caption": "New Constraint…",
                                 "command": "auto_set_syntax_create_new_constraint",
                             },
                             {
