@@ -349,8 +349,6 @@ _RE_JSON_MAP_BEGIN = re.compile(r'^\{"')
 _RE_JSON_MAP_END = re.compile(r'(?:[\d"\]}]|true|false|null)\}$')
 _RE_JSON_ARRAY_BEGIN = re.compile(r'^\["')
 _RE_JSON_ARRAY_END = re.compile(r'(?:[\d"\]}]|true|false|null)\]$')
-_RE_LEADING_WS = re.compile(r"^\s+")
-_RE_TRAILING_WS = re.compile(r"\s+$")
 
 _SMALL_FILE_SIZE = 1 * 1024  # 1 KB
 
@@ -362,8 +360,11 @@ def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerE
         return view_snapshot.char_count < _SMALL_FILE_SIZE
 
     def is_json(view_snapshot: ViewSnapshot) -> bool:
-        text_begin = _RE_LEADING_WS.sub("", view_snapshot.content[:10])
-        text_end = _RE_TRAILING_WS.sub("", view_snapshot.content[-10:])
+        # strip whitespace from the *whole* (already size-bounded) content before slicing --
+        # slicing first would let >= 10 chars of leading/trailing padding (blank lines, etc.)
+        # swallow the slice window entirely, hiding real JSON content from the regexes below
+        text_begin = view_snapshot.content.lstrip()[:10]
+        text_end = view_snapshot.content.rstrip()[-10:]
 
         # XSSI protection prefix (https://security.stackexchange.com/q/110539)
         if text_begin.startswith(_XSSI_PREFIXES):
