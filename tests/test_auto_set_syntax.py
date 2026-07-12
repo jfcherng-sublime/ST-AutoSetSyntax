@@ -103,3 +103,60 @@ class TestAssignSyntaxWithHeuristicsJson:
 
         snap = _make_snapshot(_big_json_map(), syntax_name="Python")
         assert mod._assign_syntax_with_heuristics(snap, ListenerEvent.LOAD) is False
+
+
+class TestAssignSyntaxWithFirstLineEmacsModeline:
+    """`_prefer_modeline`'s Emacs branch is exercised indirectly through the outer
+    `_assign_syntax_with_first_line()`. `find_syntax_for_file` is stubbed to None so only the
+    modeline path (not the general-first-line fallback) can produce a match, and
+    `find_syntax_by_syntax_like` is stubbed to record what mode name it was actually queried
+    with -- this isolates the mode-name-extraction logic from real syntax lookup."""
+
+    @staticmethod
+    def _queried_mode_name(monkeypatch, first_line: str) -> str | None:
+        monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
+
+        queried: list[str] = []
+
+        def _fake_find(syntax_like, **kwargs):
+            queried.append(str(syntax_like))
+            return sublime.Syntax(name=str(syntax_like))
+
+        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", _fake_find)
+        monkeypatch.setattr(mod, "assign_syntax_to_view", lambda *a, **kw: True)
+
+        snap = ViewSnapshot(
+            view=MockView(),
+            char_count=len(first_line),
+            content=first_line,
+            first_line=first_line,
+            encoding="UTF-8",
+            line_count=1,
+            path_obj=None,
+            syntax=sublime.Syntax(name="Plain Text"),
+        )
+        mod._assign_syntax_with_first_line(snap, ListenerEvent.LOAD, {"modeline_lines": 5})
+        return queried[0] if queried else None
+
+    def test_bare_mode_name_short_form(self, monkeypatch):
+        assert self._queried_mode_name(monkeypatch, "# -*- python -*-") == "python"
+
+    def test_mode_key_value_form(self, monkeypatch):
+        assert self._queried_mode_name(monkeypatch, "# -*- mode: python -*-") == "python"
+
+    def test_mode_key_first_among_multiple_vars(self, monkeypatch):
+        """Regression: the old regex's greedy capture grabbed the whole "key: value; ..." list
+        instead of just the mode name, so a syntax literally named "mode: python; coding: utf-8"
+        was looked up (and never found) instead of "python"."""
+        assert self._queried_mode_name(monkeypatch, "# -*- mode: python; coding: utf-8 -*-") == "python"
+
+    def test_mode_key_last_among_multiple_vars(self, monkeypatch):
+        assert self._queried_mode_name(monkeypatch, "# -*- coding: utf-8; mode: python -*-") == "python"
+
+    def test_mode_keyword_is_case_insensitive(self, monkeypatch):
+        assert self._queried_mode_name(monkeypatch, "# -*- Mode: Python -*-") == "Python"
+
+    def test_no_mode_key_present_resolves_nothing(self, monkeypatch):
+        """A "key: value" list with no "mode" key has no mode name to use -- must not fall back
+        to treating the whole list (e.g. "coding: utf-8") as if it were one."""
+        assert self._queried_mode_name(monkeypatch, "# -*- coding: utf-8 -*-") is None

@@ -8,6 +8,7 @@ import sublime
 import sublime_plugin
 
 from ..constants import PLUGIN_NAME
+from ..constants import RE_EMACS_MODE_KV
 from ..constants import RE_EMACS_SYNTAX_LINE
 from ..constants import RE_ST_SYNTAX_TEST_LINE
 from ..constants import RE_VIM_SYNTAX_LINE
@@ -211,12 +212,26 @@ def _assign_syntax_with_first_line(
         # wrongly treated as a real modeline. See https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/30
         modeline_lines = int((settings or get_merged_plugin_settings(window=window)).get("modeline_lines", 5))
         modeline_content = head_tail_lines(view_snapshot.content, modeline_lines)
-        for match in chain(
-            RE_EMACS_SYNTAX_LINE.finditer(modeline_content),
-            RE_VIM_SYNTAX_LINE.finditer(modeline_content),
-        ):
-            if syntax := find_syntax_by_syntax_like(match.group("syntax")):
+
+        # Emacs's "-*- ... -*-" payload is either a bare mode name ("-*- python -*-") or a
+        # "key: value; ..." list that may or may not contain a "mode" key ("-*- coding: utf-8;
+        # mode: python -*-", in any order) -- the mode name has to be picked out of that payload
+        # rather than used as-is.
+        for emacs_match in RE_EMACS_SYNTAX_LINE.finditer(modeline_content):
+            payload = emacs_match.group("syntax")
+            if mode_match := RE_EMACS_MODE_KV.search(payload):
+                mode_name = mode_match.group("syntax")
+            elif ":" not in payload:
+                mode_name = payload.strip()
+            else:
+                continue  # a "key: value" list with no "mode" key -- nothing usable here
+            if mode_name and (syntax := find_syntax_by_syntax_like(mode_name)):
                 return syntax
+
+        for vim_match in RE_VIM_SYNTAX_LINE.finditer(modeline_content):
+            if syntax := find_syntax_by_syntax_like(vim_match.group("syntax")):
+                return syntax
+
         return None
 
     def _prefer_general_first_line(view_snapshot: ViewSnapshot) -> sublime.Syntax | None:
