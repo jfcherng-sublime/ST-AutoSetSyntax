@@ -25,7 +25,12 @@ def get_merged_plugin_setting(
     *,
     window: sublime.Window | None = None,
 ) -> Any:
-    return get_merged_plugin_settings(window=window or sublime.active_window()).get(key, default)
+    value = get_merged_plugin_settings(window=window or sublime.active_window()).get(key, default)
+    # a key explicitly set to `null` (e.g. a user trying to "unset" an override) is present with
+    # value None, not absent -- `.get(key, default)`'s default only covers the latter case. Treat
+    # an explicit null the same as "not configured" whenever the caller asked for a real default,
+    # since every caller that passes a non-None default needs a usable value back, not None.
+    return default if value is None else value
 
 
 def get_merged_plugin_settings(*, window: sublime.Window | None = None) -> MergedSettingsDict:
@@ -33,7 +38,10 @@ def get_merged_plugin_settings(*, window: sublime.Window | None = None) -> Merge
 
 
 def get_st_setting(key: str, default: Any | None = None) -> Any:
-    return get_st_settings().get(key, default)
+    # see get_merged_plugin_setting()'s comment: an explicit `null` override is present with
+    # value None, not absent, so `.get(key, default)`'s default alone doesn't cover it
+    value = get_st_settings().get(key, default)
+    return default if value is None else value
 
 
 def get_st_settings() -> sublime.Settings:

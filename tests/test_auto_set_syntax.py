@@ -4,6 +4,7 @@ This module is the plugin's core dispatch logic but previously had zero dedicate
 coverage (0% per `make ci-test-cov`), unlike almost everything else in the codebase.
 """
 
+import json
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -51,6 +52,13 @@ def _big_json_array() -> str:
     return f"[{body}]"
 
 
+def _big_pretty_json_map() -> str:
+    """Same shape as `_big_json_map()` but pretty-printed (2-space indent, real newlines) --
+    the far more common shape for a JSON file a user would actually save or paste, e.g. from
+    `json.dumps(x, indent=2)`, `JSON.stringify(x, null, 2)`, or a browser's "Copy as JSON"."""
+    return json.dumps({f"key{i}": i for i in range(200)}, indent=2)
+
+
 class TestAssignSyntaxWithHeuristicsJson:
     """`is_json()` is a nested closure, so it's exercised indirectly through the outer
     `_assign_syntax_with_heuristics()`, with `find_syntax_by_syntax_like`/`assign_syntax_to_view`
@@ -91,6 +99,29 @@ class TestAssignSyntaxWithHeuristicsJson:
 
     def test_json_with_short_whitespace_padding_still_detected(self, monkeypatch):
         content = "  \n" + _big_json_map() + "\n  "
+        assert self._detected(monkeypatch, content) is True
+
+    def test_pretty_printed_json_map_detected(self, monkeypatch):
+        """Regression: the begin/end regexes required the opening `{`/closing `}` to be
+        immediately adjacent to a quote/value with no whitespace at all (`^\\{"` / `...\\}$`), so
+        pretty-printed JSON -- `{\\n  "key": ...\\n}` -- never matched despite being the most
+        common real-world shape of a JSON file."""
+        assert self._detected(monkeypatch, _big_pretty_json_map()) is True
+
+    def test_pretty_printed_json_array_of_strings_detected(self, monkeypatch):
+        content = json.dumps([f"item{i}" for i in range(200)], indent=2)
+        assert self._detected(monkeypatch, content) is True
+
+    def test_pretty_printed_nested_array_of_arrays_detected(self, monkeypatch):
+        content = json.dumps([[i, i + 1] for i in range(200)], indent=2)
+        assert self._detected(monkeypatch, content) is True
+
+    def test_pretty_printed_array_of_maps_detected(self, monkeypatch):
+        content = json.dumps([{"k": i} for i in range(200)], indent=2)
+        assert self._detected(monkeypatch, content) is True
+
+    def test_pretty_printed_json_with_tab_indent_detected(self, monkeypatch):
+        content = json.dumps({f"key{i}": i for i in range(200)}, indent="\t")
         assert self._detected(monkeypatch, content) is True
 
     def test_non_json_content_not_detected(self, monkeypatch):
@@ -217,6 +248,49 @@ class TestAssignSyntaxWithFirstLineVimModeline:
 
     def test_modeline_as_last_line_with_trailing_newline(self, monkeypatch):
         assert self._queried_mode_name(monkeypatch, "# some code\n# vim: syntax=python\n") == "python"
+
+
+class TestAssignSyntaxWithFirstLineModelineLinesSetting:
+    """Regression: `_assign_syntax_with_first_line()` did `int((...).get("modeline_lines", 5))`.
+    A "modeline_lines" key explicitly set to `null` is present with value None, not absent, so
+    the `.get(..., 5)` default doesn't cover it -- `int(None)` raised TypeError for every
+    LOAD/SAVE/NEW/etc. event."""
+
+    @staticmethod
+    def _run(monkeypatch, first_line: str, settings: dict) -> str | None:
+        monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
+
+        queried: list[str] = []
+
+        def _fake_find(syntax_like, **kwargs):
+            queried.append(str(syntax_like))
+            return sublime.Syntax(name=str(syntax_like))
+
+        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", _fake_find)
+        monkeypatch.setattr(mod, "assign_syntax_to_view", lambda *a, **kw: True)
+
+        snap = ViewSnapshot(
+            view=MockView(),
+            char_count=len(first_line),
+            content=first_line,
+            first_line=first_line,
+            encoding="UTF-8",
+            line_count=1,
+            path_obj=None,
+            syntax=sublime.Syntax(name="Plain Text"),
+        )
+        mod._assign_syntax_with_first_line(snap, ListenerEvent.LOAD, settings)
+        return queried[0] if queried else None
+
+    def test_null_modeline_lines_does_not_raise_and_falls_back_to_default(self, monkeypatch):
+        result = self._run(monkeypatch, "# vim: syntax=python", {"modeline_lines": None})
+        assert result == "python"
+
+    def test_zero_modeline_lines_is_preserved_as_no_search(self, monkeypatch):
+        """`modeline_lines: 0` is a distinct, valid "no modeline search at all" setting (see
+        head_tail_lines()'s `n == 0` case) and must not be silently coerced into the default."""
+        result = self._run(monkeypatch, "# vim: syntax=python", {"modeline_lines": 0})
+        assert result is None
 
 
 class TestAssignSyntaxToView:

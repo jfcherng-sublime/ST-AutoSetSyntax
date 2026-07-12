@@ -196,9 +196,14 @@ class AbstractConstraint(ABC):
     @staticmethod
     def _handled_regex(args: tuple[Any, ...], kwargs: dict[str, Any]) -> re.Pattern[str]:
         """Returns compiled regex object from `args` and `kwargs.regex_flags`."""
+        # "regex_flags": null is present with value None, not absent, so .get(..., [...])'s
+        # default doesn't cover it -- parse_regex_flags(None) would raise TypeError. Check for
+        # None explicitly rather than falsy: "regex_flags": [] is a distinct, valid "no flags at
+        # all, not even the usual MULTILINE" setting and must not be coerced into the default.
+        regex_flags = kwargs.get("regex_flags")
         return compile_regex(
             merge_regexes(args),
-            parse_regex_flags(kwargs.get("regex_flags", ["MULTILINE"])),
+            parse_regex_flags(regex_flags if regex_flags is not None else ["MULTILINE"]),
         )
 
     @final

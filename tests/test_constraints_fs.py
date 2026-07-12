@@ -62,6 +62,21 @@ class TestRelativeExistsConstraint:
 
         assert RelativeExistsConstraint().is_droppable() is True
 
+    def test_null_match_kwarg_does_not_raise(self, make_snapshot, tmp_path):
+        """Regression: `match=None` is present with value None, not absent, so
+        `kwargs.get("match", "any")`'s default doesn't cover it -- `None.lower()` raised
+        AttributeError. Must fall back to the "any" default instead."""
+        from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
+
+        (tmp_path / "a.txt").write_text("")
+        test_file = tmp_path / "main.py"
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        constraint = RelativeExistsConstraint("a.txt", "missing.txt", match=None)
+        assert constraint.match == "any"
+        assert constraint.test(snap) is True
+
     def test_name(self):
         from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
 

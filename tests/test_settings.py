@@ -6,6 +6,7 @@ from unittest.mock import patch
 # These need to be imported after sublime stubs are set up by conftest
 from plugin.settings import AioSettings
 from plugin.settings import extra_settings_producer
+from plugin.settings import get_merged_plugin_setting
 from plugin.settings import get_st_setting
 from plugin.settings import get_st_settings
 from plugin.settings import pref_syntax_rules
@@ -28,6 +29,46 @@ class TestStSettings:
         with patch("plugin.settings.get_st_settings") as mock_settings:
             mock_settings.return_value.get.return_value = None
             assert get_st_setting("nonexistent_key") is None
+
+
+# ── get_merged_plugin_setting ────────────────────────────────────────────────
+
+
+class TestGetMergedPluginSetting:
+    def setup_method(self):
+        AioSettings._merged_plugin_settings.clear()
+
+    def test_returns_value_when_present(self):
+        mock_window = MagicMock()
+        mock_window.id.return_value = 501
+        AioSettings._merged_plugin_settings[501] = {"debounce": 5}
+        assert get_merged_plugin_setting("debounce", 0, window=mock_window) == 5
+
+    def test_returns_default_when_key_absent(self):
+        mock_window = MagicMock()
+        mock_window.id.return_value = 502
+        AioSettings._merged_plugin_settings[502] = {}
+        assert get_merged_plugin_setting("debounce", 3, window=mock_window) == 3
+
+    def test_null_value_falls_back_to_default_not_none(self):
+        """Regression: a key explicitly set to `null` (e.g. a user trying to "unset" an
+        override) is present with value None, not absent -- `dict.get(key, default)`'s default
+        only covers the latter case. Every caller that passes a non-None default needs a usable
+        value back, not None (e.g. `int(None)`/`None > 0`/`None.lower()` would all raise), so an
+        explicit null must be treated the same as "not configured"."""
+        mock_window = MagicMock()
+        mock_window.id.return_value = 503
+        AioSettings._merged_plugin_settings[503] = {"debounce": None}
+        assert get_merged_plugin_setting("debounce", 3, window=mock_window) == 3
+
+    def test_null_value_with_no_requested_default_stays_none(self):
+        """When the caller doesn't ask for a real fallback (default=None, e.g. Logger.log's
+        enable_log check), an explicit null is indistinguishable from absent either way, so
+        behavior is unchanged."""
+        mock_window = MagicMock()
+        mock_window.id.return_value = 504
+        AioSettings._merged_plugin_settings[504] = {"enable_log": None}
+        assert get_merged_plugin_setting("enable_log", window=mock_window) is None
 
 
 # ── AioSettings lifecycle ────────────────────────────────────────────────────

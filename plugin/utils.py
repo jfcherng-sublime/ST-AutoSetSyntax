@@ -80,12 +80,6 @@ def merge_literals_to_regex(literals: Iterable[str]) -> str:
     Merge (non-regex) literal strings into an optimized regex string.
 
     The returned regex is enclosed as `(?:...)`.
-
-    :note: this used to delegate to the vendored `Triegex` for a trie-compressed alternation, but
-        `TriegexNode.to_regex()` silently drops words that are a strict prefix of another word in
-        the same set (e.g. `["sh", "shell"]` loses "shell" and can even emit a spurious
-        unintended alternative). Plain escaped alternation via `merge_regexes()` has no such
-        hazard.
     """
     return merge_regexes(map(re.escape, literals))
 

@@ -6,6 +6,52 @@ from pathlib import Path
 from plugin.snapshot import ViewSnapshot
 
 
+class _FakeView:
+    def __init__(self, content: str) -> None:
+        self._content = content
+
+    def size(self) -> int:
+        return len(self._content)
+
+    def substr(self, region) -> str:
+        return self._content[region.a : region.b]
+
+    def line(self, pt: int):
+        import sublime
+
+        return sublime.Region(0, len(self._content))
+
+
+class TestGetViewPseudoContentAndFirstLine:
+    """Regression: get_view_pseudo_content()/get_view_pseudo_first_line() call
+    get_merged_plugin_setting() for "trim_file_size"/"trim_first_line_length" without an explicit
+    default, so a key explicitly set to `null` (e.g. a user trying to "unset" an override) used
+    to flow straight through as None -- raising TypeError inside head_tail_content_st()'s
+    `partial < 0` check, and inside the `max_length >= 0` check here. Both run unconditionally in
+    ViewSnapshot.from_view(), which run_auto_set_syntax_on_view() calls for every event."""
+
+    def test_pseudo_content_null_trim_file_size_falls_back_to_default(self, monkeypatch):
+        import plugin.settings as settings_mod
+        import plugin.snapshot as snapshot_mod
+
+        # simulate the *real* merged-settings layer reporting "trim_file_size" present with
+        # value None, then let the real (fixed) get_merged_plugin_setting() run on top of it --
+        # mocking get_merged_plugin_setting() itself would bypass the fix being tested
+        monkeypatch.setattr(settings_mod, "get_merged_plugin_settings", lambda *a, **kw: {"trim_file_size": None})
+        view = _FakeView("hello world")
+        assert snapshot_mod.get_view_pseudo_content(view, None) == "hello world"
+
+    def test_pseudo_first_line_null_trim_first_line_length_falls_back_to_default(self, monkeypatch):
+        import plugin.settings as settings_mod
+        import plugin.snapshot as snapshot_mod
+
+        monkeypatch.setattr(
+            settings_mod, "get_merged_plugin_settings", lambda *a, **kw: {"trim_first_line_length": None}
+        )
+        view = _FakeView("hello world")
+        assert snapshot_mod.get_view_pseudo_first_line(view, None) == "hello world"
+
+
 class TestViewSnapshotConstruction:
     def test_basic_fields(self, make_snapshot):
         snap = make_snapshot(content="hello\nworld", path="/tmp/test.txt")

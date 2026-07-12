@@ -123,6 +123,29 @@ class TestContainsRegexConstraint:
 
         assert ContainsRegexConstraint(threshold=0).is_droppable() is False
 
+    def test_null_regex_flags_falls_back_to_multiline_default(self, make_snapshot):
+        """Regression (AbstractConstraint._handled_regex): "regex_flags": null is present with
+        value None, not absent, so `kwargs.get("regex_flags", [...])`'s default doesn't cover it
+        -- parse_regex_flags(None) raised TypeError. Must fall back to the ["MULTILINE"] default."""
+        import re
+
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        constraint = ContainsRegexConstraint("foo", regex_flags=None)
+        assert constraint.regex.flags & re.MULTILINE
+        snap = make_snapshot(content="foo")
+        assert constraint.test(snap) is True
+
+    def test_empty_regex_flags_list_disables_multiline_default(self, make_snapshot):
+        """An explicit `regex_flags: []` is a distinct, valid "no flags at all, not even
+        MULTILINE" setting and must not be coerced into the `["MULTILINE"]` default."""
+        import re
+
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        constraint = ContainsRegexConstraint("foo", regex_flags=[])
+        assert not (constraint.regex.flags & re.MULTILINE)
+
 
 # ── FirstLineContainsConstraint ───────────────────────────────────────────────
 

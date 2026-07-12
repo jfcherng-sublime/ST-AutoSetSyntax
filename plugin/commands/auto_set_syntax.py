@@ -210,7 +210,13 @@ def _assign_syntax_with_first_line(
         # content instead, a "# vim: ..." or "-*- ... -*-" line that merely appears inside a
         # code block somewhere in the document (e.g., a Markdown fenced code example) would be
         # wrongly treated as a real modeline. See https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/30
-        modeline_lines = int((settings or get_merged_plugin_settings(window=window)).get("modeline_lines", 5))
+        # a key explicitly set to `null` is present with value None, not absent, so `.get(..., 5)`'s
+        # default alone doesn't cover it -- `int(None)` would raise TypeError. Check for None
+        # explicitly rather than falsy (`modeline_lines: 0` is a distinct, valid "no modeline
+        # search at all" setting -- see head_tail_lines()'s `n == 0` case -- and must not be
+        # coerced into the default.)
+        modeline_lines_setting = (settings or get_merged_plugin_settings(window=window)).get("modeline_lines")
+        modeline_lines = int(modeline_lines_setting if modeline_lines_setting is not None else 5)
         modeline_content = head_tail_lines(view_snapshot.content, modeline_lines)
 
         # Emacs's "-*- ... -*-" payload is either a bare mode name ("-*- python -*-") or a
@@ -360,10 +366,17 @@ def _assign_syntax_with_magika(
     return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "Magika (Deep Learning)"})
 
 
-_RE_JSON_MAP_BEGIN = re.compile(r'^\{"')
-_RE_JSON_MAP_END = re.compile(r'(?:[\d"\]}]|true|false|null)\}$')
-_RE_JSON_ARRAY_BEGIN = re.compile(r'^\["')
-_RE_JSON_ARRAY_END = re.compile(r'(?:[\d"\]}]|true|false|null)\]$')
+# tolerate whitespace right after the opening bracket / right before the closing one, since
+# pretty-printed JSON (e.g. `json.dumps(x, indent=2)`) -- arguably the most common shape a user
+# would actually paste or open -- always has a newline/indentation there, not a bare `{"`/`}`
+_RE_JSON_MAP_BEGIN = re.compile(r'^\{\s*"')
+_RE_JSON_MAP_END = re.compile(r'(?:[\d"\]}]|true|false|null)\s*\}$')
+_RE_JSON_ARRAY_BEGIN = re.compile(r'^\[\s*"')
+_RE_JSON_ARRAY_END = re.compile(r'(?:[\d"\]}]|true|false|null)\s*\]$')
+_RE_JSON_NESTED_ARRAY_BEGIN = re.compile(r"^\[\s*\[")
+_RE_JSON_NESTED_ARRAY_END = re.compile(r"\]\s*\]$")
+_RE_JSON_NESTED_OBJECT_BEGIN = re.compile(r"^\[\s*\{")
+_RE_JSON_NESTED_OBJECT_END = re.compile(r"\}\s*\]$")
 
 _SMALL_FILE_SIZE = 1 * 1024  # 1 KB
 
@@ -390,8 +403,10 @@ def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerE
             (_RE_JSON_MAP_BEGIN.search(text_begin) and _RE_JSON_MAP_END.search(text_end))
             # array
             or (_RE_JSON_ARRAY_BEGIN.search(text_begin) and _RE_JSON_ARRAY_END.search(text_end))
-            or (text_begin.startswith("[[") and text_end.endswith("]]"))
-            or (text_begin.startswith("[{") and text_end.endswith("}]"))
+            # array of arrays
+            or (_RE_JSON_NESTED_ARRAY_BEGIN.search(text_begin) and _RE_JSON_NESTED_ARRAY_END.search(text_end))
+            # array of objects
+            or (_RE_JSON_NESTED_OBJECT_BEGIN.search(text_begin) and _RE_JSON_NESTED_OBJECT_END.search(text_end))
         )
 
     if not ((view := view_snapshot.valid_view) and view_snapshot.syntax and is_plaintext_syntax(view_snapshot.syntax)):
