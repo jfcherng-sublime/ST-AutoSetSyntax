@@ -8,6 +8,7 @@ from typing import cast
 
 import sublime
 import sublime_plugin
+from pydantic import ValidationError
 
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
 from .constants import PLUGIN_NAME
@@ -67,7 +68,13 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     Logger.log(f'🔍 Found "Match" implementations: {names_as_str(get_matches())}', window=window)
     Logger.log(f'🔍 Found "Constraint" implementations: {names_as_str(get_constraints())}', window=window)
 
-    syntax_rule_collection = SyntaxRuleCollection.make(pref_syntax_rules(window=window))
+    try:
+        syntax_rules = pref_syntax_rules(window=window)
+    except ValidationError as e:
+        Logger.log(f'❌ Invalid "syntax_rules" setting, ignoring all of them: {e}', window=window)
+        syntax_rules = []
+
+    syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
     G.syntax_rule_collections[window] = syntax_rule_collection
     Logger.log(f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
 

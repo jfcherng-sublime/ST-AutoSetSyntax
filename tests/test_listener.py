@@ -99,3 +99,35 @@ class TestOnNewWindowStillSetsUpWhenOnNewDidNotRunFirst:
         listener_mod.AutoSetSyntaxEventListener().on_new_window(window)
 
         assert calls == [window]
+
+
+class TestCompileRulesHandlesInvalidSyntaxRules:
+    """Regression: StConstraintRule/StMatchRule now reject unrecognized keys (a typo'd
+    "constraint" key would otherwise silently validate as a no-op StMatchRule). That means a
+    single malformed rule anywhere in the user's whole syntax_rules setting raises a
+    pydantic.ValidationError -- compile_rules() must catch that and fall back to an empty rule
+    set instead of crashing set_up_window()/on_new_window() for the whole window."""
+
+    def test_invalid_syntax_rules_falls_back_to_empty_collection(self, monkeypatch):
+        from pydantic import TypeAdapter
+
+        from plugin.types import StSyntaxRule
+
+        window = _make_window(106)
+
+        def _bad_pref_syntax_rules(*, window=None):
+            # a typo'd "constraint" key, same shape as a real user config mistake
+            return TypeAdapter(list[StSyntaxRule]).validate_python([
+                {"rules": [{"constrait": "is_extension", "args": ["py"]}]}
+            ])
+
+        monkeypatch.setattr(listener_mod, "pref_syntax_rules", _bad_pref_syntax_rules)
+
+        try:
+            listener_mod.compile_rules(window)  # must not raise
+
+            collection = G.syntax_rule_collections[window]
+            assert len(collection) == 0
+        finally:
+            G.syntax_rule_collections.pop(window, None)
+            G.dropped_rules_collection.pop(window, None)

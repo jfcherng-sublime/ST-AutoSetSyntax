@@ -11,6 +11,7 @@ from typing import overload
 import sublime
 from more_itertools import always_iterable
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import field_validator
 
@@ -76,6 +77,12 @@ class Optimizable(ABC):
 class StConstraintRule(BaseModel):
     """Model for a "constraint rule" in settings."""
 
+    # reject unrecognized keys instead of silently ignoring them: a typo'd key (e.g.
+    # "constrait") would otherwise fail this model and quietly validate as a no-op StMatchRule
+    # instead (the `rules` union tries StConstraintRule first, then StMatchRule, whose every
+    # field has a default), silently dropping the user's rule with no diagnostic at all.
+    model_config = ConfigDict(extra="forbid")
+
     constraint: str
     """The name of the "constraint"."""
     args: list[Any] = Field(default_factory=list)
@@ -88,6 +95,9 @@ class StConstraintRule(BaseModel):
 
 class StMatchRule(BaseModel):
     """Model for a "match rule" in settings."""
+
+    # see StConstraintRule.model_config for why this must reject unrecognized keys
+    model_config = ConfigDict(extra="forbid")
 
     match: str = "any"
     """The name of the "match"."""

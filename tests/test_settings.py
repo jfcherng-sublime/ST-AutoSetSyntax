@@ -186,6 +186,29 @@ class TestPrefSyntaxRules:
             assert isinstance(rules[0], StSyntaxRule)
             assert rules[0].syntaxes == ["Python"]
 
+    def test_typo_d_constraint_key_raises_instead_of_silently_becoming_a_no_op(self, monkeypatch):
+        """Regression: StConstraintRule requires "constraint" but StMatchRule requires nothing,
+        so a typo like "constrait" used to fail StConstraintRule validation and quietly succeed
+        as an empty StMatchRule(match="any", rules=[]) instead -- silently dropping the user's
+        rule with no error at all. extra="forbid" on both models turns this into a clear,
+        catchable ValidationError."""
+        import pytest
+        from pydantic import ValidationError
+
+        mock_window = MagicMock()
+        mock_window.id.return_value = 43
+
+        with (
+            patch(
+                "plugin.settings.get_merged_plugin_setting",
+                return_value=[
+                    {"syntaxes": ["Python"], "rules": [{"constrait": "is_extension", "args": ["py"]}]},
+                ],
+            ),
+            pytest.raises(ValidationError),
+        ):
+            pref_syntax_rules(window=mock_window)
+
 
 # ── pref_trim_suffixes ──────────────────────────────────────────────────────
 
