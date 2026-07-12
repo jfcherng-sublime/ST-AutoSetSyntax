@@ -143,6 +143,13 @@ class TestSomeMatch:
         snap = make_snapshot()
         assert SomeMatch(0).test(snap, _rules(False, False)) is True
 
+    def test_explicit_zero_count_stored_as_zero(self):
+        """Regression: `nth(self.args, 0) or -1` treated explicit 0 as missing, storing -1."""
+        from plugin.rules.matches.some import SomeMatch
+
+        assert SomeMatch(0).count == 0
+        assert SomeMatch().count == -1
+
     def test_count_exceeds_rules_is_droppable(self):
         from plugin.rules.matches.some import SomeMatch
 
@@ -189,6 +196,18 @@ class TestRatioMatch:
         snap = make_snapshot()
         assert RatioMatch(1, 1).test(snap, _rules(True, True)) is True
         assert RatioMatch(1, 1).test(snap, _rules(True, False)) is False
+
+    def test_zero_numerator_stored_as_zero(self):
+        """Regression: `nth(...) or 0` conflated missing with explicit zero."""
+        from plugin.rules.matches.ratio import RatioMatch
+
+        assert RatioMatch(0, 3).numerator == 0
+        assert RatioMatch(2, 4).numerator == 2
+
+    def test_zero_denominator_stored_as_zero(self):
+        from plugin.rules.matches.ratio import RatioMatch
+
+        assert RatioMatch(1, 0).denominator == 0
 
     def test_zero_denominator_is_droppable(self):
         from plugin.rules.matches.ratio import RatioMatch

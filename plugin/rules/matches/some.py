@@ -16,7 +16,7 @@ class SomeMatch(AbstractMatch):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.count: float = nth(self.args, 0) or -1
+        self.count: float = nth(self.args, 0, -1)
 
     @override
     def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:

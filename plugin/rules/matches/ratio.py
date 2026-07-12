@@ -17,8 +17,8 @@ class RatioMatch(AbstractMatch):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.numerator: float = nth(self.args, 0) or 0
-        self.denominator: float = nth(self.args, 1) or 0
+        self.numerator: float = nth(self.args, 0, 0)
+        self.denominator: float = nth(self.args, 1, 0)
         self.ratio: float = (self.numerator / self.denominator) if self.denominator else -1
 
     @override
