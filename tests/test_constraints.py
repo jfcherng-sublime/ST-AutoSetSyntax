@@ -55,6 +55,14 @@ class TestContainsConstraint:
 
         assert ContainsConstraint("foo").is_droppable() is False
 
+    def test_threshold_zero_no_needles_is_not_droppable(self):
+        """threshold<=0 makes test() a constant True even with no needles (see
+        test_threshold_zero_always_true). "Droppable" must mean test() is a constant False, so
+        this must NOT be reported droppable despite having no needles."""
+        from plugin.rules.constraints.contains import ContainsConstraint
+
+        assert ContainsConstraint(threshold=0).is_droppable() is False
+
 
 # ── ContainsRegexConstraint ───────────────────────────────────────────────────
 
@@ -96,6 +104,24 @@ class TestContainsRegexConstraint:
         snap = make_snapshot(content="bar")
         # Two patterns merged into one alternation
         assert ContainsRegexConstraint("foo", "bar").test(snap) is True
+
+    def test_no_patterns_is_droppable(self):
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        assert ContainsRegexConstraint().is_droppable() is True
+
+    def test_with_patterns_not_droppable(self):
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        assert ContainsRegexConstraint("foo").is_droppable() is False
+
+    def test_threshold_zero_no_patterns_is_not_droppable(self):
+        """Same reasoning as ContainsConstraint's equivalent test: threshold<=0 is a constant
+        True regardless of patterns, so it must NOT be reported droppable (which means constant
+        False)."""
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        assert ContainsRegexConstraint(threshold=0).is_droppable() is False
 
 
 # ── FirstLineContainsConstraint ───────────────────────────────────────────────
@@ -147,6 +173,16 @@ class TestFirstLineContainsRegexConstraint:
 
         snap = make_snapshot(first_line="# -*- coding: UTF-8 -*-")
         assert FirstLineContainsRegexConstraint(r"utf-8", regex_flags=["IGNORECASE"]).test(snap) is True
+
+    def test_no_patterns_is_droppable(self):
+        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
+
+        assert FirstLineContainsRegexConstraint().is_droppable() is True
+
+    def test_with_patterns_not_droppable(self):
+        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
+
+        assert FirstLineContainsRegexConstraint("python").is_droppable() is False
 
 
 # ── IsInterpreterConstraint ───────────────────────────────────────────────────
@@ -209,6 +245,16 @@ class TestIsInterpreterConstraint:
 
         snap = make_snapshot(first_line="")
         assert IsInterpreterConstraint("python").test(snap) is False
+
+    def test_no_interpreters_is_droppable(self):
+        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
+
+        assert IsInterpreterConstraint().is_droppable() is True
+
+    def test_with_interpreter_not_droppable(self):
+        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
+
+        assert IsInterpreterConstraint("python").is_droppable() is False
 
 
 # ── IsNameConstraint ──────────────────────────────────────────────────────────
@@ -275,6 +321,45 @@ class TestNameContainsConstraint:
         with pytest.raises(AlwaysFalsyException):
             NameContainsConstraint("anything").test(snap)
 
+    def test_no_needles_is_droppable(self):
+        from plugin.rules.constraints.name_contains import NameContainsConstraint
+
+        assert NameContainsConstraint().is_droppable() is True
+
+
+# ── NameContainsRegexConstraint ───────────────────────────────────────────────
+
+
+class TestNameContainsRegexConstraint:
+    def test_regex_matches_name(self, make_snapshot):
+        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
+
+        snap = make_snapshot(path="/home/user/my_script.py")
+        assert NameContainsRegexConstraint(r"script").test(snap) is True
+
+    def test_regex_no_match(self, make_snapshot):
+        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
+
+        snap = make_snapshot(path="/home/user/main.py")
+        assert NameContainsRegexConstraint(r"script").test(snap) is False
+
+    def test_no_file_path_raises(self, make_snapshot):
+        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
+
+        snap = make_snapshot()
+        with pytest.raises(AlwaysFalsyException):
+            NameContainsRegexConstraint("anything").test(snap)
+
+    def test_no_patterns_is_droppable(self):
+        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
+
+        assert NameContainsRegexConstraint().is_droppable() is True
+
+    def test_with_patterns_not_droppable(self):
+        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
+
+        assert NameContainsRegexConstraint("script").is_droppable() is False
+
 
 # ── PathContainsConstraint ────────────────────────────────────────────────────
 
@@ -309,6 +394,40 @@ class TestPathContainsConstraint:
         from plugin.rules.constraints.path_contains import PathContainsConstraint
 
         assert PathContainsConstraint().is_droppable() is True
+
+
+# ── PathContainsRegexConstraint ───────────────────────────────────────────────
+
+
+class TestPathContainsRegexConstraint:
+    def test_regex_matches_path(self, make_snapshot):
+        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
+
+        snap = make_snapshot(path="/home/user/projects/myapp/main.py")
+        assert PathContainsRegexConstraint(r"projects").test(snap) is True
+
+    def test_regex_no_match(self, make_snapshot):
+        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
+
+        snap = make_snapshot(path="/home/user/main.py")
+        assert PathContainsRegexConstraint(r"projects").test(snap) is False
+
+    def test_no_file_path_raises(self, make_snapshot):
+        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
+
+        snap = make_snapshot()
+        with pytest.raises(AlwaysFalsyException):
+            PathContainsRegexConstraint("anything").test(snap)
+
+    def test_no_patterns_is_droppable(self):
+        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
+
+        assert PathContainsRegexConstraint().is_droppable() is True
+
+    def test_with_patterns_not_droppable(self):
+        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
+
+        assert PathContainsRegexConstraint("projects").is_droppable() is False
 
 
 # ── IsLineCountConstraint ─────────────────────────────────────────────────────

@@ -18,7 +18,16 @@ class ContainsRegexConstraint(AbstractConstraint):
 
     @override
     def is_droppable(self) -> bool:
-        return not isinstance(self.threshold, (int, float))
+        """
+        A non-numeric threshold makes `test()` always raise (caught upstream as `False`). A
+        positive threshold with no patterns can never find a match (the "match nothing" regex
+        from `merge_regexes(())` guarantees that). A threshold `<= 0` is a constant `True`,
+        though -- not droppable, since droppable must mean `test()` always fails (`False`), and
+        there's no way to represent a constant-`True` constraint here.
+        """
+        if not isinstance(self.threshold, (int, float)):
+            return True
+        return self.threshold > 0 and not self.args
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

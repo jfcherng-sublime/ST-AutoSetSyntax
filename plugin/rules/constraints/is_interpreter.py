@@ -32,7 +32,12 @@ class IsInterpreterConstraint(AbstractConstraint):
 
     @override
     def is_droppable(self) -> bool:
-        return not self.first_line_regex
+        """
+        `self.first_line_regex` is always a compiled `Pattern`, which is never falsy, even with
+        no interpreters given (it then embeds a "match nothing" sub-pattern). Check
+        `self.interpreters` itself instead of the always-truthy compiled regex.
+        """
+        return not self.interpreters
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

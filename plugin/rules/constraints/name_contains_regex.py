@@ -15,6 +15,12 @@ class NameContainsRegexConstraint(AbstractConstraint):
         self.regex = self._handled_regex(self.args, self.kwargs)
 
     @override
+    def is_droppable(self) -> bool:
+        """With no patterns, `merge_regexes(())` compiles a "match nothing" regex, so `test()`
+        always fails."""
+        return not self.args
+
+    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not (file_name := view_snapshot.file_name):
             raise AlwaysFalsyException("file not on disk")

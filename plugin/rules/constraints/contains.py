@@ -19,7 +19,15 @@ class ContainsConstraint(AbstractConstraint):
 
     @override
     def is_droppable(self) -> bool:
-        return not (self.needles and isinstance(self.threshold, (int, float)))
+        """
+        A non-numeric threshold makes `test()` always raise (caught upstream as `False`). A
+        positive threshold with no needles can never find a match. A threshold `<= 0` is a
+        constant `True`, though -- not droppable, since droppable must mean `test()` always
+        fails (`False`), and there's no way to represent a constant-`True` constraint here.
+        """
+        if not isinstance(self.threshold, (int, float)):
+            return True
+        return self.threshold > 0 and not self.needles
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
