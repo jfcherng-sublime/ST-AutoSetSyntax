@@ -1,5 +1,26 @@
 # AutoSetSyntax Changelog
 
+## 6.0.7
+
+- fix: `startup_views` was never cleared after processing, leaking view references and re-running startup detection on a plugin reload
+- fix: log squashing could clobber a distinct log line that happened to start with the same text as a repeated one
+- fix: `is_interpreter`'s VIM modeline regex had a stray backslash, breaking modelines with trailing options (e.g. `# vim: syntax=python ts=4:`)
+- perf: platform/arch constraints that can never match the current OS are now pruned by the rule optimizer
+- perf: merge redundant `is_file()` + `stat()` filesystem calls into one on the syntax-detection hot path
+- fix: `download-dependencies` could hang forever on a stalled network connection
+- fix: JSON detection heuristic missed content with long leading/trailing whitespace padding
+- fix: Emacs modeline detection broke on the standard `mode: syntax` form
+- fix: several constraints violated the rule optimizer's droppable contract, risking incorrect rule pruning
+- fix: `merge_literals_to_regex()` (used by `is_interpreter`) could drop or corrupt patterns sharing a common prefix
+- fix: `pref_trim_suffixes()` could return an unhashable list instead of a tuple
+- fix: a typo'd key in a `syntax_rules` constraint/match was silently ignored instead of raising a validation error
+- fix: explicit `null` in `syntax_rules`/`trim_suffixes`/project settings crashed the settings pipeline instead of being treated as absent
+- fix: crash when `magika.syntax_map` contained an explicit `null` entry
+- fix: typos in the command menu and syntax display names, plus a regex precedence bug in the settings JSON schema
+- fix: VIM modeline detection failed to match on the file's last line with no trailing newline
+- fix: explicit `null` config values (`modeline_lines`, `regex_flags`, etc.) are now treated as absent; JSON detection now recognizes pretty-printed JSON
+- fix: regex constraints with an empty-string or `None` pattern could match everywhere or match the literal string `'None'`
+
 ## 6.0.6
 
 - fix: rule optimization could silently flip `all()`/`any()` results when pruning droppable children
