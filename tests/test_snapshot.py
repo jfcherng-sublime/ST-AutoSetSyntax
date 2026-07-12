@@ -126,14 +126,26 @@ class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
 
         assert snap.file_size == 5  # reflects size at snapshot time, not the live file
 
-    def test_file_size_is_minus_one_when_file_disappears_before_stat(self, tmp_path, monkeypatch):
-        """Simulates a TOCTOU race: `is_file()` sees the file, but it's gone by the time we `stat()` it."""
+    def test_file_size_is_minus_one_when_file_does_not_exist(self, tmp_path, monkeypatch):
+        """`stat()` raising (deleted/never existed/permission denied) must fall back to -1 and
+        leave `path_obj` unset, not just `file_size`."""
         missing_path = tmp_path / "gone.txt"  # never created on disk
         view = self._make_view(monkeypatch, missing_path)
-        monkeypatch.setattr(Path, "is_file", lambda self: True)
 
         snap = ViewSnapshot.from_view(view)
         assert snap.file_size == -1
+        assert snap.path_obj is None
+
+    def test_path_obj_unset_for_non_regular_file(self, tmp_path, monkeypatch):
+        """A directory (or other non-regular file) at the view's path must not be treated as the
+        view's on-disk file, even though `stat()` on it succeeds."""
+        a_directory = tmp_path / "some_dir"
+        a_directory.mkdir()
+        view = self._make_view(monkeypatch, a_directory)
+
+        snap = ViewSnapshot.from_view(view)
+        assert snap.file_size == -1
+        assert snap.path_obj is None
 
 
 class TestViewSnapshotContentBytes:

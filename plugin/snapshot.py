@@ -1,3 +1,4 @@
+import stat
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
@@ -80,15 +81,19 @@ class ViewSnapshot:
         """Create a `ViewSnapshot` object from a `sublime.View` object."""
         window = view.window() or sublime.active_window()
 
-        # is real file on a disk?
-        if not (path_ := view.file_name()) or not (path := Path(path_).resolve()).is_file():
-            path = None
-
-        try:
-            file_size = path.stat().st_size if path else -1
-        except OSError:
-            # the file may have been deleted/moved between the `is_file()` check above and here
-            file_size = -1
+        # is real file on a disk? Single stat() call does double duty: it both answers that
+        # question and gives us file_size, instead of a separate is_file() + stat() pair.
+        path: Path | None = None
+        file_size = -1
+        if path_ := view.file_name():
+            candidate = Path(path_).resolve()
+            try:
+                st = candidate.stat()
+            except OSError:
+                st = None
+            if st is not None and stat.S_ISREG(st.st_mode):
+                path = candidate
+                file_size = st.st_size
 
         return cls(
             view=view,
