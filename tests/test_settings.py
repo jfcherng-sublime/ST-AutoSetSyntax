@@ -162,6 +162,28 @@ class TestExtraSettingsProducer:
         })
         assert result["trim_suffixes"] == ("ok", "also_ok")
 
+    def test_null_syntax_rules_setting_does_not_raise(self):
+        """Regression: a key explicitly set to `null` (e.g. a user trying to "unset" an
+        override) is present with value None, so `.get(key, [])`'s default never kicks in --
+        the old `+`-concatenation crashed with `TypeError: can only concatenate list (not
+        "NoneType") to list`. A null value must be treated the same as an absent/empty one."""
+        result = extra_settings_producer({
+            "core_syntax_rules": [{"match": "all", "syntaxes": ["Core"]}],
+            "user_syntax_rules": None,
+            "project_syntax_rules": [],
+            "default_syntax_rules": None,
+        })
+        assert result["syntax_rules"] == [{"match": "all", "syntaxes": ["Core"]}]
+
+    def test_null_trim_suffixes_setting_does_not_raise(self):
+        """Same regression as above, for trim_suffixes' chain() instead of +."""
+        result = extra_settings_producer({
+            "project_trim_suffixes": None,
+            "user_trim_suffixes": ["ok"],
+            "default_trim_suffixes": None,
+        })
+        assert result["trim_suffixes"] == ("ok",)
+
 
 # ── pref_syntax_rules ────────────────────────────────────────────────────────
 
@@ -286,6 +308,42 @@ class TestAioSettingsNormalizer:
         AioSettings._update_project_plugin_settings(mock_window)
         assert AioSettings._project_plugin_settings[42]["normalized"] is True
         assert AioSettings._project_plugin_settings[42]["project_key"] == "val"
+
+
+class TestUpdateProjectPluginSettingsHandlesNull:
+    """Regression: `.get(key, {})`'s default only applies when `key` is absent. A .sublime-project
+    file with "settings": null or "settings": {"<plugin_name>": null} (a plausible way a user
+    tries to "unset" project overrides) leaves the key present with value None, which used to
+    crash with AttributeError/TypeError instead of being treated as "no project overrides"."""
+
+    def setup_method(self):
+        AioSettings.plugin_name = "TestPlugin"
+        AioSettings._settings_normalizer = None
+        AioSettings._project_plugin_settings.clear()
+
+    def test_null_settings_key_does_not_raise(self):
+        mock_window = MagicMock()
+        mock_window.id.return_value = 601
+        mock_window.project_data.return_value = {"settings": None}
+
+        AioSettings._update_project_plugin_settings(mock_window)  # must not raise
+        assert AioSettings._project_plugin_settings[601] == {"__comment": "project_settings"}
+
+    def test_null_plugin_key_does_not_raise(self):
+        mock_window = MagicMock()
+        mock_window.id.return_value = 602
+        mock_window.project_data.return_value = {"settings": {"TestPlugin": None}}
+
+        AioSettings._update_project_plugin_settings(mock_window)  # must not raise
+        assert AioSettings._project_plugin_settings[602] == {"__comment": "project_settings"}
+
+    def test_real_project_settings_still_applied(self):
+        mock_window = MagicMock()
+        mock_window.id.return_value = 603
+        mock_window.project_data.return_value = {"settings": {"TestPlugin": {"key": "val"}}}
+
+        AioSettings._update_project_plugin_settings(mock_window)
+        assert AioSettings._project_plugin_settings[603]["key"] == "val"
 
 
 # ── AioSettings event handlers ──────────────────────────────────────────────

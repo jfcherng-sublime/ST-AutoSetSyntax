@@ -50,14 +50,30 @@ def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str, ..
     return get_merged_plugin_setting("trim_suffixes", (), window=window)
 
 
+def _as_list(value: Any) -> list[Any]:
+    """
+    Coerces an arbitrary settings value to a list.
+
+    `dict.get(key, [])`'s default only applies when `key` is absent -- a key explicitly set to
+    `null` (a plausible user mistake/copy-paste, meant to "unset" an override) still comes back
+    as `None`, which would blow up the `+`/`chain()` calls this feeds into.
+    """
+    return value if isinstance(value, list) else []
+
+
+def _as_dict(value: Any) -> dict[str, Any]:
+    """Coerces an arbitrary settings value to a dict. See `_as_list()` for why this is needed."""
+    return value if isinstance(value, dict) else {}
+
+
 def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
     ret: dict[str, Any] = {}
 
     ret["syntax_rules"] = (
-        settings.get("core_syntax_rules", [])
-        + settings.get("project_syntax_rules", [])
-        + settings.get("user_syntax_rules", [])
-        + settings.get("default_syntax_rules", [])
+        _as_list(settings.get("core_syntax_rules"))
+        + _as_list(settings.get("project_syntax_rules"))
+        + _as_list(settings.get("user_syntax_rules"))
+        + _as_list(settings.get("default_syntax_rules"))
     )
 
     # use tuple to freeze setting for better performance (cache-able)
@@ -65,9 +81,9 @@ def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
         drop_falsy(
             unique_everseen(
                 chain(
-                    settings.get("project_trim_suffixes", []),
-                    settings.get("user_trim_suffixes", []),
-                    settings.get("default_trim_suffixes", []),
+                    _as_list(settings.get("project_trim_suffixes")),
+                    _as_list(settings.get("user_trim_suffixes")),
+                    _as_list(settings.get("default_trim_suffixes")),
                 ),
             ),
         ),
@@ -212,9 +228,12 @@ class AioSettings(sublime_plugin.EventListener):
     def _update_project_plugin_settings(cls, window: sublime.Window) -> None:
         window_id = window.id()
         cls._project_plugin_settings[window_id] = {"__comment": "project_settings"}
-        cls._project_plugin_settings[window_id].update(
-            (window.project_data() or {}).get("settings", {}).get(cls.plugin_name, {})
-        )
+        # a project file explicitly setting "settings" or "settings.<plugin_name>" to `null`
+        # (see _as_dict()'s docstring) would otherwise crash: `.get(..., {})`'s default doesn't
+        # apply to a key that's present but null, so `.get("settings", {})` alone can still
+        # return None here.
+        project_settings = _as_dict((window.project_data() or {}).get("settings"))
+        cls._project_plugin_settings[window_id].update(_as_dict(project_settings.get(cls.plugin_name)))
         if cls._settings_normalizer:
             cls._settings_normalizer(cls._project_plugin_settings[window_id])
 
