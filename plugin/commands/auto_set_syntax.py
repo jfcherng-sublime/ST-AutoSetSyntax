@@ -2,6 +2,7 @@ import re
 from itertools import chain
 from pathlib import Path
 from typing import Any
+from typing import Final
 from typing import override
 
 import sublime
@@ -35,6 +36,21 @@ from ..utils import is_plaintext_syntax
 from ..utils import list_trimmed_filenames
 from ..utils import list_trimmed_strings
 from ..utils import stringify
+
+_FILE_SAVE_EVENTS: Final[frozenset[ListenerEvent]] = frozenset({
+    ListenerEvent.COMMAND,
+    ListenerEvent.INIT,
+    ListenerEvent.LOAD,
+    ListenerEvent.SAVE,
+    ListenerEvent.UNTRANSIENTIZE,
+})
+"""Events where file-on-disk strategies (trimmed filename, etc.) can run."""
+
+_FILE_AND_MODIFY_EVENTS: Final[frozenset[ListenerEvent]] = _FILE_SAVE_EVENTS | frozenset({
+    ListenerEvent.MODIFY,
+    ListenerEvent.PASTE,
+})
+"""Events where file-on-disk and modify-sensitive strategies can run."""
 
 
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
@@ -88,25 +104,10 @@ def run_auto_set_syntax_on_view(
     if _assign_syntax_with_first_line(view_snapshot, event, settings):
         return True
 
-    if event in {
-        ListenerEvent.COMMAND,
-        ListenerEvent.INIT,
-        ListenerEvent.LOAD,
-        ListenerEvent.SAVE,
-        ListenerEvent.UNTRANSIENTIZE,
-    } and _assign_syntax_with_trimmed_filename(view_snapshot, event, settings):
+    if event in _FILE_SAVE_EVENTS and _assign_syntax_with_trimmed_filename(view_snapshot, event, settings):
         return True
 
-    if event in {
-        ListenerEvent.COMMAND,
-        ListenerEvent.INIT,
-        ListenerEvent.LOAD,
-        ListenerEvent.SAVE,
-        ListenerEvent.UNTRANSIENTIZE,
-        # modify
-        ListenerEvent.MODIFY,
-        ListenerEvent.PASTE,
-    } and _assign_syntax_with_magika(view_snapshot, event, settings):
+    if event in _FILE_AND_MODIFY_EVENTS and _assign_syntax_with_magika(view_snapshot, event, settings):
         return True
 
     if _assign_syntax_with_heuristics(view_snapshot, event):
@@ -369,18 +370,18 @@ def _assign_syntax_with_magika(
 # tolerate whitespace right after the opening bracket / right before the closing one, since
 # pretty-printed JSON (e.g. `json.dumps(x, indent=2)`) -- arguably the most common shape a user
 # would actually paste or open -- always has a newline/indentation there, not a bare `{"`/`}`
-_RE_JSON_MAP_BEGIN = re.compile(r'^\{\s*"')
-_RE_JSON_MAP_END = re.compile(r'(?:[\d"\]}]|true|false|null)\s*\}$')
-_RE_JSON_ARRAY_BEGIN = re.compile(r'^\[\s*"')
-_RE_JSON_ARRAY_END = re.compile(r'(?:[\d"\]}]|true|false|null)\s*\]$')
-_RE_JSON_NESTED_ARRAY_BEGIN = re.compile(r"^\[\s*\[")
-_RE_JSON_NESTED_ARRAY_END = re.compile(r"\]\s*\]$")
-_RE_JSON_NESTED_OBJECT_BEGIN = re.compile(r"^\[\s*\{")
-_RE_JSON_NESTED_OBJECT_END = re.compile(r"\}\s*\]$")
+_RE_JSON_MAP_BEGIN: Final = re.compile(r'^\{\s*"')
+_RE_JSON_MAP_END: Final = re.compile(r'(?:[\d"\]}]|true|false|null)\s*\}$')
+_RE_JSON_ARRAY_BEGIN: Final = re.compile(r'^\[\s*"')
+_RE_JSON_ARRAY_END: Final = re.compile(r'(?:[\d"\]}]|true|false|null)\s*\]$')
+_RE_JSON_NESTED_ARRAY_BEGIN: Final = re.compile(r"^\[\s*\[")
+_RE_JSON_NESTED_ARRAY_END: Final = re.compile(r"\]\s*\]$")
+_RE_JSON_NESTED_OBJECT_BEGIN: Final = re.compile(r"^\[\s*\{")
+_RE_JSON_NESTED_OBJECT_END: Final = re.compile(r"\}\s*\]$")
 
-_SMALL_FILE_SIZE = 1 * 1024  # 1 KB
+_SMALL_FILE_SIZE: Final[int] = 1 * 1024  # 1 KB
 
-_XSSI_PREFIXES = (")]}'\n", ")]}',\n")
+_XSSI_PREFIXES: Final[tuple[str, ...]] = (")]}'\n", ")]}',\n")
 
 
 def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:

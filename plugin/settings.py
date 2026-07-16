@@ -5,6 +5,7 @@ from collections.abc import MutableMapping
 from itertools import chain
 from typing import Any
 from typing import ClassVar
+from typing import override
 
 import sublime
 import sublime_plugin
@@ -171,6 +172,7 @@ class AioSettings(sublime_plugin.EventListener):
     # listerners #
     # ---------- #
 
+    @override
     def on_new(self, view: sublime.View) -> None:
         cls = self.__class__
         if not (window := view.window()) or cls._is_tracked_window(window):
@@ -179,12 +181,14 @@ class AioSettings(sublime_plugin.EventListener):
         # because `on_new` will be fired before `on_new_window` when creating a new window.
         cls._on_settings_change([window], run_callbacks=False)
 
+    @override
     def on_new_window(self, window: sublime.Window) -> None:
         cls = self.__class__
         if cls._is_tracked_window(window):
             return
         cls._on_settings_change([window])
 
+    @override
     def on_pre_close_window(self, window: sublime.Window) -> None:
         cls = self.__class__
         window_id = window.id()
@@ -192,6 +196,7 @@ class AioSettings(sublime_plugin.EventListener):
         cls._project_plugin_settings.pop(window_id, None)
         cls._tracked_windows.discard(window_id)
 
+    @override
     def on_load_project_async(self, window: sublime.Window) -> None:
         """
         Will be called after saving project settings.

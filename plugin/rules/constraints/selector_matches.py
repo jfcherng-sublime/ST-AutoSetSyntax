@@ -1,4 +1,5 @@
 from typing import Any
+from typing import Final
 from typing import final
 from typing import override
 
@@ -11,7 +12,7 @@ from ..constraint import AlwaysFalsyException
 
 @final
 class SelectorMatchesConstraint(AbstractConstraint):
-    SCORE_THRESHOLD = 1
+    SCORE_THRESHOLD: Final[int] = 1
     """
     Quick tips (ST >= 4173):
 

@@ -10,6 +10,7 @@ from dataclasses import field
 from pathlib import Path
 from typing import Any
 from typing import ClassVar
+from typing import Final
 from typing import Self
 from typing import final
 from typing import override
@@ -32,6 +33,7 @@ from ..utils import parse_regex_flags
 
 
 def find_constraint(obj: Any) -> type[AbstractConstraint] | None:
+    """Find a constraint class that supports `obj`."""
     return first_true(get_constraints(), pred=lambda t: t.can_support(obj))
 
 
@@ -156,7 +158,7 @@ class AbstractConstraint(ABC):
             args = map(normalizer, args)
         return tuple(args)
 
-    _COMPARATORS: ClassVar[dict[str, Callable[[Any, Any], bool]]] = {
+    _COMPARATORS: Final[ClassVar[dict[str, Callable[[Any, Any], bool]]]] = {
         "<": operator.lt,
         "lt": operator.lt,
         # ...
