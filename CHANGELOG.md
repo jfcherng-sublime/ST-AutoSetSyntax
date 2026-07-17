@@ -1,5 +1,10 @@
 # AutoSetSyntax Changelog
 
+## 6.0.8
+
+- feat: detect Confluence Wiki pages via `<ac:layout>` as the first line
+- fix: dummy syntaxes registered by the "FileIcon" package (used only to set sidebar icons) were incorrectly matched as real syntaxes (fixes #29)
+
 ## 6.0.7
 
 - fix: `startup_views` was never cleared after processing, leaking view references and re-running startup detection on a plugin reload
