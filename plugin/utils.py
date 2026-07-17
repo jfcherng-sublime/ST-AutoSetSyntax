@@ -225,7 +225,14 @@ def find_syntaxes_by_syntax_like(
                 yield from filter(lambda syntax: like in syntax.path, all_syntaxes)
 
     def filter_like(syntax: sublime.Syntax) -> bool:
-        return (include_hidden or not syntax.hidden) and (include_plaintext or not is_plaintext_syntax(syntax))
+        return (
+            (include_hidden or not syntax.hidden)
+            and (include_plaintext or not is_plaintext_syntax(syntax))
+            # @see https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/29
+            # The "FileIcon" package uses dummy syntaxes just in order to set an icon in the sidebar.
+            # We don't want to match those dummy syntaxes, so we filter them out.
+            and ("/zzz A File Icon/" not in syntax.path)
+        )
 
     return tuple(filter(filter_like, unique_everseen(find_like(like))))
 
