@@ -63,6 +63,22 @@ Class naming convention: `FooBarMatch` → name `"foo_bar"`, `FooBarConstraint` 
 - **`SyntaxRule`** — top-level rule with `selector`, `on_events`, `syntaxes`, and a root `MatchRule`
 - **`SyntaxRuleCollection`** — ordered list of `SyntaxRule`; returns the first matching rule
 
+### Settings Rules (`AutoSetSyntax.sublime-settings`)
+
+The settings file defines `rules` entries that match file content to syntaxes. Each rule has:
+
+- **`syntaxes`** — target syntax scope(s) to apply (e.g., `"scope:source.python"`)
+- **`selector`** — a scope selector to pre-filter views (e.g., `"text.plain"`)
+- **`on_events`** — optional list of events that trigger the rule (`"on_load"`, `"on_post_save"`, `"on_close"`)
+- **`rules`** — a list of match/constraint entries, each with:
+  - **`match`** — match type: `"any"`, `"all"`, `"some"`, `"ratio"`
+  - **`constraint`** — the leaf constraint name (e.g., `"is_extension"`, `"first_line_contains"`, `"contains_regex"`)
+  - **`args`** — arguments passed to the constraint
+  - **`not`** — optional bool to negate the constraint
+  - **`comment`** — optional description of the rule's purpose
+
+Rules are evaluated top-to-bottom; the first matching rule wins. Constraints with falsy patterns (`""`, `[]`) are dropped silently.
+
 ### Extensibility
 
 Users can add custom `Match`/`Constraint` implementations by placing Python files in `AutoSetSyntax-Custom/matches/` or `AutoSetSyntax-Custom/constraints/` under ST's Packages directory. These are auto-discovered at load time via `_load_custom_implementations()`.
