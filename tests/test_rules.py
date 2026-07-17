@@ -13,8 +13,8 @@ def _ensure_rules_imported() -> None:
     global _IMPORTED
     if _IMPORTED:
         return
-    import plugin.rules.constraints  # noqa: F401
-    import plugin.rules.matches  # noqa: F401
+    import plugin.rules.constraints  # ruff:ignore[unused-import]
+    import plugin.rules.matches  # ruff:ignore[unused-import]
 
     _IMPORTED = True
 

@@ -9,4 +9,4 @@ def reload_plugin() -> None:
 
 reload_plugin()
 
-from .plugin import *  # noqa: F403
+from .plugin import *  # ruff:ignore[undefined-local-with-import-star]
