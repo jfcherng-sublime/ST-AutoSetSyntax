@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(cd D:/Repo/ST-AutoSetSyntax && make ci-fix 2>&1)",
+      "Bash(cd D:/Repo/ST-AutoSetSyntax && make ci-check 2>&1)"
+    ]
+  }
+}

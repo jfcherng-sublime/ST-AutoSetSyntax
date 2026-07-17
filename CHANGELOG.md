@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.13
+
+- fix: dummy syntaxes registered by the "FileIcon" package (used only to set sidebar icons) were incorrectly matched as real syntaxes (fixes #29)
+
 ## 4.3.12
 
 - fix: Debian SSH Includes (#27)
