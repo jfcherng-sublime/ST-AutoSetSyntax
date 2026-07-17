@@ -648,6 +648,17 @@
             ]
         },
         {
+            "comment": "Confluence Wiki source",
+            "syntaxes": "scope:text.xml",
+            "selector": "text.plain",
+            "rules": [
+                {
+                    "constraint": "first_line_contains",
+                    "args": ["<ac:layout>"]
+                }
+            ]
+        },
+        {
             "comment": "Linux Systemd files",
             "syntaxes": "scope:source.ini",
             "selector": "text.plain",
