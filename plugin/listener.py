@@ -6,7 +6,6 @@ from functools import wraps
 from typing import Any
 from typing import Final
 from typing import cast
-from typing import override
 
 import sublime
 import sublime_plugin
@@ -146,59 +145,47 @@ def _guarantee_primary_view[T: Callable](*, must_plaintext: bool = False) -> Cal
 
 class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):
     @_guarantee_primary_view()
-    @override
     def on_revert(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.REVERT)
 
     @_guarantee_primary_view(must_plaintext=True)
-    @override
     def on_text_changed_async(self, view: sublime.View, changes: list[sublime.TextChange]) -> None:
         _try_assign_syntax_when_text_changed(view, changes)
 
 
 class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
-    @override
     def on_activated(self, view: sublime.View) -> None:
         _try_assign_syntax_when_view_untransientize(view)
 
-    @override
     def on_init(self, views: list[sublime.View]) -> None:
         G.startup_views |= set(views)
 
-    @override
     def on_load(self, view: sublime.View) -> None:
         view.settings().set(VIEW_KEY_IS_TRANSIENT, is_transient_view(view))
         run_auto_set_syntax_on_view(view, ListenerEvent.LOAD)
 
-    @override
     def on_load_project(self, window: sublime.Window) -> None:
         # how to prevent new project views from triggering on_load()?
         # the `window` at this moment has no view in it
         pass
 
-    @override
     def on_new(self, view: sublime.View) -> None:
         if window := view.window():
             _ensure_window_set_up(window)
         run_auto_set_syntax_on_view(view, ListenerEvent.NEW)
 
-    @override
     def on_new_window(self, window: sublime.Window) -> None:
         _ensure_window_set_up(window)
 
-    @override
     def on_post_save(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.SAVE)
 
-    @override
     def on_pre_close_window(self, window: sublime.Window) -> None:
         tear_down_window(window)
 
-    @override
     def on_reload(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.RELOAD)
 
-    @override
     def on_post_window_command(self, window: sublime.Window, command_name: str, args: dict[str, Any]) -> None:
         if command_name in ("build", "exec") and (view := window.find_output_panel("exec")):
             run_auto_set_syntax_on_view(view, ListenerEvent.EXEC)
