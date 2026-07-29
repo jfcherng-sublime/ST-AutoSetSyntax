@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 6.0.9
+
+- fix(boot): work around pydantic core version check failure in Package Control
+
 ## 6.0.8
 
 - feat: detect Confluence Wiki pages via `<ac:layout>` as the first line
