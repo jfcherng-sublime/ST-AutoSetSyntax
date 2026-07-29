@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 4.3.14
+
+- fix(boot): work around pydantic core version check failure in package control
+
 ## 4.3.13
 
 - fix: dummy syntaxes registered by the "FileIcon" package (used only to set sidebar icons) were incorrectly matched as real syntaxes (fixes #29)
