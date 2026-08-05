@@ -125,6 +125,7 @@
                 ".temp",
                 ".test",
                 ".tmp",
+                ".tmpl",
                 ".tpl"
               ]
             },
