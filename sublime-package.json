@@ -247,6 +247,7 @@
                     "is_line_count",
                     "is_magika_enabled",
                     "is_name",
+                    "is_php_project",
                     "is_platform",
                     "is_platform_arch",
                     "is_python_project",

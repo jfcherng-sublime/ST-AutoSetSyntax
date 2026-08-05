@@ -315,6 +315,68 @@ class TestIsGoProjectConstraint:
         assert IsGoProjectConstraint.name() == "is_go_project"
 
 
+class TestIsPhpProjectConstraint:
+    def test_composer_json_exists(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        composer_json = tmp_path / "composer.json"
+        composer_json.write_text("")
+        test_file = tmp_path / "src" / "index.php"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        found = AbstractConstraint.find_parent_with_sibling(test_file, "composer.json", use_exists=False)
+        assert found is not None
+        assert found == tmp_path
+
+    def test_composer_json_exists_via_snapshot_path(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        composer_json = tmp_path / "composer.json"
+        composer_json.write_text("")
+        test_file = tmp_path / "src" / "index.php"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "composer.json", use_exists=False)
+        assert found is not None
+        assert found == tmp_path
+
+    def test_not_php_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        test_file = tmp_path / "index.php"
+        test_file.write_text("")
+
+        result = AbstractConstraint.find_parent_with_sibling(test_file, "composer.json", use_exists=False)
+        assert result is None
+
+    def test_nested_in_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_php_project import IsPhpProjectConstraint
+
+        (tmp_path / "composer.json").write_text("")
+        test_file = tmp_path / "src" / "Controller" / "HomeController.php"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        assert IsPhpProjectConstraint().test(snap) is True
+
+    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.is_php_project import IsPhpProjectConstraint
+
+        snap = make_snapshot()  # no path -> not on disk
+        with pytest.raises(AlwaysFalsyException):
+            IsPhpProjectConstraint().test(snap)
+
+    def test_name(self):
+        from plugin.rules.constraints.is_php_project import IsPhpProjectConstraint
+
+        assert IsPhpProjectConstraint.name() == "is_php_project"
+
+
 class TestIsPythonProjectConstraint:
     def test_pyproject_toml_exists(self, make_snapshot, tmp_path):
         from plugin.rules.constraint import AbstractConstraint

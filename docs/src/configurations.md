@@ -664,6 +664,18 @@ To edit project settings, go to `Project` » `Edit Project`.
 
         If `case_insensitive` is not provided, it will be `true` on Windows and macOS (case-insensitive filesystems) but `false` on Linux.
 
+#### `is_php_project`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_php_project",
+    }
+    ```
+
+    Test whether the file is in a PHP project.
+
 #### `is_platform`
 
 !!! example

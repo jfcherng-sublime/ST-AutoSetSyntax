@@ -15,6 +15,7 @@ from .is_interpreter import IsInterpreterConstraint
 from .is_line_count import IsLineCountConstraint
 from .is_magika_enabled import IsMagikaEnabledConstraint
 from .is_name import IsNameConstraint
+from .is_php_project import IsPhpProjectConstraint
 from .is_platform import IsPlatformConstraint
 from .is_platform_arch import IsPlatformArchConstraint
 from .is_python_project import IsPythonProjectConstraint
@@ -46,6 +47,7 @@ __all__ = (
     "IsLineCountConstraint",
     "IsMagikaEnabledConstraint",
     "IsNameConstraint",
+    "IsPhpProjectConstraint",
     "IsPlatformArchConstraint",
     "IsPlatformConstraint",
     "IsPythonProjectConstraint",
