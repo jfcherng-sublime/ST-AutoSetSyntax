@@ -563,6 +563,80 @@ class TestIsTypescriptProjectConstraint:
         assert IsTypescriptProjectConstraint.name() == "is_typescript_project"
 
 
+class TestIsJavascriptProjectConstraint:
+    def test_package_json_without_tsconfig_matches(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        (tmp_path / "package.json").write_text("")
+        test_file = tmp_path / "src" / "index.js"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        assert IsJavascriptProjectConstraint().test(snap) is True
+
+    def test_package_json_with_tsconfig_does_not_match(self, make_snapshot, tmp_path):
+        """The exact TypeScript case this constraint exists to exclude: a package.json alone
+        isn't enough proof of a JS (non-TS) project, since TS projects have one too."""
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        (tmp_path / "package.json").write_text("")
+        (tmp_path / "tsconfig.json").write_text("")
+        test_file = tmp_path / "src" / "index.ts"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        assert IsJavascriptProjectConstraint().test(snap) is False
+
+    def test_no_package_json_does_not_match(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        test_file = tmp_path / "index.js"
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        assert IsJavascriptProjectConstraint().test(snap) is False
+
+    def test_nested_in_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        (tmp_path / "package.json").write_text("")
+        test_file = tmp_path / "src" / "components" / "App.jsx"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        assert IsJavascriptProjectConstraint().test(snap) is True
+
+    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        snap = make_snapshot()  # no path -> not on disk
+        with pytest.raises(AlwaysFalsyException):
+            IsJavascriptProjectConstraint().test(snap)
+
+    def test_successful_match_is_cached_for_a_second_file_in_the_same_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        (tmp_path / "package.json").write_text("")
+        first_file = tmp_path / "src" / "index.js"
+        first_file.parent.mkdir(parents=True)
+        first_file.write_text("")
+        second_file = tmp_path / "src" / "app.js"
+        second_file.write_text("")
+
+        assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(first_file))) is True
+        assert tmp_path in IsJavascriptProjectConstraint._successed_dirs
+        assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(second_file))) is True
+
+    def test_name(self):
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        assert IsJavascriptProjectConstraint.name() == "is_javascript_project"
+
+
 class TestIsInPythonDjangoProjectConstraint:
     def test_manage_py_exists(self, make_snapshot, tmp_path):
         from plugin.rules.constraint import AbstractConstraint

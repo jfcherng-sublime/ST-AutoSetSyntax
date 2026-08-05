@@ -617,6 +617,25 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     is `python`, `pypy`, `python3`, `python3.8`, etc.
 
+#### `is_javascript_project`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_javascript_project",
+    }
+    ```
+
+    Test whether the file is in a JavaScript (non-TypeScript) project.
+
+    !!! info
+
+        The project root is the nearest ancestor directory containing `package.json`. Because
+        TypeScript projects also have a `package.json`, this constraint additionally requires
+        that the same directory has no `tsconfig.json`; otherwise it's considered a
+        [`is_typescript_project`](#is_typescript_project) instead.
+
 #### `is_line_count`
 
 !!! example

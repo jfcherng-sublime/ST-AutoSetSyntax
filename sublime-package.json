@@ -244,6 +244,7 @@
                     "is_in_ruby_on_rails_project",
                     "is_in_svn_repo",
                     "is_interpreter",
+                    "is_javascript_project",
                     "is_line_count",
                     "is_magika_enabled",
                     "is_name",

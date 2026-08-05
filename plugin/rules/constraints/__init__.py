@@ -12,6 +12,7 @@ from .is_in_python_django_project import IsInPythonDjangoProjectConstraint
 from .is_in_ruby_on_rails_project import IsInRubyOnRailsProjectConstraint
 from .is_in_svn_repo import IsInSvnRepoConstraint
 from .is_interpreter import IsInterpreterConstraint
+from .is_javascript_project import IsJavascriptProjectConstraint
 from .is_line_count import IsLineCountConstraint
 from .is_magika_enabled import IsMagikaEnabledConstraint
 from .is_name import IsNameConstraint
@@ -45,6 +46,7 @@ __all__ = (
     "IsInRubyOnRailsProjectConstraint",
     "IsInSvnRepoConstraint",
     "IsInterpreterConstraint",
+    "IsJavascriptProjectConstraint",
     "IsLineCountConstraint",
     "IsMagikaEnabledConstraint",
     "IsNameConstraint",
