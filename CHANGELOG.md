@@ -1,5 +1,9 @@
 # AutoSetSyntax Changelog
 
+## 6.1.1
+
+- feat: `.tmpl` is now a default trim suffix
+
 ## 6.1.0
 
 - feat: `is_go_project` constraint, matching directories containing `go.mod`
