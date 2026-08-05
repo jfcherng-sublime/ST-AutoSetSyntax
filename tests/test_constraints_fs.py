@@ -253,6 +253,68 @@ class TestIsInSvnRepoConstraint:
         assert IsInSvnRepoConstraint.name() == "is_in_svn_repo"
 
 
+class TestIsGoProjectConstraint:
+    def test_go_mod_exists(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        go_mod = tmp_path / "go.mod"
+        go_mod.write_text("")
+        test_file = tmp_path / "cmd" / "main.go"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        found = AbstractConstraint.find_parent_with_sibling(test_file, "go.mod", use_exists=False)
+        assert found is not None
+        assert found == tmp_path
+
+    def test_go_mod_exists_via_snapshot_path(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        go_mod = tmp_path / "go.mod"
+        go_mod.write_text("")
+        test_file = tmp_path / "cmd" / "main.go"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "go.mod", use_exists=False)
+        assert found is not None
+        assert found == tmp_path
+
+    def test_not_go_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        test_file = tmp_path / "main.go"
+        test_file.write_text("")
+
+        result = AbstractConstraint.find_parent_with_sibling(test_file, "go.mod", use_exists=False)
+        assert result is None
+
+    def test_nested_in_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
+
+        (tmp_path / "go.mod").write_text("")
+        test_file = tmp_path / "internal" / "pkg" / "util.go"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        assert IsGoProjectConstraint().test(snap) is True
+
+    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
+
+        snap = make_snapshot()  # no path -> not on disk
+        with pytest.raises(AlwaysFalsyException):
+            IsGoProjectConstraint().test(snap)
+
+    def test_name(self):
+        from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
+
+        assert IsGoProjectConstraint.name() == "is_go_project"
+
+
 class TestIsInPythonDjangoProjectConstraint:
     def test_manage_py_exists(self, make_snapshot, tmp_path):
         from plugin.rules.constraint import AbstractConstraint

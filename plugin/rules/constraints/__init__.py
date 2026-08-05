@@ -4,6 +4,7 @@ from .first_line_contains import FirstLineContainsConstraint
 from .first_line_contains_regex import FirstLineContainsRegexConstraint
 from .is_arch import IsArchConstraint
 from .is_extension import IsExtensionConstraint
+from .is_go_project import IsGoProjectConstraint
 from .is_hidden_syntax import IsHiddenSyntaxConstraint
 from .is_in_git_repo import IsInGitRepoConstraint
 from .is_in_hg_repo import IsInHgRepoConstraint
@@ -32,6 +33,7 @@ __all__ = (
     "FirstLineContainsRegexConstraint",
     "IsArchConstraint",
     "IsExtensionConstraint",
+    "IsGoProjectConstraint",
     "IsHiddenSyntaxConstraint",
     "IsInGitRepoConstraint",
     "IsInHgRepoConstraint",

@@ -509,6 +509,18 @@ To edit project settings, go to `Project` » `Edit Project`.
 
         If `case_insensitive` is not provided, it will be `true` on Windows and macOS (case-insensitive filesystems) but `false` on Linux.
 
+#### `is_go_project`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_go_project",
+    }
+    ```
+
+    Test whether the file is in a Go project.
+
 #### `is_hidden_syntax`
 
 !!! example

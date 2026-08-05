@@ -236,6 +236,7 @@
                     "first_line_contains_regex",
                     "is_arch",
                     "is_extension",
+                    "is_go_project",
                     "is_hidden_syntax",
                     "is_in_git_repo",
                     "is_in_hg_repo",
