@@ -249,6 +249,7 @@
                     "is_name",
                     "is_platform",
                     "is_platform_arch",
+                    "is_rust_project",
                     "is_size",
                     "is_syntax",
                     "name_contains",

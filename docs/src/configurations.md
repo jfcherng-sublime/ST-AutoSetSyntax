@@ -699,6 +699,18 @@ To edit project settings, go to `Project` » `Edit Project`.
         Available `platform_arch` are combinations of (`linux`, `osx`, `windows`) and (`x32`, `x64`, `arm64`)
         using a `_` as the delimiter.
 
+#### `is_rust_project`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_rust_project",
+    }
+    ```
+
+    Test whether the file is in a Rust project.
+
 #### `is_size`
 
 !!! example

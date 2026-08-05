@@ -17,6 +17,7 @@ from .is_magika_enabled import IsMagikaEnabledConstraint
 from .is_name import IsNameConstraint
 from .is_platform import IsPlatformConstraint
 from .is_platform_arch import IsPlatformArchConstraint
+from .is_rust_project import IsRustProjectConstraint
 from .is_size import IsSizeConstraint
 from .is_syntax import IsSyntaxConstraint
 from .name_contains import NameContainsConstraint
@@ -46,6 +47,7 @@ __all__ = (
     "IsNameConstraint",
     "IsPlatformArchConstraint",
     "IsPlatformConstraint",
+    "IsRustProjectConstraint",
     "IsSizeConstraint",
     "IsSyntaxConstraint",
     "NameContainsConstraint",
