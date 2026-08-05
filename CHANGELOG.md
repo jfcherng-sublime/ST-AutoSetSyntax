@@ -1,5 +1,14 @@
 # AutoSetSyntax Changelog
 
+## 6.1.0
+
+- feat: `is_go_project` constraint, matching directories containing `go.mod`
+- feat: `is_rust_project` constraint, matching directories containing `Cargo.toml`
+- feat: `is_python_project` constraint, matching directories containing `pyproject.toml`
+- feat: `is_php_project` constraint, matching directories containing `composer.json`
+- feat: `is_typescript_project` constraint, matching directories containing `tsconfig.json`
+- feat: `is_javascript_project` constraint, matching directories containing `package.json` but no `tsconfig.json`
+
 ## 6.0.9
 
 - fix(boot): work around pydantic core version check failure in Package Control
