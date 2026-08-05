@@ -766,6 +766,18 @@ To edit project settings, go to `Project` » `Edit Project`.
     Test whether the current syntax is in the given syntax list.
     See [syntax representation][plugin-syntax-representations] for more informations.
 
+#### `is_typescript_project`
+
+!!! example
+
+    ```js
+    {
+        "constraint": "is_typescript_project",
+    }
+    ```
+
+    Test whether the file is in a TypeScript project.
+
 #### `name_contains`
 
 !!! example

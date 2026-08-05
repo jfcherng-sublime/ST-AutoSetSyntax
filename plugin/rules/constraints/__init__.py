@@ -22,6 +22,7 @@ from .is_python_project import IsPythonProjectConstraint
 from .is_rust_project import IsRustProjectConstraint
 from .is_size import IsSizeConstraint
 from .is_syntax import IsSyntaxConstraint
+from .is_typescript_project import IsTypescriptProjectConstraint
 from .name_contains import NameContainsConstraint
 from .name_contains_regex import NameContainsRegexConstraint
 from .path_contains import PathContainsConstraint
@@ -54,6 +55,7 @@ __all__ = (
     "IsRustProjectConstraint",
     "IsSizeConstraint",
     "IsSyntaxConstraint",
+    "IsTypescriptProjectConstraint",
     "NameContainsConstraint",
     "NameContainsRegexConstraint",
     "PathContainsConstraint",

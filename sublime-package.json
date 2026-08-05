@@ -254,6 +254,7 @@
                     "is_rust_project",
                     "is_size",
                     "is_syntax",
+                    "is_typescript_project",
                     "name_contains",
                     "name_contains_regex",
                     "path_contains",

@@ -501,6 +501,68 @@ class TestIsRustProjectConstraint:
         assert IsRustProjectConstraint.name() == "is_rust_project"
 
 
+class TestIsTypescriptProjectConstraint:
+    def test_tsconfig_json_exists(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        tsconfig_json = tmp_path / "tsconfig.json"
+        tsconfig_json.write_text("")
+        test_file = tmp_path / "src" / "index.ts"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        found = AbstractConstraint.find_parent_with_sibling(test_file, "tsconfig.json", use_exists=False)
+        assert found is not None
+        assert found == tmp_path
+
+    def test_tsconfig_json_exists_via_snapshot_path(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        tsconfig_json = tmp_path / "tsconfig.json"
+        tsconfig_json.write_text("")
+        test_file = tmp_path / "src" / "index.ts"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "tsconfig.json", use_exists=False)
+        assert found is not None
+        assert found == tmp_path
+
+    def test_not_typescript_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraint import AbstractConstraint
+
+        test_file = tmp_path / "index.ts"
+        test_file.write_text("")
+
+        result = AbstractConstraint.find_parent_with_sibling(test_file, "tsconfig.json", use_exists=False)
+        assert result is None
+
+    def test_nested_in_project(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_typescript_project import IsTypescriptProjectConstraint
+
+        (tmp_path / "tsconfig.json").write_text("")
+        test_file = tmp_path / "src" / "components" / "App.tsx"
+        test_file.parent.mkdir(parents=True)
+        test_file.write_text("")
+
+        snap = make_snapshot(path=str(test_file))
+        assert IsTypescriptProjectConstraint().test(snap) is True
+
+    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraints.is_typescript_project import IsTypescriptProjectConstraint
+
+        snap = make_snapshot()  # no path -> not on disk
+        with pytest.raises(AlwaysFalsyException):
+            IsTypescriptProjectConstraint().test(snap)
+
+    def test_name(self):
+        from plugin.rules.constraints.is_typescript_project import IsTypescriptProjectConstraint
+
+        assert IsTypescriptProjectConstraint.name() == "is_typescript_project"
+
+
 class TestIsInPythonDjangoProjectConstraint:
     def test_manage_py_exists(self, make_snapshot, tmp_path):
         from plugin.rules.constraint import AbstractConstraint
