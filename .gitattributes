@@ -11,6 +11,7 @@
 .markdownlint.yaml export-ignore
 .style.yapf export-ignore
 .travis.yml export-ignore
+AGENTS.md export-ignore
 CLAUDE.md export-ignore
 cliff.toml export-ignore
 codecov.yml export-ignore
