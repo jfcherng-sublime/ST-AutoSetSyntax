@@ -120,8 +120,8 @@ flowchart TD
     SCR --> SR3["... N"]
 
     SR1 -->|properties| Selector["selector: 'text.plain'"]
-    SR1 -->|properties| OnEvents["on_events: [LOAD, SAVE]"]
-    SR1 -->|properties| Syntaxes["syntax: 'source.python'"]
+    SR1 -->|properties| OnEvents["on_events: null (all events)"]
+    SR1 -->|properties| Syntaxes["syntaxes: ['scope:source.python']"]
 
     SR1 --> MR["root_rule: MatchRule"]
     MR --> Match["AbstractMatch<br/>(any / all / some / ratio)"]
@@ -144,22 +144,29 @@ The top-level rule configured in settings:
   "comment": "Python files",
   "syntaxes": ["Python", "scope:source.python"],
   "selector": "text.plain",
-  "on_events": ["LOAD", "SAVE"],
-  "match": {
-    "match": "all",
-    "rules": [
-      { "constraint": "is_extension", "args": [".py"] }
-    ]
-  }
+  "on_events": null,
+  "match": "all",
+  "rules": [
+    { "constraint": "is_extension", "args": [".py"] }
+  ]
 }
 ```
 
+!!! warning "Unknown keys and unknown event names are hard errors or silent no-ops"
+
+    Rule models use pydantic `extra="forbid"`. A key the schema doesn't know (`syntax` instead
+    of `syntaxes`, `not` instead of `inverted`) makes the whole `syntax_rules` setting fail
+    validation, and `compile_rules` then discards **every** rule. Likewise, `on_events` values
+    are the lowercase `ListenerEvent` names (`load`, `save`, …) — an unrecognized name is dropped,
+    leaving an empty set, which makes the rule never fire. When nothing matches, check the log
+    panel for `Invalid "syntax_rules" setting`.
+
 Fields:
 
-- **`syntax`** / **`syntaxes`**: The target syntax to assign
+- **`syntaxes`**: The target syntax(es) to assign
 - **`selector`**: Scope filter — only applies if current scope matches (default: `text.plain`)
-- **`on_events`**: Restrict which events trigger this rule (`None` = all events)
-- **`root_rule`**: A `MatchRule` (the match/constraint tree)
+- **`on_events`**: Restrict which events trigger this rule (`null` = all events)
+- **`match`** / **`rules`**: The match/constraint tree (see below)
 - **`comment`**: Human-readable label (for logging/debugging)
 - **`src_setting`**: Reference back to the original setting object
 

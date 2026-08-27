@@ -69,13 +69,16 @@ The settings file defines `rules` entries that match file content to syntaxes. E
 
 - **`syntaxes`** — target syntax scope(s) to apply (e.g., `"scope:source.python"`)
 - **`selector`** — a scope selector to pre-filter views (e.g., `"text.plain"`)
-- **`on_events`** — optional list of events that trigger the rule (`"on_load"`, `"on_post_save"`, `"on_close"`)
-- **`rules`** — a list of match/constraint entries, each with:
-  - **`match`** — match type: `"any"`, `"all"`, `"some"`, `"ratio"`
+- **`on_events`** — optional list of events that trigger the rule, or `null` (default) for all events. Values are the lowercase `ListenerEvent` names: `"command"`, `"exec"`, `"init"`, `"load"`, `"modify"`, `"new"`, `"paste"`, `"reload"`, `"revert"`, `"save"`, `"untransientize"`. An empty list `[]` means the rule never fires.
+- **`match`** — match type for the rule's tree: `"any"`, `"all"`, `"some"`, `"ratio"`
+- **`rules`** — a list of match/constraint entries. A *constraint rule* has:
   - **`constraint`** — the leaf constraint name (e.g., `"is_extension"`, `"first_line_contains"`, `"contains_regex"`)
   - **`args`** — arguments passed to the constraint
-  - **`not`** — optional bool to negate the constraint
-  - **`comment`** — optional description of the rule's purpose
+  - **`kwargs`** — keyword arguments passed to the constraint
+  - **`inverted`** — optional bool (default `false`) to negate the constraint's result
+  - A *match rule* instead has `match` + a nested `rules` list (the tree recurses).
+
+All rule models use pydantic `extra="forbid"`, so an unrecognized key (e.g. writing `not` instead of `inverted`, or `syntax` instead of `syntaxes`) is a validation error. `compile_rules` reacts to **any** `ValidationError` by discarding **every** syntax rule ("Invalid `syntax_rules` setting, ignoring all of them"), so a single typo'd rule silently disables the whole plugin. Keep the shapes exactly as above.
 
 Rules are evaluated top-to-bottom; the first matching rule wins. Constraints with falsy patterns (`""`, `[]`) are dropped silently.
 
