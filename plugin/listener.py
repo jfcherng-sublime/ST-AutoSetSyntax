@@ -39,11 +39,18 @@ def set_up_window(window: sublime.Window) -> None:
         f"🌱 Environment: ST {ST_VERSION} {ST_CHANNEL} build with Python {PY_VERSION} ({ST_PLATFORM_ARCH})",
         window=window,
     )
-    if magika_obj := get_magika_object():
-        Logger.log(
-            f"🔮 Magika is available. (v{magika_obj.get_module_version()} / {magika_obj.get_model_name()})",
-            window=window,
-        )
+    if get_merged_plugin_setting("magika.enabled", False, window=window):
+        if magika_obj := get_magika_object():
+            Logger.log(
+                f"🔮 Magika is available. (v{magika_obj.get_module_version()} / {magika_obj.get_model_name()})",
+                window=window,
+            )
+        else:
+            Logger.log(
+                "🔮 Magika is enabled but not available. "
+                'Run the command "AutoSetSyntax: Download Dependencies" to install it.',
+                window=window,
+            )
     compile_rules(window)
     Logger.log("🎉 Plugin is ready now!", window=window)
 
