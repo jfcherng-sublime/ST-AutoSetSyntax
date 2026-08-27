@@ -812,7 +812,7 @@
     "magika.syntax_map.groovy": ["scope:source.groovy"],
     "magika.syntax_map.handlebars": ["scope:text.html.handlebars"],
     "magika.syntax_map.haskell": ["scope:source.haskell"],
-    "magika.syntax_map.htaccess": ["source.apacheconf"],
+    "magika.syntax_map.htaccess": ["scope:source.apacheconf"],
     "magika.syntax_map.html": ["scope:text.html.basic"],
     "magika.syntax_map.ignorefile": ["scope:text.git.ignore"],
     "magika.syntax_map.ini": ["scope:source.ini"],
