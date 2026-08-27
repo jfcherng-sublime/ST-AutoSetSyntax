@@ -313,6 +313,24 @@ def _assign_syntax_with_trimmed_filename(
     return False
 
 
+_MAGIKA_SAMPLE_CHAR_BUDGET: Final[int] = 16 * 1024
+"""Max characters of view content handed to Magika as a bytes sample.
+
+Magika only inspects the first/last few KB of content anyway, while `view_snapshot.content`
+is unbounded when `trim_file_size` is negative -- encoding the whole buffer per event would
+be a freeze/memory risk on the UI thread. Mirrors `head_tail_content_st`'s head+tail shape.
+"""
+
+
+def _magika_sample_bytes(view_snapshot: ViewSnapshot) -> bytes:
+    content = view_snapshot.content
+    if len(content) <= _MAGIKA_SAMPLE_CHAR_BUDGET:
+        return view_snapshot.content_bytes
+
+    half = _MAGIKA_SAMPLE_CHAR_BUDGET // 2
+    return (content[:half] + "\n\n" + content[-half:]).encode(view_snapshot.encoding_py)
+
+
 def _assign_syntax_with_magika(
     view_snapshot: ViewSnapshot,
     event: ListenerEvent | None = None,
@@ -339,7 +357,7 @@ def _assign_syntax_with_magika(
         if view_snapshot.path_obj and not view.is_dirty():
             magika_result = magika_obj.identify_path(view_snapshot.path_obj)
         else:
-            magika_result = magika_obj.identify_bytes(ensure_trailing_newline(view_snapshot.content_bytes))
+            magika_result = magika_obj.identify_bytes(ensure_trailing_newline(_magika_sample_bytes(view_snapshot)))
     except Exception as e:
         # `result.ok` below only covers status-coded failures; MagikaError/OSError from a broken
         # dependency install escape the call itself and must not abort syntax detection

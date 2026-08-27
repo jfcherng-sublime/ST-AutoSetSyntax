@@ -627,3 +627,35 @@ class TestAssignSyntaxWithMagika:
         assert mod._assign_syntax_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is True
         magika_obj.identify_bytes.assert_not_called()
         magika_obj.identify_path.assert_called_once()
+
+    def test_huge_buffer_is_capped_before_identify_bytes(self, monkeypatch):
+        """Content larger than the sample budget must not be fully encoded and handed to Magika."""
+        magika_obj = MagicMock()
+        magika_obj.identify_bytes.return_value = _FakeMagikaResult(label="python", score=0.9)
+        self._install_magika(monkeypatch, magika_obj)
+        monkeypatch.setattr(mod, "assign_syntax_to_view", lambda *a, **kw: True)
+
+        over = mod._MAGIKA_SAMPLE_CHAR_BUDGET + 100_000
+        huge = "a" * over + "z" * over  # distinct head/tail so the sample halves are checkable
+        snap = self._make_magika_snapshot(content=huge, dirty=True)
+
+        assert mod._assign_syntax_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is True
+        sent = magika_obj.identify_bytes.call_args[0][0]
+        assert len(sent) <= mod._MAGIKA_SAMPLE_CHAR_BUDGET + 2 + 1  # head + "\n\n" + tail + newline
+        # head and tail are both preserved so Magika still sees the file's start and end
+        assert sent.startswith(b"aaa")
+        assert sent.rstrip(b"\n").endswith(b"zzz")
+        assert b"az" not in sent  # the middle was cut out
+
+    def test_small_buffer_handed_over_wholly(self, monkeypatch):
+        magika_obj = MagicMock()
+        magika_obj.identify_bytes.return_value = _FakeMagikaResult(label="python", score=0.9)
+        self._install_magika(monkeypatch, magika_obj)
+        monkeypatch.setattr(mod, "assign_syntax_to_view", lambda *a, **kw: True)
+
+        content = "import os\nprint(os.getcwd())\n"
+        snap = self._make_magika_snapshot(content=content, dirty=True)
+
+        assert mod._assign_syntax_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is True
+        sent = magika_obj.identify_bytes.call_args[0][0]
+        assert sent.decode("utf-8") == content
