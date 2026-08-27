@@ -1,5 +1,6 @@
 import gzip
 import hashlib
+import importlib
 import io
 import re
 import shutil
@@ -16,6 +17,7 @@ from typing import override
 import sublime
 import sublime_plugin
 
+from ..cache import clear_all_cached_functions
 from ..constants import PLUGIN_NAME
 from ..constants import PLUGIN_PY_LIBS_DIR
 from ..constants import PLUGIN_PY_LIBS_URL
@@ -47,6 +49,12 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
         if not (magika_dir := PLUGIN_PY_LIBS_DIR / "magika").is_dir():
             sublime.error_message(f"[{PLUGIN_NAME}] Cannot find magika: {magika_dir!s}")
             return
+
+        # drop memoized failures (e.g. get_magika_object()'s cached None from before the install),
+        # so Magika works immediately without an ST restart. importlib also caches directory
+        # listings per FileFinder, which a just-extracted package dir can miss.
+        importlib.invalidate_caches()
+        clear_all_cached_functions()
 
         sublime.message_dialog(f"[{PLUGIN_NAME}] Finish downloading dependencies!")
 
