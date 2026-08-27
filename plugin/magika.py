@@ -11,7 +11,13 @@ if TYPE_CHECKING:
 
 @clearable_lru_cache()
 def get_magika_ignored_labels() -> set[magika.ContentTypeLabel]:
-    """Get the set of Magika content types which will be ignored by this plugin."""
+    """
+    Get the set of Magika content types which will be ignored by this plugin.
+
+    Note that the plugin compares against the raw `magika_result.dl.label`, not the final
+    output label, so generic text-ish labels (which have no `magika.syntax_map.*` entry)
+    must be ignored here to avoid pointless syntax-map resolution failures.
+    """
     if not get_magika_object():
         return set()
 
@@ -21,8 +27,14 @@ def get_magika_ignored_labels() -> set[magika.ContentTypeLabel]:
         ContentTypeLabel.DIRECTORY,
         ContentTypeLabel.EMPTY,
         ContentTypeLabel.TXT,
+        ContentTypeLabel.TXTASCII,
+        ContentTypeLabel.TXTUTF16,
+        ContentTypeLabel.TXTUTF8,
         ContentTypeLabel.UNDEFINED,
         ContentTypeLabel.UNKNOWN,
+        ContentTypeLabel.RANDOMASCII,
+        ContentTypeLabel.RANDOMBYTES,
+        ContentTypeLabel.RANDOMTXT,
     }
 
 
