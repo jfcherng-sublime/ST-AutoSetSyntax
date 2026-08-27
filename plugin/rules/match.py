@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
 from typing import Self
+from typing import cast
 from typing import final
 from typing import override
 
@@ -17,7 +18,6 @@ from ..types import Optimizable
 from ..types import StConstraintRule
 from ..types import StMatchRule
 from ..utils import camel_to_snake
-from ..utils import drop_falsy
 from ..utils import list_all_subclasses
 from .constraint import ConstraintRule
 
@@ -95,6 +95,16 @@ class MatchRule(Optimizable):
                 case StMatchRule():
                     return MatchRule.make(rule)
 
+        # A failing child is already logged by its own `make()`. It must not be silently dropped
+        # here: removing a child makes `all` more permissive than the user wrote (a lost gate lets
+        # excluded files match), and it re-bases `ratio`'s goal, which is computed from `len(rules)`.
+        # Fail this whole rule instead -- the failure propagates upward until the enclosing syntax
+        # rule loses its `root_rule` and is dropped (fail-closed).
+        child_rules = tuple(map(make_matchable_rule, match_rule.rules))
+        if any(child is None for child in child_rules):
+            Logger.log(f"❌ Dropping match rule {match} because a child rule failed to compile")
+            return None
+
         try:
             match_obj = match_class(*match_rule.args, **match_rule.kwargs)
         except Exception as e:
@@ -106,7 +116,7 @@ class MatchRule(Optimizable):
             match_name=match,
             args=tuple(match_rule.args),
             kwargs=match_rule.kwargs,
-            rules=tuple(drop_falsy(map(make_matchable_rule, match_rule.rules))),
+            rules=cast("tuple[MatchableRule, ...]", child_rules),
             src_setting=match_rule,
         )
 

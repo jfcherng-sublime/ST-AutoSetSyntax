@@ -178,6 +178,78 @@ class TestMatchRule:
         rule = MatchRule.make(StMatchRule(match="nonexistent_match"))
         assert rule is None
 
+    def test_make_fails_whole_rule_when_child_constraint_unsupported(self):
+        """A failed child must drop the whole match (fail-closed), not vanish from it silently.
+
+        Silently dropping children loosens `all` (a lost gate lets excluded files match) and
+        re-bases `ratio`, whose goal is computed from len(rules).
+        """
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+
+        rule = MatchRule.make(
+            StMatchRule(
+                match="all",
+                rules=[
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                    StConstraintRule(constraint="is_not_a_real_constraint"),
+                ],
+            )
+        )
+        assert rule is None
+
+    def test_make_fails_whole_rule_when_nested_child_match_fails(self):
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+
+        rule = MatchRule.make(
+            StMatchRule(
+                match="any",
+                rules=[
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                    StMatchRule(
+                        match="all",
+                        rules=[StConstraintRule(constraint="is_not_a_real_constraint")],
+                    ),
+                ],
+            )
+        )
+        assert rule is None
+
+    def test_make_keeps_all_children_when_all_valid(self):
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+
+        rule = MatchRule.make(
+            StMatchRule(
+                match="all",
+                rules=[
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                    StConstraintRule(constraint="is_extension", args=["js"]),
+                ],
+            )
+        )
+        assert rule is not None
+        assert len(rule.rules) == 2
+
+    def test_syntax_rule_with_failed_child_is_droppable(self):
+        """A syntax rule whose child failed must lose its root_rule and be dropped entirely."""
+        _ensure_rules_imported()
+        from plugin.rules.syntax import SyntaxRule
+
+        rule = SyntaxRule.make(
+            StSyntaxRule(
+                syntaxes=["Python"],
+                match="all",
+                rules=[
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                    StConstraintRule(constraint="is_not_a_real_constraint"),
+                ],
+            )
+        )
+        assert rule.root_rule is None
+        assert rule.is_droppable() is True
+
     def test_empty_rules_droppable(self):
         _ensure_rules_imported()
         from plugin.rules.match import MatchRule
