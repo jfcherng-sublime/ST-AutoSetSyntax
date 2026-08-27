@@ -125,6 +125,9 @@ def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
     only the last call for that key runs; calls for a different key are debounced independently
     and don't cancel each other.
 
+    The debounced function runs on Sublime's main thread (via `sublime.set_timeout`), never on
+    the `threading.Timer` thread, because the Sublime API is not thread-safe.
+
     Taken and modified from https://github.com/salesforce/decorator-operations
     """
 
@@ -135,9 +138,11 @@ def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
         def debounced(*args: Any, **kwargs: Any) -> None:
             key = args[0] if args else None
 
-            def call_function() -> Any:
+            def call_function() -> None:
                 timers.pop(key, None)
-                return func(*args, **kwargs)
+                # `threading.Timer` fires on its own thread, which must not touch the Sublime API,
+                # so hand the actual call off to Sublime's main thread
+                sublime.set_timeout(lambda: func(*args, **kwargs), 0)
 
             if timer := timers.get(key):
                 timer.cancel()
