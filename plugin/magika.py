@@ -41,17 +41,6 @@ def get_magika_ignored_labels() -> frozenset[magika.ContentTypeLabel]:
     })
 
 
-def is_magika_importable() -> bool:
-    """
-    Whether the `magika` package can be imported, without loading it or initializing a model.
-
-    Cheaper than `get_magika_object()`, which constructs a full inference session.
-    """
-    import importlib.util
-
-    return importlib.util.find_spec("magika") is not None
-
-
 @clearable_lru_cache()
 def get_magika_object() -> magika.Magika | None:
     """Get the Magika object if available. `None` otherwise."""
