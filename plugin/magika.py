@@ -10,20 +10,23 @@ if TYPE_CHECKING:
 
 
 @clearable_lru_cache()
-def get_magika_ignored_labels() -> set[magika.ContentTypeLabel]:
+def get_magika_ignored_labels() -> frozenset[magika.ContentTypeLabel]:
     """
     Get the set of Magika content types which will be ignored by this plugin.
+
+    A `frozenset` because this is an lru-cached shared object -- a mutable return value would
+    let one accidental `.add()` corrupt global plugin state until reload.
 
     Note that the plugin compares against the raw `magika_result.dl.label`, not the final
     output label, so generic text-ish labels (which have no `magika.syntax_map.*` entry)
     must be ignored here to avoid pointless syntax-map resolution failures.
     """
     if not get_magika_object():
-        return set()
+        return frozenset()
 
     from magika import ContentTypeLabel
 
-    return {
+    return frozenset({
         ContentTypeLabel.DIRECTORY,
         ContentTypeLabel.EMPTY,
         ContentTypeLabel.TXT,
@@ -35,7 +38,7 @@ def get_magika_ignored_labels() -> set[magika.ContentTypeLabel]:
         ContentTypeLabel.RANDOMASCII,
         ContentTypeLabel.RANDOMBYTES,
         ContentTypeLabel.RANDOMTXT,
-    }
+    })
 
 
 def is_magika_importable() -> bool:
