@@ -19,6 +19,7 @@ from .constants import PLUGIN_NAME
 from .constants import PLUGIN_PY_LIBS_DIR
 from .listener import AutoSetSyntaxEventListener
 from .listener import AutoSetSyntaxTextChangeListener
+from .listener import cancel_all_debounce
 from .listener import compile_rules
 from .listener import set_up_window
 from .listener import tear_down_window
@@ -88,6 +89,7 @@ def _plugin_loaded() -> None:
 
 def plugin_unloaded() -> None:
     """Executed when this plugin is unloaded."""
+    cancel_all_debounce()
     AioSettings.clear_on_change(PLUGIN_NAME)
     AioSettings.tear_down()
 

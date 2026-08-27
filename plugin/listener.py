@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
-from functools import lru_cache
 from functools import wraps
 from typing import Any
 from typing import Final
@@ -100,7 +99,10 @@ def _ensure_window_set_up(window: sublime.Window) -> None:
         set_up_window(window)
 
 
-@lru_cache(maxsize=2)
+_debounced_wrappers: dict[Callable, tuple[float, Any]] = {}
+"""Live debounced wrappers per function, with the delay they were built with."""
+
+
 def _make_debounced[T: Callable](func: T, time_s: float) -> T:
     """
     Cache the debounced wrapper so the same (func, time_s) pair reuses one wrapper.
@@ -108,10 +110,30 @@ def _make_debounced[T: Callable](func: T, time_s: float) -> T:
     The wrapper itself debounces independently per first argument (e.g. per view), so
     reusing it across calls for different views doesn't cancel each other's pending calls.
 
-    ``maxsize=2`` covers the common case (one debounced function with one
-    setting-driven delay). Bump when more debounced callbacks are added.
+    When ``time_s`` changes (e.g. after the ``debounce`` setting is edited), the old wrapper
+    is replaced and its pending timers are cancelled -- two live wrappers for one function
+    would double-schedule the same view.
     """
-    return debounce(time_s)(func)
+    if existing := _debounced_wrappers.get(func):
+        if existing[0] == time_s:
+            return existing[1]
+        existing[1].cancel_all()
+
+    wrapper = debounce(time_s)(func)
+    _debounced_wrappers[func] = (time_s, wrapper)
+    return wrapper
+
+
+def cancel_all_debounce() -> None:
+    """
+    Cancel every pending debounced invocation and drop the cached wrappers.
+
+    Must be called on plugin unload: a stale wrapper's closure would otherwise fire against
+    torn-down state (old module globals, destroyed windows/panels) after ``plugin_unloaded()``.
+    """
+    for _, wrapper in _debounced_wrappers.values():
+        wrapper.cancel_all()
+    _debounced_wrappers.clear()
 
 
 def _configured_debounce[T: Callable](func: T) -> T:

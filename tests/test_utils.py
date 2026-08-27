@@ -729,3 +729,41 @@ class TestDebounce:
         time.sleep(0.2)
         assert ("view1", "a") in calls
         assert ("view2", "b") in calls
+
+    def test_cancel_all_prevents_pending_calls(self):
+        """cancel_all() must drop every scheduled invocation (used on plugin unload)."""
+        from plugin.utils import debounce
+
+        calls = []
+
+        @debounce(0.05)
+        def record(x):
+            calls.append(x)
+
+        record("a")
+        record("b")
+        record.cancel_all()
+        time.sleep(0.2)
+        assert calls == []
+
+    def test_callback_runs_on_main_thread_via_set_timeout(self):
+        """The debounced callback must be dispatched through sublime.set_timeout, not the timer thread."""
+        import sublime
+
+        from plugin.utils import debounce
+
+        calls = []
+        dispatched = []
+        original = sublime.set_timeout
+        try:
+            # defer instead of run, exactly like ST's real set_timeout would on a non-main thread
+            sublime.set_timeout = lambda func, delay=0: dispatched.append(func)
+            record = debounce(0.01)(lambda key: calls.append(key))
+            record("view1")
+            time.sleep(0.2)
+            assert calls == []  # not invoked directly on the timer thread
+            assert len(dispatched) == 1
+            dispatched[0]()  # main-thread dispatch
+            assert calls == ["view1"]
+        finally:
+            sublime.set_timeout = original

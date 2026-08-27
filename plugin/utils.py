@@ -151,6 +151,14 @@ def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
             timers[key] = timer
             timer.start()
 
+        def cancel_all() -> None:
+            """Cancel all pending invocations scheduled by this debounced function."""
+            for timer in timers.values():
+                timer.cancel()
+            timers.clear()
+
+        debounced.cancel_all = cancel_all  # type: ignore[attr-defined]
+
         return cast(T, debounced)
 
     return decorator
