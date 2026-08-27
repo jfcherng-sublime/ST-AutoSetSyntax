@@ -823,31 +823,58 @@ class TestIsInRubyOnRailsProjectConstraint:
 
 
 class TestIsMagikaEnabledConstraint:
-    def test_enabled(self, make_snapshot):
+    def test_enabled_and_usable(self, make_snapshot):
+        from unittest.mock import MagicMock
         from unittest.mock import patch
 
         from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
 
         snap = make_snapshot()
-        with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=True):
+        with (
+            patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=True),
+            patch("plugin.rules.constraints.is_magika_enabled.get_magika_object", return_value=MagicMock()),
+        ):
             assert IsMagikaEnabledConstraint().test(snap) is True
 
-    def test_disabled(self, make_snapshot):
+    def test_enabled_but_not_installed(self, make_snapshot):
+        """Regression: setting magika.enabled without a working Magika must not report True,
+        or the inverted-gated fallback rules (e.g. regex JS detection) get skipped while
+        Magika itself never runs -- leaving the file with no syntax."""
         from unittest.mock import patch
 
         from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
 
         snap = make_snapshot()
-        with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=False):
+        with (
+            patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=True),
+            patch("plugin.rules.constraints.is_magika_enabled.get_magika_object", return_value=None),
+        ):
             assert IsMagikaEnabledConstraint().test(snap) is False
 
-    def test_default_disabled(self, make_snapshot):
+    def test_disabled_short_circuits_without_constructing_magika(self, make_snapshot):
         from unittest.mock import patch
 
         from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
 
         snap = make_snapshot()
-        with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=None):
+        with (
+            patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=False),
+            patch("plugin.rules.constraints.is_magika_enabled.get_magika_object") as magika_mock,
+        ):
+            assert IsMagikaEnabledConstraint().test(snap) is False
+        magika_mock.assert_not_called()
+
+    def test_default_disabled(self, make_snapshot):
+        from unittest.mock import MagicMock
+        from unittest.mock import patch
+
+        from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
+
+        snap = make_snapshot()
+        with (
+            patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=None),
+            patch("plugin.rules.constraints.is_magika_enabled.get_magika_object", return_value=MagicMock()),
+        ):
             assert IsMagikaEnabledConstraint().test(snap) is False
 
     def test_name(self):
