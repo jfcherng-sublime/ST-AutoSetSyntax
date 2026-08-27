@@ -3,6 +3,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from .cache import clearable_lru_cache
+from .logger import Logger
 
 if TYPE_CHECKING:
     import magika
@@ -25,6 +26,17 @@ def get_magika_ignored_labels() -> set[magika.ContentTypeLabel]:
     }
 
 
+def is_magika_importable() -> bool:
+    """
+    Whether the `magika` package can be imported, without loading it or initializing a model.
+
+    Cheaper than `get_magika_object()`, which constructs a full inference session.
+    """
+    import importlib.util
+
+    return importlib.util.find_spec("magika") is not None
+
+
 @clearable_lru_cache()
 def get_magika_object() -> magika.Magika | None:
     """Get the Magika object if available. `None` otherwise."""
@@ -33,7 +45,14 @@ def get_magika_object() -> magika.Magika | None:
         from magika import PredictionMode
     except ImportError:
         return None
-    return Magika(prediction_mode=PredictionMode.HIGH_CONFIDENCE)
+
+    try:
+        # the constructor reads model files from disk and loads the onnxruntime binary, which can
+        # fail on a corrupt/partial dependency install or a missing native DLL
+        return Magika(prediction_mode=PredictionMode.HIGH_CONFIDENCE)
+    except Exception as e:
+        Logger.log(f"🔮 Magika failed to initialize: {e}")
+        return None
 
 
 def resolve_magika_label_with_syntax_map(label: str, syntax_map: Mapping[str, list[str]]) -> list[str]:

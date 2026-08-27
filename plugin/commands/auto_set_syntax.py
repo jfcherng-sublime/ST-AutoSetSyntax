@@ -335,10 +335,16 @@ def _assign_syntax_with_magika(
     ):
         return False
 
-    if view_snapshot.path_obj and not view.is_dirty():
-        magika_result = magika_obj.identify_path(view_snapshot.path_obj)
-    else:
-        magika_result = magika_obj.identify_bytes(ensure_trailing_newline(view_snapshot.content_bytes))
+    try:
+        if view_snapshot.path_obj and not view.is_dirty():
+            magika_result = magika_obj.identify_path(view_snapshot.path_obj)
+        else:
+            magika_result = magika_obj.identify_bytes(ensure_trailing_newline(view_snapshot.content_bytes))
+    except Exception as e:
+        # `result.ok` below only covers status-coded failures; MagikaError/OSError from a broken
+        # dependency install escape the call itself and must not abort syntax detection
+        Logger.log(f"😢 Magika raised during identification: {e}", window=window)
+        return False
     if not magika_result.ok:
         Logger.log(f"😢 Magika failed: {magika_result.status}", window=window)
         return False
