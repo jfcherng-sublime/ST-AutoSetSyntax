@@ -13,7 +13,7 @@ from ..snapshot import ViewSnapshot
 from ..types import ListenerEvent
 from ..types import Optimizable
 from ..types import StSyntaxRule
-from ..utils import find_syntax_by_syntax_likes
+from ..utils import find_syntax
 from ._optimize import sift_optimizable
 from .match import MatchRule
 
@@ -71,7 +71,7 @@ class SyntaxRule(Optimizable):
         this.src_setting = syntax_rule
 
         this.syntaxes_name = tuple(syntax_rule.syntaxes)
-        if target_syntax := find_syntax_by_syntax_likes(syntax_rule.syntaxes, include_hidden=True):
+        if target_syntax := find_syntax(syntax_rule.syntaxes, include_hidden=True):
             this.syntax = target_syntax
 
         this.comment = syntax_rule.comment

@@ -4,7 +4,7 @@ import sublime
 
 from .constants import VIEW_KEY_IS_CREATED
 from .settings import get_st_setting
-from .utils import find_syntax_by_syntax_like
+from .utils import find_syntax
 from .utils import is_plaintext_syntax
 from .utils import is_transient_view
 
@@ -41,7 +41,7 @@ def create_new_view(
     view.set_read_only(read_only)
     view.settings().update(settings | {VIEW_KEY_IS_CREATED: True})
 
-    if syntax and (syntax := find_syntax_by_syntax_like(syntax, include_hidden=include_hidden_syntax)):
+    if syntax and (syntax := find_syntax(syntax, include_hidden=include_hidden_syntax)):
         view.assign_syntax(syntax)
 
     view.run_command("append", {"characters": content})

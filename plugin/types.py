@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections import UserDict
 from collections.abc import Callable
 from collections.abc import Generator
+from collections.abc import Iterable
 from collections.abc import KeysView
 from enum import StrEnum
 from typing import Any
@@ -17,6 +18,8 @@ from pydantic import field_validator
 
 type Comparator = Callable[[Any, Any], bool]
 type SyntaxLike = str | sublime.Syntax
+type SyntaxLikes = SyntaxLike | Iterable[SyntaxLike]
+"""One or more `SyntaxLike`. A bare `str` is one "like", never an iterable of characters."""
 type WindowId = int
 type WindowIdAble = WindowId | sublime.Window
 

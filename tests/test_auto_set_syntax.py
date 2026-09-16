@@ -5,8 +5,8 @@ assert on the returned decision instead of intercepting `assign_syntax_to_view()
 detector produces a decision, the *whole* `details` payload is asserted -- that dict is logged
 verbatim, so partial assertions would let the log format drift unnoticed.
 
-`find_syntax_by_syntax_like` is still stubbed: resolving a syntax name needs a real Sublime Text
-syntax registry, which the test stubs don't provide.
+`find_syntax` is still stubbed: resolving a syntax name needs a real Sublime Text syntax
+registry, which the test stubs don't provide.
 """
 
 import json
@@ -226,7 +226,7 @@ class TestDetectWithHeuristicsJson:
 
     @staticmethod
     def _decide(monkeypatch, content: str, *, char_count: int | None = None) -> SyntaxDecision | None:
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="JSON"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="JSON"))
         snap = _make_snapshot(content, char_count=char_count)
         return mod._detect_with_heuristics(snap, ListenerEvent.LOAD)
 
@@ -303,7 +303,7 @@ class TestDetectWithHeuristicsJson:
         assert self._detected(monkeypatch, content, char_count=10) is True
 
     def test_non_plaintext_syntax_never_reclassified(self, monkeypatch):
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="JSON"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="JSON"))
 
         snap = _make_snapshot(_big_json_map(), syntax_name="Python")
         assert mod._detect_with_heuristics(snap, ListenerEvent.LOAD) is None
@@ -312,7 +312,7 @@ class TestDetectWithHeuristicsJson:
 class TestDetectForExecOutput:
     def test_decides_when_the_panel_is_still_plain_text(self, monkeypatch):
         syntax = sublime.Syntax(name="Build Output")
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: syntax)
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: syntax)
         view = _make_view(syntax=sublime.Syntax(scope="text.plain"))
 
         decision = mod._detect_for_exec_output(view, ListenerEvent.EXEC, {"exec_file_syntax": "scope:source.build"})
@@ -326,19 +326,19 @@ class TestDetectForExecOutput:
         }
 
     def test_a_panel_already_given_a_real_syntax_is_left_alone(self, monkeypatch):
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="Build Output"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Build Output"))
         view = _make_view(syntax=sublime.Syntax(scope="source.python"))
 
         assert mod._detect_for_exec_output(view, ListenerEvent.EXEC, {"exec_file_syntax": "x"}) is None
 
     def test_unset_exec_file_syntax_decides_nothing(self, monkeypatch):
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="Build Output"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Build Output"))
         view = _make_view(syntax=sublime.Syntax(scope="text.plain"))
 
         assert mod._detect_for_exec_output(view, ListenerEvent.EXEC, {}) is None
 
     def test_invalid_view_decides_nothing(self, monkeypatch):
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="Build Output"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Build Output"))
         view = _make_view(valid=False, syntax=sublime.Syntax(scope="text.plain"))
 
         assert mod._detect_for_exec_output(view, ListenerEvent.EXEC, {"exec_file_syntax": "x"}) is None
@@ -347,7 +347,7 @@ class TestDetectForExecOutput:
 class TestDetectForNewView:
     def test_decides_from_new_file_syntax(self, monkeypatch):
         syntax = sublime.Syntax(name="Markdown")
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: syntax)
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: syntax)
         snap = _make_snapshot("")
 
         decision = mod._detect_for_new_view(snap, ListenerEvent.NEW, {"new_file_syntax": "scope:text.html.markdown"})
@@ -360,12 +360,12 @@ class TestDetectForNewView:
         }
 
     def test_unset_new_file_syntax_decides_nothing(self, monkeypatch):
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="Markdown"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Markdown"))
 
         assert mod._detect_for_new_view(_make_snapshot(""), ListenerEvent.NEW, {}) is None
 
     def test_unresolvable_new_file_syntax_decides_nothing(self, monkeypatch):
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: None)
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: None)
 
         assert mod._detect_for_new_view(_make_snapshot(""), ListenerEvent.NEW, {"new_file_syntax": "nope"}) is None
 
@@ -391,7 +391,7 @@ class TestDetectForStSyntaxTest:
             queried.append(str(syntax_like))
             return sublime.Syntax(name="Python")
 
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", _fake_find)
+        monkeypatch.setattr(mod, "find_syntax", _fake_find)
         snap = _syntax_test_snapshot("syntax_test_python.py", '# SYNTAX TEST "Packages/Python/Python.sublime-syntax"')
 
         decision = mod._detect_for_st_syntax_test(snap, ListenerEvent.LOAD)
@@ -401,7 +401,7 @@ class TestDetectForStSyntaxTest:
         assert decision.details == {"event": ListenerEvent.LOAD, "reason": "Sublime Test syntax test file"}
 
     def test_a_file_not_named_syntax_test_is_ignored(self, monkeypatch):
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="Python"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Python"))
         snap = _syntax_test_snapshot("regular.py", '# SYNTAX TEST "Packages/Python/Python.sublime-syntax"')
 
         assert mod._detect_for_st_syntax_test(snap, ListenerEvent.LOAD) is None
@@ -409,7 +409,7 @@ class TestDetectForStSyntaxTest:
     def test_an_unresolvable_syntax_under_test_is_logged_not_decided(self, monkeypatch):
         """The user named a syntax that doesn't exist -- worth a log line, but there's nothing
         to decide. The diagnostic stays inside the detector."""
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: None)
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: None)
         logged: list[str] = []
         monkeypatch.setattr(mod.Logger, "log", lambda msg, **kw: logged.append(str(msg)))
         snap = _syntax_test_snapshot("syntax_test_nope.py", '# SYNTAX TEST "Packages/Nope/Nope.sublime-syntax"')
@@ -456,7 +456,7 @@ def _queried_mode_name(monkeypatch, first_line: str, settings: dict | None = Non
     """Run `_detect_with_first_line()` and report which mode name it looked up.
 
     `find_syntax_for_file` is stubbed to None so only the modeline path (not the
-    general-first-line fallback) can produce a match, and `find_syntax_by_syntax_like` records
+    general-first-line fallback) can produce a match, and `find_syntax` records
     what it was queried with -- this isolates mode-name extraction from real syntax lookup.
     """
     monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
@@ -467,7 +467,7 @@ def _queried_mode_name(monkeypatch, first_line: str, settings: dict | None = Non
         queried.append(str(syntax_like))
         return sublime.Syntax(name=str(syntax_like))
 
-    monkeypatch.setattr(mod, "find_syntax_by_syntax_like", _fake_find)
+    monkeypatch.setattr(mod, "find_syntax", _fake_find)
 
     snap = _modeline_snapshot(first_line)
     mod._detect_with_first_line(snap, ListenerEvent.LOAD, settings if settings is not None else {"modeline_lines": 5})
@@ -504,7 +504,7 @@ class TestDetectWithFirstLineEmacsModeline:
         """The reason string embeds `checker.__name__`, so the log says which of the three
         first-line strategies actually fired."""
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: sublime.Syntax(name="Python"))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Python"))
 
         decision = mod._detect_with_first_line(
             _modeline_snapshot("# -*- mode: python -*-"),
@@ -770,7 +770,7 @@ class TestDetectWithMagika:
             "resolve_magika_label_with_syntax_map",
             lambda label, syntax_map: [f"scope:source.{label}"],
         )
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_likes", lambda likes, **kw: sublime.Syntax(name="Python"))
+        monkeypatch.setattr(mod, "find_syntax", lambda likes, **kw: sublime.Syntax(name="Python"))
 
     def test_disabled_setting_short_circuits(self, monkeypatch):
         magika_obj = MagicMock()

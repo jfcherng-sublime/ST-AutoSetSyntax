@@ -11,7 +11,7 @@ from ..constants import PLUGIN_CUSTOM_MODULE_PATHS
 from ..constants import PLUGIN_NAME
 from ..constants import VIEW_KEY_IS_CREATED
 from ..types import SyntaxLike
-from ..utils import find_syntax_by_syntax_like
+from ..utils import find_syntax
 
 _PYTHON_VERSION_SHORT = f"{sys.version_info.major}.{sys.version_info.minor}"
 """The running interpreter's `major.minor` version, for the scaffolded `.python-version` file."""
@@ -75,7 +75,7 @@ def _clone_file_as_template(
         VIEW_KEY_IS_CREATED: True,
     })
 
-    if syntax and (syntax := find_syntax_by_syntax_like(syntax)):
+    if syntax and (syntax := find_syntax(syntax)):
         new.assign_syntax(syntax)
 
     return new

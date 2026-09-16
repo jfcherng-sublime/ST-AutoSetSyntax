@@ -3,7 +3,7 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ...utils import find_syntaxes_by_syntax_likes
+from ...utils import find_syntaxes
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
 
@@ -24,4 +24,4 @@ class IsSyntaxConstraint(AbstractConstraint):
         if not (syntax := view_snapshot.syntax):
             raise AlwaysFalsyException(f"{view_snapshot.view} has no syntax")
 
-        return syntax in find_syntaxes_by_syntax_likes(self.candidates)
+        return syntax in find_syntaxes(self.candidates)

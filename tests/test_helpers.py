@@ -126,7 +126,7 @@ class TestCreateNewView:
         new_view = MagicMock()
         window.new_file.return_value = new_view
         resolved = sublime.Syntax(name="Python")
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: resolved)
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: resolved)
 
         mod.create_new_view(window=window, syntax="scope:source.python")
 
@@ -136,7 +136,7 @@ class TestCreateNewView:
         window = MagicMock()
         new_view = MagicMock()
         window.new_file.return_value = new_view
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: None)
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: None)
 
         mod.create_new_view(window=window, syntax="not-a-real-syntax")
 
@@ -147,7 +147,7 @@ class TestCreateNewView:
         new_view = MagicMock()
         window.new_file.return_value = new_view
         called = []
-        monkeypatch.setattr(mod, "find_syntax_by_syntax_like", lambda *a, **kw: called.append(1))
+        monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: called.append(1))
 
         mod.create_new_view(window=window)
 

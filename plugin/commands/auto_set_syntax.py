@@ -30,8 +30,7 @@ from ..types import NULL_SYNTAX
 from ..types import ListenerEvent
 from ..utils import ensure_trailing_newline
 from ..utils import extract_prefixed_dict
-from ..utils import find_syntax_by_syntax_like
-from ..utils import find_syntax_by_syntax_likes
+from ..utils import find_syntax
 from ..utils import get_syntax_name
 from ..utils import head_tail_lines
 from ..utils import is_plaintext_syntax
@@ -158,7 +157,7 @@ def _detect_for_exec_output(
         view.is_valid()
         and (not (syntax_old := view.syntax()) or syntax_old.scope == "text.plain")
         and (exec_file_syntax := settings.get("exec_file_syntax"))
-        and (syntax := find_syntax_by_syntax_like(exec_file_syntax, include_hidden=True))
+        and (syntax := find_syntax(exec_file_syntax, include_hidden=True))
     ):
         return SyntaxDecision(
             syntax,
@@ -175,7 +174,7 @@ def _detect_for_new_view(
     if (
         view_snapshot.valid_view
         and (new_file_syntax := settings.get("new_file_syntax"))
-        and (syntax := find_syntax_by_syntax_like(new_file_syntax, include_plaintext=False))
+        and (syntax := find_syntax(new_file_syntax, include_plaintext=False))
     ):
         return SyntaxDecision(
             syntax,
@@ -194,7 +193,7 @@ def _detect_for_st_syntax_test(
         and (m := RE_ST_SYNTAX_TEST_LINE.search(view_snapshot.first_line))
     ):
         new_syntax: str = m.group("syntax")
-        if syntax := find_syntax_by_syntax_like(new_syntax, include_hidden=True, include_plaintext=True):
+        if syntax := find_syntax(new_syntax, include_hidden=True, include_plaintext=True):
             return SyntaxDecision(syntax, {"event": event, "reason": "Sublime Test syntax test file"})
         Logger.log(f"😢 Cannot find the syntax under test: {new_syntax}", window=view.window())
 
@@ -259,11 +258,11 @@ def _detect_with_first_line(
                 mode_name = payload.strip()
             else:
                 continue  # a "key: value" list with no "mode" key -- nothing usable here
-            if mode_name and (syntax := find_syntax_by_syntax_like(mode_name)):
+            if mode_name and (syntax := find_syntax(mode_name)):
                 return syntax
 
         for vim_match in RE_VIM_SYNTAX_LINE.finditer(modeline_content):
-            if syntax := find_syntax_by_syntax_like(vim_match.group("syntax")):
+            if syntax := find_syntax(vim_match.group("syntax")):
                 return syntax
 
         return None
@@ -380,7 +379,7 @@ def _detect_with_magika(
         Logger.log(f"😢 Magika syntax map resolution failed for label: {magika_label}", window=window)
         return None
 
-    if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
+    if not (syntax := find_syntax(syntax_likes, include_plaintext=False)):
         Logger.log(f"😢 Failed mapping the label from Magika: {syntax_likes}", window=window)
         return None
 
@@ -438,7 +437,7 @@ def _detect_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | 
     if not (view_snapshot.valid_view and view_snapshot.syntax and is_plaintext_syntax(view_snapshot.syntax)):
         return None
 
-    if is_json(view_snapshot) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
+    if is_json(view_snapshot) and (syntax := find_syntax("scope:source.json")):
         return SyntaxDecision(syntax, {"event": event, "reason": "heuristics"})
 
     return None

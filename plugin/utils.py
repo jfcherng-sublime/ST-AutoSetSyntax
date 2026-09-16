@@ -15,18 +15,21 @@ from collections.abc import Mapping
 from functools import cache
 from functools import reduce
 from functools import wraps
+from itertools import chain
 from pathlib import Path
 from re import Pattern
 from typing import Any
 from typing import cast
 
 import sublime
+from more_itertools import always_iterable
 from more_itertools import first_true
 from more_itertools import unique_everseen
 
 from ._vendor.trie import TrieNode
 from .cache import clearable_lru_cache
 from .types import SyntaxLike
+from .types import SyntaxLikes
 
 
 def camel_to_snake(s: str) -> str:
@@ -163,48 +166,41 @@ def list_all_subclasses[T](
         yield from list_all_subclasses(leaf, skip_self=False, skip_abstract=skip_abstract)
 
 
-@clearable_lru_cache()
-def find_syntax_by_syntax_like(
-    like: SyntaxLike,
+def find_syntax(
+    likes: SyntaxLikes,
     *,
     include_hidden: bool = False,
     include_plaintext: bool = True,
 ) -> sublime.Syntax | None:
-    """Finds a syntax by a "Syntax object" / "scope" / "name" / "partial path"."""
-    return first_true(
-        find_syntaxes_by_syntax_like(
-            like,
-            include_hidden=include_hidden,
-            include_plaintext=include_plaintext,
-        ),
-    )
+    """Finds the best syntax for one or more "Syntax object" / "scope" / "name" / "partial path"."""
+    return first_true(find_syntaxes(likes, include_hidden=include_hidden, include_plaintext=include_plaintext))
 
 
-def find_syntax_by_syntax_likes(
-    likes: Iterable[SyntaxLike],
-    *,
-    include_hidden: bool = False,
-    include_plaintext: bool = True,
-) -> sublime.Syntax | None:
-    """Finds a syntax by an Iterable of "Syntax object" / "scope" / "name" / "partial path"."""
-    return first_true(
-        find_syntaxes_by_syntax_likes(
-            likes,
-            include_hidden=include_hidden,
-            include_plaintext=include_plaintext,
-        ),
-    )
-
-
-@clearable_lru_cache()
-def find_syntaxes_by_syntax_like(
-    like: SyntaxLike,
+def find_syntaxes(
+    likes: SyntaxLikes,
     *,
     include_hidden: bool = False,
     include_plaintext: bool = True,
 ) -> tuple[sublime.Syntax, ...]:
-    """Finds syntaxes by a "Syntax object" / "scope" / "name" / "partial path"."""
-    if not like:
+    """Finds every syntax matching one or more "Syntax object" / "scope" / "name" / "partial path"."""
+    # `_find_syntaxes()` is cached, so its arguments have to be hashable -- normalize here rather
+    # than making "pass a tuple" a rule every caller has to know
+    return _find_syntaxes(
+        always_iterable(likes, base_type=(str, sublime.Syntax)),
+        include_hidden=include_hidden,
+        include_plaintext=include_plaintext,
+    )
+
+
+@clearable_lru_cache()
+def _find_syntaxes(
+    likes: Iterable[SyntaxLike],
+    *,
+    include_hidden: bool,
+    include_plaintext: bool,
+) -> tuple[sublime.Syntax, ...]:
+    # a falsy "like" ("" or None from settings) matches nothing rather than everything
+    if not (likes := tuple(drop_falsy(likes))):
         return ()
 
     all_syntaxes = get_sorted_syntaxes()
@@ -234,22 +230,9 @@ def find_syntaxes_by_syntax_like(
             and ("/zzz A File Icon/" not in syntax.path)
         )
 
-    return tuple(filter(filter_like, unique_everseen(find_like(like))))
-
-
-def find_syntaxes_by_syntax_likes(
-    likes: Iterable[SyntaxLike],
-    *,
-    include_hidden: bool = False,
-    include_plaintext: bool = True,
-) -> Generator[sublime.Syntax]:
-    """Finds syntaxes by an Iterable of "Syntax object" / "scope" / "name" / "partial path"."""
-    for like in likes:
-        yield from find_syntaxes_by_syntax_like(
-            like,
-            include_hidden=include_hidden,
-            include_plaintext=include_plaintext,
-        )
+    # note that `unique_everseen` spans all `likes`, so a syntax reachable from two of them
+    # is yielded once, in the order the earlier "like" found it
+    return tuple(filter(filter_like, unique_everseen(chain.from_iterable(map(find_like, likes)))))
 
 
 @clearable_lru_cache()
