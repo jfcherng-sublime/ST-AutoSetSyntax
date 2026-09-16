@@ -1,4 +1,6 @@
 import re
+from dataclasses import dataclass
+from dataclasses import field
 from itertools import chain
 from pathlib import Path
 from typing import Any
@@ -53,6 +55,18 @@ _FILE_AND_MODIFY_EVENTS: Final[frozenset[ListenerEvent]] = _FILE_SAVE_EVENTS | f
 """Events where file-on-disk and modify-sensitive strategies can run."""
 
 
+@dataclass(slots=True, frozen=True)
+class SyntaxDecision:
+    """A detector's verdict that `syntax` should be assigned, and why it was reached."""
+
+    syntax: sublime.Syntax
+    """The syntax to assign."""
+    details: dict[str, Any] = field(default_factory=dict)
+    """The reason payload, logged verbatim by `assign_syntax_to_view()`."""
+    status_message: str | None = None
+    """An optional status bar message, shown when this decision is applied."""
+
+
 class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
     @override
     def description(self) -> str:
@@ -74,13 +88,13 @@ def run_auto_set_syntax_on_view(
         Logger.log("⏳ Calm down! View has gone or the plugin is not ready yet.")
         return False
 
-    # Resolve settings once and reuse across all strategy functions.
-    # This avoids repeated ChainMap lookups per strategy.
+    # Resolve settings once and reuse across all detectors.
+    # This avoids repeated ChainMap lookups per detector.
     settings = get_merged_plugin_settings(window=window)
 
     # Cheap EXEC short-circuit: no snapshot needed
     if event is ListenerEvent.EXEC:
-        return _assign_syntax_for_exec_output(view, event, settings)
+        return _apply(view, _detect_for_exec_output(view, event, settings))
 
     # Cheap prerequisites: reject before building expensive snapshot
     if not (
@@ -93,69 +107,87 @@ def run_auto_set_syntax_on_view(
     view_snapshot = ViewSnapshot.from_view(view)
 
     if event is ListenerEvent.NEW:
-        return _assign_syntax_for_new_view(view_snapshot, event, settings)
+        return _apply(view, _detect_for_new_view(view_snapshot, event, settings))
 
-    if _assign_syntax_for_st_syntax_test(view_snapshot, event):
-        return True
-
-    if _assign_syntax_with_plugin_rules(view_snapshot, syntax_rule_collection, event):
-        return True
-
-    if _assign_syntax_with_first_line(view_snapshot, event, settings):
-        return True
-
-    if event in _FILE_SAVE_EVENTS and _assign_syntax_with_trimmed_filename(view_snapshot, event, settings):
-        return True
-
-    if event in _FILE_AND_MODIFY_EVENTS and _assign_syntax_with_magika(view_snapshot, event, settings):
-        return True
-
-    if _assign_syntax_with_heuristics(view_snapshot, event):
-        return True
+    if decision := _detect(view_snapshot, syntax_rule_collection, event, settings):
+        return _apply(view, decision)
 
     return _sorry_cannot_help(view, event)
 
 
-def _assign_syntax_for_exec_output(
+def _apply(view: sublime.View, decision: SyntaxDecision | None) -> bool:
+    """Carry out a `decision`. The only place a detector's verdict reaches the view."""
+    if not decision:
+        return False
+    if decision.status_message:
+        sublime.status_message(decision.status_message)
+    return assign_syntax_to_view(view, decision.syntax, details=decision.details)
+
+
+def _detect(
+    view_snapshot: ViewSnapshot,
+    syntax_rule_collection: SyntaxRuleCollection,
+    event: ListenerEvent | None,
+    settings: MergedSettingsDict,
+) -> SyntaxDecision | None:
+    """Try each detector in order and return the first decision reached, if any."""
+    if decision := _detect_for_st_syntax_test(view_snapshot, event):
+        return decision
+
+    if decision := _detect_with_plugin_rules(view_snapshot, syntax_rule_collection, event):
+        return decision
+
+    if decision := _detect_with_first_line(view_snapshot, event, settings):
+        return decision
+
+    if event in _FILE_SAVE_EVENTS and (decision := _detect_with_trimmed_filename(view_snapshot, event, settings)):
+        return decision
+
+    if event in _FILE_AND_MODIFY_EVENTS and (decision := _detect_with_magika(view_snapshot, event, settings)):
+        return decision
+
+    return _detect_with_heuristics(view_snapshot, event)
+
+
+def _detect_for_exec_output(
     view: sublime.View,
-    event: ListenerEvent | None = None,
-    settings: MergedSettingsDict | None = None,
-) -> bool:
+    event: ListenerEvent | None,
+    settings: MergedSettingsDict,
+) -> SyntaxDecision | None:
     if (
         view.is_valid()
-        and (window := view.window())
         and (not (syntax_old := view.syntax()) or syntax_old.scope == "text.plain")
-        and (exec_file_syntax := (settings or get_merged_plugin_settings(window=window)).get("exec_file_syntax"))
+        and (exec_file_syntax := settings.get("exec_file_syntax"))
         and (syntax := find_syntax_by_syntax_like(exec_file_syntax, include_hidden=True))
     ):
-        return assign_syntax_to_view(
-            view,
+        return SyntaxDecision(
             syntax,
-            details={"event": event, "reason": "exec output", "exec_file_syntax": exec_file_syntax},
+            {"event": event, "reason": "exec output", "exec_file_syntax": exec_file_syntax},
         )
-    return False
+    return None
 
 
-def _assign_syntax_for_new_view(
+def _detect_for_new_view(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None = None,
-    settings: MergedSettingsDict | None = None,
-) -> bool:
+    event: ListenerEvent | None,
+    settings: MergedSettingsDict,
+) -> SyntaxDecision | None:
     if (
-        (view := view_snapshot.valid_view)
-        and (window := view.window())
-        and (new_file_syntax := (settings or get_merged_plugin_settings(window=window)).get("new_file_syntax"))
+        view_snapshot.valid_view
+        and (new_file_syntax := settings.get("new_file_syntax"))
         and (syntax := find_syntax_by_syntax_like(new_file_syntax, include_plaintext=False))
     ):
-        return assign_syntax_to_view(
-            view,
+        return SyntaxDecision(
             syntax,
-            details={"event": event, "reason": "new file", "new_file_syntax": new_file_syntax},
+            {"event": event, "reason": "new file", "new_file_syntax": new_file_syntax},
         )
-    return False
+    return None
 
 
-def _assign_syntax_for_st_syntax_test(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
+def _detect_for_st_syntax_test(
+    view_snapshot: ViewSnapshot,
+    event: ListenerEvent | None,
+) -> SyntaxDecision | None:
     if (
         (view := view_snapshot.valid_view)
         and view_snapshot.file_name.startswith("syntax_test_")
@@ -163,36 +195,31 @@ def _assign_syntax_for_st_syntax_test(view_snapshot: ViewSnapshot, event: Listen
     ):
         new_syntax: str = m.group("syntax")
         if syntax := find_syntax_by_syntax_like(new_syntax, include_hidden=True, include_plaintext=True):
-            return assign_syntax_to_view(
-                view,
-                syntax,
-                details={"event": event, "reason": "Sublime Test syntax test file"},
-            )
+            return SyntaxDecision(syntax, {"event": event, "reason": "Sublime Test syntax test file"})
         Logger.log(f"😢 Cannot find the syntax under test: {new_syntax}", window=view.window())
 
-    return False
+    return None
 
 
-def _assign_syntax_with_plugin_rules(
+def _detect_with_plugin_rules(
     view_snapshot: ViewSnapshot,
     syntax_rule_collection: SyntaxRuleCollection,
-    event: ListenerEvent | None = None,
-) -> bool:
-    if (view := view_snapshot.valid_view) and (syntax_rule := syntax_rule_collection.test(view_snapshot, event)):
+    event: ListenerEvent | None,
+) -> SyntaxDecision | None:
+    if view_snapshot.valid_view and (syntax_rule := syntax_rule_collection.test(view_snapshot, event)):
         assert syntax_rule.syntax  # otherwise it should be dropped during optimizing
-        return assign_syntax_to_view(
-            view,
+        return SyntaxDecision(
             syntax_rule.syntax,
-            details={"event": event, "reason": "plugin rule", "rule": syntax_rule},
+            {"event": event, "reason": "plugin rule", "rule": syntax_rule},
         )
-    return False
+    return None
 
 
-def _assign_syntax_with_first_line(
+def _detect_with_first_line(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None = None,
-    settings: MergedSettingsDict | None = None,
-) -> bool:
+    event: ListenerEvent | None,
+    settings: MergedSettingsDict,
+) -> SyntaxDecision | None:
     # Note that this only works for files under some circumstances.
     # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
@@ -216,7 +243,7 @@ def _assign_syntax_with_first_line(
         # explicitly rather than falsy (`modeline_lines: 0` is a distinct, valid "no modeline
         # search at all" setting -- see head_tail_lines()'s `n == 0` case -- and must not be
         # coerced into the default.)
-        modeline_lines_setting = (settings or get_merged_plugin_settings(window=window)).get("modeline_lines")
+        modeline_lines_setting = settings.get("modeline_lines")
         modeline_lines = int(modeline_lines_setting if modeline_lines_setting is not None else 5)
         modeline_content = head_tail_lines(view_snapshot.content, modeline_lines)
 
@@ -250,43 +277,40 @@ def _assign_syntax_with_first_line(
             return syntax
         return None
 
-    if not ((view := view_snapshot.valid_view) and (window := view.window())):
-        return False
+    if not view_snapshot.valid_view:
+        return None
 
     # It's potentially that a first line of a syntax is a prefix of another syntax's.
     # Thus if the user is typing, only try assigning syntax if this is not triggered by the first line.
     if event is ListenerEvent.MODIFY and view_snapshot.caret_rowcol[0] == 0:
-        return False
+        return None
 
     for checker in (_prefer_shebang, _prefer_modeline, _prefer_general_first_line):
         if syntax := checker(view_snapshot):
-            return assign_syntax_to_view(
-                view,
+            return SyntaxDecision(
                 syntax,
-                details={
+                {
                     "event": event,
                     "reason": f'syntax "first_line_match" or "file_extensions" by {checker.__name__}',
                 },
             )
 
-    return False
+    return None
 
 
-def _assign_syntax_with_trimmed_filename(
+def _detect_with_trimmed_filename(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None = None,
-    settings: MergedSettingsDict | None = None,
-) -> bool:
+    event: ListenerEvent | None,
+    settings: MergedSettingsDict,
+) -> SyntaxDecision | None:
     if not (
         (view := view_snapshot.valid_view)
         and (filepath := view.file_name())
-        and (window := view.window())
         and (syntax_old := view.syntax())
         and is_plaintext_syntax(syntax_old)
     ):
-        return False
+        return None
 
-    settings = settings or get_merged_plugin_settings(window=window)
     original = Path(filepath).name
     trim_suffixes = settings.get("trim_suffixes", ())
     trim_suffixes_auto = settings.get("trim_suffixes_auto", False)
@@ -298,10 +322,9 @@ def _assign_syntax_with_trimmed_filename(
 
     for filename in filenames:
         if (syntax := sublime.find_syntax_for_file(filename)) and not is_plaintext_syntax(syntax):
-            return assign_syntax_to_view(
-                view,
+            return SyntaxDecision(
                 syntax,
-                details={
+                {
                     "event": event,
                     "reason": "trimmed filename",
                     "filename_original": original,
@@ -310,19 +333,18 @@ def _assign_syntax_with_trimmed_filename(
                     "trim_suffixes_auto": trim_suffixes_auto,
                 },
             )
-    return False
+    return None
 
 
-def _assign_syntax_with_magika(
+def _detect_with_magika(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None = None,
-    settings: MergedSettingsDict | None = None,
-) -> bool:
+    event: ListenerEvent | None,
+    settings: MergedSettingsDict,
+) -> SyntaxDecision | None:
     if not (
         (magika_obj := get_magika_object())
         and (view := view_snapshot.valid_view)
         and (window := view.window())
-        and (settings := settings or get_merged_plugin_settings(window=window))
         and settings.get("magika.enabled")
         # don't apply on those have an extension
         and (event == ListenerEvent.COMMAND or "." not in view_snapshot.file_name_unhidden)
@@ -333,7 +355,7 @@ def _assign_syntax_with_magika(
         # right after "import" is typed but it could be JavaScript or TypeScript as well
         and (event != ListenerEvent.MODIFY or "\n" in view_snapshot.content)
     ):
-        return False
+        return None
 
     if view_snapshot.path_obj and not view.is_dirty():
         magika_result = magika_obj.identify_path(view_snapshot.path_obj)
@@ -341,7 +363,7 @@ def _assign_syntax_with_magika(
         magika_result = magika_obj.identify_bytes(ensure_trailing_newline(view_snapshot.content_bytes))
     if not magika_result.ok:
         Logger.log(f"😢 Magika failed: {magika_result.status}", window=window)
-        return False
+        return None
     Logger.log(f"🐛 Magika's prediction: {magika_result!r}", window=window)
 
     # note that "magika_result.output" may be overridden due to low confidence,
@@ -351,20 +373,23 @@ def _assign_syntax_with_magika(
 
     threadshold: float = settings.get("magika.min_confidence", 0.0)
     if magika_score < threadshold or magika_label in get_magika_ignored_labels():
-        return False
+        return None
 
     syntax_map: dict[str, list[str]] = extract_prefixed_dict(settings, prefix="magika.syntax_map.")
     if not (syntax_likes := resolve_magika_label_with_syntax_map(magika_label, syntax_map)):
         Logger.log(f"😢 Magika syntax map resolution failed for label: {magika_label}", window=window)
-        return False
+        return None
 
     if not (syntax := find_syntax_by_syntax_likes(syntax_likes, include_plaintext=False)):
         Logger.log(f"😢 Failed mapping the label from Magika: {syntax_likes}", window=window)
-        return False
+        return None
 
     confidence = round(magika_score * 100, 2)
-    sublime.status_message(f"Predicted label: {magika_label} ({confidence}% confidence)")
-    return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "Magika (Deep Learning)"})
+    return SyntaxDecision(
+        syntax,
+        {"event": event, "reason": "Magika (Deep Learning)"},
+        status_message=f"Predicted label: {magika_label} ({confidence}% confidence)",
+    )
 
 
 # tolerate whitespace right after the opening bracket / right before the closing one, since
@@ -384,7 +409,7 @@ _SMALL_FILE_SIZE: Final[int] = 1 * 1024  # 1 KB
 _XSSI_PREFIXES: Final[tuple[str, ...]] = (")]}'\n", ")]}',\n")
 
 
-def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
+def _detect_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | None) -> SyntaxDecision | None:
     def is_small_file(view_snapshot: ViewSnapshot) -> bool:
         return view_snapshot.char_count < _SMALL_FILE_SIZE
 
@@ -410,13 +435,13 @@ def _assign_syntax_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerE
             or (_RE_JSON_NESTED_OBJECT_BEGIN.search(text_begin) and _RE_JSON_NESTED_OBJECT_END.search(text_end))
         )
 
-    if not ((view := view_snapshot.valid_view) and view_snapshot.syntax and is_plaintext_syntax(view_snapshot.syntax)):
-        return False
+    if not (view_snapshot.valid_view and view_snapshot.syntax and is_plaintext_syntax(view_snapshot.syntax)):
+        return None
 
     if is_json(view_snapshot) and (syntax := find_syntax_by_syntax_like("scope:source.json")):
-        return assign_syntax_to_view(view, syntax, details={"event": event, "reason": "heuristics"})
+        return SyntaxDecision(syntax, {"event": event, "reason": "heuristics"})
 
-    return False
+    return None
 
 
 def _sorry_cannot_help(view: sublime.View, event: ListenerEvent | None = None) -> bool:
@@ -430,16 +455,13 @@ def assign_syntax_to_view(
     syntax: sublime.Syntax,
     *,
     details: dict[str, Any] | None = None,
-    same_buffer: bool = True,
 ) -> bool:
     if not view.is_valid():
         return False
 
-    details = details or {}
-    details["syntax"] = syntax
+    details = {**(details or {}), "syntax": syntax}
 
-    views = view.buffer().views() if same_buffer else (view,)
-    for view_ in views:
+    for view_ in view.buffer().views():
         if not (window := view_.window()):
             continue
 
