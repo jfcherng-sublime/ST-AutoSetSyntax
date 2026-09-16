@@ -4,7 +4,9 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Project Overview
 
-AutoSetSyntax is a Sublime Text 4 plugin that automatically sets the syntax (language) for a view using multiple detection strategies: user-defined rules, first-line matching (shebang/modeline), filename trimming, and optional deep-learning detection via Google's Magika.
+AutoSetSyntax is a Sublime Text 4 plugin that automatically sets the syntax (language) for a view using multiple detectors: user-defined rules, first-line matching (shebang/modeline), filename trimming, and optional deep-learning detection via Google's Magika.
+
+See [CONTEXT.md](CONTEXT.md) for the domain vocabulary and `docs/adr/` for recorded decisions.
 
 The plugin runs inside Sublime Text's embedded Python 3.14 interpreter. You may use any features up to Python 3.14.
 

@@ -22,8 +22,9 @@ flowchart TD
 
     ST -->|view events| Listener["EventListener<br/>+ TextChangeListener"]
     Listener --> Pipeline["run_auto_set_syntax_on_view()"]
-    Pipeline --> Cascade["Strategy Cascade<br/>(9 steps)"]
-    Cascade --> Assign["assign_syntax_to_view()"]
+    Pipeline --> Cascade["Detector Cascade<br/>(9 steps)"]
+    Cascade -->|SyntaxDecision| Apply["_apply()"]
+    Apply --> Assign["assign_syntax_to_view()"]
 
     Collection -->|test rules| Pipeline
 ```
@@ -87,7 +88,7 @@ All events converge on `run_auto_set_syntax_on_view()` in `plugin/commands/auto_
 
 ### Prerequisites (pre-flight checks)
 
-Before any strategy runs, the pipeline verifies:
+Before any detector runs, the pipeline verifies:
 
 1. View has a window and is valid
 2. View is "syntaxable" — not a widget/panel, not transient, within size limit
@@ -95,19 +96,36 @@ Before any strategy runs, the pipeline verifies:
 4. `SyntaxRuleCollection` is compiled for the window
 5. Plugin is ready (`G.is_plugin_ready()`)
 
-## The Strategy Pipeline (9 Steps)
+## The Detector Pipeline (9 Steps)
 
-The pipeline tries each strategy in order, stopping at the first match:
+The pipeline tries each detector in order, stopping at the first one to reach a decision:
 
-1. **Exec Output** — assign `exec_file_syntax` for build panels
-2. **New File** — assign `new_file_syntax` for untitled files
-3. **ST Syntax Test** — skip if file is an ST syntax test
+1. **Exec Output** — `exec_file_syntax` for build panels
+2. **New File** — `new_file_syntax` for untitled files
+3. **ST Syntax Test** — the syntax named on an ST syntax test file's first line
 4. **Plugin Rules** — iterate user-defined `SyntaxRule` collection
-5. **First Line** — detect shebang (`#!/usr/bin/env`) or modeline (`-*- mode -*-`)
+5. **First Line** — shebang (`#!/usr/bin/env`) or modeline (`-*- mode -*-`)
 6. **Trimmed Filename** — strip suffixes and match the base filename
 7. **Magika (DL)** — Google's deep-learning content-type detection
 8. **Heuristics** — content-based guess (currently JSON detection)
 9. **Give Up** — leave as plain text
+
+A detector never touches the view. It inspects the `ViewSnapshot` and returns either a
+`SyntaxDecision` or `None`:
+
+```python
+@dataclass(slots=True, frozen=True)
+class SyntaxDecision:
+    syntax: sublime.Syntax          # what to assign
+    details: dict[str, Any]         # why — logged verbatim
+    status_message: str | None      # optional status bar text, shown when applied
+```
+
+Steps 1 and 2 are early-outs handled directly by `run_auto_set_syntax_on_view()` — exec output
+runs *before* the (comparatively expensive) `ViewSnapshot` is built, since a build panel updates
+often and needs none of it. Steps 3–8 form the `_detect()` chain. Whatever the source, the
+resulting decision reaches the view through a single `_apply()` call, which emits any
+`status_message` and hands off to `assign_syntax_to_view()`.
 
 ## Rules System
 
@@ -232,7 +250,7 @@ Dropped rules are logged and stored in `G.dropped_rules_collection` for debuggin
 
 ## ViewSnapshot
 
-Before any strategy runs, a `ViewSnapshot` is created — a frozen snapshot of the view's state at that moment:
+Before the detector chain runs, a `ViewSnapshot` is created — a frozen snapshot of the view's state at that moment. It is everything a detector is allowed to know about the view:
 
 - **`view`**: The `sublime.View` object
 - **`content`**: Full text content
@@ -248,6 +266,8 @@ Before any strategy runs, a `ViewSnapshot` is created — a frozen snapshot of t
 
 ## Final Assignment
 
+`_apply()` is the only place a decision reaches the view. It is a no-op when no detector decided,
+emits the decision's `status_message` if it carries one, then delegates to
 `assign_syntax_to_view()`:
 
 ```mermaid
@@ -267,10 +287,11 @@ flowchart TD
 ```
 
 1. Validates the view
-2. Gets all sibling views sharing the same buffer (via `view.buffer().views()`)
+2. Gets all sibling views sharing the same buffer (via `view.buffer().views()`), so clones and
+   split views stay in sync
 3. For each view: skips if already has the target syntax, otherwise calls `view.assign_syntax(syntax)`
 4. Sets `VIEW_KEY_IS_ASSIGNED` on view settings
-5. Logs the change with full context (old syntax → new syntax + reason + event)
+5. Logs the change with full context (old syntax → new syntax + the decision's `details`)
 
 ## Extensibility
 
