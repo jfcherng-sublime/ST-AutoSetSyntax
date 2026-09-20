@@ -199,8 +199,12 @@ def _find_syntaxes(
     include_hidden: bool,
     include_plaintext: bool,
 ) -> tuple[sublime.Syntax, ...]:
-    # a falsy "like" ("" or None from settings) matches nothing rather than everything
-    if not (likes := tuple(drop_falsy(likes))):
+    # a falsy "like" ("" or None from settings) matches nothing rather than everything.
+    # The annotation is load-bearing: mypy can't solve `drop_falsy`'s `Iterable[T | None]`
+    # against a union this wide and falls back to `object`, which then poisons the `map()`
+    # and `filter()` below. Don't collapse this back into a walrus -- it can't be annotated.
+    valid_likes: tuple[SyntaxLike, ...] = tuple(drop_falsy(likes))
+    if not valid_likes:
         return ()
 
     all_syntaxes = get_sorted_syntaxes()
@@ -232,7 +236,7 @@ def _find_syntaxes(
 
     # note that `unique_everseen` spans all `likes`, so a syntax reachable from two of them
     # is yielded once, in the order the earlier "like" found it
-    return tuple(filter(filter_like, unique_everseen(chain.from_iterable(map(find_like, likes)))))
+    return tuple(filter(filter_like, unique_everseen(chain.from_iterable(map(find_like, valid_likes)))))
 
 
 @clearable_lru_cache()
