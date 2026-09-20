@@ -6,6 +6,8 @@ from typing import override
 from more_itertools import nth
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ..match import AbstractMatch
 from ..match import MatchableRule
 
@@ -22,18 +24,28 @@ class RatioMatch(AbstractMatch):
         self.ratio: float = (self.numerator / self.denominator) if self.denominator else -1
 
     @override
-    def fold(self, rules: tuple[MatchableRule, ...]) -> bool | None:
+    def fold(self, rules: tuple[MatchableRule, ...]) -> Fold:
         """
         With zero rules the goal `ceil(ratio * 0)` is always `0` (constant True) no matter the
         ratio. Otherwise, an invalid/negative ratio (bad denominator, or a negative numerator)
         also means `goal <= 0` (constant True); a ratio above `1` means the goal exceeds
         `len(rules)`, which can never be satisfied (constant False).
         """
-        if not rules or self.ratio < 0:
-            return True
+        # every reason is built inside the branch that returns it, so the common case -- a
+        # ratio that still depends on the view -- formats nothing
+        if not rules:
+            return Fold(True, 'a "ratio" with no sub-rule has nothing left to satisfy')
+        if self.ratio < 0:
+            return Fold(
+                True,
+                f"a ratio of {self.numerator}/{self.denominator} isn't a valid fraction, so it demands nothing",
+            )
         if self.ratio > 1:
-            return False
-        return None
+            return Fold(
+                False,
+                f"a ratio of {self.numerator}/{self.denominator} needs more than all {len(rules)} sub-rule(s) to pass",
+            )
+        return UNFOLDED
 
     @override
     def prunable_child_value(self) -> bool | None:

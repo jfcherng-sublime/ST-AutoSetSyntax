@@ -3,6 +3,8 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
 
@@ -15,8 +17,8 @@ class NameContainsConstraint(AbstractConstraint):
         self.needles: tuple[str, ...] = self._handled_args()
 
     @override
-    def fold(self) -> bool | None:
-        return None if self.needles else False
+    def fold(self) -> Fold:
+        return UNFOLDED if self.needles else Fold(False, "no needle to look for was given")
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

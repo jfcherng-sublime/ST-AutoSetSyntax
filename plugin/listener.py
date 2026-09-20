@@ -1,3 +1,4 @@
+import traceback
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Sequence
@@ -77,12 +78,32 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
         syntax_rules = []
 
     syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
-    G.syntax_rule_collections[window] = syntax_rule_collection
     Logger.log(f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
 
     # explain each rule as it's discarded: "dropped" alone is ambiguous now that a rule can be
     # discarded for always matching as well as for never matching
-    dropped_rules = list(map(DroppedRule.make, syntax_rule_collection.optimize()))
+    try:
+        dropped_rules = list(map(DroppedRule.make, syntax_rule_collection.optimize()))
+    except Exception:
+        # `optimize()` prunes the tree as it walks it, so a pass that dies halfway can leave a
+        # syntax rule whose root was already detached still in the collection -- which
+        # `SyntaxRule.test()` then asserts on, once per view. Rebuild from the source settings
+        # rather than keep a tree nobody finished: unoptimized rules still test correctly,
+        # they're just re-evaluated on every view. The likely culprit is a custom implementation
+        # whose `fold()` doesn't return a `Fold`, and that shouldn't cost the window every
+        # *other* rule the user wrote.
+        #
+        # Log the whole traceback, not just the exception: "cannot unpack non-iterable bool
+        # object" doesn't say *whose* fold() did that, and naming the class is the entire point
+        # (see `warn_legacy_fold_overrides()`, which exists for exactly that reason).
+        Logger.log(
+            f"❌ Failed optimizing the syntax rules, keeping them unoptimized:\n{traceback.format_exc()}",
+            window=window,
+        )
+        syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
+        dropped_rules = []
+
+    G.syntax_rule_collections[window] = syntax_rule_collection
     G.dropped_rules_collection[window] = dropped_rules
     Logger.log(f"✨ Optimized syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
     Logger.log(f"💀 Dropped rules during optimizing: {stringify(dropped_rules)}", window=window)

@@ -3,6 +3,7 @@
 import pytest
 
 from plugin.rules.constraint import AlwaysFalsyException
+from plugin.types import Fold
 
 # ── ContainsConstraint ────────────────────────────────────────────────────────
 
@@ -48,12 +49,12 @@ class TestContainsConstraint:
     def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.contains import ContainsConstraint
 
-        assert ContainsConstraint().fold() is False
+        assert ContainsConstraint().fold().value is False
 
     def test_with_needles_does_not_fold(self):
         from plugin.rules.constraints.contains import ContainsConstraint
 
-        assert ContainsConstraint("foo").fold() is None
+        assert ContainsConstraint("foo").fold().value is None
 
     def test_threshold_zero_no_needles_folds_to_true(self):
         """threshold<=0 makes test() a constant True even with no needles (see
@@ -62,7 +63,7 @@ class TestContainsConstraint:
         answer on every view."""
         from plugin.rules.constraints.contains import ContainsConstraint
 
-        assert ContainsConstraint(threshold=0).fold() is True
+        assert ContainsConstraint(threshold=0).fold().value is True
 
 
 # ── ContainsRegexConstraint ───────────────────────────────────────────────────
@@ -109,19 +110,19 @@ class TestContainsRegexConstraint:
     def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        assert ContainsRegexConstraint().fold() is False
+        assert ContainsRegexConstraint().fold().value is False
 
     def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        assert ContainsRegexConstraint("foo").fold() is None
+        assert ContainsRegexConstraint("foo").fold().value is None
 
     def test_threshold_zero_no_patterns_folds_to_true(self):
         """Same reasoning as ContainsConstraint's equivalent test: threshold<=0 is a constant
         True regardless of patterns."""
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        assert ContainsRegexConstraint(threshold=0).fold() is True
+        assert ContainsRegexConstraint(threshold=0).fold().value is True
 
     def test_null_regex_flags_falls_back_to_multiline_default(self, make_snapshot):
         """Regression (AbstractConstraint._handled_regex): "regex_flags": null is present with
@@ -153,7 +154,7 @@ class TestContainsRegexConstraint:
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
         constraint = ContainsRegexConstraint("")
-        assert constraint.fold() is False
+        assert constraint.fold().value is False
         snap = make_snapshot(content="anything")
         assert constraint.test(snap) is False
 
@@ -162,7 +163,7 @@ class TestContainsRegexConstraint:
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
         constraint = ContainsRegexConstraint(None)
-        assert constraint.fold() is False
+        assert constraint.fold().value is False
         snap = make_snapshot(content="anything")
         assert constraint.test(snap) is False
 
@@ -174,7 +175,7 @@ class TestContainsRegexConstraint:
 
         constraint = ContainsRegexConstraint("", "foo")
         # has a valid pattern "foo", so NOT droppable
-        assert constraint.fold() is None
+        assert constraint.fold().value is None
         snap = make_snapshot(content="foo")
         assert constraint.test(snap) is True
         snap = make_snapshot(content="bar")
@@ -206,7 +207,7 @@ class TestFirstLineContainsConstraint:
     def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.first_line_contains import FirstLineContainsConstraint
 
-        assert FirstLineContainsConstraint().fold() is False
+        assert FirstLineContainsConstraint().fold().value is False
 
 
 # ── FirstLineContainsRegexConstraint ─────────────────────────────────────────
@@ -234,17 +235,17 @@ class TestFirstLineContainsRegexConstraint:
     def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
-        assert FirstLineContainsRegexConstraint().fold() is False
+        assert FirstLineContainsRegexConstraint().fold().value is False
 
     def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
-        assert FirstLineContainsRegexConstraint("python").fold() is None
+        assert FirstLineContainsRegexConstraint("python").fold().value is None
 
     def test_empty_pattern_folds_to_false(self, make_snapshot):
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
-        assert FirstLineContainsRegexConstraint("").fold() is False
+        assert FirstLineContainsRegexConstraint("").fold().value is False
         snap = make_snapshot(first_line="anything")
         assert FirstLineContainsRegexConstraint("").test(snap) is False
 
@@ -313,12 +314,12 @@ class TestIsInterpreterConstraint:
     def test_no_interpreters_folds_to_false(self):
         from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
 
-        assert IsInterpreterConstraint().fold() is False
+        assert IsInterpreterConstraint().fold().value is False
 
     def test_with_interpreter_does_not_fold(self):
         from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
 
-        assert IsInterpreterConstraint("python").fold() is None
+        assert IsInterpreterConstraint("python").fold().value is None
 
 
 # ── IsNameConstraint ──────────────────────────────────────────────────────────
@@ -359,7 +360,7 @@ class TestIsNameConstraint:
     def test_no_names_folds_to_false(self):
         from plugin.rules.constraints.is_name import IsNameConstraint
 
-        assert IsNameConstraint().fold() is False
+        assert IsNameConstraint().fold().value is False
 
 
 # ── NameContainsConstraint ────────────────────────────────────────────────────
@@ -388,7 +389,7 @@ class TestNameContainsConstraint:
     def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.name_contains import NameContainsConstraint
 
-        assert NameContainsConstraint().fold() is False
+        assert NameContainsConstraint().fold().value is False
 
 
 # ── NameContainsRegexConstraint ───────────────────────────────────────────────
@@ -417,17 +418,17 @@ class TestNameContainsRegexConstraint:
     def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
 
-        assert NameContainsRegexConstraint().fold() is False
+        assert NameContainsRegexConstraint().fold().value is False
 
     def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
 
-        assert NameContainsRegexConstraint("script").fold() is None
+        assert NameContainsRegexConstraint("script").fold().value is None
 
     def test_empty_pattern_folds_to_false(self, make_snapshot):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
 
-        assert NameContainsRegexConstraint("").fold() is False
+        assert NameContainsRegexConstraint("").fold().value is False
         snap = make_snapshot(path="file.py")
         assert NameContainsRegexConstraint("").test(snap) is False
 
@@ -464,7 +465,7 @@ class TestPathContainsConstraint:
     def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.path_contains import PathContainsConstraint
 
-        assert PathContainsConstraint().fold() is False
+        assert PathContainsConstraint().fold().value is False
 
 
 # ── PathContainsRegexConstraint ───────────────────────────────────────────────
@@ -493,17 +494,17 @@ class TestPathContainsRegexConstraint:
     def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
-        assert PathContainsRegexConstraint().fold() is False
+        assert PathContainsRegexConstraint().fold().value is False
 
     def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
-        assert PathContainsRegexConstraint("projects").fold() is None
+        assert PathContainsRegexConstraint("projects").fold().value is None
 
     def test_empty_pattern_folds_to_false(self, make_snapshot):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
-        assert PathContainsRegexConstraint("").fold() is False
+        assert PathContainsRegexConstraint("").fold().value is False
         snap = make_snapshot(path="/home/file.py")
         assert PathContainsRegexConstraint("").test(snap) is False
 
@@ -543,15 +544,23 @@ class TestIsLineCountConstraint:
         assert IsLineCountConstraint("<", 5).test(snap) is True
 
     def test_wrong_arg_count_folds_to_false(self):
+        """Assert the whole `Fold`: both failure branches fold to the same `False`, so the
+        reason is the only thing that tells them apart."""
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
 
-        assert IsLineCountConstraint(">").fold() is False
-        assert IsLineCountConstraint().fold() is False
+        expected = "expects exactly 2 args (a comparator and a threshold), got {}"
+        assert IsLineCountConstraint(">").fold() == Fold(False, expected.format(1))
+        assert IsLineCountConstraint().fold() == Fold(False, expected.format(0))
+
+    def test_unknown_comparator_folds_to_false(self):
+        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
+
+        assert IsLineCountConstraint("~~", 10).fold() == Fold(False, "'~~' is not a known comparator")
 
     def test_valid_does_not_fold(self):
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
 
-        assert IsLineCountConstraint(">", 10).fold() is None
+        assert IsLineCountConstraint(">", 10).fold().value is None
 
     def test_gte_alias(self, make_snapshot):
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
@@ -590,15 +599,22 @@ class TestIsSizeConstraint:
         assert IsSizeConstraint("==", 1024).test(snap) is True
 
     def test_wrong_arg_count_folds_to_false(self):
+        """See IsLineCountConstraint's twin: the reason is what distinguishes the branches."""
         from plugin.rules.constraints.is_size import IsSizeConstraint
 
-        assert IsSizeConstraint(">").fold() is False
-        assert IsSizeConstraint().fold() is False
+        expected = "expects exactly 2 args (a comparator and a threshold), got {}"
+        assert IsSizeConstraint(">").fold() == Fold(False, expected.format(1))
+        assert IsSizeConstraint().fold() == Fold(False, expected.format(0))
+
+    def test_unknown_comparator_folds_to_false(self):
+        from plugin.rules.constraints.is_size import IsSizeConstraint
+
+        assert IsSizeConstraint("~~", 0).fold() == Fold(False, "'~~' is not a known comparator")
 
     def test_valid_does_not_fold(self):
         from plugin.rules.constraints.is_size import IsSizeConstraint
 
-        assert IsSizeConstraint(">", 0).fold() is None
+        assert IsSizeConstraint(">", 0).fold().value is None
 
 
 # ── IsPlatformConstraint ──────────────────────────────────────────────────────
@@ -634,7 +650,7 @@ class TestIsPlatformConstraint:
     def test_empty_args_folds_to_false(self):
         from plugin.rules.constraints.is_platform import IsPlatformConstraint
 
-        assert IsPlatformConstraint().fold() is False
+        assert IsPlatformConstraint().fold() == Fold(False, "no platform was given")
 
     def test_guaranteed_false_folds_to_false(self):
         """The platform is fixed at install time, so a constraint that can never match given the
@@ -642,7 +658,7 @@ class TestIsPlatformConstraint:
         the optimizer should be able to prune it the same way."""
         from plugin.rules.constraints.is_platform import IsPlatformConstraint
 
-        assert IsPlatformConstraint("windows").fold() is False
+        assert IsPlatformConstraint("windows").fold() == Fold(False, 'this Sublime Text is linux, not any of "windows"')
 
     def test_guaranteed_true_does_not_fold(self):
         """`fold()` could report `True` here -- the platform is fixed at install time, so this
@@ -652,7 +668,7 @@ class TestIsPlatformConstraint:
         platform it was written for."""
         from plugin.rules.constraints.is_platform import IsPlatformConstraint
 
-        assert IsPlatformConstraint("linux").fold() is None
+        assert IsPlatformConstraint("linux").fold().value is None
 
 
 # ── AbstractConstraint class methods ──────────────────────────────────────────
@@ -712,17 +728,17 @@ class TestIsArchConstraint:
     def test_empty_folds_to_false(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
 
-        assert IsArchConstraint().fold() is False
+        assert IsArchConstraint().fold() == Fold(False, "no architecture was given")
 
     def test_guaranteed_false_folds_to_false(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
 
-        assert IsArchConstraint("x32").fold() is False
+        assert IsArchConstraint("x32").fold() == Fold(False, 'this Sublime Text is x64, not any of "x32"')
 
     def test_guaranteed_true_does_not_fold(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
 
-        assert IsArchConstraint("x64").fold() is None
+        assert IsArchConstraint("x64").fold().value is None
 
     def test_name(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
@@ -750,17 +766,19 @@ class TestIsPlatformArchConstraint:
     def test_empty_folds_to_false(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
 
-        assert IsPlatformArchConstraint().fold() is False
+        assert IsPlatformArchConstraint().fold() == Fold(False, "no platform/arch pair was given")
 
     def test_guaranteed_false_folds_to_false(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
 
-        assert IsPlatformArchConstraint("windows_x64").fold() is False
+        assert IsPlatformArchConstraint("windows_x64").fold() == Fold(
+            False, 'this Sublime Text is linux_x64, not any of "windows_x64"'
+        )
 
     def test_guaranteed_true_does_not_fold(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
 
-        assert IsPlatformArchConstraint("linux_x64").fold() is None
+        assert IsPlatformArchConstraint("linux_x64").fold().value is None
 
     def test_name(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
@@ -818,12 +836,12 @@ class TestSelectorMatchesConstraint:
     def test_no_candidates_folds_to_false(self):
         from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
-        assert SelectorMatchesConstraint().fold() is False
+        assert SelectorMatchesConstraint().fold().value is False
 
     def test_with_candidates_does_not_fold(self):
         from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
-        assert SelectorMatchesConstraint("source.python").fold() is None
+        assert SelectorMatchesConstraint("source.python").fold().value is None
 
     def test_no_syntax_raises(self, make_snapshot):
         from plugin.rules.constraint import AlwaysFalsyException

@@ -2,6 +2,8 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ..match import AbstractMatch
 from ..match import MatchableRule
 
@@ -11,12 +13,13 @@ class AnyMatch(AbstractMatch):
     """Matches when any rule is matched."""
 
     @override
-    def fold(self, rules: tuple[MatchableRule, ...]) -> bool | None:
+    def fold(self, rules: tuple[MatchableRule, ...]) -> Fold:
         """`any([])` is `False`, so an empty `any` is a constant False -- unlike an empty `all`, which is True."""
-        return False if not rules else None
+        return Fold(False, 'an "any" with no sub-rule matches nothing') if not rules else UNFOLDED
 
-    # prunable_child_value() is intentionally NOT overridden: False is OR's identity element
-    # (`any(False, x) == any(x)`), which matches `AbstractMatch`'s inherited default exactly.
+    @override
+    def prunable_child_value(self) -> bool | None:
+        return False
 
     @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:

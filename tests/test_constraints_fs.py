@@ -60,7 +60,7 @@ class TestRelativeExistsConstraint:
     def test_empty_args_folds_to_false(self):
         from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
 
-        assert RelativeExistsConstraint().fold() is False
+        assert RelativeExistsConstraint().fold().value is False
 
     def test_null_match_kwarg_does_not_raise(self, make_snapshot, tmp_path):
         """Regression: `match=None` is present with value None, not absent, so

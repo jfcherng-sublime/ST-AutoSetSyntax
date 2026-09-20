@@ -226,14 +226,20 @@ At compile time, the rule tree is optimized — rules that *fold* (their result 
 on runtime data, so they'd evaluate to the same thing on every view) are pruned so they aren't
 re-tested on every view.
 
-Every node answers one question, `fold()`, returning the constant it always evaluates to or
-`None` when the result still depends on the view:
+Every node answers one question, `fold()`, returning a `Fold(value, reason)` — the constant it
+always evaluates to plus why — or `UNFOLDED` when the result still depends on the view:
 
 ```
 SyntaxRule.fold()     → False if no syntax, no events (and not unrestricted), or no root_rule
 MatchRule.fold()      → the match's own fold, e.g. some(5) with 3 children is a constant False
 ConstraintRule.fold() → the constraint's fold, flipped by `inverted`
 ```
+
+The `reason` travels with the value because only the folding node knows it: by the time the rule
+reaches the dropped-rules report, "never matches" is all that would be left to say. It is quoted
+verbatim there, after the verdict — e.g. `never matches: no extension was given`, or
+`always matches: a "threshold" of 0 is met without finding anything` — so phrase it for the user
+reading **Debug Information**, not for whoever reads the source.
 
 Knowing *which* constant a rule folds to is the whole point: an empty `all` is always `True`
 (`all([]) == True`) while an empty `any` is always `False` (`any([]) == False`), and they are
@@ -249,6 +255,13 @@ safe to silently remove from its own child list without changing its result:
   removed without shifting that goal.
 
 Dropped rules are logged and stored in `G.dropped_rules_collection` for debugging.
+
+Optimizing is best-effort: it walks the tree mutating it, so if a node's `fold()` misbehaves
+(in practice, a Custom Implementation that doesn't return a `Fold`), a half-finished pass would
+leave a rule whose root was already detached. `compile_rules()` catches that, logs the offending
+class, and rebuilds the collection from the settings to run **unoptimized** — every rule still
+tests correctly, it just gets re-evaluated on each view. One broken custom implementation
+doesn't cost the window the rest of the user's rules.
 
 ## ViewSnapshot
 
@@ -302,10 +315,12 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
 1. Create a Python file in `Packages/AutoSetSyntax-Custom/matches/` or `Packages/AutoSetSyntax-Custom/constraints/`
 2. Subclass `AbstractMatch` or `AbstractConstraint`
 3. Implement `test()` (and optionally `fold()`)
-   - `fold()` returns the constant `test()` would always return, or `None` when the result still
-     depends on the view. Both constants are expressible, so an "always matches" implementation
-     reports `True` and an "always fails" one reports `False` — getting this backwards inverts
-     the rule's meaning.
+   - `fold()` returns `Fold(constant, reason)` — the constant `test()` would always return plus
+     a user-facing explanation — or `UNFOLDED` when the result still depends on the view. Both
+     constants are expressible, so an "always matches" implementation reports `True` and an
+     "always fails" one reports `False` — getting this backwards inverts the rule's meaning.
+     It has to be a real `Fold`: a bare `False`/`None`, or a plain `(False, "…")` tuple, is
+     rejected.
    - For `AbstractMatch`, also override `prunable_child_value()` if the match supports safely
      pruning individual children (see [Optimization](#optimization)); the default of "only a
      constant-`False` child is prunable" is right for `any`-like combinators but wrong for
@@ -316,8 +331,17 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
     `fold()` replaces `is_droppable()`, `droppable_value()` and `AbstractMatch.is_droppable()`.
     A custom implementation still overriding those names keeps working, but silently stops
     being optimized away — AutoSetSyntax logs a warning naming the class at startup. To
-    migrate, return `False` where you returned `is_droppable() == True`, and `None` where you
-    returned `False`.
+    migrate, return `False` where you returned `is_droppable() == True`, and `UNFOLDED` where
+    you returned `False`.
+
+    `fold()` now returns a `Fold(value, reason)` rather than a bare `bool | None`, and the
+    contract is strict: it **must** return a `Fold` (or `UNFOLDED`) — a plain `(value, reason)`
+    tuple does not count. A custom implementation
+    still returning a bare `True`/`False`/`None` raises a `TypeError` naming the offending
+    class in the log panel; AutoSetSyntax then falls back to running every rule unoptimized
+    rather than losing the window's rules entirely. Migrate by wrapping the value with its
+    reason: `return Fold(False, "no foo was given")`, and `return UNFOLDED` where you returned
+    `None`.
 4. The class name convention determines the setting name: `FooBarMatch` → `"foo_bar"` and `BazConstraint` → `"baz"`
 
 Auto-discovered at plugin load via `_load_custom_implementations()` using `pkgutil.iter_modules()`.

@@ -35,10 +35,13 @@ from .settings import extra_settings_producer
 from .settings import get_merged_plugin_setting
 from .shared import G
 from .snapshot import ViewSnapshot
+from .types import UNFOLDED
+from .types import Fold
 from .types import ListenerEvent
 
 __all__ = (
     # public interfaces
+    "UNFOLDED",
     "AbstractConstraint",
     "AbstractMatch",
     # ST: listeners
@@ -57,6 +60,7 @@ __all__ = (
     "AutoSetSyntaxTextChangeListener",
     "AutoSetSyntaxToggleLogPanelCommand",
     "AutoSetSyntaxUpdateLogCommand",
+    "Fold",
     "MatchableRule",
     "ViewSnapshot",
     # ST: core

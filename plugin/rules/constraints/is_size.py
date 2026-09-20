@@ -3,7 +3,9 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
 from ...types import Comparator
+from ...types import Fold
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
 
@@ -25,8 +27,12 @@ class IsSizeConstraint(AbstractConstraint):
         self.threshold = float(threshold)
 
     @override
-    def fold(self) -> bool | None:
-        return None if (self.comparator and self.threshold is not None) else False
+    def fold(self) -> Fold:
+        if len(self.args) != 2:
+            return Fold(False, f"expects exactly 2 args (a comparator and a threshold), got {len(self.args)}")
+        if not self.comparator:
+            return Fold(False, f"{self.args[0]!r} is not a known comparator")
+        return UNFOLDED
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

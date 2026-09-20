@@ -22,6 +22,8 @@ from ..constants import PLUGIN_NAME
 from ..constants import ST_PLATFORM
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
+from ..types import UNFOLDED
+from ..types import Fold
 from ..types import Optimizable
 from ..types import StConstraintRule
 from ..utils import camel_to_snake
@@ -30,6 +32,7 @@ from ..utils import drop_falsy
 from ..utils import list_all_subclasses
 from ..utils import merge_regexes
 from ..utils import parse_regex_flags
+from ._optimize import require_fold
 
 
 def find_constraint(obj: Any) -> type[AbstractConstraint] | None:
@@ -58,13 +61,19 @@ class ConstraintRule(Optimizable):
     """The source setting object."""
 
     @override
-    def fold(self) -> bool | None:
-        # a rule whose constraint failed to compile can never pass, so it folds like a `test()`
-        # that always fails -- which `inverted` then flips, exactly as it would a real result
-        value = self.constraint.fold() if self.constraint else False
+    def fold(self) -> Fold:
+        # `make()` returns `None` rather than a constraint-less rule, and every parent drops
+        # those, so a rule in a compiled tree always has one -- same assumption `test()` makes
+        assert self.constraint
+
+        value, reason = require_fold(self.constraint, self.constraint.fold())
         if value is None:
-            return None
-        return not value if self.inverted else value
+            return UNFOLDED
+        if not self.inverted:
+            return Fold(value, reason)
+        # the reason states what the *constraint* settled, so say that "not" flipped the verdict
+        # -- "always matches: no extension was given" reads like its own contradiction otherwise
+        return Fold(not value, ", ".join(drop_falsy((reason, 'negated by "not"'))))
 
     @override
     def optimize(self) -> Generator[Optimizable]:
@@ -127,17 +136,18 @@ class AbstractConstraint(ABC):
         """Determines whether this class supports `obj`."""
         return str(obj) == cls.name()
 
-    def fold(self) -> bool | None:
+    def fold(self) -> Fold:
         """
-        The fixed boolean value `test()` always returns, or `None` when the result still
+        The constant `test()` always returns and why, or `UNFOLDED` when the result still
         depends on the view.
 
         Override this when this constraint's own arguments already settle the answer: e.g.
-        `is_extension` with no extensions given can never match, so it folds to `False`, and
-        `contains` with a threshold of `0` always matches, so it folds to `True`. A folded
-        constraint is reported to the user as a dropped rule instead of being tested per view.
+        `is_extension` with no extensions given can never match, so it folds to
+        `Fold(False, "no extensions given")`, and `contains` with a threshold of `0` always
+        matches, so it folds to `Fold(True, ...)`. A folded constraint is reported to the user as
+        a dropped rule -- carrying that reason verbatim -- instead of being tested per view.
         """
-        return None
+        return UNFOLDED
 
     @abstractmethod
     def test(self, view_snapshot: ViewSnapshot) -> bool:

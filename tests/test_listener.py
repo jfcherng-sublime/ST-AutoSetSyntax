@@ -131,3 +131,64 @@ class TestCompileRulesHandlesInvalidSyntaxRules:
         finally:
             G.syntax_rule_collections.pop(window, None)
             G.dropped_rules_collection.pop(window, None)
+
+
+class TestCompileRulesSurvivesABrokenFold:
+    """`fold()` must return a `Fold`, but a Custom Implementation is user code we only find out
+    about at compile time. Optimizing prunes the tree as it walks it, so letting the failure
+    escape would both kill `set_up_window()` for the whole window and leave a half-pruned
+    collection behind. Fall back to the unoptimized rules instead."""
+
+    def test_bad_fold_keeps_the_rules_usable(self, monkeypatch):
+        from plugin.rules import AbstractConstraint
+        from plugin.types import StConstraintRule
+        from plugin.types import StSyntaxRule
+
+        class BrokenFoldConstraint(AbstractConstraint):
+            """A custom constraint still written against the old bare-`bool | None` contract."""
+
+            def fold(self):  # type: ignore[override]
+                return False
+
+            def test(self, view_snapshot) -> bool:
+                return True
+
+        window = _make_window(107)
+        syntax = sublime.Syntax("Packages/Python/Python.sublime-syntax", "Python", False, "source.python")
+        monkeypatch.setattr(
+            listener_mod,
+            "pref_syntax_rules",
+            lambda *, window=None: [
+                StSyntaxRule(
+                    syntaxes=["Python"],
+                    selector="",
+                    rules=[StConstraintRule(constraint="broken_fold")],
+                )
+            ],
+        )
+        monkeypatch.setattr("plugin.rules.syntax.find_syntax", lambda *args, **kwargs: syntax)
+
+        logged: list[str] = []
+        monkeypatch.setattr(
+            listener_mod.Logger,
+            "log",
+            staticmethod(lambda msg, **kwargs: logged.append(msg() if callable(msg) else msg)),
+        )
+
+        try:
+            listener_mod.compile_rules(window)  # must not raise
+
+            # the rule survived unoptimized, still holding the root that `SyntaxRule.test()`
+            # asserts on -- a half-pruned tree would have detached it
+            collection = G.syntax_rule_collections[window]
+            assert len(collection) == 1
+            assert collection.rules[0].root_rule is not None
+            assert G.dropped_rules_collection[window] == []
+
+            # naming the class is the whole point: "cannot unpack non-iterable bool object"
+            # would leave the user guessing which of their custom implementations broke
+            failure = next(msg for msg in logged if msg.startswith("❌"))
+            assert "BrokenFoldConstraint.fold() must return a Fold" in failure
+        finally:
+            G.syntax_rule_collections.pop(window, None)
+            G.dropped_rules_collection.pop(window, None)

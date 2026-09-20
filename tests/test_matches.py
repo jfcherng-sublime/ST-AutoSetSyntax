@@ -50,12 +50,12 @@ class TestAnyMatch:
     def test_empty_rules_folds_to_false(self):
         from plugin.rules.matches.any import AnyMatch
 
-        assert AnyMatch().fold(()) is False
+        assert AnyMatch().fold(()).value is False
 
     def test_non_empty_rules_does_not_fold(self):
         from plugin.rules.matches.any import AnyMatch
 
-        assert AnyMatch().fold(_rules(True)) is None
+        assert AnyMatch().fold(_rules(True)).value is None
 
     def test_name(self):
         from plugin.rules.matches.any import AnyMatch
@@ -109,7 +109,7 @@ class TestAllMatch:
         `fold()` exists to carry."""
         from plugin.rules.matches.all import AllMatch
 
-        assert AllMatch().fold(()) is True
+        assert AllMatch().fold(()).value is True
 
     def test_name(self):
         from plugin.rules.matches.all import AllMatch
@@ -156,12 +156,12 @@ class TestSomeMatch:
         from plugin.rules.matches.some import SomeMatch
 
         # count=5 but only 3 rules → droppable
-        assert SomeMatch(5).fold(_rules(True, True, True)) is False
+        assert SomeMatch(5).fold(_rules(True, True, True)).value is False
 
     def test_valid_count_does_not_fold(self):
         from plugin.rules.matches.some import SomeMatch
 
-        assert SomeMatch(2).fold(_rules(True, True, True)) is None
+        assert SomeMatch(2).fold(_rules(True, True, True)).value is None
 
     def test_name(self):
         from plugin.rules.matches.some import SomeMatch
@@ -216,17 +216,17 @@ class TestRatioMatch:
         `test_count()` passes -- a constant True, not False."""
         from plugin.rules.matches.ratio import RatioMatch
 
-        assert RatioMatch(1, 0).fold(_rules(True)) is True
+        assert RatioMatch(1, 0).fold(_rules(True)).value is True
 
     def test_ratio_above_one_folds_to_false(self):
         from plugin.rules.matches.ratio import RatioMatch
 
-        assert RatioMatch(3, 2).fold(_rules(True)) is False
+        assert RatioMatch(3, 2).fold(_rules(True)).value is False
 
     def test_valid_ratio_does_not_fold(self):
         from plugin.rules.matches.ratio import RatioMatch
 
-        assert RatioMatch(2, 3).fold(_rules(True, True, True)) is None
+        assert RatioMatch(2, 3).fold(_rules(True, True, True)).value is None
 
     def test_name(self):
         from plugin.rules.matches.ratio import RatioMatch

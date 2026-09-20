@@ -3,6 +3,8 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ...utils import compile_regex
 from ...utils import merge_literals_to_regex
 from ...utils import merge_regexes
@@ -31,13 +33,13 @@ class IsInterpreterConstraint(AbstractConstraint):
         )
 
     @override
-    def fold(self) -> bool | None:
+    def fold(self) -> Fold:
         """
         `self.first_line_regex` is always a compiled `Pattern`, which is never falsy, even with
         no interpreters given (it then embeds a "match nothing" sub-pattern). Check
         `self.interpreters` itself instead of the always-truthy compiled regex.
         """
-        return None if self.interpreters else False
+        return UNFOLDED if self.interpreters else Fold(False, "no interpreter was given")
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

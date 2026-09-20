@@ -10,10 +10,13 @@ from more_itertools import map_except
 
 from ..constants import VERSION
 from ..snapshot import ViewSnapshot
+from ..types import UNFOLDED
+from ..types import Fold
 from ..types import ListenerEvent
 from ..types import Optimizable
 from ..types import StSyntaxRule
 from ..utils import find_syntax
+from ..utils import quote_join
 from ._optimize import sift_optimizable
 from .match import MatchRule
 
@@ -32,21 +35,25 @@ class SyntaxRule(Optimizable):
     """The source setting object."""
 
     @override
-    def fold(self) -> bool | None:
+    def fold(self) -> Fold:
         # with no syntax to assign, no event that can ever trigger it, or no root rule left,
         # this rule can never usefully match
-        if not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule):
-            return False
-        return None
+        if not self.syntax:
+            return Fold(False, f"none of these syntaxes is available: {quote_join(self.syntaxes_name or ())}")
+        if self.on_events is not None and not self.on_events:
+            return Fold(False, '"on_events" lists no event that could trigger it')
+        if not self.root_rule:
+            return Fold(False, "no sub-rule is left to test")
+        return UNFOLDED
 
     @override
     def optimize(self) -> Generator[Optimizable]:
         if not self.root_rule:
             return
 
-        if (folded := self.root_rule.fold()) is None:
+        if (folded := self.root_rule.fold().value) is None:
             yield from self.root_rule.optimize()
-            folded = self.root_rule.fold()  # optimizing may have collapsed it to a constant
+            folded = self.root_rule.fold().value  # optimizing may have collapsed it to a constant
 
         # a constant-True root_rule always matches (given selector/events); only a
         # constant-False one can be discarded without changing this rule's behavior

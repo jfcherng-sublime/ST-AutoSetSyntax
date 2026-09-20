@@ -55,7 +55,8 @@ _Avoid_: group, operator, combinator
 **Dropped Rule**:
 A syntax rule, match or constraint discarded while compiling because its outcome can no longer depend
 on the view — it would always pass, or always fail. Dropped rules are reported to the user rather
-than silently removed.
+than silently removed, each carrying the reason it could be dropped in the words of the rule that
+settled it — "no extension was given", not just the verdict "never matches".
 _Avoid_: pruned rule, optimized-away rule, dead rule
 
 ### Configuration

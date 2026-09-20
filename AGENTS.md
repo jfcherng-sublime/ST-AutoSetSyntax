@@ -62,6 +62,7 @@ Class naming convention: `FooBarMatch` → name `"foo_bar"`, `FooBarConstraint` 
 
 - **`AbstractMatch`** — base class for `any`, `all`, `some`, `ratio` match types; `test()` receives a `ViewSnapshot` and child `MatchableRule`s
 - **`AbstractConstraint`** — base class for leaf conditions (`is_extension`, `contains_regex`, `is_syntax`, etc.); `test()` returns bool
+- **`fold()`** — the optimizer contract both base classes carry alongside `test()`. Return `Fold(constant, reason)` when the object's own arguments already settle the answer, `UNFOLDED` when the result still depends on the view. Strict: returning a bare `bool`/`None` raises a `TypeError` naming the class. The `reason` is user-facing — it's quoted verbatim in the dropped-rules report, so phrase it for whoever reads Debug Information
 - **`SyntaxRule`** — top-level rule with `selector`, `on_events`, `syntaxes`, and a root `MatchRule`
 - **`SyntaxRuleCollection`** — ordered list of `SyntaxRule`; returns the first matching rule
 
@@ -79,7 +80,7 @@ The settings file defines `rules` entries that match file content to syntaxes. E
   - **`not`** — optional bool to negate the constraint
   - **`comment`** — optional description of the rule's purpose
 
-Rules are evaluated top-to-bottom; the first matching rule wins. Constraints with falsy patterns (`""`, `[]`) are dropped silently.
+Rules are evaluated top-to-bottom; the first matching rule wins. A constraint with falsy patterns (`""`, `[]`) can never match, so it's dropped while compiling — and reported, with the reason, in the log panel and in Debug Information. Nothing is dropped silently.
 
 ### Extensibility
 

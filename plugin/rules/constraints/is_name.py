@@ -3,6 +3,8 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
 
@@ -18,8 +20,8 @@ class IsNameConstraint(AbstractConstraint):
         self.names = set(map(str.lower, names) if self.case_insensitive else names)
 
     @override
-    def fold(self) -> bool | None:
-        return None if self.names else False
+    def fold(self) -> Fold:
+        return UNFOLDED if self.names else Fold(False, "no file name was given")
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

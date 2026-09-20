@@ -15,7 +15,17 @@ Log messages are printed in the dedicated log panel. There are two ways to open 
 
 To check whether your rules are being dropped during optimization (e.g., due to wrong names
 or arguments), (re-)save your plugin/project settings and inspect the log panel for dropped
-rules messages.
+rules messages. Each one says *why* it could be dropped, in the rule's own words:
+
+```
+never matches: no extension was given
+never matches: this Sublime Text is linux_x64, not any of "windows_x64"
+always matches: a "threshold" of 0 is met without finding anything
+```
+
+A dropped rule is not an error — a rule that can never match, or always matches, simply
+doesn't need re-testing on every view. But if one you meant to use shows up here, the reason
+is what tells you which argument to fix.
 
 !!! note
 

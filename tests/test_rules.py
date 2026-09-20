@@ -1,5 +1,9 @@
 """Tests for ConstraintRule, MatchRule, SyntaxRule, SyntaxRuleCollection, sift_optimizable."""
 
+import pytest
+
+from plugin.types import UNFOLDED
+from plugin.types import Fold
 from plugin.types import StConstraintRule
 from plugin.types import StMatchRule
 from plugin.types import StSyntaxRule
@@ -65,7 +69,7 @@ class TestConstraintRule:
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension"))
         assert rule is not None
         # empty args → no extensions → constraint folds to a constant False
-        assert rule.fold() is False
+        assert rule.fold().value is False
 
     def test_src_setting_stored(self):
         _ensure_rules_imported()
@@ -92,7 +96,7 @@ class TestConstraintRule:
 
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension"))  # empty args -> folds
         assert rule is not None
-        assert rule.fold() is False
+        assert rule.fold().value is False
 
     def test_folds_to_true_when_inverted(self):
         """`inverted` flips a folded constraint like it flips a real result: an always-fails
@@ -102,7 +106,9 @@ class TestConstraintRule:
 
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", inverted=True))
         assert rule is not None
-        assert rule.fold() is True
+        # the reason still states what the constraint settled, so it has to name the flip too --
+        # a bare "always matches: no extension was given" reads like its own contradiction
+        assert rule.fold() == Fold(True, 'no extension was given, negated by "not"')
 
     def test_does_not_fold_when_constraint_depends_on_the_view(self):
         """`inverted` must not turn a non-constant constraint into one."""
@@ -111,7 +117,7 @@ class TestConstraintRule:
 
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"], inverted=True))
         assert rule is not None
-        assert rule.fold() is None
+        assert rule.fold().value is None
 
 
 # ── MatchRule ──────────────────────────────────────────────────────────────────
@@ -192,7 +198,7 @@ class TestMatchRule:
 
         rule = MatchRule.make(StMatchRule(match="any", rules=[]))
         assert rule is not None
-        assert rule.fold() is False
+        assert rule.fold().value is False
 
     def test_src_setting_stored(self):
         _ensure_rules_imported()
@@ -215,7 +221,7 @@ class TestMatchFoldAndPrunability:
         _ensure_rules_imported()
         from plugin.rules.matches.any import AnyMatch
 
-        assert AnyMatch().fold(()) is False
+        assert AnyMatch().fold(()).value is False
         assert AnyMatch().prunable_child_value() is False
 
     def test_all_match_folds_empty_to_true(self):
@@ -223,7 +229,7 @@ class TestMatchFoldAndPrunability:
         _ensure_rules_imported()
         from plugin.rules.matches.all import AllMatch
 
-        assert AllMatch().fold(()) is True
+        assert AllMatch().fold(()).value is True
         assert AllMatch().prunable_child_value() is True
 
     def test_some_match_folds_to_true_when_goal_unreachable_low(self):
@@ -231,15 +237,15 @@ class TestMatchFoldAndPrunability:
         _ensure_rules_imported()
         from plugin.rules.matches.some import SomeMatch
 
-        assert SomeMatch(-1).fold(()) is True
-        assert SomeMatch(0).fold((_FixedRule(True), _FixedRule(True))) is True
+        assert SomeMatch(-1).fold(()).value is True
+        assert SomeMatch(0).fold((_FixedRule(True), _FixedRule(True))).value is True
 
     def test_some_match_folds_to_false_when_goal_unreachable_high(self):
         """count > len(rules) can never be satisfied -> constant False."""
         _ensure_rules_imported()
         from plugin.rules.matches.some import SomeMatch
 
-        assert SomeMatch(3).fold((_FixedRule(True), _FixedRule(True))) is False
+        assert SomeMatch(3).fold((_FixedRule(True), _FixedRule(True))).value is False
 
     def test_ratio_match_never_allows_child_pruning(self):
         """Ratio's goal is recomputed from `len(rules)`, so pruning any child would corrupt it."""
@@ -255,12 +261,13 @@ class TestMatchFoldAndPrunability:
 class _FixedRule:
     """Fake leaf rule: fixed test() result and droppability, for isolating optimizer logic."""
 
-    def __init__(self, result: bool, *, folded: bool | None = None) -> None:
+    def __init__(self, result: bool, *, folded: bool | None = None, reason: str = "") -> None:
         self._result = result
         self._folded = folded
+        self._reason = reason
 
-    def fold(self) -> bool | None:
-        return self._folded
+    def fold(self) -> Fold:
+        return Fold(self._folded, self._reason)
 
     def optimize(self):
         return iter(())
@@ -431,7 +438,7 @@ class TestSyntaxRule:
                 rules=[StConstraintRule(constraint="is_extension", args=["py"])],
             )
         )
-        assert rule.fold() is False
+        assert rule.fold().value is False
 
     def test_empty_on_events_never_triggers(self, make_snapshot):
         """on_events=[] means no event triggers — rule becomes droppable."""
@@ -476,7 +483,7 @@ class TestSyntaxRule:
         rule = SyntaxRule.make(StSyntaxRule(syntaxes=["Python"], rules=[]))
         root_rule = rule.root_rule
         assert root_rule is not None
-        assert root_rule.fold() is False
+        assert root_rule.fold().value is False
 
         dropped = list(rule.optimize())
 
@@ -491,7 +498,7 @@ class TestSyntaxRule:
         rule = SyntaxRule.make(StSyntaxRule(syntaxes=["Python"], match="all", rules=[]))
         root_rule = rule.root_rule
         assert root_rule is not None
-        assert root_rule.fold() is True
+        assert root_rule.fold().value is True
 
         dropped = list(rule.optimize())
 
@@ -515,7 +522,7 @@ class TestSyntaxRule:
         root_rule = rule.root_rule
         assert root_rule is not None
         assert len(root_rule.rules) == 2
-        assert root_rule.fold() is None
+        assert root_rule.fold().value is None
 
         dropped = list(rule.optimize())
 
@@ -536,7 +543,7 @@ class TestSyntaxRule:
         )
         root_rule = rule.root_rule
         assert root_rule is not None
-        assert root_rule.fold() is None  # still has a (droppable) child, so not droppable yet
+        assert root_rule.fold().value is None  # still has a (droppable) child, so not droppable yet
         child_rule = root_rule.rules[0]
 
         dropped = list(rule.optimize())
@@ -618,8 +625,8 @@ class _OptimizableBase:
         self._droppable = droppable
         self.optimized_yielded: list = []
 
-    def fold(self) -> bool | None:
-        return False if self._droppable else None
+    def fold(self) -> Fold:
+        return Fold(False, "droppable") if self._droppable else UNFOLDED
 
     def optimize(self):
         return iter(self.optimized_yielded)
@@ -722,8 +729,50 @@ class TestDroppedRule:
         dropped = [DroppedRule.make(r) for r in rule.optimize()]
 
         # the constant-False child stays: `all(False, x)` is False, unlike `all(x)`
-        assert [(d.rule.constraint_name, d.reason) for d in dropped] == [("contains", "always matches")]  # type: ignore[union-attr]
-        assert DroppedRule.make(rule.rules[0]).reason == "never matches"
+        assert [(d.rule.constraint_name, d.reason) for d in dropped] == [  # type: ignore[union-attr]
+            ("contains", 'always matches: a "threshold" of 0 is met without finding anything'),
+        ]
+        assert DroppedRule.make(rule.rules[0]).reason == "never matches: no extension was given"
+
+
+class _BadFoldConstraint:
+    """A custom constraint whose `fold()` returns something that isn't a `Fold`."""
+
+    def __init__(self, fold: object) -> None:
+        self._fold = fold
+
+    def fold(self) -> object:
+        return self._fold
+
+    def test(self, view_snapshot) -> bool:
+        return False
+
+
+class TestFoldReturnTypeIsEnforced:
+    """`fold()` must return a `Fold`. Nothing else counts -- not a bare `bool`/`None` from the
+    older contract, and not a plain `(value, reason)` tuple of the right shape either, even
+    though `Fold` is a `NamedTuple` and unpacking one would have worked. The rejection has to
+    name the class: that's the only part of the message a user can act on."""
+
+    @pytest.mark.parametrize("bad", [False, True, None, (False, "no widget was given"), "nope"])
+    def test_non_fold_return_is_rejected_by_class_name(self, bad):
+        _ensure_rules_imported()
+        from plugin.rules.constraint import ConstraintRule
+
+        rule = ConstraintRule(constraint=_BadFoldConstraint(bad))  # type: ignore[arg-type]
+
+        with pytest.raises(TypeError, match=r"_BadFoldConstraint\.fold\(\) must return a Fold"):
+            rule.fold()
+
+    def test_a_real_fold_is_returned_as_is(self):
+        _ensure_rules_imported()
+        from plugin.rules.constraint import ConstraintRule
+        from plugin.types import DroppedRule
+
+        rule = ConstraintRule(constraint=_BadFoldConstraint(Fold(False, "no widget was given")))  # type: ignore[arg-type]
+
+        assert rule.fold() == Fold(False, "no widget was given")
+        assert DroppedRule.make(rule).reason == "never matches: no widget was given"
 
 
 # ── warn_legacy_fold_overrides ────────────────────────────────────────────────
@@ -827,8 +876,8 @@ class _ConsistentFixedRule:
         self._result = result
         self._folds = folds
 
-    def fold(self) -> bool | None:
-        return self._result if self._folds else None
+    def fold(self) -> Fold:
+        return Fold(self._result, "fixed") if self._folds else UNFOLDED
 
     def optimize(self):
         return iter(())

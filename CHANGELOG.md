@@ -3,17 +3,24 @@
 ## Unreleased
 
 - refactor!: `fold()` replaces the `is_droppable()`/`droppable_value()`/`AbstractMatch.is_droppable()`
-  trio in the rule optimizer. It returns the constant a rule always evaluates to, or `None` when
-  the result still depends on the view. **Custom constraints/matches** overriding the old names
-  keep working but are no longer optimized away; a warning naming the class is printed at
-  startup. To migrate, return `False` where you returned `is_droppable() == True`, and `None`
-  where you returned `False`.
+  trio in the rule optimizer. It returns a `Fold(value, reason)` -- the constant a rule always
+  evaluates to, plus why -- or `UNFOLDED` when the result still depends on the view. Nothing else
+  is accepted: a custom implementation returning a bare `True`/`False`/`None` (or a plain
+  `(value, reason)` tuple) is rejected with a `TypeError` naming the class.
+  **Custom constraints/matches** overriding the old names keep working but are no longer
+  optimized away; a warning naming the class is printed at startup. To migrate, return
+  `Fold(False, "why it can never match")` where you returned `is_droppable() == True`, and
+  `UNFOLDED` where you returned `False`.
 - perf: a constraint or match that always *matches* can now be pruned too, which the old
   protocol could only express for the always-fails direction. `contains`/`contains_regex` with
   a threshold `<= 0` and `some(0)` are now reported as dropped rules instead of being re-tested
   on every view.
-- feat(debug): dropped rules now say why they were dropped -- `always matches` or `never
-  matches` -- in the log and in Debug Information
+- feat(debug): dropped rules now say *why* they were dropped, in the rule's own words --
+  `never matches: no extension was given`, `always matches: a "threshold" of 0 is met without
+  finding anything` -- in the log panel and in Debug Information
+- fix: a custom implementation that breaks rule optimizing no longer costs the window every
+  other rule. The failure is logged with the offending class name and the rules are used
+  unoptimized instead.
 
 ## 6.1.1
 

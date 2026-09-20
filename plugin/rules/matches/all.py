@@ -2,6 +2,8 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ..match import AbstractMatch
 from ..match import MatchableRule
 
@@ -11,9 +13,9 @@ class AllMatch(AbstractMatch):
     """Matches when all rules are matched."""
 
     @override
-    def fold(self, rules: tuple[MatchableRule, ...]) -> bool | None:
+    def fold(self, rules: tuple[MatchableRule, ...]) -> Fold:
         """`all([])` is `True`, so an empty `all` is a constant True -- unlike an empty `any`, which is False."""
-        return True if not rules else None
+        return Fold(True, 'an "all" with no sub-rule matches everything') if not rules else UNFOLDED
 
     @override
     def prunable_child_value(self) -> bool | None:

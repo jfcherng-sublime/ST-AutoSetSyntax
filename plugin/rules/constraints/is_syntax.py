@@ -3,6 +3,8 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ...utils import find_syntaxes
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
@@ -16,8 +18,8 @@ class IsSyntaxConstraint(AbstractConstraint):
         self.candidates: tuple[str, ...] = self._handled_args()
 
     @override
-    def fold(self) -> bool | None:
-        return None if self.candidates else False
+    def fold(self) -> Fold:
+        return UNFOLDED if self.candidates else Fold(False, "no syntax was given")
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

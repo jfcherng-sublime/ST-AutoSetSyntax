@@ -4,6 +4,8 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
 
@@ -20,8 +22,8 @@ class RelativeExistsConstraint(AbstractConstraint):
         self.matcher = all if self.match == "all" else any
 
     @override
-    def fold(self) -> bool | None:
-        return None if self.relatives else False
+    def fold(self) -> Fold:
+        return UNFOLDED if self.relatives else Fold(False, "no relative path was given")
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

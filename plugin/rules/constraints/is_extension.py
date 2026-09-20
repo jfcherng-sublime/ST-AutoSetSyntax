@@ -4,6 +4,8 @@ from typing import override
 
 from ...settings import pref_trim_suffixes
 from ...snapshot import ViewSnapshot
+from ...types import UNFOLDED
+from ...types import Fold
 from ...utils import list_trimmed_strings
 from ..constraint import AbstractConstraint
 from ..constraint import AlwaysFalsyException
@@ -24,8 +26,8 @@ class IsExtensionConstraint(AbstractConstraint):
         self.exts = tuple(map(self.fix_case, self.exts))
 
     @override
-    def fold(self) -> bool | None:
-        return None if self.exts else False
+    def fold(self) -> Fold:
+        return UNFOLDED if self.exts else Fold(False, "no extension was given")
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

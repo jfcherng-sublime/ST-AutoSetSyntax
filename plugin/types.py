@@ -8,6 +8,8 @@ from collections.abc import KeysView
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
+from typing import Final
+from typing import NamedTuple
 from typing import Self
 from typing import overload
 
@@ -45,10 +47,31 @@ class ListenerEvent(StrEnum):
     UNTRANSIENTIZE = "untransientize"
 
 
+class Fold(NamedTuple):
+    """The constant a rule's `test()` always returns, paired with why it's constant."""
+
+    value: bool | None
+    """The constant `test()` always returns, or `None` when the result still depends on the view."""
+    reason: str
+    """
+    Why it's constant, in the user's terms ("no extensions given", not "self.exts is empty") --
+    this is what the dropped-rules report shows. Empty when `value` is `None`.
+    """
+
+
+UNFOLDED: Final = Fold(None, "")
+"""The result still depends on the view, so there is nothing to explain."""
+
+
+def _explain(verdict: str, reason: str) -> str:
+    """Join a verdict with its reason, tolerating a `fold()` that gave no reason."""
+    return f"{verdict}: {reason}" if reason else verdict
+
+
 class Optimizable(ABC):
-    def fold(self) -> bool | None:
+    def fold(self) -> Fold:
         """
-        The fixed boolean value this object's `test()` always returns, or `None` when the result
+        The constant this object's `test()` always returns and why, or `UNFOLDED` when the result
         still depends on the view.
 
         An object folds once its outcome no longer depends on runtime data -- a leaf constraint
@@ -58,9 +81,12 @@ class Optimizable(ABC):
         `any` is a constant `False`, and they are not interchangeable. See
         `AbstractMatch.prunable_child_value()` for what a parent match does with the answer.
 
-        Defaults to `None` -- "still depends on the view", i.e. never dropped.
+        The reason travels with the value because only the folding node knows it: by the time
+        `DroppedRule` reports the rule to the user, "never matches" is all that's left to say.
+
+        Defaults to `UNFOLDED` -- "still depends on the view", i.e. never dropped.
         """
-        return None
+        return UNFOLDED
 
     @abstractmethod
     def optimize(self) -> Generator[Optimizable]:
@@ -80,10 +106,10 @@ class DroppedRule:
     def make(cls, rule: Optimizable) -> Self:
         """Explain a rule that optimizing has just decided to discard."""
         match rule.fold():
-            case True:
-                return cls("always matches", rule)
-            case False:
-                return cls("never matches", rule)
+            case Fold(True, reason):
+                return cls(_explain("always matches", reason), rule)
+            case Fold(False, reason):
+                return cls(_explain("never matches", reason), rule)
             case _:
                 # optimizing only discards a rule that folds, so this means someone dropped a
                 # rule for another reason and didn't say which -- report it rather than lie

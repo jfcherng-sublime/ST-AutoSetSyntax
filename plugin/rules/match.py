@@ -13,12 +13,15 @@ from more_itertools import first_true
 from ..cache import clearable_lru_cache
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
+from ..types import UNFOLDED
+from ..types import Fold
 from ..types import Optimizable
 from ..types import StConstraintRule
 from ..types import StMatchRule
 from ..utils import camel_to_snake
 from ..utils import drop_falsy
 from ..utils import list_all_subclasses
+from ._optimize import require_fold
 from .constraint import ConstraintRule
 
 
@@ -47,16 +50,17 @@ class MatchRule(Optimizable):
     """The source setting object."""
 
     @override
-    def fold(self) -> bool | None:
-        if not self.match:
-            return False  # a match rule that failed to compile can never pass
+    def fold(self) -> Fold:
+        # `make()` returns `None` rather than a match-less rule, and every parent drops those,
+        # so a rule in a compiled tree always has one -- same assumption `test()` makes
+        assert self.match
 
-        value = self.match.fold(self.rules)
+        value, reason = require_fold(self.match, self.match.fold(self.rules))
         if value is None and not self.rules:
             # whatever the combinator, a match with no child rules can't depend on the view;
             # `False` mirrors what a match that doesn't say what it folds to used to collapse to
-            return False
-        return value
+            return Fold(False, f'the "{self.match_name}" match has no sub-rule')
+        return Fold(value, reason)
 
     @override
     def optimize(self) -> Generator[Optimizable]:
@@ -74,7 +78,7 @@ class MatchRule(Optimizable):
         survivors: list[MatchableRule] = []
         for rule in self.rules:
             # a rule that doesn't fold compares as `None` here, so it's never pruned
-            if rule.fold() == prunable_value:
+            if rule.fold().value == prunable_value:
                 yield rule
             else:
                 survivors.append(rule)
@@ -136,17 +140,18 @@ class AbstractMatch(ABC):
         """Determines whether this class supports `obj`."""
         return str(obj) == cls.name()
 
-    def fold(self, rules: tuple[MatchableRule, ...]) -> bool | None:
+    def fold(self, rules: tuple[MatchableRule, ...]) -> Fold:
         """
-        The fixed boolean value `test()` always returns for `rules`, or `None` when the result
+        The constant `test()` always returns for `rules` and why, or `UNFOLDED` when the result
         still depends on the view (see `Optimizable.fold()` for the general contract).
 
         Override this whenever this combinator's own parameters and rule *count* already settle
         the answer, in either direction: `all([])` is a constant `True` and `any([])` a constant
         `False`, while `some(n)` is a constant `True` when `n <= 0` and a constant `False` when
-        `n` exceeds the rule count.
+        `n` exceeds the rule count. Phrase the reason for the user reading the dropped-rules
+        report, which quotes it verbatim.
         """
-        return None
+        return UNFOLDED
 
     def prunable_child_value(self) -> bool | None:
         """

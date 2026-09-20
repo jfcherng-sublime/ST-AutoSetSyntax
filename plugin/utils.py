@@ -67,6 +67,11 @@ def drop_falsy[T](iterable: Iterable[T | None]) -> Generator[T]:
     yield from filter(None, iterable)
 
 
+def quote_join(items: Iterable[str]) -> str:
+    """Render strings for a message a user reads: `"a", "b"` rather than a container's repr."""
+    return ", ".join(f'"{item}"' for item in items)
+
+
 def get_fqcn(obj: Any) -> str:
     match obj:
         case None:
