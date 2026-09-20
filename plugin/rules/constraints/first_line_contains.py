@@ -14,8 +14,8 @@ class FirstLineContainsConstraint(AbstractConstraint):
         self.needles: tuple[str, ...] = self._handled_args()
 
     @override
-    def is_droppable(self) -> bool:
-        return not self.needles
+    def fold(self) -> bool | None:
+        return None if self.needles else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

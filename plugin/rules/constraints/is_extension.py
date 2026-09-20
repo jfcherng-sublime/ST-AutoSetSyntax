@@ -24,8 +24,8 @@ class IsExtensionConstraint(AbstractConstraint):
         self.exts = tuple(map(self.fix_case, self.exts))
 
     @override
-    def is_droppable(self) -> bool:
-        return not self.exts
+    def fold(self) -> bool | None:
+        return None if self.exts else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

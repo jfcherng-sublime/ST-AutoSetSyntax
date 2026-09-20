@@ -18,8 +18,8 @@ class IsNameConstraint(AbstractConstraint):
         self.names = set(map(str.lower, names) if self.case_insensitive else names)
 
     @override
-    def is_droppable(self) -> bool:
-        return not self.names
+    def fold(self) -> bool | None:
+        return None if self.names else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

@@ -11,13 +11,9 @@ class AllMatch(AbstractMatch):
     """Matches when all rules are matched."""
 
     @override
-    def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
-        return len(rules) == 0
-
-    @override
-    def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
+    def fold(self, rules: tuple[MatchableRule, ...]) -> bool | None:
         """`all([])` is `True`, so an empty `all` is a constant True -- unlike an empty `any`, which is False."""
-        return True
+        return True if not rules else None
 
     @override
     def prunable_child_value(self) -> bool | None:

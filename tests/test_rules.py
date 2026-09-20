@@ -64,8 +64,8 @@ class TestConstraintRule:
 
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension"))
         assert rule is not None
-        # empty args → no extensions → constraint is droppable
-        assert rule.is_droppable() is True
+        # empty args → no extensions → constraint folds to a constant False
+        assert rule.fold() is False
 
     def test_src_setting_stored(self):
         _ensure_rules_imported()
@@ -85,25 +85,33 @@ class TestConstraintRule:
         dropped = list(rule.optimize())
         assert dropped == []
 
-    def test_droppable_value_false_when_not_inverted(self):
-        """A droppable (always-fails) constraint that isn't inverted is constant False."""
+    def test_folds_to_false_when_not_inverted(self):
+        """A constraint that always fails is constant False."""
         _ensure_rules_imported()
         from plugin.rules.constraint import ConstraintRule
 
-        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension"))  # empty args -> droppable
+        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension"))  # empty args -> folds
         assert rule is not None
-        assert rule.is_droppable() is True
-        assert rule.droppable_value() is False
+        assert rule.fold() is False
 
-    def test_droppable_value_true_when_inverted(self):
-        """A droppable (always-fails) constraint that's inverted is constant True, not False."""
+    def test_folds_to_true_when_inverted(self):
+        """`inverted` flips a folded constraint like it flips a real result: an always-fails
+        constraint, inverted, is a constant True."""
         _ensure_rules_imported()
         from plugin.rules.constraint import ConstraintRule
 
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", inverted=True))
         assert rule is not None
-        assert rule.is_droppable() is True
-        assert rule.droppable_value() is True
+        assert rule.fold() is True
+
+    def test_does_not_fold_when_constraint_depends_on_the_view(self):
+        """`inverted` must not turn a non-constant constraint into one."""
+        _ensure_rules_imported()
+        from plugin.rules.constraint import ConstraintRule
+
+        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"], inverted=True))
+        assert rule is not None
+        assert rule.fold() is None
 
 
 # ── MatchRule ──────────────────────────────────────────────────────────────────
@@ -178,13 +186,13 @@ class TestMatchRule:
         rule = MatchRule.make(StMatchRule(match="nonexistent_match"))
         assert rule is None
 
-    def test_empty_rules_droppable(self):
+    def test_empty_rules_folds_to_false(self):
         _ensure_rules_imported()
         from plugin.rules.match import MatchRule
 
         rule = MatchRule.make(StMatchRule(match="any", rules=[]))
         assert rule is not None
-        assert rule.is_droppable() is True
+        assert rule.fold() is False
 
     def test_src_setting_stored(self):
         _ensure_rules_imported()
@@ -199,38 +207,39 @@ class TestMatchRule:
         assert rule.src_setting is src
 
 
-# ── AbstractMatch.droppable_value / prunable_child_value ────────────────────────
+# ── AbstractMatch.fold / prunable_child_value ──────────────────────────────────
 
 
-class TestMatchDroppableValueAndPrunability:
-    def test_any_match_droppable_value_is_false(self):
+class TestMatchFoldAndPrunability:
+    def test_any_match_folds_empty_to_false(self):
         _ensure_rules_imported()
         from plugin.rules.matches.any import AnyMatch
 
-        assert AnyMatch().droppable_value(()) is False
+        assert AnyMatch().fold(()) is False
         assert AnyMatch().prunable_child_value() is False
 
-    def test_all_match_droppable_value_is_true(self):
+    def test_all_match_folds_empty_to_true(self):
         """`all([])` is `True`, so an empty `all` is constant True, not False."""
         _ensure_rules_imported()
         from plugin.rules.matches.all import AllMatch
 
-        assert AllMatch().droppable_value(()) is True
+        assert AllMatch().fold(()) is True
         assert AllMatch().prunable_child_value() is True
 
-    def test_some_match_droppable_value_true_when_goal_unreachable_low(self):
-        """A negative count means the goal is always satisfied (`goal <= 0` -> constant True)."""
+    def test_some_match_folds_to_true_when_goal_unreachable_low(self):
+        """A count <= 0 means the goal is always satisfied (`goal <= 0` -> constant True)."""
         _ensure_rules_imported()
         from plugin.rules.matches.some import SomeMatch
 
-        assert SomeMatch(-1).droppable_value(()) is True
+        assert SomeMatch(-1).fold(()) is True
+        assert SomeMatch(0).fold((_FixedRule(True), _FixedRule(True))) is True
 
-    def test_some_match_droppable_value_false_when_goal_unreachable_high(self):
+    def test_some_match_folds_to_false_when_goal_unreachable_high(self):
         """count > len(rules) can never be satisfied -> constant False."""
         _ensure_rules_imported()
         from plugin.rules.matches.some import SomeMatch
 
-        assert SomeMatch(3).droppable_value((_FixedRule(True), _FixedRule(True))) is False
+        assert SomeMatch(3).fold((_FixedRule(True), _FixedRule(True))) is False
 
     def test_ratio_match_never_allows_child_pruning(self):
         """Ratio's goal is recomputed from `len(rules)`, so pruning any child would corrupt it."""
@@ -246,16 +255,12 @@ class TestMatchDroppableValueAndPrunability:
 class _FixedRule:
     """Fake leaf rule: fixed test() result and droppability, for isolating optimizer logic."""
 
-    def __init__(self, result: bool, *, droppable: bool = False, droppable_value: bool = False) -> None:
+    def __init__(self, result: bool, *, folded: bool | None = None) -> None:
         self._result = result
-        self._droppable = droppable
-        self._droppable_value = droppable_value
+        self._folded = folded
 
-    def is_droppable(self) -> bool:
-        return self._droppable
-
-    def droppable_value(self) -> bool:
-        return self._droppable_value
+    def fold(self) -> bool | None:
+        return self._folded
 
     def optimize(self):
         return iter(())
@@ -272,7 +277,7 @@ class TestMatchRuleOptimizeSemantics:
         from plugin.rules.matches.all import AllMatch
         from plugin.rules.matches.any import AnyMatch
 
-        leaf = _FixedRule(True)  # a genuine (non-droppable) rule, not itself a candidate for pruning
+        leaf = _FixedRule(True)  # a genuine (non-folding) rule, not itself a candidate for pruning
         inner_any = MatchRule(match=AnyMatch(), match_name="any", rules=())
         outer_all = MatchRule(match=AllMatch(), match_name="all", rules=(leaf, inner_any))
 
@@ -291,7 +296,7 @@ class TestMatchRuleOptimizeSemantics:
         from plugin.rules.matches.all import AllMatch
         from plugin.rules.matches.any import AnyMatch
 
-        leaf = _FixedRule(False)  # a genuine (non-droppable) rule, not itself a candidate for pruning
+        leaf = _FixedRule(False)  # a genuine (non-folding) rule, not itself a candidate for pruning
         inner_all = MatchRule(match=AllMatch(), match_name="all", rules=())
         outer_any = MatchRule(match=AnyMatch(), match_name="any", rules=(leaf, inner_all))
 
@@ -309,7 +314,7 @@ class TestMatchRuleOptimizeSemantics:
         from plugin.rules.match import MatchRule
         from plugin.rules.matches.all import AllMatch
 
-        const_true_leaf = _FixedRule(True, droppable=True, droppable_value=True)
+        const_true_leaf = _FixedRule(True, folded=True)
         rule = MatchRule(match=AllMatch(), match_name="all", rules=(_FixedRule(True), const_true_leaf))
 
         dropped = list(rule.optimize())
@@ -317,13 +322,13 @@ class TestMatchRuleOptimizeSemantics:
         assert const_true_leaf in dropped
         assert const_true_leaf not in rule.rules
 
-    def test_ratio_never_prunes_children_even_when_droppable(self):
+    def test_ratio_never_prunes_children_even_when_folds_to_false(self):
         """Ratio's own goal depends on len(rules), so no child pruning is ever safe."""
         _ensure_rules_imported()
         from plugin.rules.match import MatchRule
         from plugin.rules.matches.ratio import RatioMatch
 
-        droppable_leaf = _FixedRule(False, droppable=True, droppable_value=False)
+        droppable_leaf = _FixedRule(False, folded=False)
         rule = MatchRule(
             match=RatioMatch(2, 3),
             match_name="ratio",
@@ -333,6 +338,52 @@ class TestMatchRuleOptimizeSemantics:
         list(rule.optimize())
 
         assert len(rule.rules) == 3
+
+    def test_all_prunes_a_real_constraint_that_folds_to_true(self):
+        """End to end, with a real constraint rather than a fake: `contains` with a threshold of
+        0 always matches, so `all` can drop it. This is the constant-True case the old
+        is_droppable()/droppable_value() pair had no way to express for a constraint -- it could
+        only say "always False" -- so such a rule used to be re-tested on every single view."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+
+        rule = MatchRule.make(
+            StMatchRule(
+                match="all",
+                rules=[
+                    StConstraintRule(constraint="contains", args=["anything"], kwargs={"threshold": 0}),
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                ],
+            )
+        )
+        assert rule is not None
+
+        dropped = list(rule.optimize())
+
+        assert [r.constraint_name for r in dropped] == ["contains"]  # type: ignore[union-attr]
+        assert [r.constraint_name for r in rule.rules] == ["is_extension"]  # type: ignore[union-attr]
+
+    def test_any_keeps_a_real_constraint_that_folds_to_true(self):
+        """The mirror of the above: a constant-True child of `any` makes the whole `any` true,
+        so pruning it would silently flip the result. Only `all` may drop it."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+
+        rule = MatchRule.make(
+            StMatchRule(
+                match="any",
+                rules=[
+                    StConstraintRule(constraint="contains", args=["anything"], kwargs={"threshold": 0}),
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                ],
+            )
+        )
+        assert rule is not None
+
+        dropped = list(rule.optimize())
+
+        assert dropped == []
+        assert len(rule.rules) == 2
 
 
 # ── SyntaxRule ─────────────────────────────────────────────────────────────────
@@ -369,7 +420,7 @@ class TestSyntaxRule:
         assert rule.syntax is None
         assert rule.syntaxes_name == ("NonexistentSyntax",)
 
-    def test_is_droppable_no_syntax(self, make_snapshot):
+    def test_folds_to_false_with_no_syntax(self, make_snapshot):
         """Without a resolved syntax, the rule should be droppable."""
         _ensure_rules_imported()
         from plugin.rules.syntax import SyntaxRule
@@ -380,7 +431,7 @@ class TestSyntaxRule:
                 rules=[StConstraintRule(constraint="is_extension", args=["py"])],
             )
         )
-        assert rule.is_droppable() is True
+        assert rule.fold() is False
 
     def test_empty_on_events_never_triggers(self, make_snapshot):
         """on_events=[] means no event triggers — rule becomes droppable."""
@@ -425,7 +476,7 @@ class TestSyntaxRule:
         rule = SyntaxRule.make(StSyntaxRule(syntaxes=["Python"], rules=[]))
         root_rule = rule.root_rule
         assert root_rule is not None
-        assert root_rule.is_droppable() is True
+        assert root_rule.fold() is False
 
         dropped = list(rule.optimize())
 
@@ -440,8 +491,7 @@ class TestSyntaxRule:
         rule = SyntaxRule.make(StSyntaxRule(syntaxes=["Python"], match="all", rules=[]))
         root_rule = rule.root_rule
         assert root_rule is not None
-        assert root_rule.is_droppable() is True
-        assert root_rule.droppable_value() is True
+        assert root_rule.fold() is True
 
         dropped = list(rule.optimize())
 
@@ -465,7 +515,7 @@ class TestSyntaxRule:
         root_rule = rule.root_rule
         assert root_rule is not None
         assert len(root_rule.rules) == 2
-        assert root_rule.is_droppable() is False
+        assert root_rule.fold() is None
 
         dropped = list(rule.optimize())
 
@@ -486,7 +536,7 @@ class TestSyntaxRule:
         )
         root_rule = rule.root_rule
         assert root_rule is not None
-        assert root_rule.is_droppable() is False  # still has a (droppable) child, so not droppable yet
+        assert root_rule.fold() is None  # still has a (droppable) child, so not droppable yet
         child_rule = root_rule.rules[0]
 
         dropped = list(rule.optimize())
@@ -568,8 +618,8 @@ class _OptimizableBase:
         self._droppable = droppable
         self.optimized_yielded: list = []
 
-    def is_droppable(self) -> bool:
-        return self._droppable
+    def fold(self) -> bool | None:
+        return False if self._droppable else None
 
     def optimize(self):
         return iter(self.optimized_yielded)
@@ -627,6 +677,106 @@ class TestSiftOptimizable:
         assert survivors[0] is parent
 
 
+# ── DroppedRule ───────────────────────────────────────────────────────────────
+
+
+class TestDroppedRule:
+    """A dropped rule has to say which constant it folded to. "Dropped" alone is ambiguous:
+    a rule is discarded both for never matching and for always matching, and those mean
+    opposite things to someone reading the debug dump."""
+
+    def test_never_matching_rule(self):
+        from plugin.types import DroppedRule
+
+        assert DroppedRule.make(_FixedRule(False, folded=False)).reason == "never matches"
+
+    def test_always_matching_rule(self):
+        from plugin.types import DroppedRule
+
+        assert DroppedRule.make(_FixedRule(True, folded=True)).reason == "always matches"
+
+    def test_rule_that_does_not_fold(self):
+        """Optimizing shouldn't discard one of these, so say so rather than claim a constant."""
+        from plugin.types import DroppedRule
+
+        assert DroppedRule.make(_FixedRule(True)).reason == "dropped without folding"
+
+    def test_reason_survives_the_real_optimizer(self):
+        """End to end: `all` drops one child for always matching and one for never matching."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+        from plugin.types import DroppedRule
+
+        rule = MatchRule.make(
+            StMatchRule(
+                match="all",
+                rules=[
+                    StConstraintRule(constraint="contains", args=["x"], kwargs={"threshold": 0}),
+                    StConstraintRule(constraint="is_extension"),  # no extensions -> never matches
+                    StConstraintRule(constraint="is_extension", args=["py"]),
+                ],
+            )
+        )
+        assert rule is not None
+
+        dropped = [DroppedRule.make(r) for r in rule.optimize()]
+
+        # the constant-False child stays: `all(False, x)` is False, unlike `all(x)`
+        assert [(d.rule.constraint_name, d.reason) for d in dropped] == [("contains", "always matches")]  # type: ignore[union-attr]
+        assert DroppedRule.make(rule.rules[0]).reason == "never matches"
+
+
+# ── warn_legacy_fold_overrides ────────────────────────────────────────────────
+
+
+class TestWarnLegacyFoldOverrides:
+    """`fold()` replaced `is_droppable()`/`droppable_value()`, which the docs advertise as the
+    Custom Implementation extension point. A custom class still overriding the old names keeps
+    working but silently stops being optimized away, so it has to be told at load time."""
+
+    def test_warns_about_a_legacy_override(self, capsys):
+        from plugin.rules._optimize import warn_legacy_fold_overrides
+
+        class _Base:
+            pass
+
+        class _Legacy(_Base):
+            def is_droppable(self) -> bool:
+                return True
+
+        warn_legacy_fold_overrides(_Base)
+
+        out = capsys.readouterr().out
+        assert "_Legacy" in out
+        assert "is_droppable" in out
+        assert "fold()" in out
+
+    def test_silent_when_nothing_overrides_the_old_names(self, capsys):
+        from plugin.rules._optimize import warn_legacy_fold_overrides
+
+        class _Base:
+            pass
+
+        class _Modern(_Base):
+            def fold(self) -> bool | None:
+                return None
+
+        warn_legacy_fold_overrides(_Base)
+
+        assert capsys.readouterr().out == ""
+
+    def test_built_in_constraints_and_matches_are_all_migrated(self, capsys):
+        """Guards against a built-in being missed by the migration."""
+        _ensure_rules_imported()
+        from plugin.rules._optimize import warn_legacy_fold_overrides
+        from plugin.rules.constraint import AbstractConstraint
+        from plugin.rules.match import AbstractMatch
+
+        warn_legacy_fold_overrides(AbstractConstraint, AbstractMatch)
+
+        assert capsys.readouterr().out == ""
+
+
 # ── Integration: MatchRule → SyntaxRule → SyntaxRuleCollection ────────────────
 
 
@@ -660,28 +810,25 @@ class TestRuleIntegration:
 #
 # Every real bug found in this optimizer so far (droppable rules getting pruned
 # from the wrong side of all()/any(), a constant-True root_rule getting discarded
-# like a constant-False one, is_droppable() missing a constant-False case) was a
+# like a constant-False one, a missing constant-False case) was a
 # violation of the same invariant: running optimize() on a rule tree must never
 # change what test() returns for it. Rather than hand-writing one example per bug
-# shape, generate many random trees (honoring the is_droppable()/droppable_value()
-# contract) and check the invariant holds across all of them.
+# shape, generate many random trees (honoring the fold()/test() contract) and check the
+# invariant holds across all of them.
 
 
 class _ConsistentFixedRule:
-    """Fake leaf that honors the is_droppable()/droppable_value()/test() contract: when
-    droppable, test() always equals droppable_value() (see Optimizable.droppable_value docs).
-    An inconsistent fake would make optimize() *correctly* look buggy against a contract
-    violation that isn't the optimizer's fault, so this is deliberately always self-consistent."""
+    """Fake leaf that honors the fold()/test() contract: when it folds, test() always equals
+    what it folded to (see Optimizable.fold docs). An inconsistent fake would make optimize()
+    *correctly* look buggy against a contract violation that isn't the optimizer's fault, so
+    this is deliberately always self-consistent."""
 
-    def __init__(self, result: bool, *, droppable: bool = False) -> None:
+    def __init__(self, result: bool, *, folds: bool = False) -> None:
         self._result = result
-        self._droppable = droppable
+        self._folds = folds
 
-    def is_droppable(self) -> bool:
-        return self._droppable
-
-    def droppable_value(self) -> bool:
-        return self._result
+    def fold(self) -> bool | None:
+        return self._result if self._folds else None
 
     def optimize(self):
         return iter(())
@@ -693,7 +840,7 @@ class _ConsistentFixedRule:
 def _random_child(rng, depth: int):
     """A node usable as a MatchRule child: either a leaf or a nested MatchRule."""
     if depth <= 0 or rng.random() < 0.35:
-        return _ConsistentFixedRule(rng.random() < 0.5, droppable=rng.random() < 0.4)
+        return _ConsistentFixedRule(rng.random() < 0.5, folds=rng.random() < 0.4)
     return _random_match_rule(rng, depth - 1)
 
 
@@ -756,7 +903,7 @@ class TestMatchRuleOptimizeInvariant:
                 list(syntax_rule.optimize())
                 post = (syntax_rule.root_rule.test(None)) if syntax_rule.root_rule else syntax_rule.root_rule
                 # if root_rule was dropped entirely, it must only be because it was constant
-                # False (SyntaxRule.optimize()'s own droppable_value() check enforces this);
+                # False (SyntaxRule.optimize()'s own `fold() is False` check enforces this);
                 # a constant-True root_rule must be kept (or represented as an unconditional
                 # match), never silently turned into "no match".
                 if syntax_rule.root_rule is None:

@@ -28,6 +28,7 @@ from .rules import get_matches
 from .settings import get_merged_plugin_setting
 from .settings import pref_syntax_rules
 from .shared import G
+from .types import DroppedRule
 from .types import ListenerEvent
 from .utils import debounce
 from .utils import is_transient_view
@@ -79,7 +80,9 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     G.syntax_rule_collections[window] = syntax_rule_collection
     Logger.log(f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
 
-    dropped_rules = list(syntax_rule_collection.optimize())
+    # explain each rule as it's discarded: "dropped" alone is ambiguous now that a rule can be
+    # discarded for always matching as well as for never matching
+    dropped_rules = list(map(DroppedRule.make, syntax_rule_collection.optimize()))
     G.dropped_rules_collection[window] = dropped_rules
     Logger.log(f"✨ Optimized syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
     Logger.log(f"💀 Dropped rules during optimizing: {stringify(dropped_rules)}", window=window)

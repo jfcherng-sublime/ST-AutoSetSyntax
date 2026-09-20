@@ -20,8 +20,8 @@ class RelativeExistsConstraint(AbstractConstraint):
         self.matcher = all if self.match == "all" else any
 
     @override
-    def is_droppable(self) -> bool:
-        return not self.relatives
+    def fold(self) -> bool | None:
+        return None if self.relatives else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

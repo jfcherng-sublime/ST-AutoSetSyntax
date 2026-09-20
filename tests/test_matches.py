@@ -47,15 +47,15 @@ class TestAnyMatch:
         snap = make_snapshot()
         assert AnyMatch().test(snap, ()) is False
 
-    def test_empty_rules_is_droppable(self):
+    def test_empty_rules_folds_to_false(self):
         from plugin.rules.matches.any import AnyMatch
 
-        assert AnyMatch().is_droppable(()) is True
+        assert AnyMatch().fold(()) is False
 
-    def test_non_empty_rules_not_droppable(self):
+    def test_non_empty_rules_does_not_fold(self):
         from plugin.rules.matches.any import AnyMatch
 
-        assert AnyMatch().is_droppable(_rules(True)) is False
+        assert AnyMatch().fold(_rules(True)) is None
 
     def test_name(self):
         from plugin.rules.matches.any import AnyMatch
@@ -104,10 +104,12 @@ class TestAllMatch:
         snap = make_snapshot()
         assert AllMatch().test(snap, ()) is True
 
-    def test_empty_rules_is_droppable(self):
+    def test_empty_rules_folds_to_true(self):
+        """`all([])` is True -- the opposite constant to an empty `any`, and the distinction
+        `fold()` exists to carry."""
         from plugin.rules.matches.all import AllMatch
 
-        assert AllMatch().is_droppable(()) is True
+        assert AllMatch().fold(()) is True
 
     def test_name(self):
         from plugin.rules.matches.all import AllMatch
@@ -150,16 +152,16 @@ class TestSomeMatch:
         assert SomeMatch(0).count == 0
         assert SomeMatch().count == -1
 
-    def test_count_exceeds_rules_is_droppable(self):
+    def test_count_exceeds_rules_folds_to_false(self):
         from plugin.rules.matches.some import SomeMatch
 
         # count=5 but only 3 rules → droppable
-        assert SomeMatch(5).is_droppable(_rules(True, True, True)) is True
+        assert SomeMatch(5).fold(_rules(True, True, True)) is False
 
-    def test_valid_count_not_droppable(self):
+    def test_valid_count_does_not_fold(self):
         from plugin.rules.matches.some import SomeMatch
 
-        assert SomeMatch(2).is_droppable(_rules(True, True, True)) is False
+        assert SomeMatch(2).fold(_rules(True, True, True)) is None
 
     def test_name(self):
         from plugin.rules.matches.some import SomeMatch
@@ -209,20 +211,22 @@ class TestRatioMatch:
 
         assert RatioMatch(1, 0).denominator == 0
 
-    def test_zero_denominator_is_droppable(self):
+    def test_zero_denominator_folds_to_true(self):
+        """A bad denominator makes `ratio` -1, so the goal `ceil(-1 * len)` is <= 0, which
+        `test_count()` passes -- a constant True, not False."""
         from plugin.rules.matches.ratio import RatioMatch
 
-        assert RatioMatch(1, 0).is_droppable(_rules(True)) is True
+        assert RatioMatch(1, 0).fold(_rules(True)) is True
 
-    def test_ratio_above_one_is_droppable(self):
+    def test_ratio_above_one_folds_to_false(self):
         from plugin.rules.matches.ratio import RatioMatch
 
-        assert RatioMatch(3, 2).is_droppable(_rules(True)) is True
+        assert RatioMatch(3, 2).fold(_rules(True)) is False
 
-    def test_valid_ratio_not_droppable(self):
+    def test_valid_ratio_does_not_fold(self):
         from plugin.rules.matches.ratio import RatioMatch
 
-        assert RatioMatch(2, 3).is_droppable(_rules(True, True, True)) is False
+        assert RatioMatch(2, 3).fold(_rules(True, True, True)) is None
 
     def test_name(self):
         from plugin.rules.matches.ratio import RatioMatch

@@ -32,23 +32,27 @@ class SyntaxRule(Optimizable):
     """The source setting object."""
 
     @override
-    def is_droppable(self) -> bool:
-        return not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule)
+    def fold(self) -> bool | None:
+        # with no syntax to assign, no event that can ever trigger it, or no root rule left,
+        # this rule can never usefully match
+        if not (self.syntax and (self.on_events is None or self.on_events) and self.root_rule):
+            return False
+        return None
 
     @override
     def optimize(self) -> Generator[Optimizable]:
-        if self.root_rule:
-            if self.root_rule.is_droppable():
-                # a constant-True root_rule always matches (given selector/events); only a
-                # constant-False one can be discarded without changing this rule's behavior
-                if not self.root_rule.droppable_value():
-                    yield self.root_rule
-                    self.root_rule = None
-            else:
-                yield from self.root_rule.optimize()
-                if self.root_rule.is_droppable() and not self.root_rule.droppable_value():
-                    yield self.root_rule
-                    self.root_rule = None
+        if not self.root_rule:
+            return
+
+        if (folded := self.root_rule.fold()) is None:
+            yield from self.root_rule.optimize()
+            folded = self.root_rule.fold()  # optimizing may have collapsed it to a constant
+
+        # a constant-True root_rule always matches (given selector/events); only a
+        # constant-False one can be discarded without changing this rule's behavior
+        if folded is False:
+            yield self.root_rule
+            self.root_rule = None
 
     def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
         if event and self.on_events is not None and event not in self.on_events:

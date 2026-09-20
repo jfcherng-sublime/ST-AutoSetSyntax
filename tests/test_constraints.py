@@ -45,23 +45,24 @@ class TestContainsConstraint:
         snap = make_snapshot(content="")
         assert ContainsConstraint("anything", threshold=0).test(snap) is True
 
-    def test_no_needles_is_droppable(self):
+    def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.contains import ContainsConstraint
 
-        assert ContainsConstraint().is_droppable() is True
+        assert ContainsConstraint().fold() is False
 
-    def test_with_needles_not_droppable(self):
+    def test_with_needles_does_not_fold(self):
         from plugin.rules.constraints.contains import ContainsConstraint
 
-        assert ContainsConstraint("foo").is_droppable() is False
+        assert ContainsConstraint("foo").fold() is None
 
-    def test_threshold_zero_no_needles_is_not_droppable(self):
+    def test_threshold_zero_no_needles_folds_to_true(self):
         """threshold<=0 makes test() a constant True even with no needles (see
-        test_threshold_zero_always_true). "Droppable" must mean test() is a constant False, so
-        this must NOT be reported droppable despite having no needles."""
+        test_threshold_zero_always_true), so it folds to True -- not False, which would
+        invert the rule's meaning, and not None, which would keep testing a settled
+        answer on every view."""
         from plugin.rules.constraints.contains import ContainsConstraint
 
-        assert ContainsConstraint(threshold=0).is_droppable() is False
+        assert ContainsConstraint(threshold=0).fold() is True
 
 
 # ── ContainsRegexConstraint ───────────────────────────────────────────────────
@@ -105,23 +106,22 @@ class TestContainsRegexConstraint:
         # Two patterns merged into one alternation
         assert ContainsRegexConstraint("foo", "bar").test(snap) is True
 
-    def test_no_patterns_is_droppable(self):
+    def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        assert ContainsRegexConstraint().is_droppable() is True
+        assert ContainsRegexConstraint().fold() is False
 
-    def test_with_patterns_not_droppable(self):
+    def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        assert ContainsRegexConstraint("foo").is_droppable() is False
+        assert ContainsRegexConstraint("foo").fold() is None
 
-    def test_threshold_zero_no_patterns_is_not_droppable(self):
+    def test_threshold_zero_no_patterns_folds_to_true(self):
         """Same reasoning as ContainsConstraint's equivalent test: threshold<=0 is a constant
-        True regardless of patterns, so it must NOT be reported droppable (which means constant
-        False)."""
+        True regardless of patterns."""
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        assert ContainsRegexConstraint(threshold=0).is_droppable() is False
+        assert ContainsRegexConstraint(threshold=0).fold() is True
 
     def test_null_regex_flags_falls_back_to_multiline_default(self, make_snapshot):
         """Regression (AbstractConstraint._handled_regex): "regex_flags": null is present with
@@ -153,7 +153,7 @@ class TestContainsRegexConstraint:
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
         constraint = ContainsRegexConstraint("")
-        assert constraint.is_droppable() is True
+        assert constraint.fold() is False
         snap = make_snapshot(content="anything")
         assert constraint.test(snap) is False
 
@@ -162,7 +162,7 @@ class TestContainsRegexConstraint:
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
         constraint = ContainsRegexConstraint(None)
-        assert constraint.is_droppable() is True
+        assert constraint.fold() is False
         snap = make_snapshot(content="anything")
         assert constraint.test(snap) is False
 
@@ -174,7 +174,7 @@ class TestContainsRegexConstraint:
 
         constraint = ContainsRegexConstraint("", "foo")
         # has a valid pattern "foo", so NOT droppable
-        assert constraint.is_droppable() is False
+        assert constraint.fold() is None
         snap = make_snapshot(content="foo")
         assert constraint.test(snap) is True
         snap = make_snapshot(content="bar")
@@ -203,10 +203,10 @@ class TestFirstLineContainsConstraint:
         snap = make_snapshot(first_line="#!/usr/bin/ruby")
         assert FirstLineContainsConstraint("python", "ruby").test(snap) is True
 
-    def test_no_needles_is_droppable(self):
+    def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.first_line_contains import FirstLineContainsConstraint
 
-        assert FirstLineContainsConstraint().is_droppable() is True
+        assert FirstLineContainsConstraint().fold() is False
 
 
 # ── FirstLineContainsRegexConstraint ─────────────────────────────────────────
@@ -231,20 +231,20 @@ class TestFirstLineContainsRegexConstraint:
         snap = make_snapshot(first_line="# -*- coding: UTF-8 -*-")
         assert FirstLineContainsRegexConstraint(r"utf-8", regex_flags=["IGNORECASE"]).test(snap) is True
 
-    def test_no_patterns_is_droppable(self):
+    def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
-        assert FirstLineContainsRegexConstraint().is_droppable() is True
+        assert FirstLineContainsRegexConstraint().fold() is False
 
-    def test_with_patterns_not_droppable(self):
+    def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
-        assert FirstLineContainsRegexConstraint("python").is_droppable() is False
+        assert FirstLineContainsRegexConstraint("python").fold() is None
 
-    def test_empty_pattern_droppable(self, make_snapshot):
+    def test_empty_pattern_folds_to_false(self, make_snapshot):
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
-        assert FirstLineContainsRegexConstraint("").is_droppable() is True
+        assert FirstLineContainsRegexConstraint("").fold() is False
         snap = make_snapshot(first_line="anything")
         assert FirstLineContainsRegexConstraint("").test(snap) is False
 
@@ -310,15 +310,15 @@ class TestIsInterpreterConstraint:
         snap = make_snapshot(first_line="")
         assert IsInterpreterConstraint("python").test(snap) is False
 
-    def test_no_interpreters_is_droppable(self):
+    def test_no_interpreters_folds_to_false(self):
         from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
 
-        assert IsInterpreterConstraint().is_droppable() is True
+        assert IsInterpreterConstraint().fold() is False
 
-    def test_with_interpreter_not_droppable(self):
+    def test_with_interpreter_does_not_fold(self):
         from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
 
-        assert IsInterpreterConstraint("python").is_droppable() is False
+        assert IsInterpreterConstraint("python").fold() is None
 
 
 # ── IsNameConstraint ──────────────────────────────────────────────────────────
@@ -356,10 +356,10 @@ class TestIsNameConstraint:
         with pytest.raises(AlwaysFalsyException):
             IsNameConstraint("Makefile").test(snap)
 
-    def test_no_names_is_droppable(self):
+    def test_no_names_folds_to_false(self):
         from plugin.rules.constraints.is_name import IsNameConstraint
 
-        assert IsNameConstraint().is_droppable() is True
+        assert IsNameConstraint().fold() is False
 
 
 # ── NameContainsConstraint ────────────────────────────────────────────────────
@@ -385,10 +385,10 @@ class TestNameContainsConstraint:
         with pytest.raises(AlwaysFalsyException):
             NameContainsConstraint("anything").test(snap)
 
-    def test_no_needles_is_droppable(self):
+    def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.name_contains import NameContainsConstraint
 
-        assert NameContainsConstraint().is_droppable() is True
+        assert NameContainsConstraint().fold() is False
 
 
 # ── NameContainsRegexConstraint ───────────────────────────────────────────────
@@ -414,20 +414,20 @@ class TestNameContainsRegexConstraint:
         with pytest.raises(AlwaysFalsyException):
             NameContainsRegexConstraint("anything").test(snap)
 
-    def test_no_patterns_is_droppable(self):
+    def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
 
-        assert NameContainsRegexConstraint().is_droppable() is True
+        assert NameContainsRegexConstraint().fold() is False
 
-    def test_with_patterns_not_droppable(self):
+    def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
 
-        assert NameContainsRegexConstraint("script").is_droppable() is False
+        assert NameContainsRegexConstraint("script").fold() is None
 
-    def test_empty_pattern_droppable(self, make_snapshot):
+    def test_empty_pattern_folds_to_false(self, make_snapshot):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
 
-        assert NameContainsRegexConstraint("").is_droppable() is True
+        assert NameContainsRegexConstraint("").fold() is False
         snap = make_snapshot(path="file.py")
         assert NameContainsRegexConstraint("").test(snap) is False
 
@@ -461,10 +461,10 @@ class TestPathContainsConstraint:
         with pytest.raises(AlwaysFalsyException):
             PathContainsConstraint("anything").test(snap)
 
-    def test_no_needles_is_droppable(self):
+    def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.path_contains import PathContainsConstraint
 
-        assert PathContainsConstraint().is_droppable() is True
+        assert PathContainsConstraint().fold() is False
 
 
 # ── PathContainsRegexConstraint ───────────────────────────────────────────────
@@ -490,20 +490,20 @@ class TestPathContainsRegexConstraint:
         with pytest.raises(AlwaysFalsyException):
             PathContainsRegexConstraint("anything").test(snap)
 
-    def test_no_patterns_is_droppable(self):
+    def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
-        assert PathContainsRegexConstraint().is_droppable() is True
+        assert PathContainsRegexConstraint().fold() is False
 
-    def test_with_patterns_not_droppable(self):
+    def test_with_patterns_does_not_fold(self):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
-        assert PathContainsRegexConstraint("projects").is_droppable() is False
+        assert PathContainsRegexConstraint("projects").fold() is None
 
-    def test_empty_pattern_droppable(self, make_snapshot):
+    def test_empty_pattern_folds_to_false(self, make_snapshot):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
-        assert PathContainsRegexConstraint("").is_droppable() is True
+        assert PathContainsRegexConstraint("").fold() is False
         snap = make_snapshot(path="/home/file.py")
         assert PathContainsRegexConstraint("").test(snap) is False
 
@@ -542,16 +542,16 @@ class TestIsLineCountConstraint:
         snap = make_snapshot(line_count=2)
         assert IsLineCountConstraint("<", 5).test(snap) is True
 
-    def test_wrong_arg_count_is_droppable(self):
+    def test_wrong_arg_count_folds_to_false(self):
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
 
-        assert IsLineCountConstraint(">").is_droppable() is True
-        assert IsLineCountConstraint().is_droppable() is True
+        assert IsLineCountConstraint(">").fold() is False
+        assert IsLineCountConstraint().fold() is False
 
-    def test_valid_not_droppable(self):
+    def test_valid_does_not_fold(self):
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
 
-        assert IsLineCountConstraint(">", 10).is_droppable() is False
+        assert IsLineCountConstraint(">", 10).fold() is None
 
     def test_gte_alias(self, make_snapshot):
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
@@ -589,16 +589,16 @@ class TestIsSizeConstraint:
         snap = make_snapshot(file_size=1024)
         assert IsSizeConstraint("==", 1024).test(snap) is True
 
-    def test_wrong_arg_count_is_droppable(self):
+    def test_wrong_arg_count_folds_to_false(self):
         from plugin.rules.constraints.is_size import IsSizeConstraint
 
-        assert IsSizeConstraint(">").is_droppable() is True
-        assert IsSizeConstraint().is_droppable() is True
+        assert IsSizeConstraint(">").fold() is False
+        assert IsSizeConstraint().fold() is False
 
-    def test_valid_not_droppable(self):
+    def test_valid_does_not_fold(self):
         from plugin.rules.constraints.is_size import IsSizeConstraint
 
-        assert IsSizeConstraint(">", 0).is_droppable() is False
+        assert IsSizeConstraint(">", 0).fold() is None
 
 
 # ── IsPlatformConstraint ──────────────────────────────────────────────────────
@@ -631,26 +631,28 @@ class TestIsPlatformConstraint:
         snap = make_snapshot()
         assert IsPlatformConstraint("windows", "linux").test(snap) is True
 
-    def test_empty_args_is_droppable(self):
+    def test_empty_args_folds_to_false(self):
         from plugin.rules.constraints.is_platform import IsPlatformConstraint
 
-        assert IsPlatformConstraint().is_droppable() is True
+        assert IsPlatformConstraint().fold() is False
 
-    def test_guaranteed_false_is_droppable(self):
+    def test_guaranteed_false_folds_to_false(self):
         """The platform is fixed at install time, so a constraint that can never match given the
         current platform is just as much a compile-time constant as one with no names at all --
         the optimizer should be able to prune it the same way."""
         from plugin.rules.constraints.is_platform import IsPlatformConstraint
 
-        assert IsPlatformConstraint("windows").is_droppable() is True
+        assert IsPlatformConstraint("windows").fold() is False
 
-    def test_guaranteed_true_is_not_droppable(self):
-        """A constraint that always matches must NOT report droppable: `AbstractConstraint`'s
-        contract is "droppable implies test() always False" (see `ConstraintRule.droppable_value`
-        docs) -- there's no mechanism to propagate "always True" for a bare constraint."""
+    def test_guaranteed_true_does_not_fold(self):
+        """`fold()` could report `True` here -- the platform is fixed at install time, so this
+        constraint is a constant on this machine. It deliberately doesn't: unlike a degenerate
+        config (`contains(threshold=0)`), a platform check that matches is a normal, intended
+        rule, and folding it would report it to the user as a dropped rule on exactly the
+        platform it was written for."""
         from plugin.rules.constraints.is_platform import IsPlatformConstraint
 
-        assert IsPlatformConstraint("linux").is_droppable() is False
+        assert IsPlatformConstraint("linux").fold() is None
 
 
 # ── AbstractConstraint class methods ──────────────────────────────────────────
@@ -707,20 +709,20 @@ class TestIsArchConstraint:
         snap = make_snapshot()
         assert IsArchConstraint("X64").test(snap) is True
 
-    def test_empty_is_droppable(self):
+    def test_empty_folds_to_false(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
 
-        assert IsArchConstraint().is_droppable() is True
+        assert IsArchConstraint().fold() is False
 
-    def test_guaranteed_false_is_droppable(self):
+    def test_guaranteed_false_folds_to_false(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
 
-        assert IsArchConstraint("x32").is_droppable() is True
+        assert IsArchConstraint("x32").fold() is False
 
-    def test_guaranteed_true_is_not_droppable(self):
+    def test_guaranteed_true_does_not_fold(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
 
-        assert IsArchConstraint("x64").is_droppable() is False
+        assert IsArchConstraint("x64").fold() is None
 
     def test_name(self):
         from plugin.rules.constraints.is_arch import IsArchConstraint
@@ -745,20 +747,20 @@ class TestIsPlatformArchConstraint:
         snap = make_snapshot()
         assert IsPlatformArchConstraint("windows_x64").test(snap) is False
 
-    def test_empty_is_droppable(self):
+    def test_empty_folds_to_false(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
 
-        assert IsPlatformArchConstraint().is_droppable() is True
+        assert IsPlatformArchConstraint().fold() is False
 
-    def test_guaranteed_false_is_droppable(self):
+    def test_guaranteed_false_folds_to_false(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
 
-        assert IsPlatformArchConstraint("windows_x64").is_droppable() is True
+        assert IsPlatformArchConstraint("windows_x64").fold() is False
 
-    def test_guaranteed_true_is_not_droppable(self):
+    def test_guaranteed_true_does_not_fold(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
 
-        assert IsPlatformArchConstraint("linux_x64").is_droppable() is False
+        assert IsPlatformArchConstraint("linux_x64").fold() is None
 
     def test_name(self):
         from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
@@ -813,15 +815,15 @@ class TestIsHiddenSyntaxConstraint:
 
 
 class TestSelectorMatchesConstraint:
-    def test_no_candidates_is_droppable(self):
+    def test_no_candidates_folds_to_false(self):
         from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
-        assert SelectorMatchesConstraint().is_droppable() is True
+        assert SelectorMatchesConstraint().fold() is False
 
-    def test_with_candidates_not_droppable(self):
+    def test_with_candidates_does_not_fold(self):
         from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
-        assert SelectorMatchesConstraint("source.python").is_droppable() is False
+        assert SelectorMatchesConstraint("source.python").fold() is None
 
     def test_no_syntax_raises(self, make_snapshot):
         from plugin.rules.constraint import AlwaysFalsyException

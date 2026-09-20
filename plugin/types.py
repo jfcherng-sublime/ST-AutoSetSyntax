@@ -5,8 +5,10 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import KeysView
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
+from typing import Self
 from typing import overload
 
 import sublime
@@ -44,37 +46,48 @@ class ListenerEvent(StrEnum):
 
 
 class Optimizable(ABC):
-    def is_droppable(self) -> bool:
+    def fold(self) -> bool | None:
         """
-        Determines whether this object is droppable.
-        If it's droppable, then it may be dropped by who holds it during optimizing.
+        The fixed boolean value this object's `test()` always returns, or `None` when the result
+        still depends on the view.
+
+        An object folds once its outcome no longer depends on runtime data -- a leaf constraint
+        with no arguments, an empty `any`/`all` match, and so on. Whoever holds it uses this to
+        decide whether it can be discarded, which needs *which* constant it folds to, not just
+        that it folds: an empty `all` is a constant `True` (`all([]) == True`) while an empty
+        `any` is a constant `False`, and they are not interchangeable. See
+        `AbstractMatch.prunable_child_value()` for what a parent match does with the answer.
+
+        Defaults to `None` -- "still depends on the view", i.e. never dropped.
         """
-        return False
-
-    def droppable_value(self) -> bool:
-        """
-        The fixed boolean value this object always evaluates to, once it's known to be droppable.
-        Only meaningful when `is_droppable()` is `True` -- ignore it otherwise.
-
-        A droppable object is one whose test-like result no longer depends on runtime data (e.g.
-        a leaf constraint with no arguments, or an empty `any`/`all` match); this is *what that
-        fixed result is*.
-
-        This is a separate method from `is_droppable()` because "droppable" alone is ambiguous:
-        it can mean the object always evaluates to `True` (e.g. an empty `all`, since
-        `all([]) == True`) or always to `False` (e.g. an empty `any`, since `any([]) == False`).
-        Whoever holds this object needs to know *which* constant it collapses to before deciding
-        whether it's safe to discard -- see `AbstractMatch.prunable_child_value()` for why that
-        distinction matters.
-
-        Defaults to `False`, which matches every built-in leaf constraint (a droppable
-        constraint -- e.g. `is_extension` with no extensions given -- always fails its `test()`).
-        """
-        return False
+        return None
 
     @abstractmethod
     def optimize(self) -> Generator[Optimizable]:
         """Does optimizations and returns a generator for dropped objects."""
+
+
+@dataclass(frozen=True, slots=True)
+class DroppedRule:
+    """A rule discarded during optimizing, paired with why it could be."""
+
+    reason: str
+    """Human-readable, for the debug dump -- nothing branches on this. Declared before `rule`
+    so it stays readable at the front of the (long) generated repr."""
+    rule: Optimizable
+
+    @classmethod
+    def make(cls, rule: Optimizable) -> Self:
+        """Explain a rule that optimizing has just decided to discard."""
+        match rule.fold():
+            case True:
+                return cls("always matches", rule)
+            case False:
+                return cls("never matches", rule)
+            case _:
+                # optimizing only discards a rule that folds, so this means someone dropped a
+                # rule for another reason and didn't say which -- report it rather than lie
+                return cls("dropped without folding", rule)
 
 
 class StConstraintRule(BaseModel):

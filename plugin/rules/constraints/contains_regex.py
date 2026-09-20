@@ -17,17 +17,17 @@ class ContainsRegexConstraint(AbstractConstraint):
         self.threshold: int = kwargs.get("threshold", 1)
 
     @override
-    def is_droppable(self) -> bool:
+    def fold(self) -> bool | None:
         """
-        A non-numeric threshold makes `test()` always raise (caught upstream as `False`). A
-        positive threshold with no patterns can never find a match (the "match nothing" regex
-        from `merge_regexes(())` guarantees that). A threshold `<= 0` is a constant `True`,
-        though -- not droppable, since droppable must mean `test()` always fails (`False`), and
-        there's no way to represent a constant-`True` constraint here.
+        A non-numeric threshold makes `test()` always raise, which is caught upstream as
+        `False`. A threshold `<= 0` always matches. A positive threshold with no patterns can
+        never find a match (the "match nothing" regex from `merge_regexes(())` guarantees that).
         """
         if not isinstance(self.threshold, (int, float)):
+            return False
+        if self.threshold <= 0:
             return True
-        return self.threshold > 0 and not any(self.args)
+        return None if any(self.args) else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

@@ -19,13 +19,17 @@ class SomeMatch(AbstractMatch):
         self.count: float = nth(self.args, 0, -1)
 
     @override
-    def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
-        return not (0 <= self.count <= len(rules))
-
-    @override
-    def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
-        """A negative count always satisfies `goal <= 0` (constant True); count > len(rules) can never be satisfied."""
-        return self.count <= 0
+    def fold(self, rules: tuple[MatchableRule, ...]) -> bool | None:
+        """
+        A count `<= 0` makes `test_count()` short-circuit on its `goal <= 0` check, so the match
+        is a constant True no matter how many rules it has -- note that includes `some(0)`, not
+        just a negative count. A count above the rule count can never be reached: constant False.
+        """
+        if self.count <= 0:
+            return True
+        if self.count > len(rules):
+            return False
+        return None
 
     # prunable_child_value() is intentionally NOT overridden. `some(n)`'s goal `n` is a fixed
     # literal, independent of how many rules it has (unlike `ratio`), so dropping a

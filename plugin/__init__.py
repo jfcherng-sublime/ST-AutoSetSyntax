@@ -29,6 +29,7 @@ from .logger import AutoSetSyntaxUpdateLogCommand
 from .rules import AbstractConstraint
 from .rules import AbstractMatch
 from .rules import MatchableRule
+from .rules._optimize import warn_legacy_fold_overrides
 from .settings import AioSettings
 from .settings import extra_settings_producer
 from .settings import get_merged_plugin_setting
@@ -73,6 +74,7 @@ def plugin_loaded() -> None:
 def _plugin_loaded() -> None:
     _add_python_lib_path()
     _load_custom_implementations()
+    warn_legacy_fold_overrides(AbstractConstraint, AbstractMatch)
 
     AioSettings.plugin_name = PLUGIN_NAME
     AioSettings.set_settings_producer(extra_settings_producer)

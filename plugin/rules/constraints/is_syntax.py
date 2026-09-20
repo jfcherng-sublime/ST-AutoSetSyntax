@@ -16,8 +16,8 @@ class IsSyntaxConstraint(AbstractConstraint):
         self.candidates: tuple[str, ...] = self._handled_args()
 
     @override
-    def is_droppable(self) -> bool:
-        return not self.candidates
+    def fold(self) -> bool | None:
+        return None if self.candidates else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

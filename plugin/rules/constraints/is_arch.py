@@ -16,10 +16,10 @@ class IsArchConstraint(AbstractConstraint):
         self.result = ST_ARCH in self.names
 
     @override
-    def is_droppable(self) -> bool:
+    def fold(self) -> bool | None:
         # the arch is fixed at install time, so a guaranteed non-match (self.result is False) is
         # just as much a constant as having no names at all
-        return not self.names or not self.result
+        return None if (self.names and self.result) else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

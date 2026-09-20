@@ -58,18 +58,13 @@ class ConstraintRule(Optimizable):
     """The source setting object."""
 
     @override
-    def is_droppable(self) -> bool:
-        return not (self.constraint and not self.constraint.is_droppable())
-
-    @override
-    def droppable_value(self) -> bool:
-        """
-        A droppable constraint's underlying `AbstractConstraint.test()` always fails (`False`) --
-        see `AbstractConstraint.is_droppable()`, whose contract is "droppable implies always
-        fails". `inverted` flips that result, so a droppable *inverted* `ConstraintRule` is
-        actually a constant `True`, not `False`.
-        """
-        return self.inverted
+    def fold(self) -> bool | None:
+        # a rule whose constraint failed to compile can never pass, so it folds like a `test()`
+        # that always fails -- which `inverted` then flips, exactly as it would a real result
+        value = self.constraint.fold() if self.constraint else False
+        if value is None:
+            return None
+        return not value if self.inverted else value
 
     @override
     def optimize(self) -> Generator[Optimizable]:
@@ -132,19 +127,17 @@ class AbstractConstraint(ABC):
         """Determines whether this class supports `obj`."""
         return str(obj) == cls.name()
 
-    def is_droppable(self) -> bool:
+    def fold(self) -> bool | None:
         """
-        Determines whether this object is droppable.
-        If it's droppable, then it may be dropped by who holds it during optimizing.
+        The fixed boolean value `test()` always returns, or `None` when the result still
+        depends on the view.
 
-        Contract for subclasses: droppable must mean `test()` always fails (`False`), not always
-        passes. Unlike `AbstractMatch`, constraints have no `droppable_value()` -- `ConstraintRule`
-        assumes a droppable constraint is a constant `False` pre-inversion (see
-        `ConstraintRule.droppable_value()`, which only flips that via `inverted`). A custom
-        constraint whose `is_droppable()` reports `True` for a case where `test()` would actually
-        return `True` breaks that assumption and will be pruned incorrectly.
+        Override this when this constraint's own arguments already settle the answer: e.g.
+        `is_extension` with no extensions given can never match, so it folds to `False`, and
+        `contains` with a threshold of `0` always matches, so it folds to `True`. A folded
+        constraint is reported to the user as a dropped rule instead of being tested per view.
         """
-        return False
+        return None
 
     @abstractmethod
     def test(self, view_snapshot: ViewSnapshot) -> bool:

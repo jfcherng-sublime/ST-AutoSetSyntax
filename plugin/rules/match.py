@@ -47,13 +47,16 @@ class MatchRule(Optimizable):
     """The source setting object."""
 
     @override
-    def is_droppable(self) -> bool:
-        return not (self.rules and self.match and not self.match.is_droppable(self.rules))
+    def fold(self) -> bool | None:
+        if not self.match:
+            return False  # a match rule that failed to compile can never pass
 
-    @override
-    def droppable_value(self) -> bool:
-        """Delegates to the underlying `match`'s `droppable_value()`, evaluated against `self.rules`."""
-        return self.match.droppable_value(self.rules) if self.match else False
+        value = self.match.fold(self.rules)
+        if value is None and not self.rules:
+            # whatever the combinator, a match with no child rules can't depend on the view;
+            # `False` mirrors what a match that doesn't say what it folds to used to collapse to
+            return False
+        return value
 
     @override
     def optimize(self) -> Generator[Optimizable]:
@@ -65,12 +68,13 @@ class MatchRule(Optimizable):
         prunable_value = self.match.prunable_child_value()
         if prunable_value is None:
             # this combinator's result depends on how many rules it has (e.g. ratio), so no
-            # child -- even a droppable/constant one -- can ever be safely removed from `rules`
+            # child -- even a folded/constant one -- can ever be safely removed from `rules`
             return
 
         survivors: list[MatchableRule] = []
         for rule in self.rules:
-            if rule.is_droppable() and rule.droppable_value() == prunable_value:
+            # a rule that doesn't fold compares as `None` here, so it's never pruned
+            if rule.fold() == prunable_value:
                 yield rule
             else:
                 survivors.append(rule)
@@ -132,37 +136,28 @@ class AbstractMatch(ABC):
         """Determines whether this class supports `obj`."""
         return str(obj) == cls.name()
 
-    def is_droppable(self, rules: tuple[MatchableRule, ...]) -> bool:
+    def fold(self, rules: tuple[MatchableRule, ...]) -> bool | None:
         """
-        Determines whether this object is droppable.
-        If it's droppable, then it may be dropped by who holds it during optimizing.
-        """
-        return False
+        The fixed boolean value `test()` always returns for `rules`, or `None` when the result
+        still depends on the view (see `Optimizable.fold()` for the general contract).
 
-    def droppable_value(self, rules: tuple[MatchableRule, ...]) -> bool:
+        Override this whenever this combinator's own parameters and rule *count* already settle
+        the answer, in either direction: `all([])` is a constant `True` and `any([])` a constant
+        `False`, while `some(n)` is a constant `True` when `n <= 0` and a constant `False` when
+        `n` exceeds the rule count.
         """
-        The fixed boolean value this match always evaluates to, once it's known to be droppable
-        (see `Optimizable.droppable_value()` for the general contract).
-
-        Override this whenever `is_droppable()` can report `True` for a case where `test()`
-        would actually resolve to `True` rather than `False`. For example `all([])` is a
-        constant `True` (see `AllMatch`), and `some(n)` is a constant `True` when `n <= 0` (see
-        `SomeMatch`) -- both override this. A plain `any` never needs to, since `any([])` is
-        `False`, matching the inherited default.
-        """
-        return False
+        return None
 
     def prunable_child_value(self) -> bool | None:
         """
-        Which `droppable_value()` a droppable child rule must have to be safely removable from
+        Which constant a folded child rule must fold to for it to be safely removable from
         `rules` without changing this match's own result -- i.e. this combinator's identity
         element.
 
         `MatchRule.optimize()` calls this to decide what it may prune from a `MatchRule`'s
-        children: a droppable child is removed only when its `droppable_value()` equals this
-        value. A droppable child with the *other* value must stay in `rules` so it keeps
-        contributing its fixed result at test time -- dropping it would silently change what
-        this match evaluates to.
+        children: a child is removed only when its `fold()` equals this value. A child folding
+        to the *other* constant must stay in `rules` so it keeps contributing its fixed result
+        at test time -- dropping it would silently change what this match evaluates to.
 
         For example, `True` is safe to drop from `all(...)` (AND's identity element:
         `all(True, is_extension("py")) == all(is_extension("py"))`), but `False` is not
@@ -171,10 +166,10 @@ class AbstractMatch(ABC):
         rather than leaving it in place or collapsing the whole match to `False` -- is exactly
         the bug this method exists to prevent.
 
-        Return `None` when NO child can ever be safely removed, regardless of its value -- i.e.
-        this match's result depends on how many children it has, not just their individual
-        values. `RatioMatch` returns `None`: its goal is `ceil(ratio * len(rules))`, so removing
-        any child -- constant or not -- shifts that goal.
+        Return `None` when NO child can ever be safely removed, regardless of what it folds to
+        -- i.e. this match's result depends on how many children it has, not just their
+        individual values. `RatioMatch` returns `None`: its goal is `ceil(ratio * len(rules))`,
+        so removing any child -- constant or not -- shifts that goal.
 
         Defaults to `False` (safe to drop a constant-`False` child), which is correct for `any`
         (OR: `False` is the identity element) and for a fixed-goal `some(n)` (removing a rule

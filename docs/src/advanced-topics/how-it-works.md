@@ -222,21 +222,23 @@ A `ConstraintRule` wraps an `AbstractConstraint` with optional inversion:
 
 ### Optimization
 
-At compile time, the rule tree is optimized — rules that are "droppable" (their result no longer
-depends on runtime data, so they'd evaluate to the same thing on every view) are pruned so they
-aren't re-tested on every view:
+At compile time, the rule tree is optimized — rules that *fold* (their result no longer depends
+on runtime data, so they'd evaluate to the same thing on every view) are pruned so they aren't
+re-tested on every view.
+
+Every node answers one question, `fold()`, returning the constant it always evaluates to or
+`None` when the result still depends on the view:
 
 ```
-SyntaxRule.is_droppable()     → true if no syntax, no events (and not unrestricted), or no root_rule
-MatchRule.is_droppable()      → true if no children or match is ineffective (e.g., some(5) with 3 children)
-ConstraintRule.is_droppable() → true if constraint is None or self-droppable
+SyntaxRule.fold()     → False if no syntax, no events (and not unrestricted), or no root_rule
+MatchRule.fold()      → the match's own fold, e.g. some(5) with 3 children is a constant False
+ConstraintRule.fold() → the constraint's fold, flipped by `inverted`
 ```
 
-Being "droppable" only says a rule is a fixed constant — it doesn't say *which* constant. An
-empty `all` is always `True` (`all([]) == True`); an empty `any` is always `False`
-(`any([]) == False`). `droppable_value()` reports which one a droppable rule collapses to, and
-`prunable_child_value()` tells a parent match which of those two values is safe to silently
-remove from its own child list without changing its result:
+Knowing *which* constant a rule folds to is the whole point: an empty `all` is always `True`
+(`all([]) == True`) while an empty `any` is always `False` (`any([]) == False`), and they are
+not interchangeable. `prunable_child_value()` tells a parent match which of those two values is
+safe to silently remove from its own child list without changing its result:
 
 - Dropping a constant-`True` child from `all(...)` is safe (`True` is AND's identity element:
   `all(True, x) == all(x)`), but dropping a constant-`False` child is not — the whole `all(...)`
@@ -299,15 +301,23 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
 
 1. Create a Python file in `Packages/AutoSetSyntax-Custom/matches/` or `Packages/AutoSetSyntax-Custom/constraints/`
 2. Subclass `AbstractMatch` or `AbstractConstraint`
-3. Implement `test()` (and optionally `is_droppable()`)
-   - For `AbstractConstraint`, a droppable constraint must mean `test()` always fails (`False`) —
-     `ConstraintRule` assumes that and only flips it via `inverted`.
-   - For `AbstractMatch`, if `is_droppable()` can ever be `True` in a case where `test()` would
-     actually resolve to `True` (e.g. an "always match" combinator with no children), also
-     override `droppable_value()` to report that, and `prunable_child_value()` if the match
-     supports safely pruning individual children (see [Optimization](#optimization)) — otherwise
-     the default assumes "droppable always means False" and "only a constant-False child is
-     prunable", which will silently prune or collapse this match incorrectly.
+3. Implement `test()` (and optionally `fold()`)
+   - `fold()` returns the constant `test()` would always return, or `None` when the result still
+     depends on the view. Both constants are expressible, so an "always matches" implementation
+     reports `True` and an "always fails" one reports `False` — getting this backwards inverts
+     the rule's meaning.
+   - For `AbstractMatch`, also override `prunable_child_value()` if the match supports safely
+     pruning individual children (see [Optimization](#optimization)); the default of "only a
+     constant-`False` child is prunable" is right for `any`-like combinators but wrong for
+     `all`-like ones.
+
+!!! warning "Breaking change for existing Custom Implementations"
+
+    `fold()` replaces `is_droppable()`, `droppable_value()` and `AbstractMatch.is_droppable()`.
+    A custom implementation still overriding those names keeps working, but silently stops
+    being optimized away — AutoSetSyntax logs a warning naming the class at startup. To
+    migrate, return `False` where you returned `is_droppable() == True`, and `None` where you
+    returned `False`.
 4. The class name convention determines the setting name: `FooBarMatch` → `"foo_bar"` and `BazConstraint` → `"baz"`
 
 Auto-discovered at plugin load via `_load_custom_implementations()` using `pkgutil.iter_modules()`.

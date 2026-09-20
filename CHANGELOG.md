@@ -1,5 +1,20 @@
 # AutoSetSyntax Changelog
 
+## Unreleased
+
+- refactor!: `fold()` replaces the `is_droppable()`/`droppable_value()`/`AbstractMatch.is_droppable()`
+  trio in the rule optimizer. It returns the constant a rule always evaluates to, or `None` when
+  the result still depends on the view. **Custom constraints/matches** overriding the old names
+  keep working but are no longer optimized away; a warning naming the class is printed at
+  startup. To migrate, return `False` where you returned `is_droppable() == True`, and `None`
+  where you returned `False`.
+- perf: a constraint or match that always *matches* can now be pruned too, which the old
+  protocol could only express for the always-fails direction. `contains`/`contains_regex` with
+  a threshold `<= 0` and `some(0)` are now reported as dropped rules instead of being re-tested
+  on every view.
+- feat(debug): dropped rules now say why they were dropped -- `always matches` or `never
+  matches` -- in the log and in Debug Information
+
 ## 6.1.1
 
 - feat: `.tmpl` is now a default trim suffix

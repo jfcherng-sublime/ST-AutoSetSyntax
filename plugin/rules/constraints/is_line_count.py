@@ -24,8 +24,8 @@ class IsLineCountConstraint(AbstractConstraint):
         self.threshold = float(threshold)
 
     @override
-    def is_droppable(self) -> bool:
-        return not (self.comparator and self.threshold is not None)
+    def fold(self) -> bool | None:
+        return None if (self.comparator and self.threshold is not None) else False
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
