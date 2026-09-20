@@ -331,8 +331,8 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
     `fold()` replaces `is_droppable()`, `droppable_value()` and `AbstractMatch.is_droppable()`.
     A custom implementation still overriding those names keeps working, but silently stops
     being optimized away — AutoSetSyntax logs a warning naming the class at startup. To
-    migrate, return `False` where you returned `is_droppable() == True`, and `UNFOLDED` where
-    you returned `False`.
+    migrate, return `Fold(False, "why it can never match")` where you returned
+    `is_droppable() == True`, and `UNFOLDED` where you returned `False`.
 
     `fold()` now returns a `Fold(value, reason)` rather than a bare `bool | None`, and the
     contract is strict: it **must** return a `Fold` (or `UNFOLDED`) — a plain `(value, reason)`

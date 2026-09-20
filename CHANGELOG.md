@@ -1,16 +1,39 @@
 # AutoSetSyntax Changelog
 
-## Unreleased
+## 6.2.0
+
+> **BREAKING: the rule optimizer's drop protocol is now `fold()`.**
+> Only authors of **custom constraints/matches** are affected -- if you have never subclassed
+> `AbstractConstraint` or `AbstractMatch`, nothing changes for you.
 
 - refactor!: `fold()` replaces the `is_droppable()`/`droppable_value()`/`AbstractMatch.is_droppable()`
   trio in the rule optimizer. It returns a `Fold(value, reason)` -- the constant a rule always
-  evaluates to, plus why -- or `UNFOLDED` when the result still depends on the view. Nothing else
-  is accepted: a custom implementation returning a bare `True`/`False`/`None` (or a plain
-  `(value, reason)` tuple) is rejected with a `TypeError` naming the class.
-  **Custom constraints/matches** overriding the old names keep working but are no longer
-  optimized away; a warning naming the class is printed at startup. To migrate, return
-  `Fold(False, "why it can never match")` where you returned `is_droppable() == True`, and
-  `UNFOLDED` where you returned `False`.
+  evaluates to, plus why -- or `UNFOLDED` when the result still depends on the view.
+
+  The old names keep working (your rule still evaluates correctly) but are no longer optimized
+  away, and a warning naming the class is printed at startup. To migrate:
+
+  ```python
+  # before
+  def is_droppable(self) -> bool:
+      return not self.args
+
+  # after
+  def fold(self) -> Fold:
+      if not self.args:
+          return Fold(False, "no argument was given")
+      return UNFOLDED
+  ```
+
+  `Fold(False, ...)` is the old `is_droppable() == True`, and `UNFOLDED` is the old `False`.
+  Rules that always *match* -- previously inexpressible -- now return `Fold(True, ...)`.
+  The `reason` is user-facing: it is what the log panel and Debug Information show.
+
+  `fold()` must return a `Fold` or `UNFOLDED`; a bare `True`/`False`/`None`, or a plain
+  `(value, reason)` tuple, raises a `TypeError` naming the class.
+  See [Extensibility](https://jfcherng.github.io/ST-AutoSetSyntax/advanced-topics/how-it-works/#extensibility)
+  for the full contract.
+
 - perf: a constraint or match that always *matches* can now be pruned too, which the old
   protocol could only express for the always-fails direction. `contains`/`contains_regex` with
   a threshold `<= 0` and `some(0)` are now reported as dropped rules instead of being re-tested
@@ -21,6 +44,10 @@
 - fix: a custom implementation that breaks rule optimizing no longer costs the window every
   other rule. The failure is logged with the offending class name and the rules are used
   unoptimized instead.
+- refactor!: `find_syntax_by_syntax_like`, `find_syntax_by_syntax_likes`,
+  `find_syntaxes_by_syntax_like` and `find_syntaxes_by_syntax_likes` collapse into
+  `find_syntax()` and `find_syntaxes()`, each taking one syntax-like or many. **Custom
+  constraints/matches** importing the old names must switch to the new ones.
 
 ## 6.1.1
 
