@@ -6,7 +6,6 @@ import shutil
 import tarfile
 import tempfile
 import threading
-import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -53,6 +52,18 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
     @staticmethod
     def _prepare_dependencies() -> bool:
         """Download, verify and install dependencies. Returns whether it succeeded."""
+        # the checksum is mandatory: a missing (404) or empty sidecar used to skip validation and
+        # install whatever was downloaded. Fetched first, since it's tiny and the archive isn't
+        sha256_url = f"{PLUGIN_PY_LIBS_URL}.sha256"
+        try:
+            content_hash = simple_urlopen(sha256_url).decode("utf-8").strip()
+        except Exception as e:
+            sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {sha256_url} ({e})")
+            return False
+        if not content_hash:
+            sublime.error_message(f"[{PLUGIN_NAME}] Empty SHA-256 checksum: {sha256_url}")
+            return False
+
         url = PLUGIN_PY_LIBS_URL
         try:
             content_bytes = simple_urlopen(url, timeout=1800)
@@ -60,20 +71,7 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
             sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {url} ({e})")
             return False
 
-        sha256_url = f"{PLUGIN_PY_LIBS_URL}.sha256"
-        try:
-            content_hash = simple_urlopen(sha256_url).decode("utf-8").strip()
-        except urllib.error.HTTPError as e:
-            if e.code != 404:
-                sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {sha256_url} ({e})")
-                return False
-            print(f"[{PLUGIN_NAME}] Error while fetching: {sha256_url} ({e}; skip checksum validation)")
-            content_hash = ""
-        except Exception as e:
-            sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {sha256_url} ({e})")
-            return False
-
-        if content_hash and sha256sum(content_bytes).casefold() != content_hash.casefold():
+        if sha256sum(content_bytes).casefold() != content_hash.casefold():
             sublime.error_message(f"[{PLUGIN_NAME}] SHA-256 checksum mismatches: {PLUGIN_PY_LIBS_URL}")
             return False
 

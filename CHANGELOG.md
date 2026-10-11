@@ -34,6 +34,9 @@
   and macOS existing rules may now match more files -- e.g. the bundled "Django templates" rule's
   `/templates/` now also matches a `Templates` folder. Set `"case_insensitive": false` to keep
   the old behavior.
+- fix: "Download Dependencies" always verifies the SHA-256 checksum. A missing (404) or empty
+  checksum file used to skip verification and install the archive unchecked; now it aborts. The
+  checksum is also fetched first, so such a failure no longer costs the large archive download.
 
 ## 6.2.0
 

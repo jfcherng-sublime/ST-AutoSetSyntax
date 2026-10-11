@@ -1,14 +1,37 @@
 """Tests for the dependency-download command's control flow (success/failure signaling, checksum handling)."""
 
+import hashlib
 import urllib.error
 
 import pytest
+
+_ARCHIVE = b"archive-bytes"
+_VALID_CHECKSUM = hashlib.sha256(_ARCHIVE).hexdigest().encode()
 
 
 def _import_module():
     import plugin.commands.auto_set_syntax_download_dependencies as mod
 
     return mod
+
+
+def _serve(checksum: bytes | Exception = _VALID_CHECKSUM, requested: list[str] | None = None):
+    """A fake `simple_urlopen` serving `_ARCHIVE` and, for its `.sha256` sidecar, `checksum` (or raising it)."""
+
+    def _urlopen(url, **kwargs):
+        if requested is not None:
+            requested.append(url)
+        if not url.endswith(".sha256"):
+            return _ARCHIVE
+        if isinstance(checksum, Exception):
+            raise checksum
+        return checksum
+
+    return _urlopen
+
+
+def _not_found(url: str = "https://example.invalid/x.sha256") -> urllib.error.HTTPError:
+    return urllib.error.HTTPError(url, 404, "Not Found", None, None)  # type: ignore[arg-type]
 
 
 @pytest.fixture(autouse=True)
@@ -36,56 +59,46 @@ class TestPrepareDependencies:
     def test_checksum_mismatch_returns_false_without_extracting(self, monkeypatch):
         mod = _import_module()
 
-        def _urlopen(url, **kwargs):
-            if url.endswith(".sha256"):
-                return b"0" * 64
-            return b"archive-bytes"
-
-        monkeypatch.setattr(mod, "simple_urlopen", _urlopen)
+        monkeypatch.setattr(mod, "simple_urlopen", _serve(b"0" * 64))
         extract_calls = []
         monkeypatch.setattr(mod, "decompress_buffer", lambda *a, **kw: extract_calls.append(1) or True)
 
         assert mod.AutoSetSyntaxDownloadDependenciesCommand._prepare_dependencies() is False
         assert extract_calls == []
 
-    def test_checksum_sidecar_missing_404_skips_validation_and_proceeds(self, monkeypatch, tmp_path):
+    @pytest.mark.parametrize(
+        "checksum",
+        [_not_found(), OSError("network down"), b"", b"  \n"],
+        ids=["404", "network-error", "empty", "blank"],
+    )
+    def test_unverifiable_archive_is_never_downloaded_or_installed(self, monkeypatch, checksum):
+        """No usable checksum means nothing to verify against: a missing (404) or empty sidecar used
+        to skip validation and install whatever was downloaded. Fetched first, so a sidecar that
+        can't be had doesn't cost the (large) archive download either."""
+        mod = _import_module()
+
+        requested: list[str] = []
+        monkeypatch.setattr(mod, "simple_urlopen", _serve(checksum, requested))
+        extract_calls = []
+        monkeypatch.setattr(mod, "decompress_buffer", lambda *a, **kw: extract_calls.append(1) or True)
+
+        assert mod.AutoSetSyntaxDownloadDependenciesCommand._prepare_dependencies() is False
+        assert extract_calls == []
+        assert all(url.endswith(".sha256") for url in requested)
+
+    def test_checksum_comparison_ignores_case_and_surrounding_whitespace(self, monkeypatch, tmp_path):
         mod = _import_module()
         libs_dir = tmp_path / "libs"
 
-        def _urlopen(url, **kwargs):
-            if url.endswith(".sha256"):
-                raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
-            return b"archive-bytes"
-
-        extract_calls = []
-
         def _fake_extract(buffer, *, filename, dst_dir):
-            extract_calls.append(1)
             (dst_dir / libs_dir.name).mkdir(parents=True)
             return True
 
-        monkeypatch.setattr(mod, "simple_urlopen", _urlopen)
+        monkeypatch.setattr(mod, "simple_urlopen", _serve(_VALID_CHECKSUM.upper() + b"\n"))
         monkeypatch.setattr(mod, "decompress_buffer", _fake_extract)
         monkeypatch.setattr(mod, "PLUGIN_PY_LIBS_DIR", libs_dir)
 
         assert mod.AutoSetSyntaxDownloadDependenciesCommand._prepare_dependencies() is True
-        assert extract_calls == [1]
-
-    def test_checksum_sidecar_network_error_aborts_without_extracting(self, monkeypatch):
-        """A transient failure fetching the sidecar must NOT be treated the same as "no checksum published"."""
-        mod = _import_module()
-
-        def _urlopen(url, **kwargs):
-            if url.endswith(".sha256"):
-                raise OSError("network down")
-            return b"archive-bytes"
-
-        monkeypatch.setattr(mod, "simple_urlopen", _urlopen)
-        extract_calls = []
-        monkeypatch.setattr(mod, "decompress_buffer", lambda *a, **kw: extract_calls.append(1) or True)
-
-        assert mod.AutoSetSyntaxDownloadDependenciesCommand._prepare_dependencies() is False
-        assert extract_calls == []
 
     def test_extraction_failure_leaves_old_deps_intact(self, monkeypatch, tmp_path):
         mod = _import_module()
@@ -94,15 +107,10 @@ class TestPrepareDependencies:
         libs_dir.mkdir()
         (libs_dir / "sentinel.txt").write_text("old deps")
 
-        def _urlopen(url, **kwargs):
-            if url.endswith(".sha256"):
-                raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
-            return b"archive-bytes"
-
         def _boom_extract(*a, **kw):
             raise OSError("corrupt archive")
 
-        monkeypatch.setattr(mod, "simple_urlopen", _urlopen)
+        monkeypatch.setattr(mod, "simple_urlopen", _serve())
         monkeypatch.setattr(mod, "decompress_buffer", _boom_extract)
         monkeypatch.setattr(mod, "PLUGIN_PY_LIBS_DIR", libs_dir)
 
@@ -116,11 +124,6 @@ class TestPrepareDependencies:
         libs_dir.mkdir()
         (libs_dir / "sentinel.txt").write_text("old deps")
 
-        def _urlopen(url, **kwargs):
-            if url.endswith(".sha256"):
-                raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
-            return b"archive-bytes"
-
         def _fake_extract(buffer, *, filename, dst_dir):
             # archives extract into a `dst_dir / <libs-dir-name>` subfolder, like the real tarball does
             extracted = dst_dir / libs_dir.name
@@ -128,7 +131,7 @@ class TestPrepareDependencies:
             (extracted / "new_marker.txt").write_text("new deps")
             return True
 
-        monkeypatch.setattr(mod, "simple_urlopen", _urlopen)
+        monkeypatch.setattr(mod, "simple_urlopen", _serve())
         monkeypatch.setattr(mod, "decompress_buffer", _fake_extract)
         monkeypatch.setattr(mod, "PLUGIN_PY_LIBS_DIR", libs_dir)
 
@@ -144,12 +147,7 @@ class TestPrepareDependencies:
         libs_dir.mkdir()
         (libs_dir / "sentinel.txt").write_text("old deps")
 
-        def _urlopen(url, **kwargs):
-            if url.endswith(".sha256"):
-                raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
-            return b"archive-bytes"
-
-        monkeypatch.setattr(mod, "simple_urlopen", _urlopen)
+        monkeypatch.setattr(mod, "simple_urlopen", _serve())
         monkeypatch.setattr(mod, "decompress_buffer", lambda *a, **kw: True)  # extracts nothing useful
         monkeypatch.setattr(mod, "PLUGIN_PY_LIBS_DIR", libs_dir)
 
