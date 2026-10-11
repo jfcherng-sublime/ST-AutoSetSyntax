@@ -52,6 +52,20 @@ class TestGetViewPseudoContentAndFirstLine:
         assert snapshot_mod.get_view_pseudo_first_line(view, None) == "hello world"
 
 
+class TestHeadTailContentSt:
+    def test_content_between_half_and_partial_is_not_duplicated(self):
+        """Regression: with `half < size <= partial` the head and the tail overlapped, so the
+        middle appeared twice."""
+        from plugin.utils import head_tail_content_st
+
+        assert head_tail_content_st(_FakeView("aaaaFOObbbb"), 20) == "aaaaFOObbbb"
+
+    def test_content_longer_than_partial_is_split(self):
+        from plugin.utils import head_tail_content_st
+
+        assert head_tail_content_st(_FakeView("abcdefghij1234567890X"), 20) == "abcdefghij\n\n234567890X"
+
+
 class TestViewSnapshotConstruction:
     def test_basic_fields(self, make_snapshot):
         snap = make_snapshot(content="hello\nworld", path="/tmp/test.txt")

@@ -193,6 +193,14 @@ class TestHeadTailContent:
         # → content[:2] + "\n\n" + content[-2:] = "ab\n\nde"
         assert head_tail_content("abcde", 4) == "ab\n\nde"
 
+    def test_content_between_half_and_n_is_not_duplicated(self):
+        """Regression: with `half < len <= n` the head and the tail overlapped, so the middle
+        appeared twice -- `contains` with a threshold of 2 then matched a single occurrence."""
+        from plugin.utils import head_tail_content
+
+        content = "aaaaFOObbbb"  # 11 chars, n=20 → half=10
+        assert head_tail_content(content, 20) == content
+
 
 # ── head_tail_lines ───────────────────────────────────────────────────────────
 

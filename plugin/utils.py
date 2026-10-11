@@ -296,8 +296,8 @@ def get_window_by_id(id: int) -> sublime.Window | None:
 def head_tail_content(content: str, n: int) -> str:
     """
     Return the first `n // 2` and the last `n // 2` characters of `content`,
-    joined by a blank line. A negative `n` means no limit, in which case `content` is
-    returned as-is.
+    joined by a blank line. A negative `n` means no limit, and `content` no longer than `n`
+    fits as a whole, in which cases `content` is returned as-is.
     """
     if n < 0:
         return content
@@ -305,7 +305,8 @@ def head_tail_content(content: str, n: int) -> str:
     if (half := n // 2) <= 0:
         return ""
 
-    if len(content) <= half:
+    # not `<= half`: between `half` and `n`, the head and the tail overlap, duplicating the middle
+    if len(content) <= n:
         return content
 
     return content[:half] + "\n\n" + content[-half:]
@@ -340,7 +341,8 @@ def head_tail_content_st(view: sublime.View, partial: int) -> str:
     if (half := partial // 2) <= 0:
         return ""
 
-    if (size := view.size()) <= half:
+    # see `head_tail_content()`: a smaller `partial` would duplicate the overlapping middle
+    if (size := view.size()) <= partial:
         return view.substr(sublime.Region(0, size))
 
     return (

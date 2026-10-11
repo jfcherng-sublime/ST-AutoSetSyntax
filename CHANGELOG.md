@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: for a file between half and all of `trim_file_size` long, the middle of its content was
+  tested twice, e.g. `contains` with a `threshold` of `2` matched a single occurrence.
 - fix!: a rule containing an unknown or invalid match/constraint is now dropped as a whole.
   Previously only the bad entry was removed, which could change what the rule meant: an `all`
   whose only constraint was misspelled became an empty `all`, which matches every file.
