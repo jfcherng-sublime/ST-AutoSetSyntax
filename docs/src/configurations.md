@@ -811,10 +811,15 @@ To edit project settings, go to `Project` » `Edit Project`.
     {
         "constraint": "name_contains",
         "args": ["foo", "bar"],
+        "kwargs": {"case_insensitive": false},
     }
     ```
 
     Test whether the file name contains `foo` or `bar`.
+
+    !!! info
+
+        If `case_insensitive` is not provided, it will be `true` on Windows and macOS (case-insensitive filesystems) but `false` on Linux.
 
 #### `name_contains_regex`
 
@@ -838,10 +843,15 @@ To edit project settings, go to `Project` » `Edit Project`.
     {
         "constraint": "path_contains",
         "args": ["foo", "bar"],
+        "kwargs": {"case_insensitive": false},
     }
     ```
 
     Test whether the file path contains `foo` or `bar`.
+
+    !!! info
+
+        If `case_insensitive` is not provided, it will be `true` on Windows and macOS (case-insensitive filesystems) but `false` on Linux.
 
 #### `path_contains_regex`
 

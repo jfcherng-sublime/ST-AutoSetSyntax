@@ -468,6 +468,56 @@ class TestPathContainsConstraint:
         assert PathContainsConstraint().fold().value is False
 
 
+# ── name_contains / path_contains: case sensitivity ───────────────────────────
+
+
+_CONTAINS_CASES = [
+    # (module, class name, file path, needle differing from it only in case)
+    ("name_contains", "NameContainsConstraint", "/home/user/Makefile", "makefile"),
+    ("path_contains", "PathContainsConstraint", "/home/user/Templates/page.html", "/templates/"),
+]
+
+
+def _contains_constraint(module: str, cls_name: str) -> type:
+    import importlib
+
+    return getattr(importlib.import_module(f"plugin.rules.constraints.{module}"), cls_name)
+
+
+class TestNameAndPathContainsCaseSensitivity:
+    """Like `is_name`/`is_extension`: these look at file names, so they follow the filesystem's
+    case sensitivity by default -- insensitive on Windows/macOS, sensitive on Linux."""
+
+    @pytest.mark.parametrize(("module", "cls_name", "path", "needle"), _CONTAINS_CASES)
+    def test_explicit_case_insensitive(self, make_snapshot, module, cls_name, path, needle):
+        constraint = _contains_constraint(module, cls_name)
+        snap = make_snapshot(path=path)
+
+        assert constraint(needle, case_insensitive=True).test(snap) is True
+        assert constraint(needle, case_insensitive=False).test(snap) is False
+
+    @pytest.mark.parametrize(("module", "cls_name", "path", "needle"), _CONTAINS_CASES)
+    @pytest.mark.parametrize(("platform", "matches"), [("windows", True), ("osx", True), ("linux", False)])
+    def test_default_follows_the_platform(
+        self, make_snapshot, monkeypatch, module, cls_name, path, needle, platform, matches
+    ):
+        import plugin.rules.constraint as constraint_mod
+
+        monkeypatch.setattr(constraint_mod, "ST_PLATFORM", platform)
+        constraint = _contains_constraint(module, cls_name)
+
+        assert constraint(needle).test(make_snapshot(path=path)) is matches
+
+    @pytest.mark.parametrize(("module", "cls_name", "path", "needle"), _CONTAINS_CASES)
+    def test_exact_case_matches_either_way(self, make_snapshot, module, cls_name, path, needle):
+        constraint = _contains_constraint(module, cls_name)
+        exact = needle.title() if module == "name_contains" else "/Templates/"
+        snap = make_snapshot(path=path)
+
+        assert constraint(exact, case_insensitive=True).test(snap) is True
+        assert constraint(exact, case_insensitive=False).test(snap) is True
+
+
 # ── PathContainsRegexConstraint ───────────────────────────────────────────────
 
 

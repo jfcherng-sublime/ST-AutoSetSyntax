@@ -28,6 +28,12 @@
 - fix: `is_javascript_project` no longer depends on the order files are opened in. A file in a
   TypeScript package nested inside a JavaScript project was treated as JavaScript once any file
   of the outer project had been checked.
+- feat!: `name_contains` and `path_contains` take a `case_insensitive` kwarg, defaulting like
+  `is_name`/`is_extension`: case-insensitive on Windows and macOS (case-insensitive
+  filesystems), case-sensitive on Linux. They used to be case-sensitive everywhere, so on Windows
+  and macOS existing rules may now match more files -- e.g. the bundled "Django templates" rule's
+  `/templates/` now also matches a `Templates` folder. Set `"case_insensitive": false` to keep
+  the old behavior.
 
 ## 6.2.0
 

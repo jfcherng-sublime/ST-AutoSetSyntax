@@ -14,7 +14,9 @@ class NameContainsConstraint(AbstractConstraint):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.needles: tuple[str, ...] = self._handled_args()
+        # a file name, so follow the filesystem's case sensitivity like `is_name` does
+        self.case_insensitive = self._handled_case_insensitive(kwargs)
+        self.needles: tuple[str, ...] = self._handled_args(self.fix_case)
 
     @override
     def fold(self) -> Fold:
@@ -25,4 +27,8 @@ class NameContainsConstraint(AbstractConstraint):
         if not (file_name := view_snapshot.file_name):
             raise AlwaysFalsyException("file not on disk")
 
+        file_name = self.fix_case(file_name)
         return any((needle in file_name) for needle in self.needles)
+
+    def fix_case(self, string: str) -> str:
+        return string.lower() if self.case_insensitive else string
