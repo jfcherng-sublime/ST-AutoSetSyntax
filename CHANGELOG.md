@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fix!: an invalid `is_size`/`is_line_count` comparator, or a non-integer `contains`/`contains_regex`
+  `threshold`, makes the rule invalid. Previously such a constraint never matched, so with `"not"`
+  it matched every file.
 - fix: for a file between half and all of `trim_file_size` long, the middle of its content was
   tested twice, e.g. `contains` with a `threshold` of `2` matched a single occurrence.
 - fix!: a rule containing an unknown or invalid match/constraint is now dropped as a whole.

@@ -62,6 +62,24 @@ class TestConstraintRule:
         rule = ConstraintRule.make(StConstraintRule(constraint="nonexistent_constraint"))
         assert rule is None
 
+    @pytest.mark.parametrize(
+        ("constraint", "args", "kwargs"),
+        [
+            ("is_size", ["=>", 100], {}),
+            ("is_line_count", ["=>", 100], {}),
+            ("contains", ["x"], {"threshold": "2"}),
+            ("contains_regex", ["x"], {"threshold": "2"}),
+        ],
+    )
+    def test_make_invalid_args_under_not_is_invalid(self, constraint, args, kwargs):
+        """Regression: an invalid argument used to fold to False, which "not" flipped to a constant
+        True -- so a typo made the rule match every file. It must make the rule invalid instead."""
+        _ensure_rules_imported()
+        from plugin.rules.constraint import ConstraintRule
+
+        src = StConstraintRule(constraint=constraint, args=args, kwargs=kwargs, inverted=True)
+        assert ConstraintRule.make(src) is None
+
     def test_make_empty_args(self):
         _ensure_rules_imported()
         from plugin.rules.constraint import ConstraintRule

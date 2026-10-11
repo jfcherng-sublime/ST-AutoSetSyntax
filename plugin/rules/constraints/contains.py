@@ -17,17 +17,14 @@ class ContainsConstraint(AbstractConstraint):
         super().__init__(*args, **kwargs)
 
         self.needles: tuple[str, ...] = self._handled_args()
-        self.threshold: int = kwargs.get("threshold", 1)
+        self.threshold = self._handled_threshold(kwargs)
 
     @override
     def fold(self) -> Fold:
         """
-        A non-numeric threshold makes `test()` always raise, which is caught upstream as
-        `False`. A threshold `<= 0` always matches. A positive threshold with no needles can
-        never find a match.
+        A threshold `<= 0` always matches. A positive threshold with no needles can never find a
+        match.
         """
-        if not isinstance(self.threshold, (int, float)):
-            return Fold(False, f'"threshold" is {self.threshold!r}, which is not a number')
         if self.threshold <= 0:
             return Fold(True, f'a "threshold" of {self.threshold} is met without finding anything')
         return UNFOLDED if self.needles else Fold(False, "no needle to look for was given")

@@ -1,5 +1,7 @@
 """Tests for built-in constraint implementations."""
 
+import re
+
 import pytest
 
 from plugin.rules.constraint import AlwaysFalsyException
@@ -65,6 +67,14 @@ class TestContainsConstraint:
 
         assert ContainsConstraint(threshold=0).fold().value is True
 
+    @pytest.mark.parametrize("threshold", ["2", 1.5, True, None])
+    def test_non_integer_threshold_raises(self, threshold):
+        """Raise rather than fold to False: under "not", False would flip to "always matches"."""
+        from plugin.rules.constraints.contains import ContainsConstraint
+
+        with pytest.raises(ValueError, match='"threshold" must be an integer'):
+            ContainsConstraint("x", threshold=threshold)
+
 
 # ── ContainsRegexConstraint ───────────────────────────────────────────────────
 
@@ -123,6 +133,12 @@ class TestContainsRegexConstraint:
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
         assert ContainsRegexConstraint(threshold=0).fold().value is True
+
+    def test_non_integer_threshold_raises(self):
+        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
+
+        with pytest.raises(ValueError, match='"threshold" must be an integer'):
+            ContainsRegexConstraint("x", threshold="2")
 
     def test_null_regex_flags_falls_back_to_multiline_default(self, make_snapshot):
         """Regression (AbstractConstraint._handled_regex): "regex_flags": null is present with
@@ -593,19 +609,20 @@ class TestIsLineCountConstraint:
         snap = make_snapshot(line_count=2)
         assert IsLineCountConstraint("<", 5).test(snap) is True
 
-    def test_wrong_arg_count_folds_to_false(self):
-        """Assert the whole `Fold`: both failure branches fold to the same `False`, so the
-        reason is the only thing that tells them apart."""
+    @pytest.mark.parametrize(
+        ("args", "message"),
+        [
+            ((">",), "expects exactly 2 args (a comparator and a threshold), got 1"),
+            ((), "expects exactly 2 args (a comparator and a threshold), got 0"),
+            (("~~", 10), "'~~' is not a known comparator"),
+        ],
+    )
+    def test_invalid_args_raise(self, args, message):
+        """Raise rather than fold to False: under "not", False would flip to "always matches"."""
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
 
-        expected = "expects exactly 2 args (a comparator and a threshold), got {}"
-        assert IsLineCountConstraint(">").fold() == Fold(False, expected.format(1))
-        assert IsLineCountConstraint().fold() == Fold(False, expected.format(0))
-
-    def test_unknown_comparator_folds_to_false(self):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        assert IsLineCountConstraint("~~", 10).fold() == Fold(False, "'~~' is not a known comparator")
+        with pytest.raises(ValueError, match=re.escape(message)):
+            IsLineCountConstraint(*args)
 
     def test_valid_does_not_fold(self):
         from plugin.rules.constraints.is_line_count import IsLineCountConstraint
@@ -648,18 +665,20 @@ class TestIsSizeConstraint:
         snap = make_snapshot(file_size=1024)
         assert IsSizeConstraint("==", 1024).test(snap) is True
 
-    def test_wrong_arg_count_folds_to_false(self):
-        """See IsLineCountConstraint's twin: the reason is what distinguishes the branches."""
+    @pytest.mark.parametrize(
+        ("args", "message"),
+        [
+            ((">",), "expects exactly 2 args (a comparator and a threshold), got 1"),
+            ((), "expects exactly 2 args (a comparator and a threshold), got 0"),
+            (("~~", 10), "'~~' is not a known comparator"),
+        ],
+    )
+    def test_invalid_args_raise(self, args, message):
+        """Raise rather than fold to False: under "not", False would flip to "always matches"."""
         from plugin.rules.constraints.is_size import IsSizeConstraint
 
-        expected = "expects exactly 2 args (a comparator and a threshold), got {}"
-        assert IsSizeConstraint(">").fold() == Fold(False, expected.format(1))
-        assert IsSizeConstraint().fold() == Fold(False, expected.format(0))
-
-    def test_unknown_comparator_folds_to_false(self):
-        from plugin.rules.constraints.is_size import IsSizeConstraint
-
-        assert IsSizeConstraint("~~", 0).fold() == Fold(False, "'~~' is not a known comparator")
+        with pytest.raises(ValueError, match=re.escape(message)):
+            IsSizeConstraint(*args)
 
     def test_valid_does_not_fold(self):
         from plugin.rules.constraints.is_size import IsSizeConstraint

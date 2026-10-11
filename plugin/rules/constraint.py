@@ -199,6 +199,36 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
+    def _handled_comparison(args: tuple[Any, ...]) -> tuple[Callable[[Any, Any], bool], float]:
+        """
+        Parse `args` as `(comparator, threshold)`.
+
+        Raise rather than fold to `False`: a typo'd comparator under `"not"` would fold to `True`,
+        i.e. a typo made the rule match every file. Raising makes the whole rule invalid instead.
+        """
+        if len(args) != 2:
+            raise ValueError(f"expects exactly 2 args (a comparator and a threshold), got {len(args)}")
+        comparator, threshold = args
+        if not (comparator_func := AbstractConstraint._handled_comparator(comparator)):
+            raise ValueError(f"{comparator!r} is not a known comparator")
+        return comparator_func, float(threshold)
+
+    @final
+    @staticmethod
+    def _handled_threshold(kwargs: dict[str, Any]) -> int:
+        """
+        The `threshold` in `kwargs`, an integer count of matches. Defaulted to `1`.
+
+        Raise rather than fold to `False`, for the same reason as `_handled_comparison()`.
+        """
+        threshold = kwargs.get("threshold", 1)
+        # `bool` is an `int` subclass, but `true` in settings is surely not meant as a count of 1
+        if not isinstance(threshold, int) or isinstance(threshold, bool):
+            raise ValueError(f'"threshold" must be an integer, got {threshold!r}')
+        return threshold
+
+    @final
+    @staticmethod
     def _handled_regex(args: tuple[Any, ...], kwargs: dict[str, Any]) -> re.Pattern[str]:
         """Returns compiled regex object from `args` and `kwargs.regex_flags`.
 
