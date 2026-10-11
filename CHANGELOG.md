@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fix: re-downloading dependencies on Windows while Magika is loaded no longer breaks the install.
+  The old dependencies, which can't be deleted then, are now moved aside and removed on the next
+  start, instead of being half-deleted with the new ones installed into a subdirectory.
 - fix!: an invalid `is_size`/`is_line_count` comparator, or a non-integer `contains`/`contains_regex`
   `threshold`, makes the rule invalid. Previously such a constraint never matched, so with `"not"`
   it matched every file.

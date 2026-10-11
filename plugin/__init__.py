@@ -9,6 +9,7 @@ from .commands import AutoSetSyntaxCreateNewMatchCommand
 from .commands import AutoSetSyntaxDebugInformationCommand
 from .commands import AutoSetSyntaxDownloadDependenciesCommand
 from .commands import AutoSetSyntaxSyntaxRulesSummaryCommand
+from .commands import remove_stale_dependency_dirs
 from .commands import run_auto_set_syntax_on_view
 from .constants import PLUGIN_NAME
 from .constants import PLUGIN_PY_LIBS_DIR
@@ -72,6 +73,8 @@ def plugin_loaded() -> None:
 
 
 def _plugin_loaded() -> None:
+    # old installs a dependency download left behind; they're never on `sys.path`, so safe anytime
+    sublime.set_timeout_async(remove_stale_dependency_dirs)
     _add_python_lib_path()
     load_custom_implementations()
     warn_legacy_fold_overrides(AbstractConstraint, AbstractMatch)

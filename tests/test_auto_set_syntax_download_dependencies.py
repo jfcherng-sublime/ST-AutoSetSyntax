@@ -155,6 +155,78 @@ class TestPrepareDependencies:
         assert (libs_dir / "sentinel.txt").exists()
 
 
+def _extract_new_deps(buffer, *, filename, dst_dir):
+    """A fake `decompress_buffer` extracting a `libs` dir holding `new_marker.txt`."""
+    (extracted := dst_dir / "libs").mkdir(parents=True)
+    (extracted / "new_marker.txt").write_text("new deps")
+    return True
+
+
+class TestSwapIn:
+    """Installing renames the old deps aside instead of deleting them in place."""
+
+    @pytest.fixture
+    def libs_dir(self, monkeypatch, tmp_path):
+        mod = _import_module()
+        libs_dir = tmp_path / "libs"
+        libs_dir.mkdir()
+        (libs_dir / "sentinel.txt").write_text("old deps")
+        monkeypatch.setattr(mod, "simple_urlopen", _serve())
+        monkeypatch.setattr(mod, "decompress_buffer", _extract_new_deps)
+        monkeypatch.setattr(mod, "PLUGIN_PY_LIBS_DIR", libs_dir)
+        return libs_dir
+
+    def test_undeletable_old_deps_are_not_installed_into(self, monkeypatch, libs_dir):
+        """Regression: a loaded DLL can't be deleted on Windows, so deleting the old deps got
+        halfway and the new ones were then moved *into* the leftover, as `libs/libs`."""
+        mod = _import_module()
+        monkeypatch.setattr(mod, "rmtree_ex", lambda *a, **kw: None)  # nothing can be deleted
+
+        assert mod.AutoSetSyntaxDownloadDependenciesCommand._prepare_dependencies() is True
+        assert sorted(p.name for p in libs_dir.iterdir()) == ["new_marker.txt"]
+        (backup,) = libs_dir.parent.glob("libs.old-*")
+        assert (backup / "sentinel.txt").exists()
+
+    def test_stale_dirs_are_removed(self, monkeypatch, libs_dir):
+        mod = _import_module()
+        (libs_dir.parent / "libs.old-1234").mkdir()
+        (libs_dir.parent / "libs.tmp-5678").mkdir()
+
+        mod.remove_stale_dependency_dirs()
+
+        assert sorted(p.name for p in libs_dir.parent.iterdir()) == ["libs"]
+
+    def test_failing_to_move_old_deps_aside_changes_nothing(self, monkeypatch, libs_dir):
+        mod = _import_module()
+        real_rename = mod.Path.rename
+
+        def _rename(self, target):
+            if self == libs_dir:
+                raise PermissionError("in use")
+            return real_rename(self, target)
+
+        monkeypatch.setattr(mod.Path, "rename", _rename)
+
+        assert mod.AutoSetSyntaxDownloadDependenciesCommand._prepare_dependencies() is False
+        assert sorted(p.name for p in libs_dir.iterdir()) == ["sentinel.txt"]
+        assert sorted(p.name for p in libs_dir.parent.iterdir()) == ["libs"]
+
+    def test_failing_to_install_restores_old_deps(self, monkeypatch, libs_dir):
+        mod = _import_module()
+        real_rename = mod.Path.rename
+
+        def _rename(self, target):
+            if mod.Path(target) == libs_dir and ".old-" not in self.name:
+                raise PermissionError("in use")
+            return real_rename(self, target)
+
+        monkeypatch.setattr(mod.Path, "rename", _rename)
+
+        assert mod.AutoSetSyntaxDownloadDependenciesCommand._prepare_dependencies() is False
+        assert sorted(p.name for p in libs_dir.iterdir()) == ["sentinel.txt"]
+        assert sorted(p.name for p in libs_dir.parent.iterdir()) == ["libs"]
+
+
 class TestSimpleUrlopen:
     def test_passes_a_timeout_to_urlopen(self, monkeypatch):
         """A hung/black-holed connection must not block the download thread forever -- urlopen()

@@ -7,6 +7,7 @@ import tarfile
 import tempfile
 import threading
 import urllib.request
+import uuid
 import zipfile
 from pathlib import Path
 from typing import BinaryIO
@@ -76,8 +77,12 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
             return False
 
         # extract into a scratch parent dir first so a corrupt/incomplete archive never destroys a
-        # working install; the archive's own top-level entry is named like `PLUGIN_PY_LIBS_DIR`
-        tmp_parent = Path(tempfile.mkdtemp(prefix=f"{PLUGIN_NAME}-deps-"))
+        # working install; the archive's own top-level entry is named like `PLUGIN_PY_LIBS_DIR`.
+        # A sibling of it, so installing is a rename on the same filesystem, not a copy
+        PLUGIN_PY_LIBS_DIR.parent.mkdir(parents=True, exist_ok=True)
+        tmp_parent = Path(
+            tempfile.mkdtemp(prefix=f"{PLUGIN_PY_LIBS_DIR.name}{_TMP_DIR_INFIX}", dir=PLUGIN_PY_LIBS_DIR.parent)
+        )
         try:
             try:
                 ok = decompress_buffer(io.BytesIO(content_bytes), filename=PLUGIN_PY_LIBS_ZIP_NAME, dst_dir=tmp_parent)
@@ -95,12 +100,54 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
                 )
                 return False
 
-            rmtree_ex(PLUGIN_PY_LIBS_DIR, ignore_errors=True)
-            shutil.move(str(extracted_dir), str(PLUGIN_PY_LIBS_DIR))
+            return _swap_in(extracted_dir)
         finally:
             rmtree_ex(tmp_parent, ignore_errors=True)
 
-        return True
+
+_TMP_DIR_INFIX = ".tmp-"
+_OLD_DIR_INFIX = ".old-"
+
+
+def _swap_in(new_dir: Path) -> bool:
+    """
+    Replace `PLUGIN_PY_LIBS_DIR` with `new_dir`. Returns whether it succeeded.
+
+    Rename the old install aside rather than delete it: on Windows, a loaded DLL (e.g. Magika's
+    onnxruntime) can't be deleted, so deleting got halfway -- leaving a broken install that the
+    new one was then moved *into*, as a subdirectory. A directory holding a loaded DLL can still
+    be renamed, though, and a rename that fails changes nothing.
+    """
+    backup_dir: Path | None = None
+    if PLUGIN_PY_LIBS_DIR.exists():
+        backup_dir = PLUGIN_PY_LIBS_DIR.with_name(f"{PLUGIN_PY_LIBS_DIR.name}{_OLD_DIR_INFIX}{uuid.uuid4().hex[:8]}")
+        try:
+            PLUGIN_PY_LIBS_DIR.rename(backup_dir)
+        except OSError as e:
+            sublime.error_message(f"[{PLUGIN_NAME}] Cannot move the old dependencies aside: {e}")
+            return False
+
+    try:
+        new_dir.rename(PLUGIN_PY_LIBS_DIR)
+    except OSError as e:
+        if backup_dir:
+            backup_dir.rename(PLUGIN_PY_LIBS_DIR)
+        sublime.error_message(f"[{PLUGIN_NAME}] Cannot install the new dependencies: {e}")
+        return False
+
+    if backup_dir:
+        # its DLLs may still be loaded; whatever is left is removed on the next start
+        rmtree_ex(backup_dir, ignore_errors=True)
+    return True
+
+
+def remove_stale_dependency_dirs() -> None:
+    """Remove the old installs and scratch dirs a previous download couldn't, e.g. for a loaded DLL."""
+    if not (parent := PLUGIN_PY_LIBS_DIR.parent).is_dir():
+        return
+    for infix in (_TMP_DIR_INFIX, _OLD_DIR_INFIX):
+        for path in parent.glob(f"{PLUGIN_PY_LIBS_DIR.name}{infix}*"):
+            rmtree_ex(path, ignore_errors=True)
 
 
 def decompress_buffer(buffer: BinaryIO, *, filename: str, dst_dir: PathLike) -> bool:
