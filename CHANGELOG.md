@@ -12,6 +12,10 @@
 - fix: a custom implementation that fails to import with anything other than `ImportError`
   (e.g. a `SyntaxError`) no longer stops the whole plugin from starting. It's logged with its
   traceback and skipped.
+- fix: custom implementations no longer vanish after the plugin is reloaded (e.g. upgraded by
+  Package Control). The cached custom modules used to be reused, and their classes still
+  inherited from the base classes of the previous load. A reload now also picks up edited
+  custom files.
 
 ## 6.2.0
 

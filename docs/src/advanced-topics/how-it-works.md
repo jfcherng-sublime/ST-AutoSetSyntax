@@ -353,7 +353,9 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
 Auto-discovered at plugin load via `load_custom_implementations()` (`plugin/custom.py`) using
 `pkgutil.iter_modules()`. A module that fails to import, for any reason (including a
 `SyntaxError`), is logged with its traceback and skipped; the plugin and the other custom
-modules still load.
+modules still load. The custom package is dropped from `sys.modules` before each load, so every
+load executes it afresh: on a plugin reload `boot.py` re-imports only `AutoSetSyntax.*`, and a
+cached custom module's classes would still subclass the *previous* `AbstractConstraint`/`AbstractMatch`.
 
 ## Magika Integration
 
