@@ -1,8 +1,4 @@
-import importlib
-import importlib.machinery
-import pkgutil
 import sys
-from pathlib import Path
 
 import sublime
 
@@ -14,9 +10,9 @@ from .commands import AutoSetSyntaxDebugInformationCommand
 from .commands import AutoSetSyntaxDownloadDependenciesCommand
 from .commands import AutoSetSyntaxSyntaxRulesSummaryCommand
 from .commands import run_auto_set_syntax_on_view
-from .constants import PLUGIN_CUSTOM_MODULE_PATHS
 from .constants import PLUGIN_NAME
 from .constants import PLUGIN_PY_LIBS_DIR
+from .custom import load_custom_implementations
 from .listener import AutoSetSyntaxEventListener
 from .listener import AutoSetSyntaxTextChangeListener
 from .listener import compile_rules
@@ -77,7 +73,7 @@ def plugin_loaded() -> None:
 
 def _plugin_loaded() -> None:
     _add_python_lib_path()
-    _load_custom_implementations()
+    load_custom_implementations()
     warn_legacy_fold_overrides(AbstractConstraint, AbstractMatch)
 
     AioSettings.plugin_name = PLUGIN_NAME
@@ -109,21 +105,6 @@ def _settings_changed_callback(window: sublime.Window) -> None:
 def _add_python_lib_path() -> None:
     if (path := str(PLUGIN_PY_LIBS_DIR)) not in sys.path:
         sys.path.insert(0, path)
-
-
-def _load_custom_implementations() -> None:
-    for finder, name, _ in pkgutil.iter_modules(map(str, PLUGIN_CUSTOM_MODULE_PATHS.values())):
-        assert isinstance(finder, importlib.machinery.FileFinder)
-        # something like "AutoSetSyntax-Custom/matches"
-        module_relpath = Path(finder.path).relative_to(sublime.packages_path()).as_posix()
-        # something like "AutoSetSyntax-Custom.matches"
-        module_base = module_relpath.replace("/", ".")
-        module_name = f"{module_base}.{name}"
-        try:
-            importlib.import_module(module_name)
-            print(f"[{PLUGIN_NAME}][INFO] Load custom implementation: {module_name}")
-        except ImportError as e:
-            print(f"[{PLUGIN_NAME}][ERROR] Failed loading custom implementation: {e}")
 
 
 def _run_on_startup_views() -> None:

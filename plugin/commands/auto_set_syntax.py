@@ -98,7 +98,8 @@ def run_auto_set_syntax_on_view(
     # Cheap prerequisites: reject before building expensive snapshot
     if not (
         (skip_syntaxable_check or is_syntaxable_view(view, must_plaintext=must_plaintext))
-        and (syntax_rule_collection := G.syntax_rule_collections.get(window))
+        # `is not None`, not truthiness: an empty collection still lets the non-rule detectors run
+        and (syntax_rule_collection := G.syntax_rule_collections.get(window)) is not None
     ):
         return False
 

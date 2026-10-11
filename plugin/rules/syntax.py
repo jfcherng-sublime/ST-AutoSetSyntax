@@ -30,6 +30,8 @@ class SyntaxRule(Optimizable):
     on_events: set[ListenerEvent] | None = None
     """`None` = no restriction, empty = no event = never triggered."""
     root_rule: MatchRule | None = None
+    is_invalid: bool = False
+    """The root rule couldn't be compiled, as opposed to having been optimized away."""
 
     src_setting: StSyntaxRule | None = None
     """The source setting object."""
@@ -37,7 +39,9 @@ class SyntaxRule(Optimizable):
     @override
     def fold(self) -> Fold:
         # with no syntax to assign, no event that can ever trigger it, or no root rule left,
-        # this rule can never usefully match
+        # this rule can never usefully match. A user mistake goes first: it's the actionable one
+        if self.is_invalid:
+            return Fold(False, "it contains an unknown or invalid match/constraint (the log above says which)")
         if not self.syntax:
             return Fold(False, f"none of these syntaxes is available: {quote_join(self.syntaxes_name or ())}")
         if self.on_events is not None and not self.on_events:
@@ -65,6 +69,11 @@ class SyntaxRule(Optimizable):
         if event and self.on_events is not None and event not in self.on_events:
             return False
 
+        # what `fold()` settles as never matching; optimizing normally drops such a rule, but
+        # `compile_rules()` keeps the collection unoptimized when optimizing fails
+        if not (self.syntax and self.root_rule):
+            return False
+
         if not view_snapshot.syntax:
             return False
 
@@ -72,7 +81,6 @@ class SyntaxRule(Optimizable):
         if sublime.score_selector(view_snapshot.syntax.scope, self.selector) == 0:
             return False
 
-        assert self.root_rule
         return self.root_rule.test(view_snapshot)
 
     @classmethod
@@ -94,6 +102,8 @@ class SyntaxRule(Optimizable):
 
         if match_rule_compiled := MatchRule.make(syntax_rule):
             this.root_rule = match_rule_compiled
+        else:
+            this.is_invalid = True
 
         return this
 

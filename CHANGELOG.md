@@ -1,5 +1,18 @@
 # AutoSetSyntax Changelog
 
+## Unreleased
+
+- fix!: a rule containing an unknown or invalid match/constraint is now dropped as a whole.
+  Previously only the bad entry was removed, which could change what the rule meant: an `all`
+  whose only constraint was misspelled became an empty `all`, which matches every file.
+  Debug Information reports such a rule as
+  `never matches: it contains an unknown or invalid match/constraint`.
+- fix: shebang, modeline, heuristics, new-file syntax and Magika detection kept working only
+  while at least one syntax rule was active. A window with no active rule now still runs them.
+- fix: a custom implementation that fails to import with anything other than `ImportError`
+  (e.g. a `SyntaxError`) no longer stops the whole plugin from starting. It's logged with its
+  traceback and skipped.
+
 ## 6.2.0
 
 > **BREAKING: the rule optimizer's drop protocol is now `fold()`.**

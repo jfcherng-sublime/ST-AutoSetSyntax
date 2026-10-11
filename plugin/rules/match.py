@@ -19,7 +19,6 @@ from ..types import Optimizable
 from ..types import StConstraintRule
 from ..types import StMatchRule
 from ..utils import camel_to_snake
-from ..utils import drop_falsy
 from ..utils import list_all_subclasses
 from ._optimize import require_fold
 from .constraint import ConstraintRule
@@ -109,12 +108,22 @@ class MatchRule(Optimizable):
             Logger.log(f"❌ Failed to create match {match}({match_rule.args}, {match_rule.kwargs}): {e}")
             return None
 
+        # a child that can't be made must fail this whole match, not just vanish from it: removing
+        # a child changes what the match means (an `all` left empty folds to "always matches").
+        # No log here: the innermost failure already logged what's wrong, and the syntax rule this
+        # cascades up to is reported as dropped -- logging at every level would repeat it per depth
+        children: list[MatchableRule] = []
+        for rule in match_rule.rules:
+            if (child := make_matchable_rule(rule)) is None:
+                return None
+            children.append(child)
+
         return cls(
             match=match_obj,
             match_name=match,
             args=tuple(match_rule.args),
             kwargs=match_rule.kwargs,
-            rules=tuple(drop_falsy(map(make_matchable_rule, match_rule.rules))),
+            rules=tuple(children),
             src_setting=match_rule,
         )
 

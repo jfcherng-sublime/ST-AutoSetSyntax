@@ -230,7 +230,7 @@ Every node answers one question, `fold()`, returning a `Fold(value, reason)` —
 always evaluates to plus why — or `UNFOLDED` when the result still depends on the view:
 
 ```
-SyntaxRule.fold()     → False if no syntax, no events (and not unrestricted), or no root_rule
+SyntaxRule.fold()     → False if invalid, no syntax, no events (and not unrestricted), or no root_rule
 MatchRule.fold()      → the match's own fold, e.g. some(5) with 3 children is a constant False
 ConstraintRule.fold() → the constraint's fold, flipped by `inverted`
 ```
@@ -255,6 +255,12 @@ safe to silently remove from its own child list without changing its result:
   removed without shifting that goal.
 
 Dropped rules are logged and stored in `G.dropped_rules_collection` for debugging.
+
+A rule that can't be compiled at all — an unknown match/constraint name, or arguments its class
+rejects — fails its enclosing match, and so on up to the syntax rule, which is then dropped with
+the reason `never matches: it contains an unknown or invalid match/constraint`. The bad entry is
+never just removed on its own, since that would change what its parent means: an `all` whose only
+child is a typo would be left empty, and an empty `all` matches everything.
 
 Optimizing is best-effort: it walks the tree mutating it, so if a node's `fold()` misbehaves
 (in practice, a Custom Implementation that doesn't return a `Fold`), a half-finished pass would
@@ -344,7 +350,10 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
     `None`.
 4. The class name convention determines the setting name: `FooBarMatch` → `"foo_bar"` and `BazConstraint` → `"baz"`
 
-Auto-discovered at plugin load via `_load_custom_implementations()` using `pkgutil.iter_modules()`.
+Auto-discovered at plugin load via `load_custom_implementations()` (`plugin/custom.py`) using
+`pkgutil.iter_modules()`. A module that fails to import, for any reason (including a
+`SyntaxError`), is logged with its traceback and skipped; the plugin and the other custom
+modules still load.
 
 ## Magika Integration
 

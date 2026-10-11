@@ -26,7 +26,10 @@ class _GlobalState:
     """Those per-window rules which are dropped after doing optimizations."""
 
     def is_plugin_ready(self, window: sublime.Window) -> bool:
-        return bool(get_merged_plugin_settings(window=window) and self.syntax_rule_collections.get(window))
+        # an empty collection is still a compiled one (every rule may have been optimized away),
+        # so test membership rather than truthiness: `SyntaxRuleCollection.__len__` makes an empty
+        # collection falsy
+        return bool(get_merged_plugin_settings(window=window)) and window in self.syntax_rule_collections
 
 
 G = _GlobalState()
