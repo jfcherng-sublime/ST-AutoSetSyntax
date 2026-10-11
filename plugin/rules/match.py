@@ -154,11 +154,13 @@ class AbstractMatch(ABC):
         The constant `test()` always returns for `rules` and why, or `UNFOLDED` when the result
         still depends on the view (see `Optimizable.fold()` for the general contract).
 
-        Override this whenever this combinator's own parameters and rule *count* already settle
-        the answer, in either direction: `all([])` is a constant `True` and `any([])` a constant
-        `False`, while `some(n)` is a constant `True` when `n <= 0` and a constant `False` when
-        `n` exceeds the rule count. Phrase the reason for the user reading the dropped-rules
-        report, which quotes it verbatim.
+        Override this whenever this combinator's own parameters, its rule *count*, or a child's
+        own fold already settle the answer, in either direction: `all([])` is a constant `True`
+        and `any([])` a constant `False`; `some(0)` is a constant `True` and `some(n)` a constant
+        `False` when `n` exceeds the rule count; and a child folding to the combinator's absorbing
+        element (`False` for `all`, `True` for `any` -- see `first_child_folding_to()`) settles
+        the whole match. Phrase the reason for the user reading the dropped-rules report, which
+        quotes it verbatim.
         """
         return UNFOLDED
 
@@ -194,6 +196,17 @@ class AbstractMatch(ABC):
     @abstractmethod
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:
         """Tests whether the `view_snapshot` passes this `match` with those `rules`."""
+
+    @final
+    @staticmethod
+    def first_child_folding_to(rules: tuple[MatchableRule, ...], value: bool) -> Fold | None:
+        """
+        The fold of the first rule in `rules` that folds to the constant `value`, if any.
+
+        For a combinator's absorbing element (`False` for `all`, `True` for `any`), one such child
+        settles the whole match -- its reason is what explains the match's own fold.
+        """
+        return next((fold for rule in rules if (fold := rule.fold()).value is value), None)
 
     @final
     @staticmethod

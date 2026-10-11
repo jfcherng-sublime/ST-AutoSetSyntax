@@ -185,12 +185,16 @@ Fields:
 
 A `MatchRule` combines a match strategy (`AbstractMatch`) with child rules:
 
-| Match        | Behavior                     | Droppable When           |
-| ------------ | ---------------------------- | ------------------------ |
-| `any`        | At least one child passes    | No child rules           |
-| `all`        | Every child passes           | No child rules           |
-| `some(n)`    | At least `n` children pass   | `n` > number of children |
-| `ratio(n/d)` | At least `n` out of `d` pass | Bad ratio parameters     |
+| Match        | Behavior                     | Droppable When                                  |
+| ------------ | ---------------------------- | ----------------------------------------------- |
+| `any`        | At least one child passes    | No child rules, or a child always matches       |
+| `all`        | Every child passes           | No child rules, or a child never matches        |
+| `some(n)`    | At least `n` children pass   | `n` is 0, or `n` > number of children           |
+| `ratio(n/d)` | At least `n` out of `d` pass | No child rules, `n` is 0, or `n/d` > 1          |
+
+Invalid arguments — `some` without exactly one non-negative integer, or `ratio` without a
+non-negative numerator and a positive denominator — are rejected when the match is built, which
+drops the whole syntax rule as invalid (see below) rather than letting it match every file.
 
 Children can be `ConstraintRule` (leaf) or nested `MatchRule` (sub-tree).
 
@@ -248,8 +252,11 @@ safe to silently remove from its own child list without changing its result:
 
 - Dropping a constant-`True` child from `all(...)` is safe (`True` is AND's identity element:
   `all(True, x) == all(x)`), but dropping a constant-`False` child is not — the whole `all(...)`
-  must become `False` instead, since `all(False, x)` is always `False` regardless of `x`.
-- The mirror is true for `any`: dropping constant-`False` is safe, constant-`True` is not.
+  folds to `False` instead, since `all(False, x)` is always `False` regardless of `x`
+  (`False` is AND's absorbing element). Its reason quotes that child's, so the report still says
+  *why*: `never matches: one of its "all" sub-rules never matches: no extension was given`.
+- The mirror is true for `any`: dropping constant-`False` is safe, while a constant-`True` child
+  makes the whole `any(...)` fold to `True`.
 - `ratio(n/d)`'s `prunable_child_value()` is `None` — its goal (`ceil(ratio * len(rules))`)
   depends on the *count* of its children, so no child, constant or not, can ever be safely
   removed without shifting that goal.

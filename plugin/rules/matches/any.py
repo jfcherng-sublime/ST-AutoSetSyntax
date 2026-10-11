@@ -14,8 +14,16 @@ class AnyMatch(AbstractMatch):
 
     @override
     def fold(self, rules: tuple[MatchableRule, ...]) -> Fold:
-        """`any([])` is `False`, so an empty `any` is a constant False -- unlike an empty `all`, which is True."""
-        return Fold(False, 'an "any" with no sub-rule matches nothing') if not rules else UNFOLDED
+        """
+        `any([])` is `False`, so an empty `any` is a constant False -- unlike an empty `all`, which
+        is True. `True` absorbs OR, so one sub-rule that always matches makes the whole `any` always
+        match.
+        """
+        if not rules:
+            return Fold(False, 'an "any" with no sub-rule matches nothing')
+        if (child := self.first_child_folding_to(rules, True)) is not None:
+            return Fold(True, f'one of its "any" sub-rules always matches: {child.reason}')
+        return UNFOLDED
 
     @override
     def prunable_child_value(self) -> bool | None:

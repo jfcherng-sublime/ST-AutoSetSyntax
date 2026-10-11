@@ -16,6 +16,18 @@
   Package Control). The cached custom modules used to be reused, and their classes still
   inherited from the base classes of the previous load. A reload now also picks up edited
   custom files.
+- fix!: invalid `some`/`ratio` arguments make the rule invalid. `some` needs exactly one
+  non-negative integer; `ratio` needs a non-negative numerator and a positive denominator.
+  Previously, e.g. `some` without arguments or `ratio` with a zero denominator silently matched
+  every file.
+- fix: `ratio` computes its goal exactly. With floats, `[7, 25]` over 25 rules required 8 of them
+  to pass instead of 7.
+- fix: an `all` with a sub-rule that never matches (e.g. `is_platform` for another OS) is now
+  reported as dropped, with the sub-rule's reason. Likewise, an `any` with a sub-rule that always
+  matches. Such rules used to stay silently in the compiled rules.
+- fix: `is_javascript_project` no longer depends on the order files are opened in. A file in a
+  TypeScript package nested inside a JavaScript project was treated as JavaScript once any file
+  of the outer project had been checked.
 
 ## 6.2.0
 

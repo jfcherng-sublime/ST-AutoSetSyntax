@@ -233,11 +233,12 @@ class TestMatchFoldAndPrunability:
         assert AllMatch().prunable_child_value() is True
 
     def test_some_match_folds_to_true_when_goal_unreachable_low(self):
-        """A count <= 0 means the goal is always satisfied (`goal <= 0` -> constant True)."""
+        """A count of 0 means the goal is always satisfied (`goal <= 0` -> constant True). A
+        negative count is rejected outright, see `TestSomeMatch.test_invalid_args_are_rejected`."""
         _ensure_rules_imported()
         from plugin.rules.matches.some import SomeMatch
 
-        assert SomeMatch(-1).fold(()).value is True
+        assert SomeMatch(0).fold(()).value is True
         assert SomeMatch(0).fold((_FixedRule(True), _FixedRule(True))).value is True
 
     def test_some_match_folds_to_false_when_goal_unreachable_high(self):
@@ -907,10 +908,11 @@ def _random_match_rule(rng, depth: int):
         match_obj, match_name = AllMatch(), "all"
     elif kind == "any":
         match_obj, match_name = AnyMatch(), "any"
+    # only valid arguments: invalid ones are rejected when the match is constructed
     elif kind == "some":
-        match_obj, match_name = SomeMatch(rng.randint(-1, len(children) + 1)), "some"
+        match_obj, match_name = SomeMatch(rng.randint(0, len(children) + 1)), "some"
     else:
-        match_obj, match_name = RatioMatch(rng.randint(0, 3), rng.randint(0, 3)), "ratio"
+        match_obj, match_name = RatioMatch(rng.randint(0, 3), rng.randint(1, 3)), "ratio"
 
     return MatchRule(match=match_obj, match_name=match_name, rules=children)
 

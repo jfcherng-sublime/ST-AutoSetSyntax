@@ -359,6 +359,9 @@ To edit project settings, go to `Project` » `Edit Project`.
 
     Test whether at least $\frac{2}{3}$ of rules in `rules` are satisfied.
 
+    `args` must be exactly two numbers: a non-negative numerator and a positive denominator.
+    Otherwise, the whole syntax rule is dropped as invalid.
+
 #### `some`
 
 !!! example
@@ -372,6 +375,9 @@ To edit project settings, go to `Project` » `Edit Project`.
     ```
 
     Test whether at least 4 rules in `rules` are satisfied.
+
+    `args` must be exactly one non-negative integer. Otherwise, the whole syntax rule is dropped
+    as invalid.
 
 ### Built-in `Constraint`s
 

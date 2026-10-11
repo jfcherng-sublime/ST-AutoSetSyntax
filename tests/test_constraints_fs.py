@@ -617,6 +617,24 @@ class TestIsJavascriptProjectConstraint:
         with pytest.raises(AlwaysFalsyException):
             IsJavascriptProjectConstraint().test(snap)
 
+    def test_cached_outer_js_root_does_not_override_a_nearer_typescript_root(self, make_snapshot, tmp_path):
+        """A monorepo whose root is JS but holds a TS package: the nearest `package.json` decides,
+        so the cached outer root must not answer for a file under the nearer TS one."""
+        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+
+        (tmp_path / "package.json").write_text("")
+        root_file = tmp_path / "index.js"
+        root_file.write_text("")
+        app = tmp_path / "packages" / "app"
+        (app / "src").mkdir(parents=True)
+        (app / "package.json").write_text("")
+        (app / "tsconfig.json").write_text("")
+        app_file = app / "src" / "index.js"
+        app_file.write_text("")
+
+        assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(root_file))) is True
+        assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(app_file))) is False
+
     def test_successful_match_is_cached_for_a_second_file_in_the_same_project(self, make_snapshot, tmp_path):
         from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
 
