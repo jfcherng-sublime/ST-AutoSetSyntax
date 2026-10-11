@@ -102,32 +102,57 @@ class TestOnNewWindowStillSetsUpWhenOnNewDidNotRunFirst:
 
 
 class TestCompileRulesHandlesInvalidSyntaxRules:
-    """Regression: StConstraintRule/StMatchRule now reject unrecognized keys (a typo'd
-    "constraint" key would otherwise silently validate as a no-op StMatchRule). That means a
-    single malformed rule anywhere in the user's whole syntax_rules setting raises a
-    pydantic.ValidationError -- compile_rules() must catch that and fall back to an empty rule
-    set instead of crashing set_up_window()/on_new_window() for the whole window."""
+    """StConstraintRule/StMatchRule reject unrecognized keys (a typo'd "constraint" key would
+    otherwise silently validate as a no-op StMatchRule). One such rule used to fail validation of
+    the whole merged list, so compile_rules() fell back to *no* rules at all -- the bundled ones
+    included. Only the malformed rule may go, and it must show up in Debug Information."""
 
-    def test_invalid_syntax_rules_falls_back_to_empty_collection(self, monkeypatch):
-        from pydantic import TypeAdapter
-
-        from plugin.types import StSyntaxRule
+    def test_invalid_rule_is_dropped_alone_and_reported(self, monkeypatch):
+        import plugin.rules.constraints  # ruff:ignore[unused-import]
 
         window = _make_window(106)
-
-        def _bad_pref_syntax_rules(*, window=None):
-            # a typo'd "constraint" key, same shape as a real user config mistake
-            return TypeAdapter(list[StSyntaxRule]).validate_python([
-                {"rules": [{"constrait": "is_extension", "args": ["py"]}]}
-            ])
-
-        monkeypatch.setattr(listener_mod, "pref_syntax_rules", _bad_pref_syntax_rules)
+        syntax = sublime.Syntax("Packages/Python/Python.sublime-syntax", "Python", False, "source.python")
+        monkeypatch.setattr("plugin.rules.syntax.find_syntax", lambda *args, **kwargs: syntax)
+        monkeypatch.setattr(
+            "plugin.settings.get_merged_plugin_settings",
+            lambda **kwargs: {
+                "user_syntax_rules": [
+                    # a typo'd "constraint" key, same shape as a real user config mistake
+                    {"rules": [{"constrait": "is_extension", "args": ["py"]}]},
+                    {"selector": "", "rules": [{"constraint": "is_extension", "args": ["py"]}]},
+                ],
+            },
+        )
 
         try:
             listener_mod.compile_rules(window)  # must not raise
 
-            collection = G.syntax_rule_collections[window]
-            assert len(collection) == 0
+            assert len(G.syntax_rule_collections[window]) == 1
+            [dropped] = G.dropped_rules_collection[window]
+            assert dropped.reason.startswith("invalid setting at user_syntax_rules[0]: ")
+        finally:
+            G.syntax_rule_collections.pop(window, None)
+            G.dropped_rules_collection.pop(window, None)
+
+    def test_invalid_rules_stay_reported_when_optimizing_fails(self, monkeypatch):
+        """The unoptimized fallback must not forget the rules that never got that far."""
+        from plugin.rules import SyntaxRuleCollection
+        from plugin.types import DroppedRule
+
+        window = _make_window(108)
+        invalid = DroppedRule.invalid("user_syntax_rules[0]", {"constrait": "x"}, "boom")
+        monkeypatch.setattr(listener_mod, "pref_syntax_rules", lambda *, window=None: ([], [invalid]))
+
+        def _broken_optimize(self):
+            raise RuntimeError("optimizer broke")
+            yield
+
+        monkeypatch.setattr(SyntaxRuleCollection, "optimize", _broken_optimize)
+
+        try:
+            listener_mod.compile_rules(window)
+
+            assert G.dropped_rules_collection[window] == [invalid]
         finally:
             G.syntax_rule_collections.pop(window, None)
             G.dropped_rules_collection.pop(window, None)
@@ -158,13 +183,16 @@ class TestCompileRulesSurvivesABrokenFold:
         monkeypatch.setattr(
             listener_mod,
             "pref_syntax_rules",
-            lambda *, window=None: [
-                StSyntaxRule(
-                    syntaxes=["Python"],
-                    selector="",
-                    rules=[StConstraintRule(constraint="broken_fold")],
-                )
-            ],
+            lambda *, window=None: (
+                [
+                    StSyntaxRule(
+                        syntaxes=["Python"],
+                        selector="",
+                        rules=[StConstraintRule(constraint="broken_fold")],
+                    )
+                ],
+                [],
+            ),
         )
         monkeypatch.setattr("plugin.rules.syntax.find_syntax", lambda *args, **kwargs: syntax)
 

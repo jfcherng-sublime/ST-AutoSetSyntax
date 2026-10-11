@@ -37,6 +37,12 @@
 - fix: "Download Dependencies" always verifies the SHA-256 checksum. A missing (404) or empty
   checksum file used to skip verification and install the archive unchecked; now it aborts. The
   checksum is also fetched first, so such a failure no longer costs the large archive download.
+- fix: a malformed syntax rule (an unknown key like `"constrait"`, or a wrong type like
+  `"args": "py"`) is now dropped alone. One such rule used to make the plugin ignore every rule,
+  the bundled ones included. Debug Information lists it with where it is and what's wrong, e.g.
+  `invalid setting at user_syntax_rules[3]: rules[0].constrait: Extra inputs are not permitted`.
+  A rules setting that isn't a list (e.g. a single rule without the surrounding `[...]`) is
+  reported the same way instead of being ignored silently.
 
 ## 6.2.0
 

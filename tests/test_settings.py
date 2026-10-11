@@ -3,6 +3,8 @@
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pytest
+
 # These need to be imported after sublime stubs are set up by conftest
 from plugin.settings import AioSettings
 from plugin.settings import extra_settings_producer
@@ -161,24 +163,6 @@ class TestAioSettingsLifecycle:
 
 
 class TestExtraSettingsProducer:
-    def test_merges_syntax_rules_in_order(self):
-        result = extra_settings_producer({
-            "core_syntax_rules": [{"match": "all", "syntaxes": ["Core"]}],
-            "project_syntax_rules": [{"match": "all", "syntaxes": ["Project"]}],
-            "user_syntax_rules": [{"match": "all", "syntaxes": ["User"]}],
-            "default_syntax_rules": [{"match": "all", "syntaxes": ["Default"]}],
-        })
-        rules = result["syntax_rules"]
-        assert len(rules) == 4
-        assert rules[0]["syntaxes"] == ["Core"]
-        assert rules[1]["syntaxes"] == ["Project"]
-        assert rules[2]["syntaxes"] == ["User"]
-        assert rules[3]["syntaxes"] == ["Default"]
-
-    def test_empty_syntax_rules(self):
-        result = extra_settings_producer({})
-        assert result["syntax_rules"] == []
-
     def test_trim_suffixes_merged_deduplicated(self):
         result = extra_settings_producer({
             "project_trim_suffixes": ["a", "b"],
@@ -203,19 +187,6 @@ class TestExtraSettingsProducer:
         })
         assert result["trim_suffixes"] == ("ok", "also_ok")
 
-    def test_null_syntax_rules_setting_does_not_raise(self):
-        """Regression: a key explicitly set to `null` (e.g. a user trying to "unset" an
-        override) is present with value None, so `.get(key, [])`'s default never kicks in --
-        the old `+`-concatenation crashed with `TypeError: can only concatenate list (not
-        "NoneType") to list`. A null value must be treated the same as an absent/empty one."""
-        result = extra_settings_producer({
-            "core_syntax_rules": [{"match": "all", "syntaxes": ["Core"]}],
-            "user_syntax_rules": None,
-            "project_syntax_rules": [],
-            "default_syntax_rules": None,
-        })
-        assert result["syntax_rules"] == [{"match": "all", "syntaxes": ["Core"]}]
-
     def test_null_trim_suffixes_setting_does_not_raise(self):
         """Same regression as above, for trim_suffixes' chain() instead of +."""
         result = extra_settings_producer({
@@ -230,47 +201,73 @@ class TestExtraSettingsProducer:
 
 
 class TestPrefSyntaxRules:
-    def test_parses_from_merged_settings(self, monkeypatch):
-        """pref_syntax_rules should read from merged settings via get_merged_plugin_setting."""
-        # Verify the function exists and delegates to get_merged_plugin_setting
-        from plugin.types import StSyntaxRule
+    @staticmethod
+    def _pref(settings: dict):
+        with patch("plugin.settings.get_merged_plugin_settings", return_value=settings):
+            return pref_syntax_rules(window=MagicMock())
 
-        mock_window = MagicMock()
-        mock_window.id.return_value = 42
+    def test_reads_every_source_in_test_order(self):
+        valid, invalid = self._pref({
+            "default_syntax_rules": [{"syntaxes": ["Default"]}],
+            "user_syntax_rules": [{"syntaxes": ["User"]}],
+            "project_syntax_rules": [{"syntaxes": ["Project"]}],
+            "core_syntax_rules": [{"syntaxes": ["Core"]}],
+        })
 
-        with patch(
-            "plugin.settings.get_merged_plugin_setting",
-            return_value=[
-                {"syntaxes": ["Python"], "rules": [{"constraint": "is_extension", "args": ["py"]}]},
-            ],
-        ):
-            rules = pref_syntax_rules(window=mock_window)
-            assert len(rules) == 1
-            assert isinstance(rules[0], StSyntaxRule)
-            assert rules[0].syntaxes == ["Python"]
+        assert [rule.syntaxes for rule in valid] == [["Core"], ["Project"], ["User"], ["Default"]]
+        assert invalid == []
 
-    def test_typo_d_constraint_key_raises_instead_of_silently_becoming_a_no_op(self, monkeypatch):
-        """Regression: StConstraintRule requires "constraint" but StMatchRule requires nothing,
-        so a typo like "constrait" used to fail StConstraintRule validation and quietly succeed
-        as an empty StMatchRule(match="any", rules=[]) instead -- silently dropping the user's
-        rule with no error at all. extra="forbid" on both models turns this into a clear,
-        catchable ValidationError."""
-        import pytest
-        from pydantic import ValidationError
+    def test_invalid_rule_is_dropped_alone_and_located(self):
+        """One malformed rule used to fail validation of the whole merged list, so every rule --
+        the bundled ones included -- was ignored. A typo'd key ("constrait") is the classic case:
+        extra="forbid" rejects it rather than letting it validate as an empty no-op match."""
+        bad = {"syntaxes": ["Python"], "rules": [{"constrait": "is_extension", "args": ["py"]}]}
 
-        mock_window = MagicMock()
-        mock_window.id.return_value = 43
+        valid, invalid = self._pref({
+            "user_syntax_rules": [{"syntaxes": ["A"]}, bad],
+            "default_syntax_rules": [{"syntaxes": ["B"]}],
+        })
 
-        with (
-            patch(
-                "plugin.settings.get_merged_plugin_setting",
-                return_value=[
-                    {"syntaxes": ["Python"], "rules": [{"constrait": "is_extension", "args": ["py"]}]},
-                ],
+        assert [rule.syntaxes for rule in valid] == [["A"], ["B"]]
+        assert len(invalid) == 1
+        assert invalid[0].reason.startswith("invalid setting at user_syntax_rules[1]: ")
+        assert "constrait" in invalid[0].reason
+        assert invalid[0].rule == bad
+
+    @pytest.mark.parametrize(
+        ("rule", "problem"),
+        [
+            ({"rules": [{"constrait": "is_extension"}]}, "rules[0].constrait: Extra inputs are not permitted"),
+            ({"rules": [{"constraint": "is_extension", "args": "py"}]}, "rules[0].args: Input should be a valid list"),
+            (
+                {"rules": [{"match": "all", "rules": [{"constrait": "x"}]}]},
+                "rules[0].rules[0].constrait: Extra inputs are not permitted",
             ),
-            pytest.raises(ValidationError),
-        ):
-            pref_syntax_rules(window=mock_window)
+        ],
+    )
+    def test_reason_points_at_the_setting_in_the_users_terms(self, rule, problem):
+        """The reason is shown verbatim in Debug Information: it must name the offending key as
+        the user wrote it, with no model class names, and only the problems of the one kind of
+        rule it can be (a "constraint" key makes a constraint rule)."""
+        _, [dropped] = self._pref({"user_syntax_rules": [rule]})
+
+        assert dropped.reason == f"invalid setting at user_syntax_rules[0]: {problem}"
+
+    def test_null_source_means_unset(self):
+        """A key explicitly set to `null` (a user trying to "unset" an override) is present with
+        value None, so it has to be treated like an absent one, not crash or be reported."""
+        valid, invalid = self._pref({"core_syntax_rules": [{"syntaxes": ["Core"]}], "user_syntax_rules": None})
+
+        assert [rule.syntaxes for rule in valid] == [["Core"]]
+        assert invalid == []
+
+    def test_non_list_source_is_reported(self):
+        """Forgetting the brackets around a single rule used to be ignored without a word."""
+        valid, invalid = self._pref({"user_syntax_rules": {"syntaxes": ["Python"]}})
+
+        assert valid == []
+        assert len(invalid) == 1
+        assert invalid[0].reason.startswith("invalid setting at user_syntax_rules: ")
 
 
 # ── pref_trim_suffixes ──────────────────────────────────────────────────────

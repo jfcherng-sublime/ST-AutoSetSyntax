@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from collections.abc import KeysView
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Annotated
 from typing import Any
 from typing import Final
 from typing import NamedTuple
@@ -17,7 +18,9 @@ import sublime
 from more_itertools import always_iterable
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import Discriminator
 from pydantic import Field
+from pydantic import Tag
 from pydantic import field_validator
 
 type Comparator = Callable[[Any, Any], bool]
@@ -95,12 +98,18 @@ class Optimizable(ABC):
 
 @dataclass(frozen=True, slots=True)
 class DroppedRule:
-    """A rule discarded during optimizing, paired with why it could be."""
+    """A rule discarded while compiling or optimizing, paired with why it could be."""
 
     reason: str
     """Human-readable, for the debug dump -- nothing branches on this. Declared before `rule`
     so it stays readable at the front of the (long) generated repr."""
-    rule: Optimizable
+    rule: Optimizable | Any
+    """The compiled rule, or the raw setting when it couldn't even be parsed into one."""
+
+    @classmethod
+    def invalid(cls, location: str, setting: Any, error: str) -> Self:
+        """Explain a rule setting that couldn't be parsed, e.g. at `location` "user_syntax_rules[3]"."""
+        return cls(_explain(f"invalid setting at {location}", error), setting)
 
     @classmethod
     def make(cls, rule: Optimizable) -> Self:
@@ -120,9 +129,9 @@ class StConstraintRule(BaseModel):
     """Model for a "constraint rule" in settings."""
 
     # reject unrecognized keys instead of silently ignoring them: a typo'd key (e.g.
-    # "constrait") would otherwise fail this model and quietly validate as a no-op StMatchRule
-    # instead (the `rules` union tries StConstraintRule first, then StMatchRule, whose every
-    # field has a default), silently dropping the user's rule with no diagnostic at all.
+    # "constrait") would otherwise quietly validate as a no-op StMatchRule (a rule without a
+    # "constraint" key is read as one, see `_rule_kind()`, and its every field has a default),
+    # silently dropping the user's rule with no diagnostic at all.
     model_config = ConfigDict(extra="forbid")
 
     constraint: str
@@ -133,6 +142,22 @@ class StConstraintRule(BaseModel):
     """Keyword arguments for the "constraint"."""
     inverted: bool = False
     """Whether the test result should be inverted."""
+
+
+RULE_KIND_TAGS: Final = frozenset({"constraint rule", "match rule"})
+"""The tags `_rule_kind()` picks between. Pydantic puts them in an error's location."""
+
+
+def _rule_kind(value: Any) -> str:
+    """
+    Which model a sub-rule is: a constraint rule if and only if it has a "constraint" key.
+
+    That's no new restriction -- StConstraintRule requires the key and StMatchRule forbids it, so
+    only one model could ever accept a given rule. Saying which up front makes pydantic report that
+    model's errors alone, instead of one set per model that a user can't make sense of.
+    """
+    is_constraint = "constraint" in value if isinstance(value, dict) else isinstance(value, StConstraintRule)
+    return "constraint rule" if is_constraint else "match rule"
 
 
 class StMatchRule(BaseModel):
@@ -147,7 +172,12 @@ class StMatchRule(BaseModel):
     """Positional arguments for the "match"."""
     kwargs: dict[str, Any] = Field(default_factory=dict)
     """Keyword arguments for the "match"."""
-    rules: list[StConstraintRule | StMatchRule] = Field(default_factory=list)
+    rules: list[
+        Annotated[
+            Annotated[StConstraintRule, Tag("constraint rule")] | Annotated[StMatchRule, Tag("match rule")],
+            Discriminator(_rule_kind),
+        ]
+    ] = Field(default_factory=list)
     """Rules to match against."""
 
 

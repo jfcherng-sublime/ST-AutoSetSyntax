@@ -269,6 +269,14 @@ the reason `never matches: it contains an unknown or invalid match/constraint`. 
 never just removed on its own, since that would change what its parent means: an `all` whose only
 child is a typo would be left empty, and an empty `all` matches everything.
 
+Before any of that, `pref_syntax_rules()` validates the settings one syntax rule at a time, source
+by source (`core_syntax_rules`, `project_syntax_rules`, `user_syntax_rules`,
+`default_syntax_rules`, in that order). A rule the schema rejects — an unknown key like
+`"constrait"`, or a wrong type like `"args": "py"` — is dropped alone and reported with where it
+is, e.g. `invalid setting at user_syntax_rules[3]: rules[0].constrait: Extra inputs are not
+permitted`; every other rule still compiles. (Validating them as one list used to throw away
+every rule, the bundled ones included, over a single typo.)
+
 Optimizing is best-effort: it walks the tree mutating it, so if a node's `fold()` misbehaves
 (in practice, a Custom Implementation that doesn't return a `Fold`), a half-finished pass would
 leave a rule whose root was already detached. `compile_rules()` catches that, logs the offending
@@ -395,7 +403,7 @@ Key settings groups:
 
 - **Strategy control**: `new_file_syntax`, `exec_file_syntax`, `trim_suffixes`, `magika.*`
 - **Behavior**: `debounce`, `run_on_startup_views`, `enable_log`
-- **Rules**: `syntax_rules` — the array of user-defined `SyntaxRule` objects
+- **Rules**: `core_syntax_rules`, `project_syntax_rules`, `user_syntax_rules`, `default_syntax_rules` — arrays of `SyntaxRule` objects, tested in that order
 
 ## Shared Global State
 

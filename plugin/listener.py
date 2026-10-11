@@ -10,7 +10,6 @@ from typing import cast
 
 import sublime
 import sublime_plugin
-from pydantic import ValidationError
 
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
 from .constants import PLUGIN_NAME
@@ -71,11 +70,10 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     Logger.log(f'🔍 Found "Match" implementations: {names_as_str(get_matches())}', window=window)
     Logger.log(f'🔍 Found "Constraint" implementations: {names_as_str(get_constraints())}', window=window)
 
-    try:
-        syntax_rules = pref_syntax_rules(window=window)
-    except ValidationError as e:
-        Logger.log(f'❌ Invalid "syntax_rules" setting, ignoring all of them: {e}', window=window)
-        syntax_rules = []
+    # a malformed rule is dropped alone; the rest still compile
+    syntax_rules, invalid_rules = pref_syntax_rules(window=window)
+    for invalid_rule in invalid_rules:
+        Logger.log(f"❌ Ignoring a syntax rule, {invalid_rule.reason}", window=window)
 
     syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
     Logger.log(f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
@@ -83,7 +81,7 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     # explain each rule as it's discarded: "dropped" alone is ambiguous now that a rule can be
     # discarded for always matching as well as for never matching
     try:
-        dropped_rules = list(map(DroppedRule.make, syntax_rule_collection.optimize()))
+        dropped_rules = [*invalid_rules, *map(DroppedRule.make, syntax_rule_collection.optimize())]
     except Exception:
         # `optimize()` prunes the tree as it walks it, so a pass that dies halfway can leave a
         # syntax rule whose root was already detached still in the collection -- which
@@ -101,12 +99,12 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
             window=window,
         )
         syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
-        dropped_rules = []
+        dropped_rules = list(invalid_rules)
 
     G.syntax_rule_collections[window] = syntax_rule_collection
     G.dropped_rules_collection[window] = dropped_rules
     Logger.log(f"✨ Optimized syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
-    Logger.log(f"💀 Dropped rules during optimizing: {stringify(dropped_rules)}", window=window)
+    Logger.log(f"💀 Dropped rules: {stringify(dropped_rules)}", window=window)
 
     Logger.log(
         f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} END",

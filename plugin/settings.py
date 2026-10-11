@@ -5,12 +5,15 @@ from collections.abc import MutableMapping
 from itertools import chain
 from typing import Any
 from typing import ClassVar
+from typing import Final
 
 import sublime
 import sublime_plugin
 from more_itertools import unique_everseen
-from pydantic import TypeAdapter
+from pydantic import ValidationError
 
+from .types import RULE_KIND_TAGS
+from .types import DroppedRule
 from .types import StSyntaxRule
 from .utils import drop_falsy
 
@@ -48,8 +51,46 @@ def get_st_settings() -> sublime.Settings:
     return sublime.load_settings("Preferences.sublime-settings")
 
 
-def pref_syntax_rules(*, window: sublime.Window | None = None) -> list[StSyntaxRule]:
-    return TypeAdapter(list[StSyntaxRule]).validate_python(get_merged_plugin_setting("syntax_rules", [], window=window))
+SYNTAX_RULE_SOURCES: Final = ("core_syntax_rules", "project_syntax_rules", "user_syntax_rules", "default_syntax_rules")
+"""The settings syntax rules come from, in the order they're tested (the first matching rule wins)."""
+
+
+def pref_syntax_rules(*, window: sublime.Window | None = None) -> tuple[list[StSyntaxRule], list[DroppedRule]]:
+    """
+    The syntax rules, validated one by one, plus the ones that failed, located for the user.
+
+    A malformed rule must cost only itself: validating all of them as one list failed on the first
+    typo and threw away every rule, the bundled ones included.
+    """
+    settings = get_merged_plugin_settings(window=window)
+    valid: list[StSyntaxRule] = []
+    invalid: list[DroppedRule] = []
+    for source in SYNTAX_RULE_SOURCES:
+        if (rules := settings.get(source)) is None:  # an explicit `null` means "unset", like absent
+            continue
+        if not isinstance(rules, list):
+            invalid.append(DroppedRule.invalid(source, rules, f"expected a list of rules, got {type(rules).__name__}"))
+            continue
+        for index, rule in enumerate(rules):
+            try:
+                valid.append(StSyntaxRule.model_validate(rule))
+            except ValidationError as e:
+                invalid.append(DroppedRule.invalid(f"{source}[{index}]", rule, _describe_validation_error(e)))
+    return valid, invalid
+
+
+def _describe_validation_error(e: ValidationError) -> str:
+    """One `where: what` per problem (e.g. `rules[0].args: ...`), on one line, instead of pydantic's report."""
+
+    def where(loc: tuple[int | str, ...]) -> str:
+        # drop the rule-kind tags pydantic inserts: they name a model, not anything in the user's settings
+        parts = (part for part in loc if part not in RULE_KIND_TAGS)
+        return "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts).lstrip(".")
+
+    return "; ".join(
+        f"{location}: {error['msg']}" if (location := where(error["loc"])) else error["msg"]
+        for error in e.errors(include_url=False)
+    )
 
 
 def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str, ...]:
@@ -64,7 +105,7 @@ def _as_list(value: Any) -> list[Any]:
 
     `dict.get(key, [])`'s default only applies when `key` is absent -- a key explicitly set to
     `null` (a plausible user mistake/copy-paste, meant to "unset" an override) still comes back
-    as `None`, which would blow up the `+`/`chain()` calls this feeds into.
+    as `None`, which would blow up the `chain()` call this feeds into.
     """
     return value if isinstance(value, list) else []
 
@@ -77,12 +118,8 @@ def _as_dict(value: Any) -> dict[str, Any]:
 def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
     ret: dict[str, Any] = {}
 
-    ret["syntax_rules"] = (
-        _as_list(settings.get("core_syntax_rules"))
-        + _as_list(settings.get("project_syntax_rules"))
-        + _as_list(settings.get("user_syntax_rules"))
-        + _as_list(settings.get("default_syntax_rules"))
-    )
+    # syntax rules aren't merged here: `pref_syntax_rules()` validates each source separately, so
+    # a malformed rule can be reported with where it came from
 
     # use tuple to freeze setting for better performance (cache-able)
     ret["trim_suffixes"] = tuple(
