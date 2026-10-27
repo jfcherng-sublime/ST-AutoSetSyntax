@@ -234,7 +234,7 @@ class TestCompileRulesKeepsTheRuleOrigin:
         from plugin.types import StSyntaxRule
 
         window = _make_window(108)
-        origin = "Packages/Foo/AutoSetSyntax.rules.sublime-settings"
+        origin = "Packages/Foo/AutoSetSyntax.rules.v1.sublime-settings"
         # no matching syntax available -> the rule folds to "never matches" and gets dropped
         monkeypatch.setattr("plugin.rules.syntax.find_syntax", lambda *args, **kwargs: None)
         monkeypatch.setattr(

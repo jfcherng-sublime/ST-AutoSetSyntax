@@ -281,7 +281,7 @@ class TestPrefSyntaxRules:
 # ── package-provided syntax rules ────────────────────────────────────────────
 
 
-PACKAGE_FILE = "Packages/Foo/AutoSetSyntax.rules.sublime-settings"
+PACKAGE_FILE = "Packages/Foo/AutoSetSyntax.rules.v1.sublime-settings"
 
 
 class TestPrefSyntaxRulesWithPackages:
