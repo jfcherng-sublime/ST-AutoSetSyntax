@@ -5,6 +5,7 @@ plugin code is imported, so that unit tests can run outside Sublime Text.
 
 import importlib.machinery
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -41,6 +42,16 @@ def _make_sublime_stub() -> ModuleType:
     mod.set_timeout_async = lambda func, delay=0: None
     mod.score_selector = lambda scope, selector: 0
     mod.load_settings = lambda name: MagicMock()
+
+    # Resource APIs. A test that needs real content monkeypatches these (see
+    # `test_package_rules.py`, which simulates a package directory).
+    #
+    # The real `decode_value()` reads Sublime Text's JSON dialect (comments, trailing commas);
+    # this stub is plain JSON, so fixtures here must not rely on that dialect -- what's under
+    # test is the parser, not ST's JSON reader.
+    mod.find_resources = lambda pattern: []
+    mod.load_resource = lambda name: ""
+    mod.decode_value = json.loads
 
     class Region:
         def __init__(self, a: int, b: int | None = None) -> None:
