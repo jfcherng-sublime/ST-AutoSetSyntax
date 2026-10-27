@@ -12,9 +12,9 @@ import sublime_plugin
 from more_itertools import unique_everseen
 from pydantic import ValidationError
 
-from .types import RULE_KIND_TAGS
 from .types import DroppedRule
 from .types import StSyntaxRule
+from .types import describe_validation_error
 from .utils import drop_falsy
 
 type SettingsDict = MutableMapping[str, Any]
@@ -75,22 +75,8 @@ def pref_syntax_rules(*, window: sublime.Window | None = None) -> tuple[list[StS
             try:
                 valid.append(StSyntaxRule.model_validate(rule))
             except ValidationError as e:
-                invalid.append(DroppedRule.invalid(f"{source}[{index}]", rule, _describe_validation_error(e)))
+                invalid.append(DroppedRule.invalid(f"{source}[{index}]", rule, describe_validation_error(e)))
     return valid, invalid
-
-
-def _describe_validation_error(e: ValidationError) -> str:
-    """One `where: what` per problem (e.g. `rules[0].args: ...`), on one line, instead of pydantic's report."""
-
-    def where(loc: tuple[int | str, ...]) -> str:
-        # drop the rule-kind tags pydantic inserts: they name a model, not anything in the user's settings
-        parts = (part for part in loc if part not in RULE_KIND_TAGS)
-        return "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts).lstrip(".")
-
-    return "; ".join(
-        f"{location}: {error['msg']}" if (location := where(error["loc"])) else error["msg"]
-        for error in e.errors(include_url=False)
-    )
 
 
 def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str, ...]:

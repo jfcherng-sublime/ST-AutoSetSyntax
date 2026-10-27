@@ -21,6 +21,7 @@ from pydantic import ConfigDict
 from pydantic import Discriminator
 from pydantic import Field
 from pydantic import Tag
+from pydantic import ValidationError
 from pydantic import field_validator
 
 type Comparator = Callable[[Any, Any], bool]
@@ -72,6 +73,14 @@ def _explain(verdict: str, reason: str) -> str:
 
 
 class Optimizable(ABC):
+    src_origin: str = ""
+    """Where this rule came from: a settings key, or another package's rules file path.
+
+    Empty by default. Set on a `SyntaxRule` by whoever compiled it, so that anything discarded
+    further down -- while optimizing, long after the rule was read -- can still be reported as
+    coming from there.
+    """
+
     def fold(self) -> Fold:
         """
         The constant this object's `test()` always returns and why, or `UNFOLDED` when the result
@@ -105,6 +114,14 @@ class DroppedRule:
     so it stays readable at the front of the (long) generated repr."""
     rule: Optimizable | Any
     """The compiled rule, or the raw setting when it couldn't even be parsed into one."""
+    origin: str = ""
+    """Where the rule came from: a settings key, or another package's rules file path.
+
+    `reason` says *what* is wrong with a rule; this says *whose* it is. They're separate because a
+    rule discarded while optimizing has no location left in its reason at all -- "none of these
+    syntaxes is available" doesn't say whether that came from the user's own settings or from a
+    package the user forgot they installed, and the answer decides whether there's anything to fix.
+    """
 
     @classmethod
     def invalid(cls, location: str, setting: Any, error: str) -> Self:
@@ -112,17 +129,17 @@ class DroppedRule:
         return cls(_explain(f"invalid setting at {location}", error), setting)
 
     @classmethod
-    def make(cls, rule: Optimizable) -> Self:
-        """Explain a rule that optimizing has just decided to discard."""
+    def make(cls, rule: Optimizable, *, origin: str = "") -> Self:
+        """Explain a rule that optimizing has just decided to discard, noting where it came from."""
         match rule.fold():
             case Fold(True, reason):
-                return cls(_explain("always matches", reason), rule)
+                return cls(_explain("always matches", reason), rule, origin)
             case Fold(False, reason):
-                return cls(_explain("never matches", reason), rule)
+                return cls(_explain("never matches", reason), rule, origin)
             case _:
                 # optimizing only discards a rule that folds, so this means someone dropped a
                 # rule for another reason and didn't say which -- report it rather than lie
-                return cls("dropped without folding", rule)
+                return cls("dropped without folding", rule, origin)
 
 
 class StConstraintRule(BaseModel):
@@ -146,6 +163,20 @@ class StConstraintRule(BaseModel):
 
 RULE_KIND_TAGS: Final = frozenset({"constraint rule", "match rule"})
 """The tags `_rule_kind()` picks between. Pydantic puts them in an error's location."""
+
+
+def describe_validation_error(e: ValidationError) -> str:
+    """One `where: what` per problem (e.g. `rules[0].args: ...`), on one line, instead of pydantic's report."""
+
+    def where(loc: tuple[int | str, ...]) -> str:
+        # drop the rule-kind tags pydantic inserts: they name a model, not anything in the user's settings
+        parts = (part for part in loc if part not in RULE_KIND_TAGS)
+        return "".join(f"[{part}]" if isinstance(part, int) else f".{part}" for part in parts).lstrip(".")
+
+    return "; ".join(
+        f"{location}: {error['msg']}" if (location := where(error["loc"])) else error["msg"]
+        for error in e.errors(include_url=False)
+    )
 
 
 def _rule_kind(value: Any) -> str:
