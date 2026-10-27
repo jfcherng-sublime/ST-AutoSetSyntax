@@ -202,8 +202,9 @@ def load_package_rules(
             )
 
         try:
-            # `decode_value()` reads the same JSON dialect as a `.sublime-settings` file (comments,
-            # trailing commas), which is what the file name promises the author
+            # `decode_value()` is documented to allow comments and trailing commas, which is the
+            # dialect the `.sublime-settings` name promises -- and this is a hand-written file by
+            # definition. `tests/test_sublime_json_dialect.py` holds the test stub to it.
             data = sublime.decode_value(sublime.load_resource(location))
         except Exception as e:  # a broken file, or one this process cannot read
             dropped.append(DroppedRule.invalid(location, None, f"cannot be read: {e}"))

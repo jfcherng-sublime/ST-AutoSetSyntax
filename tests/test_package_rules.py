@@ -197,6 +197,27 @@ class TestLoadPackageRules:
 
         assert (len(rules), dropped) == (2, [])
 
+    def test_a_file_may_be_written_in_sts_json_dialect(self, fake_packages):
+        """The name ends in `.sublime-settings`, so comments and trailing commas are part of what
+        it promises the author -- and this is a hand-written file by definition."""
+        fake_packages.readable[f"Packages/Alpha/{rules_resource_name(1)}"] = """
+            {
+                // the format our files use
+                "rules": [
+                    {
+                        "syntaxes": ["scope:source.groovy.jenkinsfile"],
+                        /* told apart by name, not content */
+                        "rules": [{"constraint": "name_contains_regex", "args": ["^Jenkinsfile"]},],
+                    },
+                ],
+            }
+        """
+
+        rules, dropped = load_package_rules()
+
+        assert dropped == []
+        assert len(rules) == 1
+
     def test_one_broken_file_does_not_cost_the_others(self, fake_packages):
         fake_packages.write("Alpha", VALID_RULE)
         fake_packages.readable["Packages/Broken/AutoSetSyntax.rules.v1.sublime-settings"] = "{not json"

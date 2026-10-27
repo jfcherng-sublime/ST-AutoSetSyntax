@@ -9,6 +9,7 @@ import json
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -17,6 +18,53 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 
 
 # ── Sublime Text stubs ────────────────────────────────────────────────────────
+
+
+def _decode_st_json(data: str) -> Any:
+    """
+    `sublime.decode_value()`, as documented: JSON with comments and trailing commas allowed.
+
+    Not `json.loads` -- the dialect is part of what a `.sublime-settings` file promises its author,
+    and the package rules files are read through it. A stub that rejected comments would let a
+    test pass while the real thing rejected a file the docs say is valid.
+    """
+    out: list[str] = []
+    in_string = False
+    escaped = False
+    index = 0
+    while index < len(data):
+        char = data[index]
+        if in_string:
+            out.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+            out.append(char)
+        elif data.startswith("//", index):
+            while index < len(data) and data[index] != "\n":
+                index += 1
+            continue
+        elif data.startswith("/*", index):
+            index = data.find("*/", index) + 2
+            continue
+        elif char == ",":
+            # a trailing comma is one followed by nothing but whitespace and a closing bracket
+            lookahead = index + 1
+            while lookahead < len(data) and data[lookahead].isspace():
+                lookahead += 1
+            if lookahead < len(data) and data[lookahead] in "}]":
+                index += 1  # drop the comma; the bracket is written back on the next pass
+                continue
+            out.append(char)
+        else:
+            out.append(char)
+        index += 1
+    return json.loads("".join(out))
 
 
 def _make_sublime_stub() -> ModuleType:
@@ -45,13 +93,11 @@ def _make_sublime_stub() -> ModuleType:
 
     # Resource APIs. A test that needs real content monkeypatches these (see
     # `test_package_rules.py`, which simulates a package directory).
-    #
-    # The real `decode_value()` reads Sublime Text's JSON dialect (comments, trailing commas);
-    # this stub is plain JSON, so fixtures here must not rely on that dialect -- what's under
-    # test is the parser, not ST's JSON reader.
     mod.find_resources = lambda pattern: []
     mod.load_resource = lambda name: ""
-    mod.decode_value = json.loads
+    # ST's documented dialect, and the one an `AutoSetSyntax.rules.v1.sublime-settings` file is
+    # allowed to be written in. See `tests/test_sublime_json_dialect.py`.
+    mod.decode_value = _decode_st_json
 
     class Region:
         def __init__(self, a: int, b: int | None = None) -> None:
