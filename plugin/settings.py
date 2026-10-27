@@ -2,6 +2,7 @@ from collections import ChainMap
 from collections.abc import Callable
 from collections.abc import Mapping
 from collections.abc import MutableMapping
+from dataclasses import dataclass
 from itertools import chain
 from typing import Any
 from typing import ClassVar
@@ -63,9 +64,31 @@ SYNTAX_RULE_SOURCES_AFTER_PACKAGES: Final = ("default_syntax_rules",)
 """The settings whose rules a package's outrank -- the generic fallbacks bundled with this plugin."""
 
 
-def pref_syntax_rules(
-    *, window: sublime.Window | None = None
-) -> tuple[list[tuple[StSyntaxRule, str]], list[DroppedRule]]:
+@dataclass(frozen=True, slots=True)
+class SyntaxRulesLoad:
+    """Every syntax rule a window's settings produce, and what had to be left behind."""
+
+    rules: list[tuple[StSyntaxRule, str]]
+    """The rules, each paired with the setting key or the package file it came from."""
+    dropped: list[DroppedRule]
+    """Rules and files that couldn't be used, each explaining why."""
+    package_files: tuple[str, ...]
+    """The package rules files that were read, in the order they were read.
+
+    Reported separately from `rules` so a log line can say which packages are contributing: an
+    empty result from a package that *was* read and a package that ships nothing are different
+    situations, and only one of them is worth looking into.
+    """
+    package_rules_enabled: bool = False
+    """Whether package-provided rules were even looked for.
+
+    Carried here rather than re-read from the settings by whoever logs it: `pref_syntax_rules()`
+    already made the decision, and asking again risks the two disagreeing if a setting changes
+    between the call and the log line.
+    """
+
+
+def pref_syntax_rules(*, window: sublime.Window | None = None) -> SyntaxRulesLoad:
     """
     The syntax rules and where each came from, plus the ones that failed, located for the user.
 
@@ -78,6 +101,7 @@ def pref_syntax_rules(
     settings = get_merged_plugin_settings(window=window)
     valid: list[tuple[StSyntaxRule, str]] = []
     invalid: list[DroppedRule] = []
+    package_files: tuple[str, ...] = ()
 
     def absorb(sources: tuple[str, ...]) -> None:
         rules, dropped = _read_rule_sources(settings, sources)
@@ -87,17 +111,19 @@ def pref_syntax_rules(
     # the project's and the user's own rules first: their opinion has to win over any package's
     absorb(SYNTAX_RULE_SOURCES_BEFORE_PACKAGES)
 
-    if get_merged_plugin_setting("enable_package_syntax_rules", True, window=window):
+    enabled = bool(get_merged_plugin_setting("enable_package_syntax_rules", True, window=window))
+    if enabled:
         # a bare string ("Foo" for ["Foo"]) would otherwise be iterated character by character
         disabled = get_merged_plugin_setting("disabled_package_syntax_rule_packages", (), window=window)
         disabled = frozenset(disabled) if isinstance(disabled, list) else frozenset()
-        package_rules, package_invalid = load_package_rules(disabled_packages=disabled)
-        valid.extend(package_rules)
-        invalid.extend(package_invalid)
+        loaded = load_package_rules(disabled_packages=disabled)
+        valid.extend(loaded.rules)
+        invalid.extend(loaded.dropped)
+        package_files = loaded.files
 
     # then the generic fallbacks this plugin ships, which a package knows better than
     absorb(SYNTAX_RULE_SOURCES_AFTER_PACKAGES)
-    return valid, invalid
+    return SyntaxRulesLoad(valid, invalid, package_files, package_rules_enabled=enabled)
 
 
 def _read_rule_sources(

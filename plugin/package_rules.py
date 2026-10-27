@@ -19,6 +19,7 @@ read below keeps each rule's origin in the location string of its dropped entrie
 import re
 from collections.abc import Callable
 from collections.abc import Collection
+from dataclasses import dataclass
 from typing import Any
 from typing import Final
 
@@ -160,9 +161,29 @@ def find_package_rules_resources(*, disabled_packages: Collection[str] = ()) -> 
     return dict(sorted(found.items()))
 
 
-def load_package_rules(
-    *, disabled_packages: Collection[str] = ()
-) -> tuple[list[tuple[StSyntaxRule, str]], list[DroppedRule]]:
+@dataclass(frozen=True, slots=True)
+class PackageRulesLoad:
+    """What `load_package_rules()` found, kept together so a caller can report on it."""
+
+    rules: list[tuple[StSyntaxRule, str]]
+    """The rules, each paired with the file it came from."""
+    dropped: list[DroppedRule]
+    """Rules and files that couldn't be used, each explaining why."""
+    files: tuple[str, ...]
+    """The resource paths actually read, in the order they were read.
+
+    Separate from `rules` because a file that parsed to zero rules was still read, and saying so is
+    the difference between "no package ships rules" and "this package's rules file is empty" -- the
+    first needs no action, the second usually means the author made a mistake.
+    """
+
+    @property
+    def packages(self) -> tuple[str, ...]:
+        """The packages whose rules were read, in the order they were read."""
+        return tuple(dict.fromkeys(_package_name(path) for path in self.files))
+
+
+def load_package_rules(*, disabled_packages: Collection[str] = ()) -> PackageRulesLoad:
     """
     Read and validate the rules of every package, in package order.
 
@@ -172,6 +193,7 @@ def load_package_rules(
     """
     rules: list[tuple[StSyntaxRule, str]] = []
     dropped: list[DroppedRule] = []
+    files: list[str] = []
 
     for versions in find_package_rules_resources(disabled_packages=disabled_packages).values():
         if not (supported := sorted(set(versions) & set(_ENVELOPE_PARSERS))):
@@ -210,8 +232,9 @@ def load_package_rules(
             dropped.append(DroppedRule.invalid(location, None, f"cannot be read: {e}"))
             continue
 
+        files.append(location)
         file_rules, file_dropped = parse_package_rules(data, location=location, version=max(supported))
         rules.extend((rule, location) for rule in file_rules)
         dropped.extend(file_dropped)
 
-    return rules, dropped
+    return PackageRulesLoad(rules, dropped, tuple(files))

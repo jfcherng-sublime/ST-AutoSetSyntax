@@ -25,6 +25,7 @@ from .magika import get_magika_object
 from .rules import SyntaxRuleCollection
 from .rules import get_constraints
 from .rules import get_matches
+from .settings import SyntaxRulesLoad
 from .settings import get_merged_plugin_setting
 from .settings import pref_syntax_rules
 from .shared import G
@@ -32,7 +33,20 @@ from .types import DroppedRule
 from .types import ListenerEvent
 from .utils import debounce
 from .utils import is_transient_view
+from .utils import quote_join
 from .utils import stringify
+
+
+def _package_of(resource: str) -> str:
+    """The package a rules resource belongs to: `Packages/Foo/AutoSetSyntax.rules.v1...` -> `Foo`."""
+    return resource.split("/")[1]
+
+
+def _describe_package_rules(loaded: SyntaxRulesLoad) -> str:
+    """Which packages contributed rules, for the log panel."""
+    if not loaded.package_files:
+        return "none (no installed package ships any)"
+    return quote_join(dict.fromkeys(_package_of(path) for path in loaded.package_files))
 
 
 def set_up_window(window: sublime.Window) -> None:
@@ -71,11 +85,18 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     Logger.log(f'🔍 Found "Constraint" implementations: {names_as_str(get_constraints())}', window=window)
 
     # a malformed rule is dropped alone; the rest still compile
-    syntax_rules, invalid_rules = pref_syntax_rules(window=window)
-    for invalid_rule in invalid_rules:
+    loaded = pref_syntax_rules(window=window)
+    if loaded.package_rules_enabled:
+        # name the packages, not just the count: "which package is setting my syntax?" is the
+        # question this answers, and it can't be answered from the rules alone once they're compiled
+        Logger.log(f"📦 Package syntax rules: {_describe_package_rules(loaded)}", window=window)
+    else:
+        Logger.log('📦 Package syntax rules: disabled by "enable_package_syntax_rules"', window=window)
+
+    for invalid_rule in loaded.dropped:
         Logger.log(f"❌ Ignoring a syntax rule, {invalid_rule.reason}", window=window)
 
-    syntax_rule_collection = SyntaxRuleCollection.from_origins(syntax_rules)
+    syntax_rule_collection = SyntaxRuleCollection.from_origins(loaded.rules)
     Logger.log(f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
 
     # explain each rule as it's discarded: "dropped" alone is ambiguous now that a rule can be
@@ -84,7 +105,7 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     # through `origin`, which is the only place a user can see it came from another package
     try:
         dropped_rules = [
-            *invalid_rules,
+            *loaded.dropped,
             *(DroppedRule.make(dropped, origin=dropped.src_origin) for dropped in syntax_rule_collection.optimize()),
         ]
     except Exception:
@@ -103,8 +124,8 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
             f"❌ Failed optimizing the syntax rules, keeping them unoptimized:\n{traceback.format_exc()}",
             window=window,
         )
-        syntax_rule_collection = SyntaxRuleCollection.from_origins(syntax_rules)
-        dropped_rules = list(invalid_rules)
+        syntax_rule_collection = SyntaxRuleCollection.from_origins(loaded.rules)
+        dropped_rules = list(loaded.dropped)
 
     G.syntax_rule_collections[window] = syntax_rule_collection
     G.dropped_rules_collection[window] = dropped_rules

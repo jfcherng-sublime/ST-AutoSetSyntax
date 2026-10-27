@@ -8,6 +8,7 @@ import pytest
 
 from plugin import package_rules
 from plugin.package_rules import SPEC_VERSION
+from plugin.package_rules import PackageRulesLoad
 from plugin.package_rules import find_package_rules_resources
 from plugin.package_rules import load_package_rules
 from plugin.package_rules import parse_package_rules
@@ -193,9 +194,9 @@ class TestLoadPackageRules:
         fake_packages.write("Alpha", VALID_RULE)
         fake_packages.write("Zebra", VALID_RULE)
 
-        rules, dropped = load_package_rules()
+        loaded = load_package_rules()
 
-        assert (len(rules), dropped) == (2, [])
+        assert (len(loaded.rules), loaded.dropped) == (2, [])
 
     def test_a_file_may_be_written_in_sts_json_dialect(self, fake_packages):
         """The name ends in `.sublime-settings`, so comments and trailing commas are part of what
@@ -213,33 +214,33 @@ class TestLoadPackageRules:
             }
         """
 
-        rules, dropped = load_package_rules()
+        loaded = load_package_rules()
 
-        assert dropped == []
-        assert len(rules) == 1
+        assert loaded.dropped == []
+        assert len(loaded.rules) == 1
 
     def test_one_broken_file_does_not_cost_the_others(self, fake_packages):
         fake_packages.write("Alpha", VALID_RULE)
         fake_packages.readable["Packages/Broken/AutoSetSyntax.rules.v1.sublime-settings"] = "{not json"
 
-        rules, dropped = load_package_rules()
+        loaded = load_package_rules()
 
-        assert len(rules) == 1
-        assert len(dropped) == 1
-        assert "Packages/Broken/AutoSetSyntax.rules.v1.sublime-settings" in dropped[0].reason
+        assert len(loaded.rules) == 1
+        assert len(loaded.dropped) == 1
+        assert "Packages/Broken/AutoSetSyntax.rules.v1.sublime-settings" in loaded.dropped[0].reason
 
     def test_an_unreadable_file_is_reported_rather_than_raising(self, fake_packages):
         fake_packages.write("Alpha", VALID_RULE)
         fake_packages.broken.add("Packages/Locked/AutoSetSyntax.rules.v1.sublime-settings")
 
-        rules, dropped = load_package_rules()
+        loaded = load_package_rules()
 
-        assert len(rules) == 1
-        assert len(dropped) == 1
-        assert "Packages/Locked/AutoSetSyntax.rules.v1.sublime-settings" in dropped[0].reason
+        assert len(loaded.rules) == 1
+        assert len(loaded.dropped) == 1
+        assert "Packages/Locked/AutoSetSyntax.rules.v1.sublime-settings" in loaded.dropped[0].reason
 
     def test_no_files_at_all_is_not_an_error(self, fake_packages):
-        assert load_package_rules() == ([], [])
+        assert load_package_rules() == PackageRulesLoad([], [], ())
 
 
 class TestLoadPackageRulesAcrossVersions:
@@ -250,25 +251,25 @@ class TestLoadPackageRulesAcrossVersions:
         fake_packages.write("Alpha", {**VALID_RULE, "comment": "old"}, version=SPEC_VERSION)
         fake_packages.write("Alpha", {**VALID_RULE, "comment": "new"}, version=SPEC_VERSION + 1)
 
-        rules, _ = load_package_rules()
+        loaded = load_package_rules()
 
-        assert [rule.comment for rule, _ in rules] == ["old"]
+        assert [rule.comment for rule, _ in loaded.rules] == ["old"]
 
     def test_a_newer_version_that_is_skipped_says_so(self, fake_packages):
         fake_packages.write("Alpha", VALID_RULE, version=1)
         fake_packages.write("Alpha", VALID_RULE, version=SPEC_VERSION + 1)
 
-        _, dropped = load_package_rules()
+        loaded = load_package_rules()
 
-        assert len(dropped) == 1
-        assert f"v{SPEC_VERSION + 1}" in dropped[0].reason
+        assert len(loaded.dropped) == 1
+        assert f"v{SPEC_VERSION + 1}" in loaded.dropped[0].reason
 
     def test_a_package_with_only_an_unsupported_version_is_explained(self, fake_packages):
         fake_packages.write("Alpha", VALID_RULE, version=SPEC_VERSION + 1)
 
-        rules, dropped = load_package_rules()
+        loaded = load_package_rules()
 
-        assert rules == []
-        assert len(dropped) == 1
-        assert "rules format" in dropped[0].reason
-        assert "update the plugin" in dropped[0].reason
+        assert loaded.rules == []
+        assert len(loaded.dropped) == 1
+        assert "rules format" in loaded.dropped[0].reason
+        assert "update the plugin" in loaded.dropped[0].reason

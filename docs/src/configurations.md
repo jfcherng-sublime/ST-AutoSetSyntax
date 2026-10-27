@@ -252,6 +252,15 @@ rule that fails to parse costs only itself, and is reported, with the file it ca
 The file name has a JSON schema contributed by this plugin, so Sublime Text validates and completes the file while a
 package author writes it, including the syntax rule structure below.
 
+The log panel names the packages whose rules are in effect, which is the quickest way to answer "why did this file get
+that syntax?".
+
+!!! note "Installing a package that ships rules"
+
+    Rules are re-read when the plugin's settings change, and when the plugin is (re)loaded. A package installed while
+    Sublime Text is running is therefore only picked up after the plugin reloads or Sublime Text restarts -- the log
+    panel says which packages it currently knows about, so compare against that.
+
 Set this to `false` to ignore all such rules.
 
 ### `disabled_package_syntax_rule_packages`

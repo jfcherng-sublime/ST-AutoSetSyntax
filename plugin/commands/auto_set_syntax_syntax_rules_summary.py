@@ -22,19 +22,28 @@ class AutoSetSyntaxSyntaxRulesSummaryCommand(sublime_plugin.WindowCommand):
         if not (rule_collection := G.syntax_rule_collections.get(self.window)):
             return
 
-        summary: defaultdict[sublime.Syntax, list[StSyntaxRule]] = defaultdict(list)
+        # grouped by where the rule came from, then by target syntax: "which package is doing
+        # this?" is why someone opens this command, and the settings keys are the answer for the
+        # rules the user wrote themselves
+        summary: defaultdict[str, defaultdict[sublime.Syntax, list[StSyntaxRule]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
         for rule in rule_collection.rules:
             if rule.syntax and rule.src_setting:
-                summary[rule.syntax].append(rule.src_setting)
+                summary[rule.src_origin or "(unknown)"][rule.syntax].append(rule.src_setting)
 
         content = f"// [{PLUGIN_NAME}] Syntax Rules Summary\n\n"
-        for syntax, rules in sorted(summary.items(), key=lambda x: x[0].name.casefold()):
-            content += "/" * 80 + "\n"
-            content += f"// Syntax : {syntax.name}\n"
-            content += f"// Path   : {syntax.path}\n"
-            content += f"// Hidden : {syntax.hidden}\n"
-            content += "/" * 80 + "\n"
-            content += "\n".join(st_rule.model_dump_json(indent=tab_size) for st_rule in rules) + "\n\n"
+        for origin, by_syntax in sorted(summary.items(), key=lambda pair: pair[0].casefold()):
+            content += "#" * 80 + "\n"
+            content += f"# Origin : {origin}\n"
+            content += "#" * 80 + "\n\n"
+            for syntax, rules in sorted(by_syntax.items(), key=lambda pair: pair[0].name.casefold()):
+                content += "/" * 80 + "\n"
+                content += f"// Syntax : {syntax.name}\n"
+                content += f"// Path   : {syntax.path}\n"
+                content += f"// Hidden : {syntax.hidden}\n"
+                content += "/" * 80 + "\n"
+                content += "\n".join(st_rule.model_dump_json(indent=tab_size) for st_rule in rules) + "\n\n"
 
         create_new_view(
             name=self.description(),

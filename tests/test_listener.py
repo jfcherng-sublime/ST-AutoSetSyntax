@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 import sublime
 
 import plugin.listener as listener_mod
+from plugin.settings import SyntaxRulesLoad
 from plugin.shared import G
 
 
@@ -141,7 +142,9 @@ class TestCompileRulesHandlesInvalidSyntaxRules:
 
         window = _make_window(108)
         invalid = DroppedRule.invalid("user_syntax_rules[0]", {"constrait": "x"}, "boom")
-        monkeypatch.setattr(listener_mod, "pref_syntax_rules", lambda *, window=None: ([], [invalid]))
+        monkeypatch.setattr(
+            listener_mod, "pref_syntax_rules", lambda *, window=None: SyntaxRulesLoad([], [invalid], ())
+        )
 
         def _broken_optimize(self):
             raise RuntimeError("optimizer broke")
@@ -183,7 +186,7 @@ class TestCompileRulesSurvivesABrokenFold:
         monkeypatch.setattr(
             listener_mod,
             "pref_syntax_rules",
-            lambda *, window=None: (
+            lambda *, window=None: SyntaxRulesLoad(
                 [
                     (
                         StSyntaxRule(
@@ -195,6 +198,7 @@ class TestCompileRulesSurvivesABrokenFold:
                     )
                 ],
                 [],
+                (),
             ),
         )
         monkeypatch.setattr("plugin.rules.syntax.find_syntax", lambda *args, **kwargs: syntax)
@@ -240,7 +244,7 @@ class TestCompileRulesKeepsTheRuleOrigin:
         monkeypatch.setattr(
             listener_mod,
             "pref_syntax_rules",
-            lambda *, window=None: ([(StSyntaxRule(syntaxes=["NoSuchSyntax"]), origin)], []),
+            lambda *, window=None: SyntaxRulesLoad([(StSyntaxRule(syntaxes=["NoSuchSyntax"]), origin)], [], ()),
         )
         monkeypatch.setattr(listener_mod.Logger, "log", staticmethod(lambda msg, **kwargs: None))
 
@@ -264,7 +268,9 @@ class TestCompileRulesKeepsTheRuleOrigin:
         monkeypatch.setattr(
             listener_mod,
             "pref_syntax_rules",
-            lambda *, window=None: ([(StSyntaxRule(syntaxes=["NoSuchSyntax"]), "user_syntax_rules")], []),
+            lambda *, window=None: SyntaxRulesLoad(
+                [(StSyntaxRule(syntaxes=["NoSuchSyntax"]), "user_syntax_rules")], [], ()
+            ),
         )
         monkeypatch.setattr(listener_mod.Logger, "log", staticmethod(lambda msg, **kwargs: None))
 
@@ -277,3 +283,80 @@ class TestCompileRulesKeepsTheRuleOrigin:
         finally:
             G.syntax_rule_collections.pop(window, None)
             G.dropped_rules_collection.pop(window, None)
+
+
+class TestCompileRulesReportsWhichPackagesContribute:
+    """The log panel is how a user answers "which package is setting my syntax?". Naming the
+    packages is the only thing that answers it -- once compiled, the rules look like any other."""
+
+    @staticmethod
+    def _compile(monkeypatch, load) -> list[str]:
+        window = _make_window(110)
+        monkeypatch.setattr(listener_mod, "pref_syntax_rules", lambda *, window=None: load)
+        logged: list[str] = []
+        monkeypatch.setattr(
+            listener_mod.Logger,
+            "log",
+            staticmethod(lambda msg, **kwargs: logged.append(msg() if callable(msg) else msg)),
+        )
+        try:
+            listener_mod.compile_rules(window)
+        finally:
+            G.syntax_rule_collections.pop(window, None)
+            G.dropped_rules_collection.pop(window, None)
+        return logged
+
+    def test_names_the_packages_that_ship_rules(self, monkeypatch):
+        logged = self._compile(
+            monkeypatch,
+            SyntaxRulesLoad(
+                [], [], ("Packages/Foo/AutoSetSyntax.rules.v1.sublime-settings",), package_rules_enabled=True
+            ),
+        )
+
+        summary = next(msg for msg in logged if msg.startswith("📦"))
+        assert "Foo" in summary
+
+    def test_reports_a_package_only_once_even_with_several_files(self, monkeypatch):
+        logged = self._compile(
+            monkeypatch,
+            SyntaxRulesLoad(
+                [],
+                [],
+                (
+                    "Packages/Foo/AutoSetSyntax.rules.v1.sublime-settings",
+                    "Packages/Foo/AutoSetSyntax.rules.v1.extra.sublime-settings",
+                ),
+                package_rules_enabled=True,
+            ),
+        )
+
+        summary = next(msg for msg in logged if msg.startswith("📦"))
+        assert summary.count('"Foo"') == 1
+
+    def test_says_so_when_no_package_ships_any(self, monkeypatch):
+        """ "Nothing found" and "the feature is off" are different answers to the same question."""
+        logged = self._compile(monkeypatch, SyntaxRulesLoad([], [], (), package_rules_enabled=True))
+
+        assert any("none" in msg for msg in logged if msg.startswith("📦"))
+
+    def test_says_so_when_the_feature_is_switched_off(self, monkeypatch):
+        window = _make_window(111)
+        monkeypatch.setattr(
+            listener_mod,
+            "pref_syntax_rules",
+            lambda *, window=None: SyntaxRulesLoad([], [], (), package_rules_enabled=False),
+        )
+        logged: list[str] = []
+        monkeypatch.setattr(
+            listener_mod.Logger,
+            "log",
+            staticmethod(lambda msg, **kwargs: logged.append(msg() if callable(msg) else msg)),
+        )
+        try:
+            listener_mod.compile_rules(window)
+        finally:
+            G.syntax_rule_collections.pop(window, None)
+            G.dropped_rules_collection.pop(window, None)
+
+        assert any("disabled" in msg for msg in logged if msg.startswith("📦"))
