@@ -150,11 +150,18 @@
               }
             },
             "package_syntax_rules": {
-              "$comment": "The envelope of an AutoSetSyntax.rules.sublime-settings file that a package ships for itself.",
+              "$comment": "Dispatches on spec_version, one definition per version of the format, so that adding a version means adding a branch rather than rewriting what every existing version already means. Keep the branches in step with _ENVELOPE_PARSERS in plugin/package_rules.py: a version described here but not implemented there would validate in an author's editor and then be rejected at runtime, which is the one thing this schema exists to prevent. A file declaring a version newer than any branch here is flagged rather than silently accepted -- this schema genuinely cannot validate it, and saying so is more honest than guessing.",
+              "oneOf": [
+                {
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/package_syntax_rules_v1"
+                }
+              ]
+            },
+            "package_syntax_rules_v1": {
               "type": "object",
               "properties": {
                 "spec_version": {
-                  "markdownDescription": "The version of this format the file is written against. Currently `1`.\n\nA file declaring a version newer than the installed AutoSetSyntax understands is ignored as a whole, and the log panel says so.",
+                  "markdownDescription": "The version of this format the file is written against.\n\nA red squiggle here means the file declares a `spec_version` the installed AutoSetSyntax doesn't implement -- update the plugin, or write the file against a version it does implement. A file declaring an unknown version is ignored as a whole, and the log panel says which file and why.",
                   "const": 1,
                   "default": 1
                 },
