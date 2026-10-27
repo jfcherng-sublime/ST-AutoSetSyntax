@@ -149,6 +149,27 @@
                 "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule"
               }
             },
+            "package_syntax_rules": {
+              "$comment": "The envelope of an AutoSetSyntax.rules.sublime-settings file that a package ships for itself.",
+              "type": "object",
+              "properties": {
+                "spec_version": {
+                  "markdownDescription": "The version of this format the file is written against. Currently `1`.\n\nA file declaring a version newer than the installed AutoSetSyntax understands is ignored as a whole, and the log panel says so.",
+                  "const": 1,
+                  "default": 1
+                },
+                "rules": {
+                  "markdownDescription": "Syntax rules this package recommends for its own files.\n\nThey are tested after the user's `user_syntax_rules` but before the bundled `default_syntax_rules`, so a user's own rules always win.",
+                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
+                },
+                "$schema": {
+                  "description": "For editors other than Sublime Text. Ignored by AutoSetSyntax.",
+                  "type": "string"
+                }
+              },
+              "required": ["spec_version", "rules"],
+              "additionalProperties": false
+            },
             "syntax_rule": {
               "allOf": [
                 {
@@ -526,6 +547,18 @@
               }
             }
           }
+        }
+      },
+      //////////////////////////////////////
+      // syntax rules shipped by a package //
+      //////////////////////////////////////
+      //
+      // A package puts this file at its own root to recommend syntax rules for its files,
+      // without shipping a plugin. See "enable_package_syntax_rules" above.
+      {
+        "file_patterns": ["/AutoSetSyntax.rules.sublime-settings"],
+        "schema": {
+          "$ref": "sublime://settings/AutoSetSyntax#/definitions/package_syntax_rules"
         }
       },
       //////////////////////

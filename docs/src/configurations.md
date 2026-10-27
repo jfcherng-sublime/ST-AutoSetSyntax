@@ -245,6 +245,9 @@ recognized, instead of maintaining a small plugin whose only job is "set my synt
 These rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so your own rules always win. A
 rule that fails to parse costs only itself, and is reported, with the file it came from, in Debug Information.
 
+The file name has a JSON schema contributed by this plugin, so Sublime Text validates and completes the file while a
+package author writes it, including the syntax rule structure below.
+
 Set this to `false` to ignore all such rules.
 
 ### `disabled_package_syntax_rule_packages`

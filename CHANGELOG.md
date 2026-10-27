@@ -7,7 +7,8 @@
   user's own rules always win. A package can then describe its own file formats without maintaining a small
   detector plugin. Every dropped rule now carries the setting or the file it came from, shown in Debug Information.
   The new `enable_package_syntax_rules` and `disabled_package_syntax_rule_packages` settings turn the feature off,
-  as a whole or per package.
+  as a whole or per package. The rules file has a JSON schema contributed by this plugin, so Sublime Text validates
+  and completes it while a package author writes it.
 - fix: re-downloading dependencies on Windows while Magika is loaded no longer breaks the install.
   The old dependencies, which can't be deleted then, are now moved aside and removed on the next
   start, instead of being half-deleted with the new ones installed into a subdirectory.
