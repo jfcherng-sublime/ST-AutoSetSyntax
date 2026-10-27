@@ -403,7 +403,7 @@ Key settings groups:
 
 - **Strategy control**: `new_file_syntax`, `exec_file_syntax`, `trim_suffixes`, `magika.*`
 - **Behavior**: `debounce`, `run_on_startup_views`, `enable_log`
-- **Rules**: `core_syntax_rules`, `project_syntax_rules`, `user_syntax_rules`, `default_syntax_rules` — arrays of `SyntaxRule` objects, tested in that order
+- **Rules**: `core_syntax_rules`, `project_syntax_rules`, `user_syntax_rules`, `default_syntax_rules` — arrays of `SyntaxRule` objects, tested in that order. Rules that installed packages ship for themselves (`AutoSetSyntax.rules.sublime-settings`) are tested between `user_syntax_rules` and `default_syntax_rules`
 
 ## Shared Global State
 

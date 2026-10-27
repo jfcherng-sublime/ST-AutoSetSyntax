@@ -44,6 +44,8 @@ TEMPLATE = f"""
 ########################
 # Dropped syntax rules #
 ########################
+# Where a dropped rule came from is shown as its "origin": either one of the rule
+# settings or another package's "AutoSetSyntax.rules.sublime-settings" file.
 
 {{dropped_rules}}
 """.lstrip()

@@ -12,6 +12,7 @@ import sublime_plugin
 from more_itertools import unique_everseen
 from pydantic import ValidationError
 
+from .package_rules import load_package_rules
 from .types import DroppedRule
 from .types import StSyntaxRule
 from .types import describe_validation_error
@@ -51,21 +52,61 @@ def get_st_settings() -> sublime.Settings:
     return sublime.load_settings("Preferences.sublime-settings")
 
 
-SYNTAX_RULE_SOURCES: Final = ("core_syntax_rules", "project_syntax_rules", "user_syntax_rules", "default_syntax_rules")
-"""The settings syntax rules come from, in the order they're tested (the first matching rule wins)."""
+SYNTAX_RULE_SOURCES_BEFORE_PACKAGES: Final = ("core_syntax_rules", "project_syntax_rules", "user_syntax_rules")
+"""The settings whose rules outrank any package's, in the order they're tested.
+
+Both the project's and the user's own opinion has to be able to win over a package's: that is the
+whole point of the layering, and it's what makes a package with bad rules survivable.
+"""
+
+SYNTAX_RULE_SOURCES_AFTER_PACKAGES: Final = ("default_syntax_rules",)
+"""The settings whose rules a package's outrank -- the generic fallbacks bundled with this plugin."""
 
 
-def pref_syntax_rules(*, window: sublime.Window | None = None) -> tuple[list[StSyntaxRule], list[DroppedRule]]:
+def pref_syntax_rules(
+    *, window: sublime.Window | None = None
+) -> tuple[list[tuple[StSyntaxRule, str]], list[DroppedRule]]:
     """
-    The syntax rules, validated one by one, plus the ones that failed, located for the user.
+    The syntax rules and where each came from, plus the ones that failed, located for the user.
 
     A malformed rule must cost only itself: validating all of them as one list failed on the first
     typo and threw away every rule, the bundled ones included.
+
+    The origin travels with the rule so that a rule behaving badly can be traced to the package
+    that ships it, which is the one thing that makes accepting third-party rules maintainable.
     """
     settings = get_merged_plugin_settings(window=window)
-    valid: list[StSyntaxRule] = []
+    valid: list[tuple[StSyntaxRule, str]] = []
     invalid: list[DroppedRule] = []
-    for source in SYNTAX_RULE_SOURCES:
+
+    def absorb(sources: tuple[str, ...]) -> None:
+        rules, dropped = _read_rule_sources(settings, sources)
+        valid.extend(rules)
+        invalid.extend(dropped)
+
+    # the project's and the user's own rules first: their opinion has to win over any package's
+    absorb(SYNTAX_RULE_SOURCES_BEFORE_PACKAGES)
+
+    if get_merged_plugin_setting("enable_package_syntax_rules", True, window=window):
+        # a bare string ("Foo" for ["Foo"]) would otherwise be iterated character by character
+        disabled = get_merged_plugin_setting("disabled_package_syntax_rule_packages", (), window=window)
+        disabled = frozenset(disabled) if isinstance(disabled, list) else frozenset()
+        package_rules, package_invalid = load_package_rules(disabled_packages=disabled)
+        valid.extend(package_rules)
+        invalid.extend(package_invalid)
+
+    # then the generic fallbacks this plugin ships, which a package knows better than
+    absorb(SYNTAX_RULE_SOURCES_AFTER_PACKAGES)
+    return valid, invalid
+
+
+def _read_rule_sources(
+    settings: MergedSettingsDict, sources: tuple[str, ...]
+) -> tuple[list[tuple[StSyntaxRule, str]], list[DroppedRule]]:
+    """Validate the rules of `sources`, each rule paired with the setting it came from."""
+    valid: list[tuple[StSyntaxRule, str]] = []
+    invalid: list[DroppedRule] = []
+    for source in sources:
         if (rules := settings.get(source)) is None:  # an explicit `null` means "unset", like absent
             continue
         if not isinstance(rules, list):
@@ -73,7 +114,7 @@ def pref_syntax_rules(*, window: sublime.Window | None = None) -> tuple[list[StS
             continue
         for index, rule in enumerate(rules):
             try:
-                valid.append(StSyntaxRule.model_validate(rule))
+                valid.append((StSyntaxRule.model_validate(rule), source))
             except ValidationError as e:
                 invalid.append(DroppedRule.invalid(f"{source}[{index}]", rule, describe_validation_error(e)))
     return valid, invalid

@@ -75,13 +75,18 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     for invalid_rule in invalid_rules:
         Logger.log(f"❌ Ignoring a syntax rule, {invalid_rule.reason}", window=window)
 
-    syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
+    syntax_rule_collection = SyntaxRuleCollection.from_origins(syntax_rules)
     Logger.log(f"📜 Compiled syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
 
     # explain each rule as it's discarded: "dropped" alone is ambiguous now that a rule can be
-    # discarded for always matching as well as for never matching
+    # discarded for always matching as well as for never matching. A malformed third-party rule
+    # already names its file in `reason`; one that parsed but was then optimized away names it
+    # through `origin`, which is the only place a user can see it came from another package
     try:
-        dropped_rules = [*invalid_rules, *map(DroppedRule.make, syntax_rule_collection.optimize())]
+        dropped_rules = [
+            *invalid_rules,
+            *(DroppedRule.make(dropped, origin=dropped.src_origin) for dropped in syntax_rule_collection.optimize()),
+        ]
     except Exception:
         # `optimize()` prunes the tree as it walks it, so a pass that dies halfway can leave a
         # syntax rule whose root was already detached still in the collection -- which
@@ -98,7 +103,7 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
             f"❌ Failed optimizing the syntax rules, keeping them unoptimized:\n{traceback.format_exc()}",
             window=window,
         )
-        syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
+        syntax_rule_collection = SyntaxRuleCollection.from_origins(syntax_rules)
         dropped_rules = list(invalid_rules)
 
     G.syntax_rule_collections[window] = syntax_rule_collection

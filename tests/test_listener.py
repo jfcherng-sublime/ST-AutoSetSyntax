@@ -185,10 +185,13 @@ class TestCompileRulesSurvivesABrokenFold:
             "pref_syntax_rules",
             lambda *, window=None: (
                 [
-                    StSyntaxRule(
-                        syntaxes=["Python"],
-                        selector="",
-                        rules=[StConstraintRule(constraint="broken_fold")],
+                    (
+                        StSyntaxRule(
+                            syntaxes=["Python"],
+                            selector="",
+                            rules=[StConstraintRule(constraint="broken_fold")],
+                        ),
+                        "user_syntax_rules",
                     )
                 ],
                 [],
@@ -217,6 +220,60 @@ class TestCompileRulesSurvivesABrokenFold:
             # would leave the user guessing which of their custom implementations broke
             failure = next(msg for msg in logged if msg.startswith("❌"))
             assert "BrokenFoldConstraint.fold() must return a Fold" in failure
+        finally:
+            G.syntax_rule_collections.pop(window, None)
+            G.dropped_rules_collection.pop(window, None)
+
+
+class TestCompileRulesKeepsTheRuleOrigin:
+    """A rule from another package's file has to stay attributable *after* it's compiled: a rule
+    discarded while optimizing has nothing left in its reason naming the file, and "which package
+    gave me this rule?" is the question a user with a misbehaving package actually asks."""
+
+    def test_a_dropped_package_rule_names_its_file(self, monkeypatch):
+        from plugin.types import StSyntaxRule
+
+        window = _make_window(108)
+        origin = "Packages/Foo/AutoSetSyntax.rules.sublime-settings"
+        # no matching syntax available -> the rule folds to "never matches" and gets dropped
+        monkeypatch.setattr("plugin.rules.syntax.find_syntax", lambda *args, **kwargs: None)
+        monkeypatch.setattr(
+            listener_mod,
+            "pref_syntax_rules",
+            lambda *, window=None: ([(StSyntaxRule(syntaxes=["NoSuchSyntax"]), origin)], []),
+        )
+        monkeypatch.setattr(listener_mod.Logger, "log", staticmethod(lambda msg, **kwargs: None))
+
+        try:
+            listener_mod.compile_rules(window)
+
+            [dropped] = G.dropped_rules_collection[window]
+            assert dropped.origin == origin
+            assert dropped.reason.startswith("never matches")
+        finally:
+            G.syntax_rule_collections.pop(window, None)
+            G.dropped_rules_collection.pop(window, None)
+
+    def test_a_rule_from_settings_keeps_its_setting_as_origin(self, monkeypatch):
+        """Optimizing discards a rule without leaving any location in its reason, so the origin is
+        the only thing that still says whether a dropped rule was the user's own or a package's."""
+        from plugin.types import StSyntaxRule
+
+        window = _make_window(109)
+        monkeypatch.setattr("plugin.rules.syntax.find_syntax", lambda *args, **kwargs: None)
+        monkeypatch.setattr(
+            listener_mod,
+            "pref_syntax_rules",
+            lambda *, window=None: ([(StSyntaxRule(syntaxes=["NoSuchSyntax"]), "user_syntax_rules")], []),
+        )
+        monkeypatch.setattr(listener_mod.Logger, "log", staticmethod(lambda msg, **kwargs: None))
+
+        try:
+            listener_mod.compile_rules(window)
+
+            [dropped] = G.dropped_rules_collection[window]
+            assert dropped.origin == "user_syntax_rules"
+            assert "user_syntax_rules" not in dropped.reason
         finally:
             G.syntax_rule_collections.pop(window, None)
             G.dropped_rules_collection.pop(window, None)

@@ -25,6 +25,20 @@
                   "type": "number",
                   "default": 0.3
                 },
+                "disabled_package_syntax_rule_packages": {
+                  "markdownDescription": "Names of packages whose shipped syntax rules are ignored, while other packages' rules still apply. Use this when one package's rules misfire.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": [],
+                  "uniqueItems": true
+                },
+                "enable_package_syntax_rules": {
+                  "markdownDescription": "Whether to also use the syntax rules that installed packages ship for themselves, in an `AutoSetSyntax.rules.sublime-settings` file at their package root.\n\nThose rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so your own rules always win.",
+                  "type": "boolean",
+                  "default": true
+                },
                 "enable_log": {
                   "description": "Enables plugin log (in a dedicated panel).",
                   "type": "boolean",

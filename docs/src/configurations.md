@@ -216,6 +216,52 @@ Syntax rules are the key part of AutoSetSyntax.
     updates for `default_syntax_rules`. The recommended way is putting your syntax rules in `user_syntax_rules`.
     And put project-specific syntax rules in `project_syntax_rules` in [project settings][plugin-project-settings].
 
+### `enable_package_syntax_rules`
+
+| Type      | Default |
+| --------- | ------- |
+| `boolean` | `true`  |
+
+Whether to also use the syntax rules that installed packages ship for themselves.
+
+A package may put an `AutoSetSyntax.rules.sublime-settings` file at its root to describe how its own files should be
+recognized, instead of maintaining a small plugin whose only job is "set my syntax when a file looks like mine":
+
+```js
+// Packages/MySyntax/AutoSetSyntax.rules.sublime-settings
+{
+    "spec_version": 1,
+    "rules": [
+        {
+            "comment": "Jenkinsfile pipeline definitions",
+            "syntaxes": ["scope:source.groovy.jenkinsfile"],
+            "selector": "text.plain",
+            "rules": [{ "constraint": "name_contains_regex", "args": ["^Jenkinsfile(?=\\b|_)"] }]
+        }
+    ]
+}
+```
+
+These rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so your own rules always win. A
+rule that fails to parse costs only itself, and is reported, with the file it came from, in Debug Information.
+
+Set this to `false` to ignore all such rules.
+
+### `disabled_package_syntax_rule_packages`
+
+| Type       | Default |
+| ---------- | ------- |
+| `string[]` | `[]`    |
+
+Names of packages whose shipped syntax rules should be ignored, while other packages' rules still apply. Use this when
+one package's rules misfire and you don't want to turn them all off:
+
+```js
+"disabled_package_syntax_rule_packages": ["SomeSyntax"]
+```
+
+The package name is the directory name under `Packages`, which the log panel and Debug Information spell out.
+
 ### `default_trim_suffixes`
 
 | Type       | Default                                                 |

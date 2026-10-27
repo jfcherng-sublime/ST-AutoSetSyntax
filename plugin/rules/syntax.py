@@ -84,10 +84,11 @@ class SyntaxRule(Optimizable):
         return self.root_rule.test(view_snapshot)
 
     @classmethod
-    def make(cls, syntax_rule: StSyntaxRule) -> Self:
-        """Build this object with the `syntax_rule`."""
+    def make(cls, syntax_rule: StSyntaxRule, *, origin: str = "") -> Self:
+        """Build this object with the `syntax_rule`, which came from `origin`."""
         this = cls()
         this.src_setting = syntax_rule
+        this.src_origin = origin
 
         this.syntaxes_name = tuple(syntax_rule.syntaxes)
         if target_syntax := find_syntax(syntax_rule.syntaxes, include_hidden=True):
@@ -128,3 +129,8 @@ class SyntaxRuleCollection(Optimizable):
     def make(cls, syntax_rules: Iterable[StSyntaxRule]) -> Self:
         """Build this object with the `syntax_rules`."""
         return cls(rules=tuple(map(SyntaxRule.make, syntax_rules)))
+
+    @classmethod
+    def from_origins(cls, syntax_rules: Iterable[tuple[StSyntaxRule, str]]) -> Self:
+        """Build this object with `(rule, origin)` pairs, keeping each rule's origin for the report."""
+        return cls(rules=tuple(SyntaxRule.make(rule, origin=origin) for rule, origin in syntax_rules))

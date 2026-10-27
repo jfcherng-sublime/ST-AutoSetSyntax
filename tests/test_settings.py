@@ -214,7 +214,7 @@ class TestPrefSyntaxRules:
             "core_syntax_rules": [{"syntaxes": ["Core"]}],
         })
 
-        assert [rule.syntaxes for rule in valid] == [["Core"], ["Project"], ["User"], ["Default"]]
+        assert [rule.syntaxes for rule, _ in valid] == [["Core"], ["Project"], ["User"], ["Default"]]
         assert invalid == []
 
     def test_invalid_rule_is_dropped_alone_and_located(self):
@@ -228,7 +228,7 @@ class TestPrefSyntaxRules:
             "default_syntax_rules": [{"syntaxes": ["B"]}],
         })
 
-        assert [rule.syntaxes for rule in valid] == [["A"], ["B"]]
+        assert [rule.syntaxes for rule, _ in valid] == [["A"], ["B"]]
         assert len(invalid) == 1
         assert invalid[0].reason.startswith("invalid setting at user_syntax_rules[1]: ")
         assert "constrait" in invalid[0].reason
@@ -258,7 +258,7 @@ class TestPrefSyntaxRules:
         value None, so it has to be treated like an absent one, not crash or be reported."""
         valid, invalid = self._pref({"core_syntax_rules": [{"syntaxes": ["Core"]}], "user_syntax_rules": None})
 
-        assert [rule.syntaxes for rule in valid] == [["Core"]]
+        assert [rule.syntaxes for rule, _ in valid] == [["Core"]]
         assert invalid == []
 
     def test_non_list_source_is_reported(self):
@@ -268,6 +268,85 @@ class TestPrefSyntaxRules:
         assert valid == []
         assert len(invalid) == 1
         assert invalid[0].reason.startswith("invalid setting at user_syntax_rules: ")
+
+    def test_rules_carry_the_setting_they_came_from(self):
+        valid, _ = self._pref({
+            "user_syntax_rules": [{"syntaxes": ["A"]}],
+            "default_syntax_rules": [{"syntaxes": ["B"]}],
+        })
+
+        assert [origin for _, origin in valid] == ["user_syntax_rules", "default_syntax_rules"]
+
+
+# ── package-provided syntax rules ────────────────────────────────────────────
+
+
+PACKAGE_FILE = "Packages/Foo/AutoSetSyntax.rules.sublime-settings"
+
+
+class TestPrefSyntaxRulesWithPackages:
+    @staticmethod
+    def _pref(settings: dict, *, rules=(), invalid=()):
+        """`rules` is what a package's file would have parsed into: `[(rule, origin)]`."""
+        with (
+            patch("plugin.settings.get_merged_plugin_settings", return_value=settings),
+            patch("plugin.settings.load_package_rules", return_value=(list(rules), list(invalid))) as mock_load,
+        ):
+            return pref_syntax_rules(window=MagicMock()), mock_load
+
+    @staticmethod
+    def _rule(syntax: str):
+        from plugin.types import StSyntaxRule
+
+        return StSyntaxRule(syntaxes=[syntax])
+
+    def test_package_rules_rank_between_user_and_default(self):
+        """A user's own opinion must win; a package's knowledge of its own format beats a generic
+        fallback we happened to ship."""
+        (valid, _), _ = self._pref(
+            {
+                "user_syntax_rules": [{"syntaxes": ["User"]}],
+                "default_syntax_rules": [{"syntaxes": ["Default"]}],
+            },
+            rules=[(self._rule("Package"), PACKAGE_FILE)],
+        )
+
+        assert [rule.syntaxes for rule, _ in valid] == [["User"], ["Package"], ["Default"]]
+
+    def test_package_rules_are_off_when_disabled(self):
+        (valid, invalid), _ = self._pref(
+            {"enable_package_syntax_rules": False, "user_syntax_rules": [{"syntaxes": ["User"]}]},
+            rules=[(self._rule("Package"), PACKAGE_FILE)],
+        )
+
+        assert [rule.syntaxes for rule, _ in valid] == [["User"]]
+        assert invalid == []
+
+    def test_disabled_packages_are_passed_to_the_loader(self):
+        _, mock_load = self._pref(
+            {"disabled_package_syntax_rule_packages": ["Foo", "Bar"]},
+            rules=[],
+        )
+
+        assert mock_load.call_args.kwargs["disabled_packages"] == frozenset({"Foo", "Bar"})
+
+    def test_package_rules_carry_their_file_as_origin(self):
+        (valid, _), _ = self._pref({}, rules=[(self._rule("Package"), PACKAGE_FILE)])
+
+        assert [origin for _, origin in valid] == [PACKAGE_FILE]
+
+    def test_a_dropped_package_rule_is_reported_next_to_the_settings_ones(self):
+        from plugin.types import DroppedRule
+
+        dropped = DroppedRule.invalid(f"{PACKAGE_FILE}[0]", None, "boom")
+
+        (_, invalid), _ = self._pref(
+            {"user_syntax_rules": [{"rules": [{"constrait": "x"}]}]},
+            invalid=[dropped],
+        )
+
+        assert len(invalid) == 2
+        assert any(PACKAGE_FILE in one.reason for one in invalid)
 
 
 # ── pref_trim_suffixes ──────────────────────────────────────────────────────
@@ -438,3 +517,16 @@ class TestAioSettingsEvents:
         with patch.object(AioSettings, "_on_settings_change") as mock:
             listener.on_load_project_async(mock_window)
             mock.assert_called_once_with([mock_window])
+
+
+def test_a_bare_string_disabled_package_is_not_read_character_by_character():
+    """`"Foo"` is a plausible way to write one package name; without the guard it would become
+    `{"F", "o"}` and silently disable nothing."""
+    settings = {"disabled_package_syntax_rule_packages": "Foo"}
+    with (
+        patch("plugin.settings.get_merged_plugin_settings", return_value=settings),
+        patch("plugin.settings.load_package_rules", return_value=([], [])) as mock_load,
+    ):
+        pref_syntax_rules(window=MagicMock())
+
+    assert mock_load.call_args.kwargs["disabled_packages"] == frozenset()

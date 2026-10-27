@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- feat: syntax rules can now be shipped by other packages, in an `AutoSetSyntax.rules.sublime-settings` file at
+  their package root. Such rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so the
+  user's own rules always win. A package can then describe its own file formats without maintaining a small
+  detector plugin. Every dropped rule now carries the setting or the file it came from, shown in Debug Information.
+  The new `enable_package_syntax_rules` and `disabled_package_syntax_rule_packages` settings turn the feature off,
+  as a whole or per package.
 - fix: re-downloading dependencies on Windows while Magika is loaded no longer breaks the install.
   The old dependencies, which can't be deleted then, are now moved aside and removed on the next
   start, instead of being half-deleted with the new ones installed into a subdirectory.
