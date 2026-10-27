@@ -2,8 +2,13 @@
 Syntax rules shipped by other packages, each in one file at its package root.
 
 A package that knows its own file format better than any generic heuristic does can drop an
-`AutoSetSyntax.rules.sublime-settings` file in its root and have those rules picked up, instead of
-maintaining a small plugin whose only job is "set my syntax when a file looks like mine".
+`AutoSetSyntax.rules.v1.sublime-settings` file in its root and have those rules picked up, instead
+of maintaining a small plugin whose only job is "set my syntax when a file looks like mine".
+
+The format version lives in the *file name*, not in the file: `v1` above. That makes the version
+visible to `find_resources()` before anything is read, so a file written against a format this
+plugin doesn't implement is identified without guessing at its contents -- and it lets one package
+ship several versions at once, so a file for a newer plugin doesn't break an older one.
 
 The file is deliberately not read with `sublime.load_settings()`: that merges every package's file
 of the same name into one object and throws away which package a rule came from, and "this rule came
@@ -11,6 +16,7 @@ from Packages/Foo/" is the whole point -- it's what makes a bad package diagnosa
 read below keeps each rule's origin in the location string of its dropped entries.
 """
 
+import re
 from collections.abc import Callable
 from collections.abc import Collection
 from typing import Any
@@ -27,8 +33,12 @@ from .types import DroppedRule
 from .types import StSyntaxRule
 from .types import describe_validation_error
 
-RULES_RESOURCE_NAME: Final = "AutoSetSyntax.rules.sublime-settings"
-"""The file a package puts its syntax rules in. Matched by file name, so any directory works."""
+RULES_RESOURCE_GLOB: Final = "AutoSetSyntax.rules.v*.sublime-settings"
+"""What `find_resources()` is asked for, so that every version -- including ones this plugin is too
+old to read -- is found and can be explained, rather than silently ignored."""
+
+_RE_RULES_RESOURCE: Final = re.compile(r"/AutoSetSyntax\.rules\.v(?P<version>[0-9]+)\.sublime-settings$")
+"""Picks the version back out of a path the glob above matched."""
 
 _EXCLUDED_PACKAGES: Final = ("User",)
 """Packages to ignore beyond our own.
@@ -39,21 +49,20 @@ so the file would look like it does nothing.
 """
 
 type EnvelopeParser = Callable[..., tuple[list[StSyntaxRule], list[DroppedRule]]]
-"""Parses one spec version's envelope into rules, given `(data, *, location)`."""
+"""Parses one format version's envelope into rules, given `(data, *, location)`."""
+
+
+def rules_resource_name(version: int) -> str:
+    """The file name a package ships its rules for `version` under."""
+    return f"AutoSetSyntax.rules.v{version}.sublime-settings"
 
 
 class _EnvelopeV1(BaseModel):
-    """The v1 envelope: `{"spec_version": 1, "rules": [...]}`."""
+    """The v1 envelope: `{"rules": [...]}`. The version is in the file name, not in here."""
 
     # a typo'd top-level key ("rule" for "rules") must not silently contribute nothing: the only
-    # keys a v1 file may have are the version and the rules themselves
+    # other key a v1 file may have is the schema hint below
     model_config = ConfigDict(extra="forbid")
-
-    # `strict` rejects `True`, `"1"` and `1.0`, which pydantic would otherwise coerce to 1. The
-    # version decides whether the rest of the file is read at all, so it's worth being pedantic: a
-    # file whose version is wrong contributes nothing and deserves to say so.
-    spec_version: int = Field(strict=True)
-    """The rules-file spec version the file was written against."""
 
     rules: list[Any]
     """The rules, as written.
@@ -67,7 +76,7 @@ class _EnvelopeV1(BaseModel):
 
 
 def _parse_v1(data: Any, *, location: str) -> tuple[list[StSyntaxRule], list[DroppedRule]]:
-    """Parse a v1 envelope into rules. Only ever called with a dict whose `spec_version` is 1."""
+    """Parse a v1 envelope into rules. Only ever called for a file named `...rules.v1...`."""
     try:
         envelope = _EnvelopeV1.model_validate(data)
     except ValidationError as e:
@@ -83,19 +92,24 @@ def _parse_v1(data: Any, *, location: str) -> tuple[list[StSyntaxRule], list[Dro
     return rules, invalid
 
 
-# The seam for a future spec version: a v2 file gets its own envelope model and parse function and
-# one more line here, and every v1 file already in the wild keeps parsing through `_parse_v1()`.
+# The seam for a future format: a v2 file gets its own envelope model and parse function and one
+# more line here, and every v1 file already in the wild keeps parsing through `_parse_v1()`.
 # Nothing else in the plugin knows which version produced its rules.
 _ENVELOPE_PARSERS: Final[dict[int, EnvelopeParser]] = {1: _parse_v1}
 
 SPEC_VERSION: Final = max(_ENVELOPE_PARSERS)
-"""The newest rules-file spec version this plugin implements.
+"""The newest rules format this plugin implements.
 
 The rule vocabulary -- constraint and match names, their arguments -- is *not* versioned by this
 number: it only ever grows and the schema only ever loosens, so a file that spells out its rules in
 full keeps working across plugin versions. Only the envelope around the rules is versioned, because
 that's the part an older plugin cannot read at all.
 """
+
+
+def _package_name(resource: str) -> str:
+    """The package a resource path belongs to: `Packages/Foo/bar.json` -> `Foo`."""
+    return resource.split("/")[1]
 
 
 def _is_excluded(resource: str) -> bool:
@@ -107,9 +121,9 @@ def _is_excluded(resource: str) -> bool:
     return resource.startswith(tuple(f"Packages/{name}/" for name in (PLUGIN_NAME, *_EXCLUDED_PACKAGES)))
 
 
-def parse_package_rules(data: Any, *, location: str) -> tuple[list[StSyntaxRule], list[DroppedRule]]:
+def parse_package_rules(data: Any, *, location: str, version: int) -> tuple[list[StSyntaxRule], list[DroppedRule]]:
     """
-    Validate one package's rules file, naming it `location` in any complaint.
+    Validate one package's rules file, written against format `version`, naming it `location`.
 
     Never raises: anything wrong with the file becomes a dropped entry instead, so that one bad file
     cannot cost the user the rules of every other package.
@@ -117,48 +131,40 @@ def parse_package_rules(data: Any, *, location: str) -> tuple[list[StSyntaxRule]
     if not isinstance(data, dict):
         return [], [DroppedRule.invalid(location, data, f"expected an object, got {type(data).__name__}")]
 
-    # The version gate has to come before the envelope is validated rather than as one of its rules.
-    # A file written against a newer spec has keys the parser it would be handed forbids, and a pile
-    # of "extra inputs are not permitted" for vocabulary this plugin doesn't have yet would bury the
-    # one sentence that explains what's actually going on.
-    version = data.get("spec_version")
-    if isinstance(version, bool) or not isinstance(version, int):
-        return [], [DroppedRule.invalid(location, data, 'it has no integer "spec_version"')]
-    if version < 1:
-        return [], [DroppedRule.invalid(location, data, f'"spec_version" {version} is not a spec version')]
     if (parse := _ENVELOPE_PARSERS.get(version)) is None:
+        # unreachable through `load_package_rules()`, which only ever passes a supported version;
+        # kept so that a future caller can't silently get a half-parsed file
         return [], [
-            DroppedRule(
-                f"ignored {location}: it declares spec_version {version}, but this version of the plugin "
-                f"implements at most {SPEC_VERSION} -- update the plugin to use it",
-                data,
-            ),
+            DroppedRule(f"ignored {location}: this version of the plugin cannot read the v{version} format", data),
         ]
 
     return parse(data, location=location)
 
 
-def find_package_rules_resources(*, disabled_packages: Collection[str] = ()) -> list[str]:
-    """Every package's rules file, sorted so that the same set of packages always behaves the same."""
+def find_package_rules_resources(*, disabled_packages: Collection[str] = ()) -> dict[str, dict[int, str]]:
+    """
+    Every package's rules files as `{package: {version: resource path}}`, packages in sorted order.
+
+    Grouped rather than flattened because the versions of one package compete: a package may ship
+    several so that both an old and a new AutoSetSyntax read what they understand, and only one of
+    them may be used, or the same rules would be applied twice.
+    """
     disabled = frozenset(disabled_packages)
-    return sorted(
-        path
-        for path in sublime.find_resources(RULES_RESOURCE_NAME)
-        if not _is_excluded(path) and _package_name(path) not in disabled
-    )
-
-
-def _package_name(resource: str) -> str:
-    """The package a resource path belongs to: `Packages/Foo/bar.json` -> `Foo`."""
-    _, _, package, *_ = resource.split("/")
-    return package
+    found: dict[str, dict[int, str]] = {}
+    for path in sorted(sublime.find_resources(RULES_RESOURCE_GLOB)):
+        if _is_excluded(path) or _package_name(path) in disabled:
+            continue
+        if (match := _RE_RULES_RESOURCE.search(path)) is None:
+            continue  # the glob matched something that isn't quite this shape
+        found.setdefault(_package_name(path), {})[int(match["version"])] = path
+    return dict(sorted(found.items()))
 
 
 def load_package_rules(
     *, disabled_packages: Collection[str] = ()
 ) -> tuple[list[tuple[StSyntaxRule, str]], list[DroppedRule]]:
     """
-    Read and validate every package's rules file, in package order.
+    Read and validate the rules of every package, in package order.
 
     The counterpart of `pref_syntax_rules()` for rules that live outside any settings object. Each
     rule is paired with the resource it came from, so a misbehaving rule can be traced to the
@@ -166,7 +172,35 @@ def load_package_rules(
     """
     rules: list[tuple[StSyntaxRule, str]] = []
     dropped: list[DroppedRule] = []
-    for location in find_package_rules_resources(disabled_packages=disabled_packages):
+
+    for versions in find_package_rules_resources(disabled_packages=disabled_packages).values():
+        if not (supported := sorted(set(versions) & set(_ENVELOPE_PARSERS))):
+            # nothing readable: say which file was too new instead of ignoring the package entirely
+            newest = max(versions)
+            location = versions[newest]
+            dropped.append(
+                DroppedRule(
+                    f"ignored {location}: it is written for the v{newest} rules format, but this version "
+                    f"of the plugin implements at most v{SPEC_VERSION} -- update the plugin to use it",
+                    None,
+                    origin=location,
+                )
+            )
+            continue
+
+        # only the newest the plugin understands: a package shipping v1 and v2 wants one of them read,
+        # not both, and `max(supported)` is the one written most recently
+        location = versions[max(supported)]
+        if stale := sorted(set(versions) - set(supported), reverse=True):
+            dropped.append(
+                DroppedRule(
+                    f"ignored {versions[stale[0]]}: {location} is used for this package instead, because this "
+                    f"version of the plugin implements at most v{SPEC_VERSION}",
+                    None,
+                    origin=versions[stale[0]],
+                )
+            )
+
         try:
             # `decode_value()` reads the same JSON dialect as a `.sublime-settings` file (comments,
             # trailing commas), which is what the file name promises the author
@@ -174,7 +208,9 @@ def load_package_rules(
         except Exception as e:  # a broken file, or one this process cannot read
             dropped.append(DroppedRule.invalid(location, None, f"cannot be read: {e}"))
             continue
-        file_rules, file_dropped = parse_package_rules(data, location=location)
+
+        file_rules, file_dropped = parse_package_rules(data, location=location, version=max(supported))
         rules.extend((rule, location) for rule in file_rules)
         dropped.extend(file_dropped)
+
     return rules, dropped

@@ -11,7 +11,9 @@
     // The time (in seconds) to wait for the next event to be triggered.
     "debounce": 0.3,
     // Whether to also use the syntax rules that installed packages ship for themselves, in
-    // an "AutoSetSyntax.rules.sublime-settings" file at their package root.
+    // an "AutoSetSyntax.rules.v1.sublime-settings" file at their package root.
+    // The format version is in the file name, so a package may ship several at once and
+    // this plugin reads the newest one it understands.
     // Those rules are tested after your "user_syntax_rules" but before "default_syntax_rules",
     // so your own rules always win. Turn this off to ignore them all.
     "enable_package_syntax_rules": true,

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- feat: syntax rules can now be shipped by other packages, in an `AutoSetSyntax.rules.sublime-settings` file at
+- feat: syntax rules can now be shipped by other packages, in an `AutoSetSyntax.rules.v1.sublime-settings` file at
   their package root. Such rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so the
   user's own rules always win. A package can then describe its own file formats without maintaining a small
   detector plugin. Every dropped rule now carries the setting or the file it came from, shown in Debug Information.

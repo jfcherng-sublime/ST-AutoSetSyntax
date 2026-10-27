@@ -224,13 +224,12 @@ Syntax rules are the key part of AutoSetSyntax.
 
 Whether to also use the syntax rules that installed packages ship for themselves.
 
-A package may put an `AutoSetSyntax.rules.sublime-settings` file at its root to describe how its own files should be
+A package may put an `AutoSetSyntax.rules.v1.sublime-settings` file at its root to describe how its own files should be
 recognized, instead of maintaining a small plugin whose only job is "set my syntax when a file looks like mine":
 
 ```js
-// Packages/MySyntax/AutoSetSyntax.rules.sublime-settings
+// Packages/MySyntax/AutoSetSyntax.rules.v1.sublime-settings
 {
-    "spec_version": 1,
     "rules": [
         {
             "comment": "Jenkinsfile pipeline definitions",
@@ -241,6 +240,11 @@ recognized, instead of maintaining a small plugin whose only job is "set my synt
     ]
 }
 ```
+
+The format version is part of the file name (`v1` above), not a field inside it. That way a package may ship several
+versions at once -- so a file written for a newer AutoSetSyntax doesn't break an older one -- and only the newest one
+this plugin understands is used. A package whose files are all too new for the installed plugin is reported in the log
+panel rather than silently ignored.
 
 These rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so your own rules always win. A
 rule that fails to parse costs only itself, and is reported, with the file it came from, in Debug Information.

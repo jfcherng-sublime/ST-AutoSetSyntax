@@ -35,7 +35,7 @@
                   "uniqueItems": true
                 },
                 "enable_package_syntax_rules": {
-                  "markdownDescription": "Whether to also use the syntax rules that installed packages ship for themselves, in an `AutoSetSyntax.rules.sublime-settings` file at their package root.\n\nThose rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so your own rules always win.",
+                  "markdownDescription": "Whether to also use the syntax rules that installed packages ship for themselves, in an `AutoSetSyntax.rules.v1.sublime-settings` file at their package root.\n\nThose rules are tested after `user_syntax_rules` but before `default_syntax_rules`, so your own rules always win.",
                   "type": "boolean",
                   "default": true
                 },
@@ -149,22 +149,10 @@
                 "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule"
               }
             },
-            "package_syntax_rules": {
-              "$comment": "Dispatches on spec_version, one definition per version of the format, so that adding a version means adding a branch rather than rewriting what every existing version already means. Keep the branches in step with _ENVELOPE_PARSERS in plugin/package_rules.py: a version described here but not implemented there would validate in an author's editor and then be rejected at runtime, which is the one thing this schema exists to prevent. A file declaring a version newer than any branch here is flagged rather than silently accepted -- this schema genuinely cannot validate it, and saying so is more honest than guessing.",
-              "oneOf": [
-                {
-                  "$ref": "sublime://settings/AutoSetSyntax#/definitions/package_syntax_rules_v1"
-                }
-              ]
-            },
             "package_syntax_rules_v1": {
+              "$comment": "Format v1 of a rules file a package ships for itself. The version is in the file name, so one format version per definition and one `file_patterns` entry per version -- no `oneOf` here, which would collapse every error to \"matches no branch\" and lose the key that's actually wrong. Keep this in step with _EnvelopeV1 in plugin/package_rules.py.",
               "type": "object",
               "properties": {
-                "spec_version": {
-                  "markdownDescription": "The version of this format the file is written against.\n\nA red squiggle here means the file declares a `spec_version` the installed AutoSetSyntax doesn't implement -- update the plugin, or write the file against a version it does implement. A file declaring an unknown version is ignored as a whole, and the log panel says which file and why.",
-                  "const": 1,
-                  "default": 1
-                },
                 "rules": {
                   "markdownDescription": "Syntax rules this package recommends for its own files.\n\nThey are tested after the user's `user_syntax_rules` but before the bundled `default_syntax_rules`, so a user's own rules always win.",
                   "$ref": "sublime://settings/AutoSetSyntax#/definitions/syntax_rule_collection"
@@ -174,7 +162,7 @@
                   "type": "string"
                 }
               },
-              "required": ["spec_version", "rules"],
+              "required": ["rules"],
               "additionalProperties": false
             },
             "syntax_rule": {
@@ -562,10 +550,15 @@
       //
       // A package puts this file at its own root to recommend syntax rules for its files,
       // without shipping a plugin. See "enable_package_syntax_rules" above.
+      //
+      // The format version is in the file name, so a new version is one more entry here plus
+      // one more definition -- never a change to what an existing version already means. Add a
+      // version only once plugin/package_rules.py implements it: a format described here but not
+      // read there would validate in an author's editor and then be rejected at runtime.
       {
-        "file_patterns": ["/AutoSetSyntax.rules.sublime-settings"],
+        "file_patterns": ["/AutoSetSyntax.rules.v1.sublime-settings"],
         "schema": {
-          "$ref": "sublime://settings/AutoSetSyntax#/definitions/package_syntax_rules"
+          "$ref": "sublime://settings/AutoSetSyntax#/definitions/package_syntax_rules_v1"
         }
       },
       //////////////////////
