@@ -130,6 +130,10 @@
             "selector": "text.plain",
             "rules": [
                 {
+                    "constraint": "path_contains_regex",
+                    "args": ["/\\.kube/config$"]
+                },
+                {
                     "constraint": "is_name",
                     "args": [".clang-format", ".clang-tidy", ".clangd"]
                 }
