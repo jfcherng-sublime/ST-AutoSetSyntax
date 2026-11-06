@@ -51,8 +51,10 @@ class SyntaxDecision:
 
     syntax: sublime.Syntax
     """The syntax to assign."""
+    reason: str
+    """Why this detector decided, in the log's words."""
     details: dict[str, Any] = field(default_factory=dict)
-    """The reason payload, logged verbatim by `assign_syntax_to_view()`."""
+    """Further evidence. Logged after the reason, together with the event that triggered detection."""
     status_message: str | None = None
     """An optional status bar message, shown when this decision is applied."""
 
@@ -64,7 +66,7 @@ def detect(
     settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     """Try each detector in order and return the first decision reached, if any."""
-    if decision := _detect_for_st_syntax_test(view_snapshot, event):
+    if decision := _detect_for_st_syntax_test(view_snapshot):
         return decision
 
     if decision := _detect_with_plugin_rules(view_snapshot, syntax_rule_collection, event):
@@ -73,18 +75,17 @@ def detect(
     if decision := _detect_with_first_line(view_snapshot, event, settings):
         return decision
 
-    if event in _FILE_SAVE_EVENTS and (decision := _detect_with_trimmed_filename(view_snapshot, event, settings)):
+    if event in _FILE_SAVE_EVENTS and (decision := _detect_with_trimmed_filename(view_snapshot, settings)):
         return decision
 
     if event in _FILE_AND_MODIFY_EVENTS and (decision := _detect_with_magika(view_snapshot, event, settings)):
         return decision
 
-    return _detect_with_heuristics(view_snapshot, event)
+    return _detect_with_heuristics(view_snapshot)
 
 
 def detect_for_exec_output(
     view: sublime.View,
-    event: ListenerEvent | None,
     settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     if (
@@ -93,16 +94,12 @@ def detect_for_exec_output(
         and (exec_file_syntax := settings.get("exec_file_syntax"))
         and (syntax := find_syntax(exec_file_syntax, include_hidden=True))
     ):
-        return SyntaxDecision(
-            syntax,
-            {"event": event, "reason": "exec output", "exec_file_syntax": exec_file_syntax},
-        )
+        return SyntaxDecision(syntax, "exec output", {"exec_file_syntax": exec_file_syntax})
     return None
 
 
 def detect_for_new_view(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None,
     settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     if (
@@ -110,17 +107,11 @@ def detect_for_new_view(
         and (new_file_syntax := settings.get("new_file_syntax"))
         and (syntax := find_syntax(new_file_syntax, include_plaintext=False))
     ):
-        return SyntaxDecision(
-            syntax,
-            {"event": event, "reason": "new file", "new_file_syntax": new_file_syntax},
-        )
+        return SyntaxDecision(syntax, "new file", {"new_file_syntax": new_file_syntax})
     return None
 
 
-def _detect_for_st_syntax_test(
-    view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None,
-) -> SyntaxDecision | None:
+def _detect_for_st_syntax_test(view_snapshot: ViewSnapshot) -> SyntaxDecision | None:
     if (
         (view := view_snapshot.valid_view)
         and view_snapshot.file_name.startswith("syntax_test_")
@@ -128,7 +119,7 @@ def _detect_for_st_syntax_test(
     ):
         new_syntax: str = m.group("syntax")
         if syntax := find_syntax(new_syntax, include_hidden=True, include_plaintext=True):
-            return SyntaxDecision(syntax, {"event": event, "reason": "Sublime Test syntax test file"})
+            return SyntaxDecision(syntax, "Sublime Test syntax test file")
         Logger.log(f"😢 Cannot find the syntax under test: {new_syntax}", window=view.window())
 
     return None
@@ -141,10 +132,7 @@ def _detect_with_plugin_rules(
 ) -> SyntaxDecision | None:
     if view_snapshot.valid_view and (syntax_rule := syntax_rule_collection.test(view_snapshot, event)):
         assert syntax_rule.syntax  # otherwise it should be dropped during optimizing
-        return SyntaxDecision(
-            syntax_rule.syntax,
-            {"event": event, "reason": "plugin rule", "rule": syntax_rule},
-        )
+        return SyntaxDecision(syntax_rule.syntax, "plugin rule", {"rule": syntax_rule})
     return None
 
 
@@ -216,10 +204,7 @@ def _detect_with_first_line(
         if syntax := checker(view_snapshot):
             return SyntaxDecision(
                 syntax,
-                {
-                    "event": event,
-                    "reason": f'syntax "first_line_match" or "file_extensions" by {checker.__name__}',
-                },
+                f'syntax "first_line_match" or "file_extensions" by {checker.__name__}',
             )
 
     return None
@@ -227,7 +212,6 @@ def _detect_with_first_line(
 
 def _detect_with_trimmed_filename(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None,
     settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     if not (
@@ -251,9 +235,8 @@ def _detect_with_trimmed_filename(
         if (syntax := sublime.find_syntax_for_file(filename)) and not is_plaintext_syntax(syntax):
             return SyntaxDecision(
                 syntax,
+                "trimmed filename",
                 {
-                    "event": event,
-                    "reason": "trimmed filename",
                     "filename_original": original,
                     "filename_trimmed": filename,
                     "trim_suffixes": trim_suffixes,
@@ -312,7 +295,7 @@ def _detect_with_magika(
     confidence = round(magika_score * 100, 2)
     return SyntaxDecision(
         syntax,
-        {"event": event, "reason": "Magika (Deep Learning)"},
+        "Magika (Deep Learning)",
         status_message=f"Predicted label: {magika_label} ({confidence}% confidence)",
     )
 
@@ -334,7 +317,7 @@ _SMALL_FILE_SIZE: Final[int] = 1 * 1024  # 1 KB
 _XSSI_PREFIXES: Final[tuple[str, ...]] = (")]}'\n", ")]}',\n")
 
 
-def _detect_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | None) -> SyntaxDecision | None:
+def _detect_with_heuristics(view_snapshot: ViewSnapshot) -> SyntaxDecision | None:
     def is_small_file(view_snapshot: ViewSnapshot) -> bool:
         return view_snapshot.char_count < _SMALL_FILE_SIZE
 
@@ -364,6 +347,6 @@ def _detect_with_heuristics(view_snapshot: ViewSnapshot, event: ListenerEvent | 
         return None
 
     if is_json(view_snapshot) and (syntax := find_syntax("scope:source.json")):
-        return SyntaxDecision(syntax, {"event": event, "reason": "heuristics"})
+        return SyntaxDecision(syntax, "heuristics")
 
     return None

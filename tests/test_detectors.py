@@ -1,9 +1,9 @@
 """Tests for the syntax detectors in plugin/detectors.py.
 
 Detectors return a `SyntaxDecision` (or `None`) rather than touching the view, so these tests
-assert on the returned decision instead of intercepting `assign_syntax_to_view()`. Where a
-detector produces a decision, the *whole* `details` payload is asserted -- that dict is logged
-verbatim, so partial assertions would let the log format drift unnoticed.
+assert on the returned decision instead of intercepting `assign_syntax_to_view()`. A decision's `reason`
+and `details` are logged verbatim (with the event added by the caller), so they are asserted in full --
+a partial assertion would let the log format drift unnoticed.
 
 `find_syntax` is still stubbed: resolving a syntax name needs a real Sublime Text syntax
 registry, which the test stubs don't provide.
@@ -80,11 +80,11 @@ class TestDetect:
             "_detect_with_heuristics",
         )
         for name in names:
-            decision = SyntaxDecision(sublime.Syntax(name="Python"), {"reason": name}) if name in deciders else None
+            decision = SyntaxDecision(sublime.Syntax(name="Python"), name) if name in deciders else None
             monkeypatch.setattr(mod, name, lambda *a, _d=decision, **kw: _d)
 
         result = mod.detect(MagicMock(), MagicMock(), event, {})
-        return result.details["reason"] if result else None
+        return result.reason if result else None
 
     def test_first_detector_to_decide_wins(self, monkeypatch):
         assert self._run(monkeypatch, ListenerEvent.LOAD, {"_detect_with_plugin_rules", "_detect_with_first_line"}) == (
@@ -121,7 +121,7 @@ class TestDetectWithHeuristicsJson:
     def _decide(monkeypatch, content: str, *, char_count: int | None = None) -> SyntaxDecision | None:
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="JSON"))
         snap = _make_snapshot(content, char_count=char_count)
-        return mod._detect_with_heuristics(snap, ListenerEvent.LOAD)
+        return mod._detect_with_heuristics(snap)
 
     def _detected(self, monkeypatch, content: str, *, char_count: int | None = None) -> bool:
         return self._decide(monkeypatch, content, char_count=char_count) is not None
@@ -132,7 +132,7 @@ class TestDetectWithHeuristicsJson:
     def test_decision_carries_the_full_details_payload(self, monkeypatch):
         decision = self._decide(monkeypatch, _big_json_map())
         assert decision is not None
-        assert decision.details == {"event": ListenerEvent.LOAD, "reason": "heuristics"}
+        assert decision.reason == "heuristics"
         assert decision.status_message is None
 
     def test_plain_json_array_detected(self, monkeypatch):
@@ -199,7 +199,7 @@ class TestDetectWithHeuristicsJson:
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="JSON"))
 
         snap = _make_snapshot(_big_json_map(), syntax_name="Python")
-        assert mod._detect_with_heuristics(snap, ListenerEvent.LOAD) is None
+        assert mod._detect_with_heuristics(snap) is None
 
 
 class TestDetectForExecOutput:
@@ -208,33 +208,30 @@ class TestDetectForExecOutput:
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: syntax)
         view = _make_view(syntax=sublime.Syntax(scope="text.plain"))
 
-        decision = mod.detect_for_exec_output(view, ListenerEvent.EXEC, {"exec_file_syntax": "scope:source.build"})
+        decision = mod.detect_for_exec_output(view, {"exec_file_syntax": "scope:source.build"})
 
         assert decision is not None
         assert decision.syntax is syntax
-        assert decision.details == {
-            "event": ListenerEvent.EXEC,
-            "reason": "exec output",
-            "exec_file_syntax": "scope:source.build",
-        }
+        assert decision.reason == "exec output"
+        assert decision.details == {"exec_file_syntax": "scope:source.build"}
 
     def test_a_panel_already_given_a_real_syntax_is_left_alone(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Build Output"))
         view = _make_view(syntax=sublime.Syntax(scope="source.python"))
 
-        assert mod.detect_for_exec_output(view, ListenerEvent.EXEC, {"exec_file_syntax": "x"}) is None
+        assert mod.detect_for_exec_output(view, {"exec_file_syntax": "x"}) is None
 
     def test_unset_exec_file_syntax_decides_nothing(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Build Output"))
         view = _make_view(syntax=sublime.Syntax(scope="text.plain"))
 
-        assert mod.detect_for_exec_output(view, ListenerEvent.EXEC, {}) is None
+        assert mod.detect_for_exec_output(view, {}) is None
 
     def test_invalid_view_decides_nothing(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Build Output"))
         view = _make_view(valid=False, syntax=sublime.Syntax(scope="text.plain"))
 
-        assert mod.detect_for_exec_output(view, ListenerEvent.EXEC, {"exec_file_syntax": "x"}) is None
+        assert mod.detect_for_exec_output(view, {"exec_file_syntax": "x"}) is None
 
 
 class TestDetectForNewView:
@@ -243,24 +240,21 @@ class TestDetectForNewView:
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: syntax)
         snap = _make_snapshot("")
 
-        decision = mod.detect_for_new_view(snap, ListenerEvent.NEW, {"new_file_syntax": "scope:text.html.markdown"})
+        decision = mod.detect_for_new_view(snap, {"new_file_syntax": "scope:text.html.markdown"})
 
         assert decision is not None
-        assert decision.details == {
-            "event": ListenerEvent.NEW,
-            "reason": "new file",
-            "new_file_syntax": "scope:text.html.markdown",
-        }
+        assert decision.reason == "new file"
+        assert decision.details == {"new_file_syntax": "scope:text.html.markdown"}
 
     def test_unset_new_file_syntax_decides_nothing(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Markdown"))
 
-        assert mod.detect_for_new_view(_make_snapshot(""), ListenerEvent.NEW, {}) is None
+        assert mod.detect_for_new_view(_make_snapshot(""), {}) is None
 
     def test_unresolvable_new_file_syntax_decides_nothing(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: None)
 
-        assert mod.detect_for_new_view(_make_snapshot(""), ListenerEvent.NEW, {"new_file_syntax": "nope"}) is None
+        assert mod.detect_for_new_view(_make_snapshot(""), {"new_file_syntax": "nope"}) is None
 
 
 def _syntax_test_snapshot(filename: str, first_line: str) -> ViewSnapshot:
@@ -287,17 +281,17 @@ class TestDetectForStSyntaxTest:
         monkeypatch.setattr(mod, "find_syntax", _fake_find)
         snap = _syntax_test_snapshot("syntax_test_python.py", '# SYNTAX TEST "Packages/Python/Python.sublime-syntax"')
 
-        decision = mod._detect_for_st_syntax_test(snap, ListenerEvent.LOAD)
+        decision = mod._detect_for_st_syntax_test(snap)
 
         assert decision is not None
         assert queried == ["Packages/Python/Python.sublime-syntax"]
-        assert decision.details == {"event": ListenerEvent.LOAD, "reason": "Sublime Test syntax test file"}
+        assert decision.reason == "Sublime Test syntax test file"
 
     def test_a_file_not_named_syntax_test_is_ignored(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Python"))
         snap = _syntax_test_snapshot("regular.py", '# SYNTAX TEST "Packages/Python/Python.sublime-syntax"')
 
-        assert mod._detect_for_st_syntax_test(snap, ListenerEvent.LOAD) is None
+        assert mod._detect_for_st_syntax_test(snap) is None
 
     def test_an_unresolvable_syntax_under_test_is_logged_not_decided(self, monkeypatch):
         """The user named a syntax that doesn't exist -- worth a log line, but there's nothing
@@ -307,7 +301,7 @@ class TestDetectForStSyntaxTest:
         monkeypatch.setattr(mod.Logger, "log", lambda msg, **kw: logged.append(str(msg)))
         snap = _syntax_test_snapshot("syntax_test_nope.py", '# SYNTAX TEST "Packages/Nope/Nope.sublime-syntax"')
 
-        assert mod._detect_for_st_syntax_test(snap, ListenerEvent.LOAD) is None
+        assert mod._detect_for_st_syntax_test(snap) is None
         assert any("Cannot find the syntax under test" in line for line in logged)
 
 
@@ -323,7 +317,8 @@ class TestDetectWithPluginRules:
 
         assert decision is not None
         assert decision.syntax is syntax
-        assert decision.details == {"event": ListenerEvent.LOAD, "reason": "plugin rule", "rule": rule}
+        assert decision.reason == "plugin rule"
+        assert decision.details == {"rule": rule}
 
     def test_no_matching_rule_decides_nothing(self):
         collection = MagicMock()
@@ -406,10 +401,7 @@ class TestDetectWithFirstLineEmacsModeline:
         )
 
         assert decision is not None
-        assert decision.details == {
-            "event": ListenerEvent.LOAD,
-            "reason": 'syntax "first_line_match" or "file_extensions" by _prefer_modeline',
-        }
+        assert decision.reason == 'syntax "first_line_match" or "file_extensions" by _prefer_modeline'
 
 
 class TestDetectWithFirstLineVimModeline:
@@ -467,12 +459,11 @@ class TestDetectWithTrimmedFilename:
 
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", _fake_find_syntax, raising=False)
 
-        decision = mod._detect_with_trimmed_filename(snap, ListenerEvent.SAVE, settings)
+        decision = mod._detect_with_trimmed_filename(snap, settings)
 
         assert decision is not None
+        assert decision.reason == "trimmed filename"
         assert decision.details == {
-            "event": ListenerEvent.SAVE,
-            "reason": "trimmed filename",
             "filename_original": "app.js.min",
             "filename_trimmed": "app.js",
             "trim_suffixes": (".min",),
@@ -485,7 +476,7 @@ class TestDetectWithTrimmedFilename:
 
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
 
-        assert mod._detect_with_trimmed_filename(snap, ListenerEvent.SAVE, settings) is None
+        assert mod._detect_with_trimmed_filename(snap, settings) is None
 
     def test_trimmed_match_that_is_still_plaintext_is_rejected(self, monkeypatch):
         """A trimmed candidate resolving back to Plain Text isn't a real match -- must keep
@@ -500,7 +491,7 @@ class TestDetectWithTrimmedFilename:
 
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", _fake_find_syntax, raising=False)
 
-        decision = mod._detect_with_trimmed_filename(snap, ListenerEvent.SAVE, settings)
+        decision = mod._detect_with_trimmed_filename(snap, settings)
 
         assert decision is not None
         assert decision.details["filename_trimmed"] == "app.js"
@@ -521,7 +512,7 @@ class TestDetectWithTrimmedFilename:
             syntax=sublime.Syntax(name="Python"),
         )
 
-        assert mod._detect_with_trimmed_filename(snap, ListenerEvent.SAVE, {}) is None
+        assert mod._detect_with_trimmed_filename(snap, {}) is None
 
     def test_unsaved_buffer_with_no_file_name_returns_no_decision(self):
         view = _make_view(syntax=sublime.Syntax(name="Plain Text"))
@@ -537,7 +528,7 @@ class TestDetectWithTrimmedFilename:
             syntax=sublime.Syntax(name="Plain Text"),
         )
 
-        assert mod._detect_with_trimmed_filename(snap, ListenerEvent.SAVE, {}) is None
+        assert mod._detect_with_trimmed_filename(snap, {}) is None
 
 
 class _FakeMagikaResult:
@@ -597,7 +588,7 @@ class TestDetectWithMagika:
         decision = mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True})
 
         assert decision is not None
-        assert decision.details == {"event": ListenerEvent.LOAD, "reason": "Magika (Deep Learning)"}
+        assert decision.reason == "Magika (Deep Learning)"
         assert decision.status_message == "Predicted label: python (90.0% confidence)"
 
     def test_detector_does_not_emit_the_status_message_itself(self, monkeypatch):

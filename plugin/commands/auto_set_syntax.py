@@ -44,7 +44,7 @@ def run_auto_set_syntax_on_view(
     settings = get_merged_plugin_settings(window=window)
 
     if event is ListenerEvent.EXEC:
-        return _apply(view, detect_for_exec_output(view, event, settings))
+        return _apply(view, detect_for_exec_output(view, settings), event)
 
     if not (
         is_syntaxable_view(view, must_plaintext=must_plaintext)
@@ -56,21 +56,22 @@ def run_auto_set_syntax_on_view(
     view_snapshot = ViewSnapshot.from_view(view)
 
     if event is ListenerEvent.NEW:
-        return _apply(view, detect_for_new_view(view_snapshot, event, settings))
+        return _apply(view, detect_for_new_view(view_snapshot, settings), event)
 
     if decision := detect(view_snapshot, syntax_rule_collection, event, settings):
-        return _apply(view, decision)
+        return _apply(view, decision, event)
 
     return _sorry_cannot_help(view, event)
 
 
-def _apply(view: sublime.View, decision: SyntaxDecision | None) -> bool:
+def _apply(view: sublime.View, decision: SyntaxDecision | None, event: ListenerEvent | None) -> bool:
     """Carry out a `decision`. The only place a detector's verdict reaches the view."""
     if not decision:
         return False
     if decision.status_message:
         sublime.status_message(decision.status_message)
-    return assign_syntax_to_view(view, decision.syntax, details=decision.details)
+    details = {"event": event, "reason": decision.reason, **decision.details}
+    return assign_syntax_to_view(view, decision.syntax, details=details)
 
 
 def _sorry_cannot_help(view: sublime.View, event: ListenerEvent | None = None) -> bool:

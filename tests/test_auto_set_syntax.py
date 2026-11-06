@@ -27,7 +27,7 @@ class TestApply:
 
     def test_no_decision_is_a_no_op(self):
         view = _make_view()
-        assert mod._apply(view, None) is False
+        assert mod._apply(view, None, ListenerEvent.LOAD) is False
         view.assign_syntax.assert_not_called()
 
     def test_decision_is_assigned_with_its_details(self, monkeypatch):
@@ -35,8 +35,17 @@ class TestApply:
         view.buffer.return_value.views.return_value = [view]
         syntax = sublime.Syntax(name="Python")
 
-        assert mod._apply(view, SyntaxDecision(syntax, {"reason": "test"})) is True
+        assert mod._apply(view, SyntaxDecision(syntax, "test"), ListenerEvent.LOAD) is True
         view.assign_syntax.assert_called_once_with(syntax)
+
+    def test_the_log_gets_the_event_and_reason_ahead_of_the_decisions_details(self, monkeypatch):
+        captured = {}
+        monkeypatch.setattr(mod, "assign_syntax_to_view", lambda view, syntax, *, details: captured.update(details))
+        syntax = sublime.Syntax(name="Python")
+
+        mod._apply(_make_view(), SyntaxDecision(syntax, "why", {"extra": 1}), ListenerEvent.SAVE)
+
+        assert list(captured.items()) == [("event", ListenerEvent.SAVE), ("reason", "why"), ("extra", 1)]
 
     def test_status_message_is_emitted_only_when_the_decision_carries_one(self, monkeypatch):
         """The status message travels on the decision so the detector decides *what* is said
@@ -48,10 +57,10 @@ class TestApply:
         view.buffer.return_value.views.return_value = [view]
         syntax = sublime.Syntax(name="Python")
 
-        mod._apply(view, SyntaxDecision(syntax, {"reason": "quiet"}))
+        mod._apply(view, SyntaxDecision(syntax, "quiet"), ListenerEvent.LOAD)
         assert messages == []
 
-        mod._apply(view, SyntaxDecision(syntax, {"reason": "loud"}, status_message="hello"))
+        mod._apply(view, SyntaxDecision(syntax, "loud", status_message="hello"), ListenerEvent.LOAD)
         assert messages == ["hello"]
 
 
