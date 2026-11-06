@@ -127,7 +127,7 @@ class TestEmptyCollectionKeepsWindowReady:
         monkeypatch.setattr(auto_mod, "get_merged_plugin_settings", lambda **kw: {})
         monkeypatch.setattr(auto_mod, "is_syntaxable_view", lambda *a, **kw: True)
         monkeypatch.setattr(auto_mod.ViewSnapshot, "from_view", classmethod(lambda cls, v: MagicMock()))
-        monkeypatch.setattr(auto_mod, "_detect", detect)
+        monkeypatch.setattr(auto_mod, "detect", detect)
         try:
             auto_mod.run_auto_set_syntax_on_view(view, ListenerEvent.LOAD)
         finally:

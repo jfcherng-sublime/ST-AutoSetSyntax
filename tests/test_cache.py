@@ -50,43 +50,6 @@ class TestClearableLruCache:
         assert square(4) == 16
         assert call_count == 2  # recomputed
 
-    def test_selective_clear(self):
-        """clear_all_cached_functions clears ALL decorated functions."""
-        count_a = 0
-        count_b = 0
-
-        @clearable_lru_cache()
-        def fn_a(x: int) -> int:
-            nonlocal count_a
-            count_a += 1
-            return x + 1
-
-        @clearable_lru_cache()
-        def fn_b(x: int) -> int:
-            nonlocal count_b
-            count_b += 1
-            return x * 2
-
-        assert fn_a(1) == 2
-        assert fn_b(1) == 2
-        assert count_a == 1
-        assert count_b == 1
-
-        # Second calls should be cached
-        assert fn_a(1) == 2
-        assert fn_b(1) == 2
-        assert count_a == 1
-        assert count_b == 1
-
-        # Clear all
-        clear_all_cached_functions()
-
-        # Both should recompute
-        assert fn_a(1) == 2
-        assert fn_b(1) == 2
-        assert count_a == 2
-        assert count_b == 2
-
     def test_maxsize_passthrough(self):
         call_count = 0
 

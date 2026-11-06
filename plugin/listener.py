@@ -70,7 +70,6 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     Logger.log(f'🔍 Found "Match" implementations: {names_as_str(get_matches())}', window=window)
     Logger.log(f'🔍 Found "Constraint" implementations: {names_as_str(get_constraints())}', window=window)
 
-    # a malformed rule is dropped alone; the rest still compile
     syntax_rules, invalid_rules = pref_syntax_rules(window=window)
     for invalid_rule in invalid_rules:
         Logger.log(f"❌ Ignoring a syntax rule, {invalid_rule.reason}", window=window)
@@ -83,17 +82,10 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
     try:
         dropped_rules = [*invalid_rules, *map(DroppedRule.make, syntax_rule_collection.optimize())]
     except Exception:
-        # `optimize()` prunes the tree as it walks it, so a pass that dies halfway can leave a
-        # syntax rule whose root was already detached still in the collection -- which
-        # `SyntaxRule.test()` then asserts on, once per view. Rebuild from the source settings
-        # rather than keep a tree nobody finished: unoptimized rules still test correctly,
-        # they're just re-evaluated on every view. The likely culprit is a custom implementation
-        # whose `fold()` doesn't return a `Fold`, and that shouldn't cost the window every
-        # *other* rule the user wrote.
-        #
-        # Log the whole traceback, not just the exception: "cannot unpack non-iterable bool
-        # object" doesn't say *whose* fold() did that, and naming the class is the entire point
-        # (see `warn_legacy_fold_overrides()`, which exists for exactly that reason).
+        # `optimize()` prunes the tree as it walks it, so a pass that dies halfway leaves a half-pruned
+        # tree. Rebuild from the source settings: unoptimized rules still test correctly. The likely
+        # culprit is a custom `fold()` returning a non-`Fold`, which must not cost the window every other
+        # rule; the traceback is logged because it names that class.
         Logger.log(
             f"❌ Failed optimizing the syntax rules, keeping them unoptimized:\n{traceback.format_exc()}",
             window=window,
@@ -185,11 +177,6 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
     def on_load(self, view: sublime.View) -> None:
         view.settings().set(VIEW_KEY_IS_TRANSIENT, is_transient_view(view))
         run_auto_set_syntax_on_view(view, ListenerEvent.LOAD)
-
-    def on_load_project(self, window: sublime.Window) -> None:
-        # how to prevent new project views from triggering on_load()?
-        # the `window` at this moment has no view in it
-        pass
 
     def on_new(self, view: sublime.View) -> None:
         if window := view.window():

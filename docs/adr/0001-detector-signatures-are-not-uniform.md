@@ -2,7 +2,7 @@
 
 Most detectors take a `ViewSnapshot`, but the exec-output detector takes a raw `sublime.View` and
 the exec-output and new-file detectors are called directly from `run_auto_set_syntax_on_view()`
-rather than from the `_detect()` chain. This is deliberate: building a `ViewSnapshot` reads the
+rather than from the `detect()` chain. This is deliberate: building a `ViewSnapshot` reads the
 view's content and issues a `stat()` call, and the `EXEC` event fires on every build-panel update,
 where none of that snapshot is needed. We chose the per-event cost saving over a uniform detector
 signature.

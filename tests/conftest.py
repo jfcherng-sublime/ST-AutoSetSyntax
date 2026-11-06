@@ -37,7 +37,6 @@ def _make_sublime_stub() -> ModuleType:
     mod.list_syntaxes = list
     mod.find_syntax_by_scope = lambda scope: []
     mod.find_syntax_by_name = lambda name: []
-    mod.expand_variables = lambda value, variables=None: value
     mod.set_timeout_async = lambda func, delay=0: None
     mod.score_selector = lambda scope, selector: 0
     mod.load_settings = lambda name: MagicMock()

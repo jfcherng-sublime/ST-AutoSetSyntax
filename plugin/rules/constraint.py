@@ -6,8 +6,6 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from dataclasses import dataclass
-from dataclasses import field
-from pathlib import Path
 from typing import Any
 from typing import ClassVar
 from typing import Final
@@ -26,12 +24,12 @@ from ..types import UNFOLDED
 from ..types import Fold
 from ..types import Optimizable
 from ..types import StConstraintRule
-from ..utils import camel_to_snake
 from ..utils import compile_regex
 from ..utils import drop_falsy
 from ..utils import list_all_subclasses
 from ..utils import merge_regexes
 from ..utils import parse_regex_flags
+from ._named import NamedImplementation
 from ._optimize import require_fold
 
 
@@ -42,19 +40,14 @@ def find_constraint(obj: Any) -> type[AbstractConstraint] | None:
 
 @clearable_lru_cache()
 def get_constraints() -> tuple[type[AbstractConstraint], ...]:
-    return tuple(sorted(list_constraints(), key=lambda cls: cls.name()))
-
-
-def list_constraints() -> Generator[type[AbstractConstraint]]:
-    yield from list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore[type-abstract]
+    implementations = list_all_subclasses(AbstractConstraint, skip_abstract=True)  # type: ignore[type-abstract]
+    return tuple(sorted(implementations, key=lambda cls: cls.name()))
 
 
 @dataclass(slots=True, frozen=True)
 class ConstraintRule(Optimizable):
     constraint: AbstractConstraint | None = None
     constraint_name: str = ""
-    args: tuple[Any, ...] = ()
-    kwargs: dict[str, Any] = field(default_factory=dict)
     inverted: bool = False
 
     src_setting: StConstraintRule | None = None
@@ -71,8 +64,8 @@ class ConstraintRule(Optimizable):
             return UNFOLDED
         if not self.inverted:
             return Fold(value, reason)
-        # the reason states what the *constraint* settled, so say that "not" flipped the verdict
-        # -- "always matches: no extension was given" reads like its own contradiction otherwise
+        # the reason states what the *constraint* settled, so say "not" flipped it, or the
+        # report reads "always matches: no extension was given"
         return Fold(not value, ", ".join(drop_falsy((reason, 'negated by "not"'))))
 
     @override
@@ -112,29 +105,13 @@ class ConstraintRule(Optimizable):
         return cls(
             constraint=constraint_obj,
             constraint_name=constraint,
-            args=tuple(constraint_rule.args),
-            kwargs=constraint_rule.kwargs,
             inverted=constraint_rule.inverted,
             src_setting=constraint_rule,
         )
 
 
-class AbstractConstraint(ABC):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.args = args
-        self.kwargs = kwargs
-
-    @final
-    @classmethod
-    def name(cls) -> str:
-        """The nickname of this class. Converts "FooBarConstraint" into "foo_bar" by default."""
-        return camel_to_snake(cls.__name__.removesuffix("Constraint"))
-
-    @final
-    @classmethod
-    def can_support(cls, obj: Any) -> bool:
-        """Determines whether this class supports `obj`."""
-        return str(obj) == cls.name()
+class AbstractConstraint(NamedImplementation):
+    _NAME_SUFFIX = "Constraint"
 
     def fold(self) -> Fold:
         """
@@ -193,12 +170,6 @@ class AbstractConstraint(ABC):
 
     @final
     @staticmethod
-    def _handled_comparator(comparator: str) -> Callable[[Any, Any], bool] | None:
-        """Convert the comparator string into a callable."""
-        return AbstractConstraint._COMPARATORS.get(comparator)
-
-    @final
-    @staticmethod
     def _handled_comparison(args: tuple[Any, ...]) -> tuple[Callable[[Any, Any], bool], float]:
         """
         Parse `args` as `(comparator, threshold)`.
@@ -209,7 +180,7 @@ class AbstractConstraint(ABC):
         if len(args) != 2:
             raise ValueError(f"expects exactly 2 args (a comparator and a threshold), got {len(args)}")
         comparator, threshold = args
-        if not (comparator_func := AbstractConstraint._handled_comparator(comparator)):
+        if not (comparator_func := AbstractConstraint._COMPARATORS.get(comparator)):
             raise ValueError(f"{comparator!r} is not a known comparator")
         return comparator_func, float(threshold)
 
@@ -230,19 +201,13 @@ class AbstractConstraint(ABC):
     @final
     @staticmethod
     def _handled_regex(args: tuple[Any, ...], kwargs: dict[str, Any]) -> re.Pattern[str]:
-        """Returns compiled regex object from `args` and `kwargs.regex_flags`.
-
-        ``drop_falsy`` is applied to ``args`` for consistency with ``_handled_args``:
-        a falsy pattern like ``""`` or ``None`` in user settings would otherwise produce a
-        surprising compiled regex: ``merge_regexes(("",))`` yields the empty group ``(?:)``
-        (a zero-width match at every position, i.e. constant-True), and ``merge_regexes((None,))``
-        yields ``(?:None)`` matching the literal string ``"None"``. Dropping falsy entries first
-        makes these degenerate cases fall through to the "match nothing" sentinel instead.
         """
-        # "regex_flags": null is present with value None, not absent, so .get(..., [...])'s
-        # default doesn't cover it -- parse_regex_flags(None) would raise TypeError. Check for
-        # None explicitly rather than falsy: "regex_flags": [] is a distinct, valid "no flags at
-        # all, not even the usual MULTILINE" setting and must not be coerced into the default.
+        Returns compiled regex object from `args` and `kwargs.regex_flags`.
+
+        Falsy patterns are dropped first, as in `_handled_args()`: `""` would otherwise compile
+        to a regex matching everywhere and `None` to one matching the text "None".
+        """
+        # `[]` is a real value (no flags, not even MULTILINE), so only `None` means "use the default"
         regex_flags = kwargs.get("regex_flags")
         return compile_regex(
             merge_regexes(drop_falsy(args)),
@@ -254,47 +219,6 @@ class AbstractConstraint(ABC):
     def _handled_case_insensitive(kwargs: dict[str, Any]) -> bool:
         """Returns `case_insensitive` in `kwars`. Defaulted to platform's specification."""
         return bool(kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}))
-
-    @final
-    @staticmethod
-    def find_parent_with_sibling(base: str | Path, sibling: str, *, use_exists: bool = False) -> Path | None:
-        """Find the first parent directory which contains `sibling`."""
-        try:
-            path = Path(base).resolve()
-        except Exception:
-            return None
-
-        if use_exists:
-            checker = Path.exists
-        elif sibling.endswith(("\\", "/")):
-            checker = Path.is_dir
-        else:
-            checker = Path.is_file
-
-        return first_true(path.parents, pred=lambda p: checker(p / sibling))
-
-    @final
-    def find_parent_with_sibling_cached(
-        self,
-        view_snapshot: ViewSnapshot,
-        true_siblings: set[Path],
-        sibling: str,
-        *,
-        use_exists: bool = False,
-    ) -> bool:
-        """Test whether the view's file is under a parent directory containing `sibling`, with caching."""
-        if not (file_path_ := view_snapshot.file_path):
-            raise AlwaysFalsyException("file not on disk")
-        file_path = Path(file_path_)
-
-        if first_true(file_path.parents, pred=lambda p: p in true_siblings):
-            return True
-
-        if found_sibling := self.find_parent_with_sibling(file_path, sibling, use_exists=use_exists):
-            true_siblings.add(found_sibling)
-            return True
-
-        return False
 
 
 class AlwaysValueException[T](Exception, ABC):

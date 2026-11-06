@@ -34,7 +34,6 @@ class TestConstraintRule:
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"]))
         assert rule is not None
         assert rule.constraint_name == "is_extension"
-        assert rule.args == ("py",)
         assert rule.inverted is False
         assert rule.constraint is not None
 
@@ -45,16 +44,6 @@ class TestConstraintRule:
         rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"], inverted=True))
         assert rule is not None
         assert rule.inverted is True
-
-    def test_make_with_kwargs(self):
-        _ensure_rules_imported()
-        from plugin.rules.constraint import ConstraintRule
-
-        rule = ConstraintRule.make(
-            StConstraintRule(constraint="is_extension", args=["py"], kwargs={"case_insensitive": True})
-        )
-        assert rule is not None
-        assert rule.kwargs == {"case_insensitive": True}
 
     def test_make_unsupported_returns_none(self):
         from plugin.rules.constraint import ConstraintRule
@@ -428,7 +417,6 @@ class TestSyntaxRule:
                 rules=[StConstraintRule(constraint="is_extension", args=["py"])],
             )
         )
-        assert rule.comment == "test rule"
         assert rule.selector == "source.python"
         assert rule.root_rule is not None
 

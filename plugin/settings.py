@@ -15,11 +15,11 @@ from pydantic import ValidationError
 from .types import RULE_KIND_TAGS
 from .types import DroppedRule
 from .types import StSyntaxRule
+from .types import WindowId
 from .utils import drop_falsy
 
 type SettingsDict = MutableMapping[str, Any]
 type MergedSettingsDict = Mapping[str, Any]
-type WindowId = int
 
 
 def get_merged_plugin_setting(
@@ -28,12 +28,7 @@ def get_merged_plugin_setting(
     *,
     window: sublime.Window | None = None,
 ) -> Any:
-    value = get_merged_plugin_settings(window=window or sublime.active_window()).get(key, default)
-    # a key explicitly set to `null` (e.g. a user trying to "unset" an override) is present with
-    # value None, not absent -- `.get(key, default)`'s default only covers the latter case. Treat
-    # an explicit null the same as "not configured" whenever the caller asked for a real default,
-    # since every caller that passes a non-None default needs a usable value back, not None.
-    return default if value is None else value
+    return get_merged_plugin_settings(window=window or sublime.active_window()).get(key, default)
 
 
 def get_merged_plugin_settings(*, window: sublime.Window | None = None) -> MergedSettingsDict:
@@ -41,8 +36,7 @@ def get_merged_plugin_settings(*, window: sublime.Window | None = None) -> Merge
 
 
 def get_st_setting(key: str, default: Any | None = None) -> Any:
-    # see get_merged_plugin_setting()'s comment: an explicit `null` override is present with
-    # value None, not absent, so `.get(key, default)`'s default alone doesn't cover it
+    # Preferences are not layered through `AioSettings`, which is what drops explicit nulls
     value = get_st_settings().get(key, default)
     return default if value is None else value
 
@@ -100,19 +94,22 @@ def pref_trim_suffixes(*, window: sublime.Window | None = None) -> tuple[str, ..
 
 
 def _as_list(value: Any) -> list[Any]:
-    """
-    Coerces an arbitrary settings value to a list.
-
-    `dict.get(key, [])`'s default only applies when `key` is absent -- a key explicitly set to
-    `null` (a plausible user mistake/copy-paste, meant to "unset" an override) still comes back
-    as `None`, which would blow up the `chain()` call this feeds into.
-    """
+    """Coerces a settings value to a list; anything else, including an absent key, is no list at all."""
     return value if isinstance(value, list) else []
 
 
 def _as_dict(value: Any) -> dict[str, Any]:
-    """Coerces an arbitrary settings value to a dict. See `_as_list()` for why this is needed."""
+    """Coerces a settings value to a dict; anything else, including `null`, is no dict at all."""
     return value if isinstance(value, dict) else {}
+
+
+def _drop_nulls(settings: Mapping[str, Any]) -> dict[str, Any]:
+    """
+    Treat an explicit `null` as "not configured", so that it falls through to the next layer
+    (or the reader's default) instead of reaching a reader as `None` -- `.get(key, default)`
+    only applies its default to an absent key, not a `null` one.
+    """
+    return {key: value for key, value in settings.items() if value is not None}
 
 
 def extra_settings_producer(settings: MergedSettingsDict) -> dict[str, Any]:
@@ -149,7 +146,6 @@ class AioSettings(sublime_plugin.EventListener):
 
     _on_settings_change_callbacks: ClassVar[dict[str, Callable[[sublime.Window], None]]] = {}
     _plugin_settings_object: ClassVar[sublime.Settings | None] = None
-    _settings_normalizer: ClassVar[Callable[[SettingsDict], None] | None] = None
     _settings_producer: ClassVar[Callable[[MergedSettingsDict], dict[str, Any]] | None] = None
     _tracked_windows: ClassVar[set[int]] = set()
 
@@ -189,16 +185,8 @@ class AioSettings(sublime_plugin.EventListener):
         cls._on_settings_change_callbacks.pop(key, None)
 
     @classmethod
-    def set_settings_normalizer(cls, normalizer: Callable[[SettingsDict], None] | None) -> None:
-        cls._settings_normalizer = normalizer
-
-    @classmethod
     def set_settings_producer(cls, producer: Callable[[MergedSettingsDict], dict[str, Any]] | None) -> None:
         cls._settings_producer = producer
-
-    @classmethod
-    def get(cls, window: sublime.Window, key: str, default: Any | None = None) -> Any:
-        return cls.get_all(window).get(key, default)
 
     @classmethod
     def get_all(cls, window: sublime.Window) -> MergedSettingsDict:
@@ -264,23 +252,15 @@ class AioSettings(sublime_plugin.EventListener):
     @classmethod
     def _update_plugin_settings(cls) -> None:
         assert cls._plugin_settings_object
-        cls._plugin_settings = {"__comment": "plugin_settings"}
-        cls._plugin_settings.update(cls._plugin_settings_object.to_dict())
-        if cls._settings_normalizer:
-            cls._settings_normalizer(cls._plugin_settings)
+        cls._plugin_settings = {"__comment": "plugin_settings"} | _drop_nulls(cls._plugin_settings_object.to_dict())
 
     @classmethod
     def _update_project_plugin_settings(cls, window: sublime.Window) -> None:
         window_id = window.id()
-        cls._project_plugin_settings[window_id] = {"__comment": "project_settings"}
-        # a project file explicitly setting "settings" or "settings.<plugin_name>" to `null`
-        # (see _as_dict()'s docstring) would otherwise crash: `.get(..., {})`'s default doesn't
-        # apply to a key that's present but null, so `.get("settings", {})` alone can still
-        # return None here.
         project_settings = _as_dict((window.project_data() or {}).get("settings"))
-        cls._project_plugin_settings[window_id].update(_as_dict(project_settings.get(cls.plugin_name)))
-        if cls._settings_normalizer:
-            cls._settings_normalizer(cls._project_plugin_settings[window_id])
+        cls._project_plugin_settings[window_id] = {"__comment": "project_settings"} | _drop_nulls(
+            _as_dict(project_settings.get(cls.plugin_name))
+        )
 
     @classmethod
     def _update_merged_plugin_settings(cls, window: sublime.Window) -> None:

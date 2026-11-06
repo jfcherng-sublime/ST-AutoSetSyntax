@@ -1,8 +1,6 @@
-from abc import ABC
 from abc import abstractmethod
 from collections.abc import Generator
 from dataclasses import dataclass
-from dataclasses import field
 from typing import Any
 from typing import Self
 from typing import final
@@ -18,8 +16,8 @@ from ..types import Fold
 from ..types import Optimizable
 from ..types import StConstraintRule
 from ..types import StMatchRule
-from ..utils import camel_to_snake
 from ..utils import list_all_subclasses
+from ._named import NamedImplementation
 from ._optimize import require_fold
 from .constraint import ConstraintRule
 
@@ -30,19 +28,14 @@ def find_match(obj: Any) -> type[AbstractMatch] | None:
 
 @clearable_lru_cache()
 def get_matches() -> tuple[type[AbstractMatch], ...]:
-    return tuple(sorted(list_matches(), key=lambda cls: cls.name()))
-
-
-def list_matches() -> Generator[type[AbstractMatch]]:
-    yield from list_all_subclasses(AbstractMatch, skip_abstract=True)  # type: ignore[type-abstract]
+    implementations = list_all_subclasses(AbstractMatch, skip_abstract=True)  # type: ignore[type-abstract]
+    return tuple(sorted(implementations, key=lambda cls: cls.name()))
 
 
 @dataclass(slots=True)
 class MatchRule(Optimizable):
     match: AbstractMatch | None = None
     match_name: str = ""
-    args: tuple[Any, ...] = ()
-    kwargs: dict[str, Any] = field(default_factory=dict)
     rules: tuple[MatchableRule, ...] = ()
 
     src_setting: StMatchRule | None = None
@@ -121,8 +114,6 @@ class MatchRule(Optimizable):
         return cls(
             match=match_obj,
             match_name=match,
-            args=tuple(match_rule.args),
-            kwargs=match_rule.kwargs,
             rules=tuple(children),
             src_setting=match_rule,
         )
@@ -132,22 +123,8 @@ class MatchRule(Optimizable):
 type MatchableRule = ConstraintRule | MatchRule
 
 
-class AbstractMatch(ABC):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.args = args
-        self.kwargs = kwargs
-
-    @final
-    @classmethod
-    def name(cls) -> str:
-        """The nickname of this class. Converts "FooBarMatch" into "foo_bar" by default."""
-        return camel_to_snake(cls.__name__.removesuffix("Match"))
-
-    @final
-    @classmethod
-    def can_support(cls, obj: Any) -> bool:
-        """Determines whether this class supports `obj`."""
-        return str(obj) == cls.name()
+class AbstractMatch(NamedImplementation):
+    _NAME_SUFFIX = "Match"
 
     def fold(self, rules: tuple[MatchableRule, ...]) -> Fold:
         """

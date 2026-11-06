@@ -13,7 +13,6 @@ import sublime_plugin
 from .constants import PLUGIN_NAME
 from .settings import get_merged_plugin_setting
 from .settings import get_st_setting
-from .utils import resolve_window
 
 
 @contextmanager
@@ -26,8 +25,8 @@ def _editable_view(view: sublime.View) -> Generator[sublime.View]:
         view.set_read_only(is_read_only)
 
 
-def _find_log_panel(obj: sublime.Buffer | sublime.View | sublime.Sheet | sublime.Window) -> sublime.View | None:
-    return (resolve_window(obj) or sublime.active_window()).find_output_panel(PLUGIN_NAME)
+def _find_log_panel(window: sublime.Window) -> sublime.View | None:
+    return window.find_output_panel(PLUGIN_NAME)
 
 
 def _create_log_panel(window: sublime.Window) -> sublime.View:
@@ -127,13 +126,12 @@ class AutoSetSyntaxAppendLogCommand(sublime_plugin.WindowCommand):
         return False
 
     @override
-    def run(self, msg: str, squash_history: bool = True) -> None:
+    def run(self, msg: str) -> None:
         if not (panel := _find_log_panel(self.window)):
             panel = _create_log_panel(self.window)
 
         if (
-            squash_history
-            and (last_line_region := panel.full_line(panel.size() - 1))
+            (last_line_region := panel.full_line(panel.size() - 1))
             and (last_line := panel.substr(last_line_region).rstrip()).startswith(msg)
             and (m := re.fullmatch(r"(?: +\(x(\d+)\))?", last_line[len(msg) :]))
         ):

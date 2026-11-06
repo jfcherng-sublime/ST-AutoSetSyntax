@@ -29,43 +29,6 @@ class TestCamelToSnake:
 
         assert camel_to_snake("FooBarBaz") == "foo_bar_baz"
 
-    def test_constraint_suffix_trimming(self):
-        # The convention used in AbstractConstraint.name() is:
-        #   camel_to_snake("FooBarConstraint".removesuffix("Constraint")) == "foo_bar"
-        from plugin.utils import camel_to_snake
-
-        assert camel_to_snake("FooBarConstraint".removesuffix("Constraint")) == "foo_bar"
-
-    def test_match_suffix_trimming(self):
-        from plugin.utils import camel_to_snake
-
-        assert camel_to_snake("AnyMatch".removesuffix("Match")) == "any"
-
-
-# ── snake_to_camel ────────────────────────────────────────────────────────────
-
-
-class TestSnakeToCamel:
-    def test_basic(self):
-        from plugin.utils import snake_to_camel
-
-        assert snake_to_camel("snake_case") == "SnakeCase"
-
-    def test_upper_first_false(self):
-        from plugin.utils import snake_to_camel
-
-        assert snake_to_camel("foo_bar", upper_first=False) == "fooBar"
-
-    def test_single_word(self):
-        from plugin.utils import snake_to_camel
-
-        assert snake_to_camel("foo") == "Foo"
-
-    def test_three_parts(self):
-        from plugin.utils import snake_to_camel
-
-        assert snake_to_camel("foo_bar_baz") == "FooBarBaz"
-
 
 # ── ensure_trailing_newline ───────────────────────────────────────────────────
 
@@ -158,48 +121,6 @@ class TestParseRegexFlags:
         from plugin.utils import parse_regex_flags
 
         assert parse_regex_flags([]) == 0
-
-
-# ── head_tail_content ─────────────────────────────────────────────────────────
-
-
-class TestHeadTailContent:
-    def test_short_content_returned_as_is(self):
-        from plugin.utils import head_tail_content
-
-        content = "hello world"
-        # partial=100 → half=50 → content (11 chars) < 50, so returned verbatim
-        assert head_tail_content(content, 100) == content
-
-    def test_long_content_split(self):
-        from plugin.utils import head_tail_content
-
-        # partial=10 → half=5; content (20 chars) > half
-        # → content[:5] + "\n\n" + content[-5:]
-        content = "abcdefghij1234567890"
-        result = head_tail_content(content, 10)
-        assert result == "abcde\n\n67890"
-
-    def test_partial_zero_returns_empty(self):
-        from plugin.utils import head_tail_content
-
-        assert head_tail_content("anything", 0) == ""
-        assert head_tail_content("anything", 1) == ""  # half=0
-
-    def test_exact_split(self):
-        from plugin.utils import head_tail_content
-
-        # partial=4, half=2; content="abcde" (5 chars > 2)
-        # → content[:2] + "\n\n" + content[-2:] = "ab\n\nde"
-        assert head_tail_content("abcde", 4) == "ab\n\nde"
-
-    def test_content_between_half_and_n_is_not_duplicated(self):
-        """Regression: with `half < len <= n` the head and the tail overlapped, so the middle
-        appeared twice -- `contains` with a threshold of 2 then matched a single occurrence."""
-        from plugin.utils import head_tail_content
-
-        content = "aaaaFOObbbb"  # 11 chars, n=20 → half=10
-        assert head_tail_content(content, 20) == content
 
 
 # ── head_tail_lines ───────────────────────────────────────────────────────────

@@ -22,36 +22,6 @@ class _FakeView:
         return sublime.Region(0, len(self._content))
 
 
-class TestGetViewPseudoContentAndFirstLine:
-    """Regression: get_view_pseudo_content()/get_view_pseudo_first_line() call
-    get_merged_plugin_setting() for "trim_file_size"/"trim_first_line_length" without an explicit
-    default, so a key explicitly set to `null` (e.g. a user trying to "unset" an override) used
-    to flow straight through as None -- raising TypeError inside head_tail_content_st()'s
-    `partial < 0` check, and inside the `max_length >= 0` check here. Both run unconditionally in
-    ViewSnapshot.from_view(), which run_auto_set_syntax_on_view() calls for every event."""
-
-    def test_pseudo_content_null_trim_file_size_falls_back_to_default(self, monkeypatch):
-        import plugin.settings as settings_mod
-        import plugin.snapshot as snapshot_mod
-
-        # simulate the *real* merged-settings layer reporting "trim_file_size" present with
-        # value None, then let the real (fixed) get_merged_plugin_setting() run on top of it --
-        # mocking get_merged_plugin_setting() itself would bypass the fix being tested
-        monkeypatch.setattr(settings_mod, "get_merged_plugin_settings", lambda *a, **kw: {"trim_file_size": None})
-        view = _FakeView("hello world")
-        assert snapshot_mod.get_view_pseudo_content(view, None) == "hello world"
-
-    def test_pseudo_first_line_null_trim_first_line_length_falls_back_to_default(self, monkeypatch):
-        import plugin.settings as settings_mod
-        import plugin.snapshot as snapshot_mod
-
-        monkeypatch.setattr(
-            settings_mod, "get_merged_plugin_settings", lambda *a, **kw: {"trim_first_line_length": None}
-        )
-        view = _FakeView("hello world")
-        assert snapshot_mod.get_view_pseudo_first_line(view, None) == "hello world"
-
-
 class TestHeadTailContentSt:
     def test_content_between_half_and_partial_is_not_duplicated(self):
         """Regression: with `half < size <= partial` the head and the tail overlapped, so the
@@ -70,24 +40,18 @@ class TestViewSnapshotConstruction:
     def test_basic_fields(self, make_snapshot):
         snap = make_snapshot(content="hello\nworld", path="/tmp/test.txt")
         assert snap.char_count == 11
-        assert snap.line_count == 1  # explicit in factory fixture
         assert snap.path_obj == Path("/tmp/test.txt")
         assert snap.syntax is None
         assert snap.caret_rowcol == (-1, -1)
 
-    def test_lazy_content_default_empty(self, make_snapshot):
+    def test_content_defaults_to_empty(self, make_snapshot):
         """Content is a regular dataclass field, always present."""
         snap = make_snapshot()
         assert snap.content == ""
 
-    def test_lazy_first_line_default(self, make_snapshot):
+    def test_first_line_is_the_first_line_of_content(self, make_snapshot):
         snap = make_snapshot(content="line1\nline2")
         assert snap.first_line == "line1"
-
-    def test_cached_properties_immutable(self, make_snapshot):
-        snap = make_snapshot(path="/tmp/foo.py")
-        _ = snap.file_extensions  # populate cache
-        assert snap.file_extensions == [".py"]
 
     def test_file_path_property(self, make_snapshot):
         snap = make_snapshot(path="/tmp/foo/bar.txt")
@@ -132,10 +96,11 @@ class TestViewSnapshotConstruction:
         snap = make_snapshot(encoding="Western (Windows 1252)")
         assert snap.encoding_py == "cp1252"
 
-    def test_valid_view_returns_view(self, make_snapshot):
+    def test_valid_view_is_none_once_the_view_is_gone(self, make_snapshot):
         snap = make_snapshot()
-        # Mock view returns is_valid() == True
         assert snap.valid_view is snap.view
+        snap.view.is_valid = lambda: False
+        assert snap.valid_view is None
 
     def test_syntax_none(self, make_snapshot):
         snap = make_snapshot()

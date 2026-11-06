@@ -12,7 +12,7 @@ from ..constraint import AlwaysFalsyException
 class IsJavascriptProjectConstraint(AbstractConstraint):
     """Check whether this file is in a JavaScript (non-TypeScript) project."""
 
-    _successed_dirs: ClassVar[set[Path]] = set()
+    _found_dirs: ClassVar[set[Path]] = set()
     """Cached directories which make the result `True`."""
 
     @override
@@ -30,13 +30,13 @@ class IsJavascriptProjectConstraint(AbstractConstraint):
         for parent in file_path.parents:
             # the cache only answers once no nearer root has been found on the way up -- a cached
             # JS root can hold a nested TS package, whose files it must not claim
-            if parent in cls._successed_dirs:
+            if parent in cls._found_dirs:
                 return True
             if not (parent / "package.json").is_file():
                 continue
             if (parent / "tsconfig.json").is_file():
                 return False
-            cls._successed_dirs.add(parent)
+            cls._found_dirs.add(parent)
             return True
 
         return False

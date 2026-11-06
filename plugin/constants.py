@@ -53,6 +53,9 @@ VIEW_KEY_IS_TRANSIENT = f"{PLUGIN_NAME}/is_transient"
 
 ################################################################################
 
+PLAIN_TEXT_SCOPE = "text.plain"
+"""The scope of the Plain Text syntax: the default target of syntax rules and what exec output starts as."""
+
 RE_ST_SYNTAX_TEST_LINE = re.compile(r'\bSYNTAX\s+TEST\s+"(?P<syntax>[^"]+)"', re.IGNORECASE)
 # captures the raw "-*- ... -*-" payload; RE_EMACS_MODE_KV then picks the mode name out of it,
 # since that payload may be a bare mode name or a "key: value; ..." list containing "mode: ..."

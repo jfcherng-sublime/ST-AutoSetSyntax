@@ -8,7 +8,7 @@ import sublime
 from more_itertools import first_true
 from more_itertools import map_except
 
-from ..constants import VERSION
+from ..constants import PLAIN_TEXT_SCOPE
 from ..snapshot import ViewSnapshot
 from ..types import UNFOLDED
 from ..types import Fold
@@ -23,10 +23,9 @@ from .match import MatchRule
 
 @dataclass(slots=True)
 class SyntaxRule(Optimizable):
-    comment: str = ""
     syntax: sublime.Syntax | None = None
-    syntaxes_name: tuple[str, ...] | None = ()
-    selector: str = "text.plain"
+    syntaxes_name: tuple[str, ...] = ()
+    selector: str = PLAIN_TEXT_SCOPE
     on_events: set[ListenerEvent] | None = None
     """`None` = no restriction, empty = no event = never triggered."""
     root_rule: MatchRule | None = None
@@ -43,7 +42,7 @@ class SyntaxRule(Optimizable):
         if self.is_invalid:
             return Fold(False, "it contains an unknown or invalid match/constraint (the log above says which)")
         if not self.syntax:
-            return Fold(False, f"none of these syntaxes is available: {quote_join(self.syntaxes_name or ())}")
+            return Fold(False, f"none of these syntaxes is available: {quote_join(self.syntaxes_name)}")
         if self.on_events is not None and not self.on_events:
             return Fold(False, '"on_events" lists no event that could trigger it')
         if not self.root_rule:
@@ -93,7 +92,6 @@ class SyntaxRule(Optimizable):
         if target_syntax := find_syntax(syntax_rule.syntaxes, include_hidden=True):
             this.syntax = target_syntax
 
-        this.comment = syntax_rule.comment
         # note that an empty string selector should match any scope
         this.selector = syntax_rule.selector
 
@@ -110,7 +108,6 @@ class SyntaxRule(Optimizable):
 
 @dataclass(slots=True)
 class SyntaxRuleCollection(Optimizable):
-    version: str = VERSION
     rules: tuple[SyntaxRule, ...] = ()
 
     def __len__(self) -> int:

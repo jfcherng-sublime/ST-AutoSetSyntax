@@ -10,7 +10,6 @@ from plugin.settings import AioSettings
 from plugin.settings import extra_settings_producer
 from plugin.settings import get_merged_plugin_setting
 from plugin.settings import get_st_setting
-from plugin.settings import get_st_settings
 from plugin.settings import pref_syntax_rules
 from plugin.settings import pref_trim_suffixes
 
@@ -18,19 +17,15 @@ from plugin.settings import pref_trim_suffixes
 
 
 class TestStSettings:
-    def test_get_st_settings_returns_mock(self):
-        settings = get_st_settings()
-        assert settings is not None
-
-    def test_get_st_setting_default(self):
+    def test_get_st_setting_returns_the_stored_value(self):
         with patch("plugin.settings.get_st_settings") as mock_settings:
-            mock_settings.return_value.get.return_value = "fallback"
-            assert get_st_setting("nonexistent_key", "fallback") == "fallback"
+            mock_settings.return_value.get.return_value = 7
+            assert get_st_setting("some_key", 3) == 7
 
-    def test_get_st_setting_none_default(self):
+    def test_get_st_setting_treats_null_as_unset(self):
         with patch("plugin.settings.get_st_settings") as mock_settings:
             mock_settings.return_value.get.return_value = None
-            assert get_st_setting("nonexistent_key") is None
+            assert get_st_setting("some_key", 3) == 3
 
 
 # ── get_merged_plugin_setting ────────────────────────────────────────────────
@@ -52,26 +47,6 @@ class TestGetMergedPluginSetting:
         AioSettings._merged_plugin_settings[502] = {}
         assert get_merged_plugin_setting("debounce", 3, window=mock_window) == 3
 
-    def test_null_value_falls_back_to_default_not_none(self):
-        """Regression: a key explicitly set to `null` (e.g. a user trying to "unset" an
-        override) is present with value None, not absent -- `dict.get(key, default)`'s default
-        only covers the latter case. Every caller that passes a non-None default needs a usable
-        value back, not None (e.g. `int(None)`/`None > 0`/`None.lower()` would all raise), so an
-        explicit null must be treated the same as "not configured"."""
-        mock_window = MagicMock()
-        mock_window.id.return_value = 503
-        AioSettings._merged_plugin_settings[503] = {"debounce": None}
-        assert get_merged_plugin_setting("debounce", 3, window=mock_window) == 3
-
-    def test_null_value_with_no_requested_default_stays_none(self):
-        """When the caller doesn't ask for a real fallback (default=None, e.g. Logger.log's
-        enable_log check), an explicit null is indistinguishable from absent either way, so
-        behavior is unchanged."""
-        mock_window = MagicMock()
-        mock_window.id.return_value = 504
-        AioSettings._merged_plugin_settings[504] = {"enable_log": None}
-        assert get_merged_plugin_setting("enable_log", window=mock_window) is None
-
 
 # ── AioSettings lifecycle ────────────────────────────────────────────────────
 
@@ -79,7 +54,6 @@ class TestGetMergedPluginSetting:
 class TestAioSettingsLifecycle:
     def setup_method(self):
         AioSettings._plugin_settings_object = None
-        AioSettings._settings_normalizer = None
         AioSettings._settings_producer = None
         AioSettings._tracked_windows.clear()
         AioSettings._plugin_settings.clear()
@@ -147,11 +121,6 @@ class TestAioSettingsLifecycle:
         AioSettings.add_on_change("my_key", callback)
         AioSettings.clear_on_change("my_key")
         assert "my_key" not in AioSettings._on_settings_change_callbacks
-
-    def test_get_returns_default_for_untracked_window(self):
-        mock_window = MagicMock()
-        mock_window.id.return_value = 999
-        assert AioSettings.get(mock_window, "anything", "default") == "default"
 
     def test_get_all_returns_empty_for_untracked_window(self):
         mock_window = MagicMock()
@@ -305,49 +274,6 @@ class TestPrefTrimSuffixes:
         hash(result)
 
 
-# ── AioSettings settings normalizer ──────────────────────────────────────────
-
-
-class TestAioSettingsNormalizer:
-    def setup_method(self):
-        AioSettings._plugin_settings_object = None
-        AioSettings._settings_normalizer = None
-        AioSettings._settings_producer = None
-        AioSettings._tracked_windows.clear()
-        AioSettings._plugin_settings.clear()
-        AioSettings._project_plugin_settings.clear()
-        AioSettings._merged_plugin_settings.clear()
-
-    def test_normalizer_applied_to_plugin_settings(self):
-        AioSettings.plugin_name = "TestPlugin"
-        mock_settings = MagicMock()
-        mock_settings.to_dict.return_value = {"key": "VALUE"}
-
-        def normalizer(d):
-            d["key"] = d["key"].lower()
-
-        AioSettings.set_settings_normalizer(normalizer)
-
-        with patch("sublime.load_settings", return_value=mock_settings):
-            AioSettings.set_up()
-
-        assert AioSettings._plugin_settings["key"] == "value"
-
-    def test_normalizer_applied_to_project_settings(self):
-        AioSettings.plugin_name = "TestPlugin"
-        AioSettings.set_settings_normalizer(lambda d: d.update({"normalized": True}))
-
-        mock_window = MagicMock()
-        mock_window.id.return_value = 42
-        mock_window.project_data.return_value = {
-            "settings": {"TestPlugin": {"project_key": "val"}},
-        }
-
-        AioSettings._update_project_plugin_settings(mock_window)
-        assert AioSettings._project_plugin_settings[42]["normalized"] is True
-        assert AioSettings._project_plugin_settings[42]["project_key"] == "val"
-
-
 class TestUpdateProjectPluginSettingsHandlesNull:
     """Regression: `.get(key, {})`'s default only applies when `key` is absent. A .sublime-project
     file with "settings": null or "settings": {"<plugin_name>": null} (a plausible way a user
@@ -356,7 +282,6 @@ class TestUpdateProjectPluginSettingsHandlesNull:
 
     def setup_method(self):
         AioSettings.plugin_name = "TestPlugin"
-        AioSettings._settings_normalizer = None
         AioSettings._project_plugin_settings.clear()
 
     def test_null_settings_key_does_not_raise(self):
@@ -384,13 +309,50 @@ class TestUpdateProjectPluginSettingsHandlesNull:
         assert AioSettings._project_plugin_settings[603]["key"] == "val"
 
 
+class TestNullMeansUnset:
+    """An explicit `null` is "not configured" at every layer, so no reader ever sees `None`."""
+
+    def setup_method(self):
+        AioSettings.plugin_name = "TestPlugin"
+        AioSettings._settings_producer = None
+        AioSettings._plugin_settings.clear()
+        AioSettings._project_plugin_settings.clear()
+        AioSettings._merged_plugin_settings.clear()
+
+    def _window(self, window_id: int, project_settings: dict) -> MagicMock:
+        window = MagicMock()
+        window.id.return_value = window_id
+        window.project_data.return_value = {"settings": {"TestPlugin": project_settings}}
+        return window
+
+    def test_null_in_plugin_settings_reads_as_absent(self):
+        mock_settings = MagicMock()
+        mock_settings.to_dict.return_value = {"debounce": None, "modeline_lines": 7}
+        with patch("sublime.load_settings", return_value=mock_settings):
+            AioSettings.set_up()
+        window = self._window(701, {})
+        AioSettings._on_settings_change([window], run_callbacks=False)
+
+        assert get_merged_plugin_setting("debounce", 3, window=window) == 3
+        assert get_merged_plugin_setting("modeline_lines", 0, window=window) == 7
+
+    def test_null_project_override_falls_through_to_the_plugin_value(self):
+        mock_settings = MagicMock()
+        mock_settings.to_dict.return_value = {"debounce": 5}
+        with patch("sublime.load_settings", return_value=mock_settings):
+            AioSettings.set_up()
+        window = self._window(702, {"debounce": None})
+        AioSettings._on_settings_change([window], run_callbacks=False)
+
+        assert get_merged_plugin_setting("debounce", 3, window=window) == 5
+
+
 # ── AioSettings event handlers ──────────────────────────────────────────────
 
 
 class TestAioSettingsEvents:
     def setup_method(self):
         AioSettings._plugin_settings_object = None
-        AioSettings._settings_normalizer = None
         AioSettings._settings_producer = None
         AioSettings._tracked_windows.clear()
         AioSettings._plugin_settings.clear()

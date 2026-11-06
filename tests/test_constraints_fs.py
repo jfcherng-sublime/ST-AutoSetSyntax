@@ -83,81 +83,7 @@ class TestRelativeExistsConstraint:
         assert RelativeExistsConstraint.name() == "relative_exists"
 
 
-class TestFindParentWithSiblingCached:
-    """find_parent_with_sibling_cached() is the shared implementation behind
-    IsInGitRepoConstraint/IsInHgRepoConstraint/IsInSvnRepoConstraint/
-    IsInRubyOnRailsProjectConstraint's test() methods. The constraint-specific test classes below
-    only exercise the underlying find_parent_with_sibling() static helper, not this wrapper's own
-    behavior (the AlwaysFalsyException guard and the cache hit/miss/populate logic), so it's
-    covered directly here once instead of duplicating it four times."""
-
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        snap = make_snapshot()  # no path
-        with pytest.raises(AlwaysFalsyException):
-            IsInGitRepoConstraint().find_parent_with_sibling_cached(snap, set(), ".git", use_exists=True)
-
-    def test_cache_hit_short_circuits_without_filesystem_match(self, make_snapshot, tmp_path):
-        """A parent directory already in the cache set must return True even though the sibling
-        doesn't actually exist on disk -- proving the cache path, not a fresh scan, was taken."""
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        test_file = tmp_path / "sub" / "main.py"
-        test_file.parent.mkdir()
-        test_file.write_text("")
-        snap = make_snapshot(path=str(test_file))
-
-        cache = {tmp_path}
-        result = IsInGitRepoConstraint().find_parent_with_sibling_cached(
-            snap, cache, "this-sibling-does-not-exist", use_exists=True
-        )
-        assert result is True
-
-    def test_cache_miss_with_match_populates_the_cache(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        (tmp_path / ".git").mkdir()
-        test_file = tmp_path / "sub" / "main.py"
-        test_file.parent.mkdir()
-        test_file.write_text("")
-        snap = make_snapshot(path=str(test_file))
-
-        cache: set = set()
-        result = IsInGitRepoConstraint().find_parent_with_sibling_cached(snap, cache, ".git", use_exists=True)
-
-        assert result is True
-        assert tmp_path in cache
-
-    def test_cache_miss_without_match_leaves_cache_empty(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        test_file = tmp_path / "sub" / "main.py"
-        test_file.parent.mkdir()
-        test_file.write_text("")
-        snap = make_snapshot(path=str(test_file))
-
-        cache: set = set()
-        result = IsInGitRepoConstraint().find_parent_with_sibling_cached(snap, cache, ".git", use_exists=True)
-
-        assert result is False
-        assert cache == set()
-
-
 class TestIsInGitRepoConstraint:
-    def test_dot_git_directory(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        # Create a temp git repo-like structure
-        git_dir = tmp_path / ".git"
-        git_dir.mkdir()
-        test_file = tmp_path / "code.py"
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsInGitRepoConstraint().test(snap) is True
-
     def test_dot_git_file_worktree(self, make_snapshot, tmp_path):
         """Git worktrees use a .git FILE, not directory."""
         from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
@@ -170,29 +96,6 @@ class TestIsInGitRepoConstraint:
         snap = make_snapshot(path=str(test_file))
         assert IsInGitRepoConstraint().test(snap) is True
 
-    def test_not_in_repo(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        test_file = tmp_path / "code.py"
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsInGitRepoConstraint().test(snap) is False
-
-    def test_nested_in_repo(self, make_snapshot, tmp_path):
-        """File in a subdirectory of a repo should also match."""
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        git_dir = tmp_path / ".git"
-        git_dir.mkdir()
-        subdir = tmp_path / "src" / "app"
-        subdir.mkdir(parents=True)
-        test_file = subdir / "main.py"
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsInGitRepoConstraint().test(snap) is True
-
     def test_name(self):
         from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
 
@@ -200,26 +103,6 @@ class TestIsInGitRepoConstraint:
 
 
 class TestIsInHgRepoConstraint:
-    def test_dot_hg_directory(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_hg_repo import IsInHgRepoConstraint
-
-        hg_dir = tmp_path / ".hg"
-        hg_dir.mkdir()
-        test_file = tmp_path / "file.txt"
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsInHgRepoConstraint().test(snap) is True
-
-    def test_not_in_hg_repo(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_hg_repo import IsInHgRepoConstraint
-
-        test_file = tmp_path / "file.txt"
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsInHgRepoConstraint().test(snap) is False
-
     def test_name(self):
         from plugin.rules.constraints.is_in_hg_repo import IsInHgRepoConstraint
 
@@ -227,26 +110,6 @@ class TestIsInHgRepoConstraint:
 
 
 class TestIsInSvnRepoConstraint:
-    def test_dot_svn_directory(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_svn_repo import IsInSvnRepoConstraint
-
-        svn_dir = tmp_path / ".svn"
-        svn_dir.mkdir()
-        test_file = tmp_path / "file.txt"
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsInSvnRepoConstraint().test(snap) is True
-
-    def test_not_in_svn_repo(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_in_svn_repo import IsInSvnRepoConstraint
-
-        test_file = tmp_path / "file.txt"
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsInSvnRepoConstraint().test(snap) is False
-
     def test_name(self):
         from plugin.rules.constraints.is_in_svn_repo import IsInSvnRepoConstraint
 
@@ -254,61 +117,6 @@ class TestIsInSvnRepoConstraint:
 
 
 class TestIsGoProjectConstraint:
-    def test_go_mod_exists(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        go_mod = tmp_path / "go.mod"
-        go_mod.write_text("")
-        test_file = tmp_path / "cmd" / "main.go"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        found = AbstractConstraint.find_parent_with_sibling(test_file, "go.mod", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_go_mod_exists_via_snapshot_path(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        go_mod = tmp_path / "go.mod"
-        go_mod.write_text("")
-        test_file = tmp_path / "cmd" / "main.go"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "go.mod", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_not_go_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        test_file = tmp_path / "main.go"
-        test_file.write_text("")
-
-        result = AbstractConstraint.find_parent_with_sibling(test_file, "go.mod", use_exists=False)
-        assert result is None
-
-    def test_nested_in_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
-
-        (tmp_path / "go.mod").write_text("")
-        test_file = tmp_path / "internal" / "pkg" / "util.go"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsGoProjectConstraint().test(snap) is True
-
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
-
-        snap = make_snapshot()  # no path -> not on disk
-        with pytest.raises(AlwaysFalsyException):
-            IsGoProjectConstraint().test(snap)
-
     def test_name(self):
         from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
 
@@ -316,61 +124,6 @@ class TestIsGoProjectConstraint:
 
 
 class TestIsPhpProjectConstraint:
-    def test_composer_json_exists(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        composer_json = tmp_path / "composer.json"
-        composer_json.write_text("")
-        test_file = tmp_path / "src" / "index.php"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        found = AbstractConstraint.find_parent_with_sibling(test_file, "composer.json", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_composer_json_exists_via_snapshot_path(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        composer_json = tmp_path / "composer.json"
-        composer_json.write_text("")
-        test_file = tmp_path / "src" / "index.php"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "composer.json", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_not_php_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        test_file = tmp_path / "index.php"
-        test_file.write_text("")
-
-        result = AbstractConstraint.find_parent_with_sibling(test_file, "composer.json", use_exists=False)
-        assert result is None
-
-    def test_nested_in_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_php_project import IsPhpProjectConstraint
-
-        (tmp_path / "composer.json").write_text("")
-        test_file = tmp_path / "src" / "Controller" / "HomeController.php"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsPhpProjectConstraint().test(snap) is True
-
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraints.is_php_project import IsPhpProjectConstraint
-
-        snap = make_snapshot()  # no path -> not on disk
-        with pytest.raises(AlwaysFalsyException):
-            IsPhpProjectConstraint().test(snap)
-
     def test_name(self):
         from plugin.rules.constraints.is_php_project import IsPhpProjectConstraint
 
@@ -378,61 +131,6 @@ class TestIsPhpProjectConstraint:
 
 
 class TestIsPythonProjectConstraint:
-    def test_pyproject_toml_exists(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        pyproject_toml = tmp_path / "pyproject.toml"
-        pyproject_toml.write_text("")
-        test_file = tmp_path / "src" / "main.py"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        found = AbstractConstraint.find_parent_with_sibling(test_file, "pyproject.toml", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_pyproject_toml_exists_via_snapshot_path(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        pyproject_toml = tmp_path / "pyproject.toml"
-        pyproject_toml.write_text("")
-        test_file = tmp_path / "src" / "main.py"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "pyproject.toml", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_not_python_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        test_file = tmp_path / "main.py"
-        test_file.write_text("")
-
-        result = AbstractConstraint.find_parent_with_sibling(test_file, "pyproject.toml", use_exists=False)
-        assert result is None
-
-    def test_nested_in_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_python_project import IsPythonProjectConstraint
-
-        (tmp_path / "pyproject.toml").write_text("")
-        test_file = tmp_path / "src" / "pkg" / "util.py"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsPythonProjectConstraint().test(snap) is True
-
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraints.is_python_project import IsPythonProjectConstraint
-
-        snap = make_snapshot()  # no path -> not on disk
-        with pytest.raises(AlwaysFalsyException):
-            IsPythonProjectConstraint().test(snap)
-
     def test_name(self):
         from plugin.rules.constraints.is_python_project import IsPythonProjectConstraint
 
@@ -440,61 +138,6 @@ class TestIsPythonProjectConstraint:
 
 
 class TestIsRustProjectConstraint:
-    def test_cargo_toml_exists(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        cargo_toml = tmp_path / "Cargo.toml"
-        cargo_toml.write_text("")
-        test_file = tmp_path / "src" / "main.rs"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        found = AbstractConstraint.find_parent_with_sibling(test_file, "Cargo.toml", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_cargo_toml_exists_via_snapshot_path(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        cargo_toml = tmp_path / "Cargo.toml"
-        cargo_toml.write_text("")
-        test_file = tmp_path / "src" / "main.rs"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "Cargo.toml", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_not_rust_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        test_file = tmp_path / "main.rs"
-        test_file.write_text("")
-
-        result = AbstractConstraint.find_parent_with_sibling(test_file, "Cargo.toml", use_exists=False)
-        assert result is None
-
-    def test_nested_in_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_rust_project import IsRustProjectConstraint
-
-        (tmp_path / "Cargo.toml").write_text("")
-        test_file = tmp_path / "src" / "bin" / "util.rs"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsRustProjectConstraint().test(snap) is True
-
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraints.is_rust_project import IsRustProjectConstraint
-
-        snap = make_snapshot()  # no path -> not on disk
-        with pytest.raises(AlwaysFalsyException):
-            IsRustProjectConstraint().test(snap)
-
     def test_name(self):
         from plugin.rules.constraints.is_rust_project import IsRustProjectConstraint
 
@@ -502,61 +145,6 @@ class TestIsRustProjectConstraint:
 
 
 class TestIsTypescriptProjectConstraint:
-    def test_tsconfig_json_exists(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        tsconfig_json = tmp_path / "tsconfig.json"
-        tsconfig_json.write_text("")
-        test_file = tmp_path / "src" / "index.ts"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        found = AbstractConstraint.find_parent_with_sibling(test_file, "tsconfig.json", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_tsconfig_json_exists_via_snapshot_path(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        tsconfig_json = tmp_path / "tsconfig.json"
-        tsconfig_json.write_text("")
-        test_file = tmp_path / "src" / "index.ts"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "tsconfig.json", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_not_typescript_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        test_file = tmp_path / "index.ts"
-        test_file.write_text("")
-
-        result = AbstractConstraint.find_parent_with_sibling(test_file, "tsconfig.json", use_exists=False)
-        assert result is None
-
-    def test_nested_in_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_typescript_project import IsTypescriptProjectConstraint
-
-        (tmp_path / "tsconfig.json").write_text("")
-        test_file = tmp_path / "src" / "components" / "App.tsx"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        assert IsTypescriptProjectConstraint().test(snap) is True
-
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraints.is_typescript_project import IsTypescriptProjectConstraint
-
-        snap = make_snapshot()  # no path -> not on disk
-        with pytest.raises(AlwaysFalsyException):
-            IsTypescriptProjectConstraint().test(snap)
-
     def test_name(self):
         from plugin.rules.constraints.is_typescript_project import IsTypescriptProjectConstraint
 
@@ -646,7 +234,7 @@ class TestIsJavascriptProjectConstraint:
         second_file.write_text("")
 
         assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(first_file))) is True
-        assert tmp_path in IsJavascriptProjectConstraint._successed_dirs
+        assert tmp_path in IsJavascriptProjectConstraint._found_dirs
         assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(second_file))) is True
 
     def test_name(self):
@@ -656,45 +244,6 @@ class TestIsJavascriptProjectConstraint:
 
 
 class TestIsInPythonDjangoProjectConstraint:
-    def test_manage_py_exists(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        manage_py = tmp_path / "manage.py"
-        manage_py.write_text("")
-        test_file = tmp_path / "app" / "models.py"
-        test_file.parent.mkdir()
-        test_file.write_text("")
-
-        # Test the static find_parent_with_sibling method directly
-        found = AbstractConstraint.find_parent_with_sibling(test_file, "manage.py", use_exists=False)
-        assert found is not None
-        # Verify the constraint works by calling the parent-finding logic
-        assert found == tmp_path
-
-    def test_manage_py_exists_via_snapshot_path(self, make_snapshot, tmp_path):
-        """Same but using the snapshot file_path as the source."""
-        from plugin.rules.constraint import AbstractConstraint
-
-        manage_py = tmp_path / "manage.py"
-        manage_py.write_text("")
-        test_file = tmp_path / "app" / "models.py"
-        test_file.parent.mkdir()
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "manage.py", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_not_django_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        test_file = tmp_path / "main.py"
-        test_file.write_text("")
-
-        result = AbstractConstraint.find_parent_with_sibling(test_file, "manage.py", use_exists=False)
-        assert result is None
-
     def test_name(self):
         from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
 
@@ -781,7 +330,7 @@ class TestIsInPythonDjangoProjectConstraintRealTest:
             IsInPythonDjangoProjectConstraint().test(snap)
 
     def test_successful_match_is_cached_for_a_second_file_in_the_same_project(self, make_snapshot, tmp_path):
-        """A second file under the same project root should hit the `_successed_dirs` fast-path
+        """A second file under the same project root should hit the `_found_dirs` fast-path
         cache rather than re-scanning the filesystem."""
         from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
 
@@ -793,47 +342,11 @@ class TestIsInPythonDjangoProjectConstraintRealTest:
         second_file.write_text("")
 
         assert IsInPythonDjangoProjectConstraint().test(make_snapshot(path=str(first_file))) is True
-        assert tmp_path in IsInPythonDjangoProjectConstraint._successed_dirs
+        assert tmp_path in IsInPythonDjangoProjectConstraint._found_dirs
         assert IsInPythonDjangoProjectConstraint().test(make_snapshot(path=str(second_file))) is True
 
 
 class TestIsInRubyOnRailsProjectConstraint:
-    def test_gemfile_exists(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        gemfile = tmp_path / "Gemfile"
-        gemfile.write_text("")
-        test_file = tmp_path / "app" / "models" / "user.rb"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        found = AbstractConstraint.find_parent_with_sibling(test_file, "Gemfile", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_gemfile_exists_via_snapshot_path(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        gemfile = tmp_path / "Gemfile"
-        gemfile.write_text("")
-        test_file = tmp_path / "app" / "models" / "user.rb"
-        test_file.parent.mkdir(parents=True)
-        test_file.write_text("")
-
-        snap = make_snapshot(path=str(test_file))
-        found = AbstractConstraint.find_parent_with_sibling(snap.file_path, "Gemfile", use_exists=False)
-        assert found is not None
-        assert found == tmp_path
-
-    def test_not_rails_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraint import AbstractConstraint
-
-        test_file = tmp_path / "main.rb"
-        test_file.write_text("")
-
-        result = AbstractConstraint.find_parent_with_sibling(test_file, "Gemfile", use_exists=False)
-        assert result is None
-
     def test_name(self):
         from plugin.rules.constraints.is_in_ruby_on_rails_project import IsInRubyOnRailsProjectConstraint
 
@@ -872,3 +385,91 @@ class TestIsMagikaEnabledConstraint:
         from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
 
         assert IsMagikaEnabledConstraint.name() == "is_magika_enabled"
+
+
+# ── parent-marker constraints ────────────────────────────────────────────────
+
+
+def _marker_constraints():
+    from plugin.rules.constraints._parent_marker import AbstractParentMarkerConstraint
+    from plugin.utils import list_all_subclasses
+
+    return sorted(list_all_subclasses(AbstractParentMarkerConstraint, skip_abstract=True), key=lambda c: c.name())
+
+
+@pytest.fixture(params=_marker_constraints(), ids=lambda cls: cls.name())
+def marker_constraint(request):
+    """A fresh constraint per test, so one test's found-directory cache can't answer for another."""
+    cls = request.param
+    cls._found_dirs.clear()
+    yield cls()
+    cls._found_dirs.clear()
+
+
+def _make_marker(root, marker):
+    """Create `marker` under `root`: a directory if it ends with `/`, else a file."""
+    path = root / marker
+    if marker.endswith("/"):
+        path.mkdir(parents=True)
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("")
+
+
+def _make_source_file(root):
+    source = root / "src" / "app" / "main.txt"
+    source.parent.mkdir(parents=True)
+    source.write_text("")
+    return source
+
+
+class TestParentMarkerConstraints:
+    def test_passes_below_a_directory_holding_the_marker(self, marker_constraint, make_snapshot, tmp_path):
+        _make_marker(tmp_path, marker_constraint.marker)
+        source = _make_source_file(tmp_path)
+
+        assert marker_constraint.test(make_snapshot(path=str(source))) is True
+
+    def test_fails_without_the_marker(self, marker_constraint, make_snapshot, tmp_path):
+        source = _make_source_file(tmp_path)
+
+        assert marker_constraint.test(make_snapshot(path=str(source))) is False
+
+    def test_no_file_on_disk_is_always_falsy(self, marker_constraint, make_snapshot):
+        from plugin.rules.constraint import AlwaysFalsyException
+
+        with pytest.raises(AlwaysFalsyException):
+            marker_constraint.test(make_snapshot())
+
+    def test_remembers_the_directory_that_held_the_marker(self, marker_constraint, make_snapshot, tmp_path):
+        _make_marker(tmp_path, marker_constraint.marker)
+        source = _make_source_file(tmp_path)
+        snapshot = make_snapshot(path=str(source))
+        assert marker_constraint.test(snapshot) is True
+
+        # removing the marker doesn't matter once the directory is known to hold it
+        if marker_constraint.marker.endswith("/"):
+            (tmp_path / marker_constraint.marker).rmdir()
+        else:
+            (tmp_path / marker_constraint.marker).unlink()
+        assert marker_constraint.test(snapshot) is True
+
+    def test_each_constraint_remembers_only_its_own_directories(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
+        from plugin.rules.constraints.is_rust_project import IsRustProjectConstraint
+
+        IsGoProjectConstraint._found_dirs.clear()
+        IsRustProjectConstraint._found_dirs.clear()
+        (tmp_path / "go.mod").write_text("")
+        snapshot = make_snapshot(path=str(_make_source_file(tmp_path)))
+
+        assert IsGoProjectConstraint().test(snapshot) is True
+        assert IsRustProjectConstraint().test(snapshot) is False
+
+    def test_a_directory_marker_must_be_a_directory(self, make_snapshot, tmp_path):
+        from plugin.rules.constraints.is_in_hg_repo import IsInHgRepoConstraint
+
+        IsInHgRepoConstraint._found_dirs.clear()
+        (tmp_path / ".hg").write_text("")  # a file, not the `.hg/` directory
+
+        assert IsInHgRepoConstraint().test(make_snapshot(path=str(_make_source_file(tmp_path)))) is False

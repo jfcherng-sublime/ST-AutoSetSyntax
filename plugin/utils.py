@@ -6,13 +6,11 @@ import os
 import re
 import shutil
 import stat
-import tempfile
 import threading
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Mapping
-from functools import cache
 from functools import reduce
 from functools import wraps
 from itertools import chain
@@ -35,12 +33,6 @@ from .types import SyntaxLikes
 def camel_to_snake(s: str) -> str:
     """Converts "CamelCase" to "snake_case"."""
     return "".join(f"_{c}" if c.isupper() else c for c in s).strip("_").lower()
-
-
-def snake_to_camel(s: str, *, upper_first: bool = True) -> str:
-    """Converts "snake_case" to "CamelCase"."""
-    first, *others = s.split("_")
-    return (first.title() if upper_first else first.lower()) + "".join(map(str.title, others))
 
 
 def ensure_trailing_newline[T: (str, bytes)](content: T) -> T:
@@ -268,50 +260,6 @@ def extract_prefixed_dict[T](dict_: Mapping[str, T], *, prefix: str) -> dict[str
     return {k[len(prefix) :]: v for k, v in dict_.items() if k.startswith(prefix)}
 
 
-def resolve_window(obj: sublime.Buffer | sublime.View | sublime.Sheet | sublime.Window) -> sublime.Window | None:
-    match obj:
-        case sublime.Window():
-            return obj
-        case sublime.View() | sublime.Sheet():
-            return obj.window()
-        case sublime.Buffer():
-            return obj.primary_view().window()
-        case _:
-            return None
-
-
-def list_all_views(*, include_transient: bool = False) -> Generator[sublime.View]:
-    for window in sublime.windows():
-        yield from window.views(include_transient=include_transient)
-
-
-def get_view_by_id(id: int) -> sublime.View | None:
-    return view if (view := sublime.View(id)).is_valid() else None
-
-
-def get_window_by_id(id: int) -> sublime.Window | None:
-    return window if (window := sublime.Window(id)).is_valid() else None
-
-
-def head_tail_content(content: str, n: int) -> str:
-    """
-    Return the first `n // 2` and the last `n // 2` characters of `content`,
-    joined by a blank line. A negative `n` means no limit, and `content` no longer than `n`
-    fits as a whole, in which cases `content` is returned as-is.
-    """
-    if n < 0:
-        return content
-
-    if (half := n // 2) <= 0:
-        return ""
-
-    # not `<= half`: between `half` and `n`, the head and the tail overlap, duplicating the middle
-    if len(content) <= n:
-        return content
-
-    return content[:half] + "\n\n" + content[-half:]
-
-
 def head_tail_lines(content: str, n: int) -> str:
     """
     Return the first `n` lines and the last `n` lines of `content`, joined by a blank line.
@@ -341,7 +289,7 @@ def head_tail_content_st(view: sublime.View, partial: int) -> str:
     if (half := partial // 2) <= 0:
         return ""
 
-    # see `head_tail_content()`: a smaller `partial` would duplicate the overlapping middle
+    # not `<= half`: between `half` and `partial`, the head and the tail overlap, duplicating the middle
     if (size := view.size()) <= partial:
         return view.substr(sublime.Region(0, size))
 
@@ -412,39 +360,6 @@ def is_plaintext_syntax(syntax: sublime.Syntax) -> bool:
 
 def is_transient_view(view: sublime.View) -> bool:
     return bool(view.is_valid() and (sheet := view.sheet()) and sheet.is_transient())
-
-
-@cache
-def get_expand_variable_map() -> dict[str, str]:
-    cache_path = Path(sublime.cache_path())
-    packages_path = Path(sublime.packages_path())
-
-    paths: dict[str, Path] = {
-        # from OS
-        "home": Path.home(),
-        "temp_dir": Path(tempfile.gettempdir()),
-        # from ST itself
-        "bin": Path(sublime.executable_path()).parent,
-        "cache": cache_path,
-        "data": packages_path.parent,
-        "index": cache_path.parent / "Index",
-        "installed_packages": Path(sublime.installed_packages_path()),
-        "lib": packages_path.parent / "Lib",
-        "local": packages_path.parent / "Local",
-        "log": packages_path.parent / "Log",
-        "packages": packages_path,
-        # from LSP
-        "package_storage": cache_path.parent / "Package Storage",
-    }
-
-    return {name: str(path.resolve()) for name, path in paths.items()}
-
-
-def expand_variables[T: bool | int | float | str | dict | list | tuple | None](
-    value: T,
-    variables: dict[str, str] | None = None,
-) -> T:
-    return sublime.expand_variables(value, get_expand_variable_map() | (variables or {}))
 
 
 def list_trimmed_filenames(filename: str, skip_self: bool = False) -> Generator[str]:

@@ -1,33 +1,10 @@
-from typing import Any
 from typing import final
-from typing import override
 
 from ...constants import ST_PLATFORM
-from ...snapshot import ViewSnapshot
-from ...types import UNFOLDED
-from ...types import Fold
-from ...utils import quote_join
-from ..constraint import AbstractConstraint
+from ._fixed_value import AbstractFixedValueConstraint
 
 
 @final
-class IsPlatformConstraint(AbstractConstraint):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.names = set(map(str.lower, self._handled_args()))
-        self.result = ST_PLATFORM in self.names
-
-    @override
-    def fold(self) -> Fold:
-        # the platform is fixed at install time, so a guaranteed non-match (self.result is
-        # False) is just as much a constant as having no names at all
-        if not self.names:
-            return Fold(False, "no platform was given")
-        if not self.result:
-            return Fold(False, f"this Sublime Text is {ST_PLATFORM}, not any of {quote_join(sorted(self.names))}")
-        return UNFOLDED
-
-    @override
-    def test(self, view_snapshot: ViewSnapshot) -> bool:
-        return self.result
+class IsPlatformConstraint(AbstractFixedValueConstraint):
+    current = ST_PLATFORM
+    noun = "platform"

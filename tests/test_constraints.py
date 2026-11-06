@@ -924,3 +924,27 @@ class TestSelectorMatchesConstraint:
         from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
         assert SelectorMatchesConstraint.name() == "selector_matches"
+
+
+class TestIsExtensionConstraint:
+    @staticmethod
+    def _test(make_snapshot, path, *args, **kwargs):
+        from plugin.rules.constraints.is_extension import IsExtensionConstraint
+
+        return IsExtensionConstraint(*args, **kwargs).test(make_snapshot(path=path))
+
+    def test_extension_given_with_or_without_the_dot(self, make_snapshot):
+        assert self._test(make_snapshot, "/tmp/a.py", "py") is True
+        assert self._test(make_snapshot, "/tmp/a.py", ".py") is True
+
+    def test_other_extension_does_not_match(self, make_snapshot):
+        assert self._test(make_snapshot, "/tmp/a.js", "py") is False
+
+    def test_multi_dot_extension_matches_the_whole_suffix(self, make_snapshot):
+        assert self._test(make_snapshot, "/tmp/a.tar.gz", "tar.gz") is True
+        assert self._test(make_snapshot, "/tmp/a.tar.gz", "gz") is True
+        assert self._test(make_snapshot, "/tmp/a.gz", "tar.gz") is False
+
+    def test_case_sensitivity_follows_the_kwarg(self, make_snapshot):
+        assert self._test(make_snapshot, "/tmp/A.PY", "py", case_insensitive=True) is True
+        assert self._test(make_snapshot, "/tmp/A.PY", "py", case_insensitive=False) is False

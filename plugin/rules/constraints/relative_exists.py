@@ -16,8 +16,6 @@ class RelativeExistsConstraint(AbstractConstraint):
         super().__init__(*args, **kwargs)
 
         self.relatives: tuple[str, ...] = self._handled_args()
-        # "match": null is present with value None, not absent, so .get(..., "any")'s default
-        # doesn't cover it -- None.lower() would raise AttributeError
         self.match: str = (kwargs.get("match") or "any").lower()
         self.matcher = all if self.match == "all" else any
 

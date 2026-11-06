@@ -56,12 +56,16 @@ make ci-test-cov      # runs pytest with coverage reporting
 - **`boot.py`** — ST plugin bootstrap: clears cached modules on reload, then imports everything from `plugin/`.
 - **`plugin/__init__.py`** — Defines `plugin_loaded()` / `plugin_unloaded()` (ST lifecycle hooks) and the public API surface (`AbstractConstraint`, `AbstractMatch`, `MatchableRule`, `ViewSnapshot`).
 
+### Detectors (`plugin/detectors.py`)
+
+Each detector turns a `ViewSnapshot` into a `SyntaxDecision` or declines; `detect()` tries them in a fixed order. `plugin/commands/auto_set_syntax.py` runs detection for a view and applies the decision. See `docs/adr/0001-...` for why the signatures differ.
+
 ### Rules System (`plugin/rules/`)
 
 Class naming convention: `FooBarMatch` → name `"foo_bar"`, `FooBarConstraint` → name `"foo_bar"`. Names are auto-derived via `camel_to_snake` and matched against settings strings.
 
 - **`AbstractMatch`** — base class for `any`, `all`, `some`, `ratio` match types; `test()` receives a `ViewSnapshot` and child `MatchableRule`s
-- **`AbstractConstraint`** — base class for leaf conditions (`is_extension`, `contains_regex`, `is_syntax`, etc.); `test()` returns bool
+- **`AbstractConstraint`** — base class for leaf conditions (`is_extension`, `contains_regex`, `is_syntax`, etc.); `test()` returns bool. "Is the file under a directory holding X" constraints (`is_in_git_repo`, `is_go_project`, ...) subclass `AbstractParentMarkerConstraint` and only name their `marker`
 - **`fold()`** — the optimizer contract both base classes carry alongside `test()`. Return `Fold(constant, reason)` when the object's own arguments already settle the answer, `UNFOLDED` when the result still depends on the view. Strict: returning a bare `bool`/`None` raises a `TypeError` naming the class. The `reason` is user-facing — it's quoted verbatim in the dropped-rules report, so phrase it for whoever reads Debug Information
 - **`SyntaxRule`** — top-level rule with `selector`, `on_events`, `syntaxes`, and a root `MatchRule`
 - **`SyntaxRuleCollection`** — ordered list of `SyntaxRule`; returns the first matching rule

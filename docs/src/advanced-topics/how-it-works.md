@@ -123,7 +123,7 @@ class SyntaxDecision:
 
 Steps 1 and 2 are early-outs handled directly by `run_auto_set_syntax_on_view()` — exec output
 runs *before* the (comparatively expensive) `ViewSnapshot` is built, since a build panel updates
-often and needs none of it. Steps 3–8 form the `_detect()` chain. Whatever the source, the
+often and needs none of it. Steps 3–8 form the `detect()` chain in `plugin/detectors.py`. Whatever the source, the
 resulting decision reaches the view through a single `_apply()` call, which emits any
 `status_message` and hands off to `assign_syntax_to_view()`.
 

@@ -1,4 +1,3 @@
-from typing import Any
 from typing import final
 from typing import override
 
@@ -9,9 +8,6 @@ from ..constraint import AlwaysFalsyException
 
 @final
 class IsHiddenSyntaxConstraint(AbstractConstraint):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         if not (syntax := view_snapshot.syntax):

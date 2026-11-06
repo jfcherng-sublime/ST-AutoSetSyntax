@@ -1,10 +1,8 @@
 from abc import ABC
 from abc import abstractmethod
 from collections import UserDict
-from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
-from collections.abc import KeysView
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated
@@ -23,7 +21,8 @@ from pydantic import Field
 from pydantic import Tag
 from pydantic import field_validator
 
-type Comparator = Callable[[Any, Any], bool]
+from .constants import PLAIN_TEXT_SCOPE
+
 type SyntaxLike = str | sublime.Syntax
 type SyntaxLikes = SyntaxLike | Iterable[SyntaxLike]
 """One or more `SyntaxLike`. A bare `str` is one "like", never an iterable of characters."""
@@ -186,7 +185,7 @@ class StSyntaxRule(StMatchRule):
 
     comment: str = ""
     """A comment for the rule."""
-    selector: str = "text.plain"
+    selector: str = PLAIN_TEXT_SCOPE
     """To constrain the syntax scope of the current view. An empty string matches any scope."""
     syntaxes: list[str] = Field(default_factory=list)
     """Syntaxes to be used. The first available one will be used."""
@@ -216,9 +215,6 @@ class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):
     def __setitem__(self, key: WindowIdAble, value: VT) -> None:
         key = self._to_window_id(key)
         self.data[key] = value
-
-    def keys(self) -> KeysView[WindowId]:
-        return self.data.keys()  # type: ignore[return-value]
 
     @overload
     def get(self, key: WindowIdAble, default: None = None) -> VT | None: ...
