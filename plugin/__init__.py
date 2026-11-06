@@ -16,9 +16,6 @@ from .constants import PLUGIN_PY_LIBS_DIR
 from .custom import load_custom_implementations
 from .listener import AutoSetSyntaxEventListener
 from .listener import AutoSetSyntaxTextChangeListener
-from .listener import compile_rules
-from .listener import set_up_window
-from .listener import tear_down_window
 from .logger import AutoSetSyntaxAppendLogCommand
 from .logger import AutoSetSyntaxClearLogPanelCommand
 from .logger import AutoSetSyntaxToggleLogPanelCommand
@@ -35,6 +32,9 @@ from .snapshot import ViewSnapshot
 from .types import UNFOLDED
 from .types import Fold
 from .types import ListenerEvent
+from .windows import compile_rules
+from .windows import set_up_window
+from .windows import tear_down_window
 
 __all__ = (
     # public interfaces

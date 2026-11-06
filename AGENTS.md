@@ -60,6 +60,10 @@ make ci-test-cov      # runs pytest with coverage reporting
 
 Each detector turns a `ViewSnapshot` into a `SyntaxDecision` or declines; `detect()` tries them in a fixed order. `plugin/commands/auto_set_syntax.py` runs detection for a view and applies the decision. See `docs/adr/0001-...` for why the signatures differ.
 
+### Windows (`plugin/windows.py`)
+
+Per-window lifecycle: `set_up_window()` / `tear_down_window()` / `compile_rules()` compile a window's syntax rules into `G`. `plugin/listener.py` only translates Sublime Text events into calls.
+
 ### Rules System (`plugin/rules/`)
 
 Class naming convention: `FooBarMatch` → name `"foo_bar"`, `FooBarConstraint` → name `"foo_bar"`. Names are auto-derived via `camel_to_snake` and matched against settings strings.
