@@ -17,6 +17,8 @@ class RelativeExistsConstraint(AbstractConstraint):
 
         self.relatives: tuple[str, ...] = self._handled_args()
         self.match: str = (kwargs.get("match") or "any").lower()
+        if self.match not in {"any", "all"}:
+            raise ValueError(f'"match" must be "any" or "all", got {self.match!r}')
         self.matcher = all if self.match == "all" else any
 
     @override
