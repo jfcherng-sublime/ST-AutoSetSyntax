@@ -2,7 +2,9 @@
 
 import json
 import re
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from plugin.rules import get_constraints
 from plugin.rules import get_matches
@@ -18,7 +20,7 @@ _SCHEMA = json.loads(
 )
 
 
-def _find(node, key):
+def _find(node: Any, key: str) -> Iterator[Any]:
     """Every value under `key`, anywhere in the schema."""
     if isinstance(node, dict):
         for k, v in node.items():
@@ -30,7 +32,7 @@ def _find(node, key):
             yield from _find(item, key)
 
 
-def _definitions():
+def _definitions() -> dict[str, Any]:
     return next(_find(_SCHEMA, "definitions"))
 
 

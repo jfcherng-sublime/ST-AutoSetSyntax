@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from typing import Any
 from typing import final
 from typing import override
 
@@ -11,7 +12,7 @@ from ._text import AbstractOccurrencesConstraint
 class ContainsConstraint(AbstractOccurrencesConstraint):
     args_noun = "needle to look for"
 
-    def __init__(self, *args: object, **kwargs: object) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.needles: tuple[str, ...] = self._handled_args()
