@@ -21,7 +21,6 @@ from .logger import AutoSetSyntaxUpdateLogCommand
 from .rules import AbstractConstraint
 from .rules import AbstractMatch
 from .rules import MatchableRule
-from .rules._optimize import warn_legacy_fold_overrides
 from .settings import AioSettings
 from .settings import get_merged_plugin_setting
 from .shared import G
@@ -34,14 +33,11 @@ from .windows import set_up_window
 from .windows import tear_down_window
 
 __all__ = (
-    # public interfaces
     "UNFOLDED",
     "AbstractConstraint",
     "AbstractMatch",
-    # ST: commands (logging)
     "AutoSetSyntaxAppendLogCommand",
     "AutoSetSyntaxClearLogPanelCommand",
-    # ST: commands
     "AutoSetSyntaxCommand",
     "AutoSetSyntaxCreateNewConstraintCommand",
     "AutoSetSyntaxCreateNewMatchCommand",
@@ -55,7 +51,6 @@ __all__ = (
     "Fold",
     "MatchableRule",
     "ViewSnapshot",
-    # ST: core
     "plugin_loaded",
     "plugin_unloaded",
 )
@@ -72,7 +67,6 @@ def _plugin_loaded() -> None:
     sublime.set_timeout_async(remove_stale_dependency_dirs)
     _add_python_lib_path()
     load_custom_implementations()
-    warn_legacy_fold_overrides(AbstractConstraint, AbstractMatch)
 
     AioSettings.set_up(recompile_window)
 
@@ -81,6 +75,8 @@ def _plugin_loaded() -> None:
 
     if get_merged_plugin_setting("run_on_startup_views"):
         sublime.set_timeout_async(_run_on_startup_views)
+    else:
+        G.startup_views.clear()
 
 
 def plugin_unloaded() -> None:

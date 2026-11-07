@@ -4,12 +4,16 @@ import pkgutil
 import sys
 import traceback
 from pathlib import Path
+from typing import Any
 
 import sublime
 
 from .constants import PLUGIN_CUSTOM_DIR
 from .constants import PLUGIN_CUSTOM_MODULE_PATHS
 from .constants import PLUGIN_NAME
+from .rules import AbstractConstraint
+from .rules import AbstractMatch
+from .utils import list_all_subclasses
 
 
 def load_custom_implementations() -> None:
@@ -30,6 +34,7 @@ def load_custom_implementations() -> None:
             print(
                 f"[{PLUGIN_NAME}][ERROR] Failed loading custom implementation: {module_name}\n{traceback.format_exc()}"
             )
+    warn_legacy_fold_overrides(AbstractConstraint, AbstractMatch)
 
 
 def _forget_custom_modules() -> None:
@@ -46,3 +51,26 @@ def _forget_custom_modules() -> None:
         del sys.modules[name]
     # the custom files may have been added since the directory listing was cached
     importlib.invalidate_caches()
+
+
+_LEGACY_METHOD_NAMES = ("is_droppable", "droppable_value")
+"""The methods `fold()` replaced. Overriding one no longer does anything."""
+
+
+def warn_legacy_fold_overrides(*bases: type[Any]) -> None:
+    """
+    Warn about custom implementations still overriding the methods `fold()` replaced.
+
+    A custom constraint/match that overrides `is_droppable()`/`droppable_value()` isn't broken
+    -- it just silently stops being optimized away, since nothing calls those names any more.
+    A silent loss of optimization is a miserable thing to debug, so say so at load time.
+    """
+    for base in bases:
+        for cls in list_all_subclasses(base, skip_self=True):
+            if legacy := [name for name in _LEGACY_METHOD_NAMES if name in vars(cls)]:
+                print(
+                    f"[{PLUGIN_NAME}][WARNING] {cls.__module__}.{cls.__qualname__} overrides"
+                    f" {'/'.join(legacy)}, which is no longer used."
+                    " Rename it to fold(), returning Fold(True/False, reason) for a constant result"
+                    " or UNFOLDED when the result still depends on the view."
+                )
