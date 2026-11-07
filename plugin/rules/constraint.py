@@ -1,5 +1,6 @@
 import operator
 import re
+from abc import ABC
 from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Generator
@@ -77,8 +78,8 @@ class ConstraintRule(Optimizable):
 
         try:
             result = self.constraint.test(view_snapshot)
-        except AlwaysFalsyException:
-            return False
+        except AlwaysBoolException as e:
+            return e.value
         except Exception as e:
             Logger.log(f"[{PLUGIN_NAME}] ConstraintRule Exception: {e}")
             return False
@@ -231,5 +232,19 @@ class AbstractConstraint(NamedImplementation):
         return str.lower if kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}) else str
 
 
-class AlwaysFalsyException(Exception):
-    """Raised from a custom constraint's `test()` to fail whether it's inverted or not."""
+class AlwaysValueException[T](Exception, ABC):
+    """Used to indicate that the constraint returns a fixed value no matter it's inverted or not."""
+
+    value: T
+
+
+class AlwaysBoolException(AlwaysValueException[bool], ABC):
+    pass
+
+
+class AlwaysTruthyException(AlwaysBoolException):
+    value = True
+
+
+class AlwaysFalsyException(AlwaysBoolException):
+    value = False

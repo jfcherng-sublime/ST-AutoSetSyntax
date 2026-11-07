@@ -28,16 +28,20 @@ def _ensure_rules_imported() -> None:
 
 class TestConstraintRule:
     @pytest.mark.parametrize("inverted", [False, True])
-    def test_a_custom_constraint_can_fail_regardless_of_inversion(self, make_snapshot, inverted):
-        from plugin.rules.constraint import AbstractConstraint
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraint import ConstraintRule
+    @pytest.mark.parametrize("exception_name", ["AlwaysTruthyException", "AlwaysFalsyException"])
+    def test_a_custom_constraint_can_force_its_verdict_regardless_of_inversion(
+        self, make_snapshot, inverted, exception_name
+    ):
+        import plugin.rules.constraint as mod
 
-        class GivesUp(AbstractConstraint):
+        exception = getattr(mod, exception_name)
+
+        class Forced(mod.AbstractConstraint):
             def test(self, view_snapshot):
-                raise AlwaysFalsyException
+                raise exception
 
-        assert ConstraintRule(constraint=GivesUp(), inverted=inverted).test(make_snapshot()) is False
+        rule = mod.ConstraintRule(constraint=Forced(), inverted=inverted)
+        assert rule.test(make_snapshot()) is (exception_name == "AlwaysTruthyException")
 
     def test_make_from_known_constraint(self):
         _ensure_rules_imported()
