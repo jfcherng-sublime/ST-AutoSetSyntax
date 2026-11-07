@@ -93,8 +93,9 @@ Before any detector runs, the pipeline verifies:
 1. View has a window and is valid
 2. View is "syntaxable" — not a widget/panel, not transient, within size limit
 3. View is plaintext (if `must_plaintext=True`)
-4. `SyntaxRuleCollection` is compiled for the window
-5. Plugin is ready (`G.is_plugin_ready()`)
+4. The window has compiled rules (`G.compiled_rules`) — i.e. it has been set up
+   (`on_new` fires before `on_new_window` for a new window's first tab, so it calls
+   `ensure_window_set_up()` first)
 
 ## The Detector Pipeline (9 Steps)
 
@@ -261,7 +262,7 @@ safe to silently remove from its own child list without changing its result:
   depends on the *count* of its children, so no child, constant or not, can ever be safely
   removed without shifting that goal.
 
-Dropped rules are logged and stored in `G.dropped_rules_collection` for debugging.
+Dropped rules are logged and stored next to the collection, in `G.compiled_rules[window].dropped`, for debugging.
 
 A rule that can't be compiled at all — an unknown match/constraint name, or arguments its class
 rejects — fails its enclosing match, and so on up to the syntax rule, which is then dropped with
@@ -342,6 +343,8 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
      "always fails" one reports `False` — getting this backwards inverts the rule's meaning.
      It has to be a real `Fold`: a bare `False`/`None`, or a plain `(False, "…")` tuple, is
      rejected.
+   - To make `test()` give a verdict that `not` must not flip, raise `AlwaysTruthyException` or
+     `AlwaysFalsyException` (from `plugin.rules.constraint`) instead of returning.
    - For `AbstractMatch`, also override `prunable_child_value()` if the match supports safely
      pruning individual children (see [Optimization](#optimization)); the default of "only a
      constant-`False` child is prunable" is right for `any`-like combinators but wrong for
@@ -395,9 +398,13 @@ def get_magika_object() -> magika.Magika | None:
 
 Uses `AioSettings` — an async settings watcher that:
 
-- Merges per-project settings with plugin defaults
-- Automatically recompiles rule collections when settings change
-- Tracks per-window settings independently
+- Merges per-project settings over plugin settings (a `null` value reads as unset)
+- Merges `project_`, `user_` and `default_trim_suffixes` into one `trim_suffixes` list
+  (deduplicated, in that order), which `ViewSnapshot.trim_suffixes` captures
+- Recompiles a window's rules when the plugin settings file changes or its project is loaded
+  (`on_load_project_async`)
+- Tracks per-window settings independently; a window is tracked by `set_up_window()` and
+  forgotten by `tear_down_window()`
 
 Key settings groups:
 
@@ -408,11 +415,15 @@ Key settings groups:
 ## Shared Global State
 
 ```python
-@dataclass
+@dataclass(frozen=True, slots=True)
+class CompiledRules:
+    collection: SyntaxRuleCollection  # The top-level plugin rules, optimized
+    dropped: list[DroppedRule]        # Rules discarded on the way, with why
+
+@dataclass(slots=True)
 class _GlobalState:
-    startup_views: set[sublime.View]         # Views existing at startup
-    syntax_rule_collections: WindowKeyedDict  # Per-window compiled rules
-    dropped_rules_collection: WindowKeyedDict # Per-window optimized-away rules
+    startup_views: set[sublime.View]               # Views existing at startup
+    compiled_rules: WindowKeyedDict[CompiledRules] # Per window; having an entry == window is ready
 ```
 
 `G = _GlobalState()` — a single shared instance holding per-window compiled state.

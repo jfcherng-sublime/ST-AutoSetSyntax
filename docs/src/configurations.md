@@ -172,6 +172,11 @@ Syntax rules are the key part of AutoSetSyntax.
 
                     If you use an empty list, then this syntax rule will never be evaluated.
 
+                !!! failure
+
+                    An unknown event name (names are lowercase) makes the whole syntax rule invalid.
+                    It's reported in the log panel and in Debug Information.
+
                 !!! info "Available Events"
 
                     | Event Name | Meaning |
