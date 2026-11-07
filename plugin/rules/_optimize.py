@@ -29,8 +29,7 @@ def sift_optimizable[T: Optimizable](rules: tuple[T, ...]) -> tuple[list[Optimiz
     survivors: list[T] = []
     for rule in rules:
         if rule.fold().value is None:
-            # only a rule that isn't already a constant is worth recursing into -- and doing so
-            # can collapse it into one, hence the second `fold()` below rather than an `else`
+            # recursing can collapse the rule into a constant, hence the second `fold()` below
             dropped.extend(rule.optimize())
         if rule.fold().value is None:
             survivors.append(rule)

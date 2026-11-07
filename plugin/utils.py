@@ -66,6 +66,11 @@ def get_fqcn(obj: Any) -> str:
     return f"{cls.__module__}.{cls.__qualname__}"
 
 
+def holds_entry(directory: Path, name: str) -> bool:
+    """Whether `directory` holds `name`: a directory if `name` ends with a slash, otherwise a file."""
+    return (directory / name).is_dir() if name.endswith(("\\", "/")) else (directory / name).is_file()
+
+
 def merge_literals_to_regex(literals: Iterable[str]) -> str:
     """
     Merge (non-regex) literal strings into an optimized regex string.

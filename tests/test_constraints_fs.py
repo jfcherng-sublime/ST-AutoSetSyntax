@@ -2,6 +2,7 @@
 
 import pytest
 
+from plugin.cache import clear_all_cached_functions
 from plugin.rules.constraint import ConstraintRule
 from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
 from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
@@ -237,12 +238,10 @@ class TestIsInPythonDjangoProjectConstraintRealTest:
 
 @pytest.mark.parametrize(("setting", "expected"), [(True, True), (False, False), (None, False)])
 def test_is_magika_enabled_follows_the_setting_and_defaults_to_off(make_snapshot, setting, expected):
-    from unittest.mock import patch
-
     from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
 
-    with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=setting):
-        assert IsMagikaEnabledConstraint().test(make_snapshot()) is expected
+    snap = make_snapshot(settings={"magika.enabled": setting})
+    assert IsMagikaEnabledConstraint().test(snap) is expected
 
 
 # ── parent-marker constraints ────────────────────────────────────────────────
@@ -258,10 +257,9 @@ def _marker_constraints():
 @pytest.fixture(params=_marker_constraints(), ids=lambda cls: cls.name())
 def marker_constraint(request):
     """A fresh constraint per test, so one test's found-directory cache can't answer for another."""
-    cls = request.param
-    cls._found_dirs.clear()
-    yield cls()
-    cls._found_dirs.clear()
+    clear_all_cached_functions()
+    yield request.param()
+    clear_all_cached_functions()
 
 
 def _make_marker(root, marker):
@@ -316,12 +314,14 @@ class TestParentMarkerConstraints:
             (tmp_path / marker_constraint.marker).unlink()
         assert marker_constraint.test(snapshot) is True
 
+        clear_all_cached_functions()  # what recompiling a window does
+        assert marker_constraint.test(snapshot) is False
+
     def test_each_constraint_remembers_only_its_own_directories(self, make_snapshot, tmp_path):
         from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
         from plugin.rules.constraints.is_rust_project import IsRustProjectConstraint
 
-        IsGoProjectConstraint._found_dirs.clear()
-        IsRustProjectConstraint._found_dirs.clear()
+        clear_all_cached_functions()
         (tmp_path / "go.mod").write_text("")
         snapshot = make_snapshot(path=str(_make_source_file(tmp_path)))
 
@@ -331,7 +331,7 @@ class TestParentMarkerConstraints:
     def test_a_directory_marker_must_be_a_directory(self, make_snapshot, tmp_path):
         from plugin.rules.constraints.is_in_hg_repo import IsInHgRepoConstraint
 
-        IsInHgRepoConstraint._found_dirs.clear()
+        clear_all_cached_functions()
         (tmp_path / ".hg").write_text("")  # a file, not the `.hg/` directory
 
         assert IsInHgRepoConstraint().test(make_snapshot(path=str(_make_source_file(tmp_path)))) is False

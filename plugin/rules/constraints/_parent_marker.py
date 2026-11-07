@@ -5,7 +5,9 @@ from typing import override
 
 from more_itertools import first_true
 
+from ...cache import register_cache_clearer
 from ...snapshot import ViewSnapshot
+from ...utils import holds_entry
 from ..constraint import AbstractConstraint
 
 
@@ -27,6 +29,7 @@ class AbstractParentMarkerConstraint(AbstractConstraint):
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         cls._found_dirs = set()
+        register_cache_clearer(cls._found_dirs.clear)
 
     @property
     @abstractmethod
@@ -49,6 +52,4 @@ class AbstractParentMarkerConstraint(AbstractConstraint):
     def _holds_marker(self, directory: Path) -> bool:
         if self.use_exists:
             return (directory / self.marker).exists()
-        if self.marker.endswith(("\\", "/")):
-            return (directory / self.marker).is_dir()
-        return (directory / self.marker).is_file()
+        return holds_entry(directory, self.marker)

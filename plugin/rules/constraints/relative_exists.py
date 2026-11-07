@@ -4,6 +4,7 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
+from ...utils import holds_entry
 from ..constraint import AbstractConstraint
 
 
@@ -26,7 +27,4 @@ class RelativeExistsConstraint(AbstractConstraint):
         file_path = view_snapshot.file_path
 
         folder = Path(file_path).parent
-        return self.matcher(
-            (Path.is_dir if relative.endswith(("\\", "/")) else Path.is_file)(folder / relative)
-            for relative in self.relatives
-        )
+        return self.matcher(holds_entry(folder, relative) for relative in self.relatives)
