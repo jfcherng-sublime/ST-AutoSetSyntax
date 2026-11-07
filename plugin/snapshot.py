@@ -3,13 +3,16 @@ from dataclasses import dataclass
 from dataclasses import field
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Self
 
 import sublime
 
 from .encodings import from_sublime as encoding_from_sublime
-from .settings import MergedSettingsDict
 from .utils import head_tail_content_st
+
+if TYPE_CHECKING:
+    from .settings import MergedSettingsDict
 
 
 @dataclass(frozen=True)
