@@ -23,8 +23,8 @@ from .windows import tear_down_window
 
 def _configured_debounce[T: Callable](func: T) -> T:
     """
-    Run `func` once the "debounce" setting's seconds have passed without another call for the same
-    first argument (the "key", e.g. a view); other keys are debounced independently. No delay
+    Run `func(view, ...)` once the "debounce" setting's seconds (the view's window's) have passed
+    without another call for the same view; other views are debounced independently. No delay
     configured, no debouncing.
 
     Taken and modified from https://github.com/salesforce/decorator-operations
@@ -32,20 +32,20 @@ def _configured_debounce[T: Callable](func: T) -> T:
     timers: dict[Any, threading.Timer] = {}
 
     @wraps(func)
-    def debounced(*args: Any, **kwargs: Any) -> None:
-        if (time_s := get_merged_plugin_setting("debounce", 0)) <= 0:
-            func(*args, **kwargs)
+    def debounced(view: sublime.View, *args: Any, **kwargs: Any) -> None:
+        if not (window := view.window()):
+            return
+        if (time_s := get_merged_plugin_setting("debounce", window=window)) <= 0:
+            func(view, *args, **kwargs)
             return
 
-        key = args[0] if args else None
-
         def call_function() -> None:
-            timers.pop(key, None)
-            func(*args, **kwargs)
+            timers.pop(view, None)
+            func(view, *args, **kwargs)
 
-        if timer := timers.get(key):
+        if timer := timers.get(view):
             timer.cancel()
-        timers[key] = timer = threading.Timer(time_s, call_function)
+        timers[view] = timer = threading.Timer(time_s, call_function)
         timer.start()
 
     return cast(T, debounced)
@@ -66,6 +66,14 @@ def _guarantee_primary_view[T: Callable](*, must_plaintext: bool = False) -> Cal
         return cast(T, wrapped)
 
     return decorator
+
+
+def run_on_startup_views() -> None:
+    """Detect syntax for the views Sublime Text had open before this plugin loaded (see `on_init`)."""
+    for view in G.startup_views:
+        if (window := view.window()) and get_merged_plugin_setting("run_on_startup_views", window=window):
+            run_auto_set_syntax_on_view(view, ListenerEvent.INIT)
+    G.startup_views.clear()
 
 
 class AutoSetSyntaxTextChangeListener(sublime_plugin.TextChangeListener):

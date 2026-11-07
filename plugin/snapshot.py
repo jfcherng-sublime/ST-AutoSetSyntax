@@ -1,5 +1,6 @@
 import stat
 from dataclasses import dataclass
+from dataclasses import field
 from functools import cached_property
 from pathlib import Path
 from typing import Self
@@ -7,7 +8,7 @@ from typing import Self
 import sublime
 
 from .encodings import from_sublime as encoding_from_sublime
-from .settings import get_merged_plugin_setting
+from .settings import MergedSettingsDict
 from .utils import head_tail_content_st
 
 
@@ -33,13 +34,18 @@ class ViewSnapshot:
     """The 0-indexed `(row, column)` of the first caret visually. -1 if no caret."""
     file_size: int = -1
     """The file size in bytes, captured at snapshot time. `-1` if not on a disk."""
-    trim_suffixes: tuple[str, ...] = ()
-    """The suffixes a file name may be trimmed of to find its syntax, per the window's settings."""
+    settings: MergedSettingsDict = field(default_factory=dict)
+    """The window's merged plugin settings, so nothing downstream has to look for a window."""
 
     def __post_init__(self) -> None:
         # for unsaved buffer, ST returns "Undefined" for its encoding
         if self.encoding == "Undefined":
             super().__setattr__("encoding", "UTF-8")
+
+    @property
+    def trim_suffixes(self) -> tuple[str, ...]:
+        """The suffixes a file name may be trimmed of to find its syntax."""
+        return self.settings.get("trim_suffixes", ())
 
     @cached_property
     def content_bytes(self) -> bytes:
@@ -77,10 +83,8 @@ class ViewSnapshot:
         return self.view if self.view.is_valid() else None
 
     @classmethod
-    def from_view(cls, view: sublime.View) -> Self:
+    def from_view(cls, view: sublime.View, settings: MergedSettingsDict) -> Self:
         """Create a `ViewSnapshot` object from a `sublime.View` object."""
-        window = view.window() or sublime.active_window()
-
         path: Path | None = None
         file_size = -1
         if path_ := view.file_name():
@@ -96,24 +100,20 @@ class ViewSnapshot:
         return cls(
             view=view,
             char_count=view.size(),
-            content=get_view_pseudo_content(view, window),
-            first_line=get_view_pseudo_first_line(view, window),
+            content=head_tail_content_st(view, settings["trim_file_size"]),
+            first_line=_first_line(view, settings["trim_first_line_length"]),
             encoding=view.encoding(),
             line_count=view.rowcol(view.size())[0] + 1,
             path_obj=path,
             syntax=view.syntax(),
             caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
             file_size=file_size,
-            trim_suffixes=get_merged_plugin_setting("trim_suffixes", (), window=window),
+            settings=settings,
         )
 
 
-def get_view_pseudo_content(view: sublime.View, window: sublime.Window) -> str:
-    return head_tail_content_st(view, get_merged_plugin_setting("trim_file_size", 20_000, window=window))
-
-
-def get_view_pseudo_first_line(view: sublime.View, window: sublime.Window) -> str:
+def _first_line(view: sublime.View, max_length: int) -> str:
     region = view.line(0)
-    if (max_length := get_merged_plugin_setting("trim_first_line_length", 500, window=window)) >= 0:
+    if max_length >= 0:
         region.b = min(region.b, max_length)
     return view.substr(region)

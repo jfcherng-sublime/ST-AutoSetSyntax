@@ -9,7 +9,7 @@ signature.
 
 ## Considered options
 
-A uniform `(ViewSnapshot, ListenerEvent, MergedSettingsDict) -> SyntaxDecision | None` signature for
+A uniform `(ViewSnapshot, ListenerEvent) -> SyntaxDecision | None` (the snapshot carries the settings) signature for
 all detectors, with exec output taking a snapshot it ignores — rejected for the cost above. A
 context object that builds the snapshot lazily would give both, but it is a larger change than the
 asymmetry costs, and would push snapshot-construction timing out of the one function that currently

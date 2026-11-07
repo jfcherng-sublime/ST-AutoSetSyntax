@@ -1,7 +1,6 @@
 from typing import final
 from typing import override
 
-from ...settings import get_merged_plugin_setting
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
 
@@ -10,6 +9,4 @@ from ..constraint import AbstractConstraint
 class IsMagikaEnabledConstraint(AbstractConstraint):
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        if not ((view := view_snapshot.valid_view) and (window := view.window())):
-            return False
-        return bool(get_merged_plugin_setting("magika.enabled", False, window=window))
+        return bool(view_snapshot.settings.get("magika.enabled"))

@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from conftest import DEFAULT_SETTINGS
 
 from plugin.constants import PLUGIN_NAME
 
@@ -251,3 +252,19 @@ class TestPrefSyntaxRules:
         assert valid == []
         assert len(invalid) == 1
         assert invalid[0].reason.startswith("invalid setting at user_syntax_rules: ")
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "debounce",
+        "magika.min_confidence",
+        "modeline_lines",
+        "trim_file_size",
+        "trim_first_line_length",
+        "trim_suffixes_auto",
+    ],
+)
+def test_settings_read_without_a_fallback_have_a_shipped_default(key):
+    """The code indexes these keys directly, so the shipped settings file is their only default."""
+    assert key in DEFAULT_SETTINGS

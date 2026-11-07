@@ -9,6 +9,7 @@ a partial assertion would let the log format drift unnoticed.
 registry, which the test stubs don't provide.
 """
 
+import dataclasses
 import json
 import sys
 from pathlib import Path
@@ -16,11 +17,19 @@ from unittest.mock import MagicMock
 
 import pytest
 import sublime
+from conftest import DEFAULT_SETTINGS
 
 import plugin.detectors as mod
 from plugin.detectors import SyntaxDecision
 from plugin.snapshot import ViewSnapshot
 from plugin.types import ListenerEvent
+
+_MAGIKA_ON = {**DEFAULT_SETTINGS, "magika.enabled": True}
+
+
+def _with(snapshot: ViewSnapshot, settings: dict) -> ViewSnapshot:
+    return dataclasses.replace(snapshot, settings=settings)
+
 
 MockView = sys.modules["sublime"].View
 
@@ -84,7 +93,7 @@ class TestDetect:
             decision = SyntaxDecision(sublime.Syntax(name="Python"), name) if name in deciders else None
             monkeypatch.setattr(mod, name, lambda *a, _d=decision, **kw: _d)
 
-        result = mod.detect(MagicMock(), MagicMock(), event, {})
+        result = mod.detect(MagicMock(), MagicMock(), event)
         return result.reason if result else None
 
     def test_first_detector_to_decide_wins(self, monkeypatch):
@@ -234,7 +243,7 @@ class TestDetectForNewView:
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: syntax)
         snap = _make_snapshot("")
 
-        decision = mod.detect_for_new_view(snap, {"new_file_syntax": "scope:text.html.markdown"})
+        decision = mod.detect_for_new_view(_with(snap, {"new_file_syntax": "scope:text.html.markdown"}))
 
         assert decision is not None
         assert decision.reason == "new file"
@@ -243,12 +252,12 @@ class TestDetectForNewView:
     def test_unset_new_file_syntax_decides_nothing(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Markdown"))
 
-        assert mod.detect_for_new_view(_make_snapshot(""), {}) is None
+        assert mod.detect_for_new_view(_with(_make_snapshot(""), {})) is None
 
     def test_unresolvable_new_file_syntax_decides_nothing(self, monkeypatch):
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: None)
 
-        assert mod.detect_for_new_view(_make_snapshot(""), {"new_file_syntax": "nope"}) is None
+        assert mod.detect_for_new_view(_with(_make_snapshot(""), {"new_file_syntax": "nope"})) is None
 
 
 def _syntax_test_snapshot(filename: str, first_line: str) -> ViewSnapshot:
@@ -351,8 +360,8 @@ def _queried_mode_name(monkeypatch, first_line: str, settings: dict | None = Non
 
     monkeypatch.setattr(mod, "find_syntax", _fake_find)
 
-    snap = _modeline_snapshot(first_line)
-    mod._detect_with_first_line(snap, ListenerEvent.LOAD, settings if settings is not None else {"modeline_lines": 5})
+    snap = _with(_modeline_snapshot(first_line), settings if settings is not None else {"modeline_lines": 5})
+    mod._detect_with_first_line(snap, ListenerEvent.LOAD)
     return queried[0] if queried else None
 
 
@@ -389,9 +398,8 @@ class TestDetectWithFirstLineEmacsModeline:
         monkeypatch.setattr(mod, "find_syntax", lambda *a, **kw: sublime.Syntax(name="Python"))
 
         decision = mod._detect_with_first_line(
-            _modeline_snapshot("# -*- mode: python -*-"),
+            _with(_modeline_snapshot("# -*- mode: python -*-"), {"modeline_lines": 5}),
             ListenerEvent.LOAD,
-            {"modeline_lines": 5},
         )
 
         assert decision is not None
@@ -442,19 +450,19 @@ class TestDetectWithTrimmedFilename:
             line_count=1,
             path_obj=None,
             syntax=sublime.Syntax(name="Plain Text"),
-            trim_suffixes=trim_suffixes,
+            settings={"trim_suffixes": trim_suffixes},
         )
 
     def test_trims_configured_suffix_and_finds_syntax(self, monkeypatch):
         snap = self._make_snapshot_for_trimming("app.js.min")
-        settings = {"trim_suffixes_auto": False}
+        settings = {"trim_suffixes": (".min",), "trim_suffixes_auto": False}
 
         def _fake_find_syntax(filename):
             return sublime.Syntax(name="JavaScript") if filename == "app.js" else sublime.Syntax(name="Plain Text")
 
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", _fake_find_syntax, raising=False)
 
-        decision = mod._detect_with_trimmed_filename(snap, settings)
+        decision = mod._detect_with_trimmed_filename(_with(snap, settings))
 
         assert decision is not None
         assert decision.reason == "trimmed filename"
@@ -467,17 +475,17 @@ class TestDetectWithTrimmedFilename:
 
     def test_no_matching_suffix_returns_no_decision(self, monkeypatch):
         snap = self._make_snapshot_for_trimming("app.js")
-        settings = {"trim_suffixes_auto": False}
+        settings = {"trim_suffixes": (".min",), "trim_suffixes_auto": False}
 
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
 
-        assert mod._detect_with_trimmed_filename(snap, settings) is None
+        assert mod._detect_with_trimmed_filename(_with(snap, settings)) is None
 
     def test_trimmed_match_that_is_still_plaintext_is_rejected(self, monkeypatch):
         """A trimmed candidate resolving back to Plain Text isn't a real match -- must keep
         trying other candidates / suffixes instead of "succeeding" with a no-op syntax."""
         snap = self._make_snapshot_for_trimming("app.js.min.min")
-        settings = {"trim_suffixes_auto": False}
+        settings = {"trim_suffixes": (".min",), "trim_suffixes_auto": False}
 
         def _fake_find_syntax(filename):
             if filename == "app.js":
@@ -486,7 +494,7 @@ class TestDetectWithTrimmedFilename:
 
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", _fake_find_syntax, raising=False)
 
-        decision = mod._detect_with_trimmed_filename(snap, settings)
+        decision = mod._detect_with_trimmed_filename(_with(snap, settings))
 
         assert decision is not None
         assert decision.details["filename_trimmed"] == "app.js"
@@ -507,7 +515,7 @@ class TestDetectWithTrimmedFilename:
             syntax=sublime.Syntax(name="Python"),
         )
 
-        assert mod._detect_with_trimmed_filename(snap, {}) is None
+        assert mod._detect_with_trimmed_filename(_with(snap, DEFAULT_SETTINGS)) is None
 
     def test_unsaved_buffer_with_no_file_name_returns_no_decision(self):
         view = _make_view(syntax=sublime.Syntax(name="Plain Text"))
@@ -523,7 +531,7 @@ class TestDetectWithTrimmedFilename:
             syntax=sublime.Syntax(name="Plain Text"),
         )
 
-        assert mod._detect_with_trimmed_filename(snap, {}) is None
+        assert mod._detect_with_trimmed_filename(_with(snap, DEFAULT_SETTINGS)) is None
 
 
 class _FakeMagikaResult:
@@ -570,7 +578,10 @@ class TestDetectWithMagika:
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot()
 
-        assert mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": False}) is None
+        assert (
+            mod._detect_with_magika(_with(snap, {**DEFAULT_SETTINGS, "magika.enabled": False}), ListenerEvent.LOAD)
+            is None
+        )
         magika_obj.identify_path.assert_not_called()
         magika_obj.identify_bytes.assert_not_called()
 
@@ -580,7 +591,7 @@ class TestDetectWithMagika:
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot()
 
-        decision = mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True})
+        decision = mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.LOAD)
 
         assert decision is not None
         assert decision.reason == "Magika (Deep Learning)"
@@ -595,7 +606,7 @@ class TestDetectWithMagika:
         magika_obj.identify_path.return_value = _FakeMagikaResult(label="python", score=0.9)
         self._install_magika(monkeypatch, magika_obj)
 
-        mod._detect_with_magika(self._make_magika_snapshot(), ListenerEvent.LOAD, {"magika.enabled": True})
+        mod._detect_with_magika(_with(self._make_magika_snapshot(), _MAGIKA_ON), ListenerEvent.LOAD)
 
         assert messages == []
 
@@ -604,9 +615,9 @@ class TestDetectWithMagika:
         magika_obj.identify_path.return_value = _FakeMagikaResult(label="python", score=0.3)
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot()
-        settings = {"magika.enabled": True, "magika.min_confidence": 0.5}
+        settings = {**_MAGIKA_ON, "magika.min_confidence": 0.5}
 
-        assert mod._detect_with_magika(snap, ListenerEvent.LOAD, settings) is None
+        assert mod._detect_with_magika(_with(snap, settings), ListenerEvent.LOAD) is None
 
     def test_ignored_label_returns_no_decision(self, monkeypatch):
         magika_obj = MagicMock()
@@ -615,7 +626,7 @@ class TestDetectWithMagika:
         monkeypatch.setattr(mod, "get_magika_ignored_labels", lambda: {"txt"})
         snap = self._make_magika_snapshot()
 
-        assert mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.LOAD) is None
 
     def test_failed_identification_returns_no_decision(self, monkeypatch):
         magika_obj = MagicMock()
@@ -623,7 +634,7 @@ class TestDetectWithMagika:
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot()
 
-        assert mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.LOAD) is None
 
     def test_modify_event_single_line_content_skipped(self, monkeypatch):
         """Guards against reclassifying mid-typing on the very first line, e.g. right after
@@ -633,7 +644,7 @@ class TestDetectWithMagika:
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot(content="import ", dirty=True)
 
-        assert mod._detect_with_magika(snap, ListenerEvent.MODIFY, {"magika.enabled": True}) is None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.MODIFY) is None
         magika_obj.identify_bytes.assert_not_called()
 
     def test_modify_event_multi_line_content_proceeds(self, monkeypatch):
@@ -642,7 +653,7 @@ class TestDetectWithMagika:
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot(content="import os\nprint(os.getcwd())\n", dirty=True)
 
-        assert mod._detect_with_magika(snap, ListenerEvent.MODIFY, {"magika.enabled": True}) is not None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.MODIFY) is not None
 
     def test_extensioned_file_skipped_unless_command_event(self, monkeypatch):
         """Files that already have an extension get their syntax from that extension via ST's
@@ -665,10 +676,10 @@ class TestDetectWithMagika:
             syntax=sublime.Syntax(name="Plain Text"),
         )
 
-        assert mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.LOAD) is None
         magika_obj.identify_path.assert_not_called()
 
-        assert mod._detect_with_magika(snap, ListenerEvent.COMMAND, {"magika.enabled": True}) is not None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.COMMAND) is not None
 
     def test_dirty_buffer_uses_identify_bytes_not_identify_path(self, monkeypatch):
         """A dirty (unsaved-changes) buffer's on-disk content is stale -- must analyze the live
@@ -678,7 +689,7 @@ class TestDetectWithMagika:
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot(dirty=True)
 
-        assert mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is not None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.LOAD) is not None
         magika_obj.identify_path.assert_not_called()
         magika_obj.identify_bytes.assert_called_once()
 
@@ -688,6 +699,6 @@ class TestDetectWithMagika:
         self._install_magika(monkeypatch, magika_obj)
         snap = self._make_magika_snapshot(dirty=False)
 
-        assert mod._detect_with_magika(snap, ListenerEvent.LOAD, {"magika.enabled": True}) is not None
+        assert mod._detect_with_magika(_with(snap, _MAGIKA_ON), ListenerEvent.LOAD) is not None
         magika_obj.identify_bytes.assert_not_called()
         magika_obj.identify_path.assert_called_once()

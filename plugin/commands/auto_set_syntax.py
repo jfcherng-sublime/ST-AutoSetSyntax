@@ -49,12 +49,12 @@ def run_auto_set_syntax_on_view(
     if not is_syntaxable_view(view, must_plaintext=must_plaintext):
         return False
 
-    view_snapshot = ViewSnapshot.from_view(view)
+    view_snapshot = ViewSnapshot.from_view(view, settings)
 
     if event is ListenerEvent.NEW:
-        return _apply(view, detect_for_new_view(view_snapshot, settings), event)
+        return _apply(view, detect_for_new_view(view_snapshot), event)
 
-    if decision := detect(view_snapshot, compiled.collection, event, settings):
+    if decision := detect(view_snapshot, compiled.collection, event):
         return _apply(view, decision, event)
 
     return _sorry_cannot_help(view, event)

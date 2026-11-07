@@ -22,17 +22,12 @@ type SettingsDict = MutableMapping[str, Any]
 type MergedSettingsDict = Mapping[str, Any]
 
 
-def get_merged_plugin_setting(
-    key: str,
-    default: Any | None = None,
-    *,
-    window: sublime.Window | None = None,
-) -> Any:
-    return get_merged_plugin_settings(window=window or sublime.active_window()).get(key, default)
+def get_merged_plugin_setting(key: str, default: Any | None = None, *, window: sublime.Window) -> Any:
+    return get_merged_plugin_settings(window=window).get(key, default)
 
 
-def get_merged_plugin_settings(*, window: sublime.Window | None = None) -> MergedSettingsDict:
-    return AioSettings.get_all(window or sublime.active_window())
+def get_merged_plugin_settings(*, window: sublime.Window) -> MergedSettingsDict:
+    return AioSettings.get_all(window)
 
 
 def get_st_setting(key: str, default: Any | None = None) -> Any:
@@ -49,7 +44,7 @@ SYNTAX_RULE_SOURCES: Final = ("core_syntax_rules", "project_syntax_rules", "user
 """The settings syntax rules come from, in the order they're tested (the first matching rule wins)."""
 
 
-def pref_syntax_rules(*, window: sublime.Window | None = None) -> tuple[list[StSyntaxRule], list[DroppedRule]]:
+def pref_syntax_rules(*, window: sublime.Window) -> tuple[list[StSyntaxRule], list[DroppedRule]]:
     """
     The syntax rules, validated one by one, plus the ones that failed, located for the user.
 

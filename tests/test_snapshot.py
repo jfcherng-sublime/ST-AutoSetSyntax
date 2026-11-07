@@ -2,6 +2,8 @@
 
 import sys
 
+from conftest import DEFAULT_SETTINGS
+
 from plugin.snapshot import ViewSnapshot
 
 
@@ -85,15 +87,18 @@ class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
     def _make_view(monkeypatch, file_path):
         from unittest.mock import MagicMock
 
+        import sublime
+
         import plugin.snapshot as snapshot_mod
 
-        monkeypatch.setattr(snapshot_mod, "get_view_pseudo_content", lambda view, window: "")
-        monkeypatch.setattr(snapshot_mod, "get_view_pseudo_first_line", lambda view, window: "")
+        monkeypatch.setattr(snapshot_mod, "head_tail_content_st", lambda view, partial: "")
 
         view = MagicMock()
         view.file_name.return_value = str(file_path)
         view.window.return_value = MagicMock()
         view.size.return_value = 0
+        view.line.return_value = sublime.Region(0, 0)
+        view.substr.return_value = ""
         view.rowcol.return_value = (0, 0)
         view.sel.return_value = []
         view.encoding.return_value = "UTF-8"
@@ -105,7 +110,7 @@ class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
         file_path.write_text("hello")  # 5 bytes
         view = self._make_view(monkeypatch, file_path)
 
-        snap = ViewSnapshot.from_view(view)
+        snap = ViewSnapshot.from_view(view, DEFAULT_SETTINGS)
 
         # mutate the file BEFORE ever reading `file_size` -- a lazily-computed value would
         # pick up this new size on first access; a properly captured one must not
@@ -119,7 +124,7 @@ class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
         missing_path = tmp_path / "gone.txt"  # never created on disk
         view = self._make_view(monkeypatch, missing_path)
 
-        snap = ViewSnapshot.from_view(view)
+        snap = ViewSnapshot.from_view(view, DEFAULT_SETTINGS)
         assert snap.file_size == -1
         assert snap.path_obj is None
 
@@ -130,7 +135,7 @@ class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
         a_directory.mkdir()
         view = self._make_view(monkeypatch, a_directory)
 
-        snap = ViewSnapshot.from_view(view)
+        snap = ViewSnapshot.from_view(view, DEFAULT_SETTINGS)
         assert snap.file_size == -1
         assert snap.path_obj is None
 

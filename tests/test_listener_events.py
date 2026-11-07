@@ -1,5 +1,6 @@
 """Tests for how Sublime Text events become `ListenerEvent`s (plugin/listener.py)."""
 
+import operator
 import time
 from unittest.mock import MagicMock
 
@@ -146,6 +147,7 @@ class TestDebounce:
     def record(self, monkeypatch):
         monkeypatch.setattr(listener_mod, "get_merged_plugin_setting", lambda *a, **kw: self.delay)
         calls = []
+        self.view1, self.view2 = MagicMock(), MagicMock()
         return listener_mod._configured_debounce(lambda key, value: calls.append((key, value))), calls
 
     delay = 0.05
@@ -154,36 +156,36 @@ class TestDebounce:
         self.delay = 0
         func, calls = record
 
-        func("view1", 1)
+        func(self.view1, 1)
 
-        assert calls == [("view1", 1)]
+        assert calls == [(self.view1, 1)]
 
     def test_runs_once_after_the_delay(self, record):
         func, calls = record
 
-        func("view1", "a")
+        func(self.view1, "a")
         assert calls == []
         time.sleep(0.2)
 
-        assert calls == [("view1", "a")]
+        assert calls == [(self.view1, "a")]
 
     def test_rapid_calls_for_one_key_only_run_the_last(self, record):
         func, calls = record
 
         for value in (1, 2, 3):
-            func("view1", value)
+            func(self.view1, value)
         time.sleep(0.2)
 
-        assert calls == [("view1", 3)]
+        assert calls == [(self.view1, 3)]
 
     def test_another_key_is_not_cancelled(self, record):
         func, calls = record
 
-        func("view1", "a")
-        func("view2", "b")
+        func(self.view1, "a")
+        func(self.view2, "b")
         time.sleep(0.2)
 
-        assert sorted(calls) == [("view1", "a"), ("view2", "b")]
+        assert sorted(calls, key=operator.itemgetter(1)) == [(self.view1, "a"), (self.view2, "b")]
 
 
 class TestTextChangeListener:
@@ -229,3 +231,21 @@ class TestTextChangeListener:
         instance.on_text_changed_async(changes)
 
         assert forwarded == [(view, changes)]
+
+
+class TestRunOnStartupViews:
+    def test_runs_only_for_views_whose_window_enables_it_and_forgets_all(self, monkeypatch):
+        enabled_window, disabled_window = MagicMock(), MagicMock()
+        enabled, disabled, windowless = MagicMock(), MagicMock(), MagicMock()
+        enabled.window.return_value = enabled_window
+        disabled.window.return_value = disabled_window
+        windowless.window.return_value = None
+        ran = []
+        monkeypatch.setattr(listener_mod, "get_merged_plugin_setting", lambda key, *, window: window is enabled_window)
+        monkeypatch.setattr(listener_mod, "run_auto_set_syntax_on_view", lambda view, event: ran.append(view))
+        monkeypatch.setattr(G, "startup_views", {enabled, disabled, windowless})
+
+        listener_mod.run_on_startup_views()
+
+        assert ran == [enabled]
+        assert G.startup_views == set()

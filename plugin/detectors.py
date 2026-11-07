@@ -69,7 +69,6 @@ def detect(
     view_snapshot: ViewSnapshot,
     syntax_rule_collection: SyntaxRuleCollection,
     event: ListenerEvent,
-    settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     """Try each detector in order and return the first decision reached, if any."""
     if decision := _detect_for_st_syntax_test(view_snapshot):
@@ -78,13 +77,13 @@ def detect(
     if decision := _detect_with_plugin_rules(view_snapshot, syntax_rule_collection, event):
         return decision
 
-    if decision := _detect_with_first_line(view_snapshot, event, settings):
+    if decision := _detect_with_first_line(view_snapshot, event):
         return decision
 
-    if event in _FILE_EVENTS and (decision := _detect_with_trimmed_filename(view_snapshot, settings)):
+    if event in _FILE_EVENTS and (decision := _detect_with_trimmed_filename(view_snapshot)):
         return decision
 
-    if event in _FILE_OR_EDIT_EVENTS and (decision := _detect_with_magika(view_snapshot, event, settings)):
+    if event in _FILE_OR_EDIT_EVENTS and (decision := _detect_with_magika(view_snapshot, event)):
         return decision
 
     return _detect_with_heuristics(view_snapshot)
@@ -104,13 +103,10 @@ def detect_for_exec_output(
     return None
 
 
-def detect_for_new_view(
-    view_snapshot: ViewSnapshot,
-    settings: MergedSettingsDict,
-) -> SyntaxDecision | None:
+def detect_for_new_view(view_snapshot: ViewSnapshot) -> SyntaxDecision | None:
     if (
         view_snapshot.valid_view
-        and (new_file_syntax := settings.get("new_file_syntax"))
+        and (new_file_syntax := view_snapshot.settings.get("new_file_syntax"))
         and (syntax := find_syntax(new_file_syntax, include_plaintext=False))
     ):
         return SyntaxDecision(syntax, "new file", {"new_file_syntax": new_file_syntax})
@@ -142,11 +138,7 @@ def _detect_with_plugin_rules(
     return None
 
 
-def _detect_with_first_line(
-    view_snapshot: ViewSnapshot,
-    event: ListenerEvent,
-    settings: MergedSettingsDict,
-) -> SyntaxDecision | None:
+def _detect_with_first_line(view_snapshot: ViewSnapshot, event: ListenerEvent) -> SyntaxDecision | None:
     # Note that this only works for files under some circumstances.
     # This is to prevent from, for example, changing a ".erb" (Rails HTML template) file into HTML syntax.
     # But we want to change a file whose name is "cpp" with a Python shebang into Python syntax.
@@ -165,7 +157,7 @@ def _detect_with_first_line(
         # content instead, a "# vim: ..." or "-*- ... -*-" line that merely appears inside a
         # code block somewhere in the document (e.g., a Markdown fenced code example) would be
         # wrongly treated as a real modeline. See https://github.com/jfcherng-sublime/ST-AutoSetSyntax/issues/30
-        modeline_lines: int = settings.get("modeline_lines", 5)
+        modeline_lines: int = view_snapshot.settings["modeline_lines"]
         modeline_content = head_tail_lines(view_snapshot.content, modeline_lines)
 
         # Emacs's "-*- ... -*-" payload is either a bare mode name ("-*- python -*-") or a
@@ -216,10 +208,7 @@ def _detect_with_first_line(
     return None
 
 
-def _detect_with_trimmed_filename(
-    view_snapshot: ViewSnapshot,
-    settings: MergedSettingsDict,
-) -> SyntaxDecision | None:
+def _detect_with_trimmed_filename(view_snapshot: ViewSnapshot) -> SyntaxDecision | None:
     if not (
         (view := view_snapshot.valid_view)
         and (filepath := view.file_name())
@@ -230,7 +219,7 @@ def _detect_with_trimmed_filename(
 
     original = Path(filepath).name
     trim_suffixes = view_snapshot.trim_suffixes
-    trim_suffixes_auto = settings.get("trim_suffixes_auto", False)
+    trim_suffixes_auto = view_snapshot.settings["trim_suffixes_auto"]
 
     filenames = chain(
         list_trimmed_strings(original, trim_suffixes, skip_self=True),
@@ -252,11 +241,8 @@ def _detect_with_trimmed_filename(
     return None
 
 
-def _detect_with_magika(
-    view_snapshot: ViewSnapshot,
-    event: ListenerEvent,
-    settings: MergedSettingsDict,
-) -> SyntaxDecision | None:
+def _detect_with_magika(view_snapshot: ViewSnapshot, event: ListenerEvent) -> SyntaxDecision | None:
+    settings = view_snapshot.settings
     if not (
         settings.get("magika.enabled")
         and (magika_obj := get_magika_object())
@@ -285,7 +271,7 @@ def _detect_with_magika(
     magika_label = magika_result.dl.label
     magika_score = magika_result.score  # range: 0.0 ~ 1.0
 
-    threshold: float = settings.get("magika.min_confidence", 0.0)
+    threshold: float = settings["magika.min_confidence"]
     if magika_score < threshold or magika_label in get_magika_ignored_labels():
         return None
 

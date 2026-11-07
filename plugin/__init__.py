@@ -14,6 +14,7 @@ from .constants import PLUGIN_PY_LIBS_DIR
 from .custom import load_custom_implementations
 from .listener import AutoSetSyntaxEventListener
 from .listener import AutoSetSyntaxTextChangeListener
+from .listener import run_on_startup_views
 from .logger import AutoSetSyntaxAppendLogCommand
 from .logger import AutoSetSyntaxClearLogPanelCommand
 from .logger import AutoSetSyntaxToggleLogPanelCommand
@@ -49,10 +50,14 @@ __all__ = (
     "AutoSetSyntaxToggleLogPanelCommand",
     "AutoSetSyntaxUpdateLogCommand",
     "Fold",
+    "G",
+    "ListenerEvent",
     "MatchableRule",
     "ViewSnapshot",
+    "get_merged_plugin_setting",
     "plugin_loaded",
     "plugin_unloaded",
+    "run_auto_set_syntax_on_view",
 )
 
 
@@ -73,10 +78,7 @@ def _plugin_loaded() -> None:
     for window in sublime.windows():
         set_up_window(window)
 
-    if get_merged_plugin_setting("run_on_startup_views"):
-        sublime.set_timeout_async(_run_on_startup_views)
-    else:
-        G.startup_views.clear()
+    sublime.set_timeout_async(run_on_startup_views)
 
 
 def plugin_unloaded() -> None:
@@ -90,9 +92,3 @@ def plugin_unloaded() -> None:
 def _add_python_lib_path() -> None:
     if (path := str(PLUGIN_PY_LIBS_DIR)) not in sys.path:
         sys.path.insert(0, path)
-
-
-def _run_on_startup_views() -> None:
-    for view in G.startup_views:
-        run_auto_set_syntax_on_view(view, ListenerEvent.INIT)
-    G.startup_views.clear()

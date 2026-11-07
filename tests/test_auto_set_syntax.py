@@ -78,7 +78,7 @@ class TestRunAutoSetSyntaxOnView:
         monkeypatch.setattr(mod, "G", fake_g)
         monkeypatch.setattr(mod, "get_merged_plugin_settings", lambda **kw: {})
         monkeypatch.setattr(mod, "is_syntaxable_view", lambda *a, **kw: syntaxable)
-        monkeypatch.setattr(mod.ViewSnapshot, "from_view", classmethod(lambda cls, v: MagicMock()))
+        monkeypatch.setattr(mod.ViewSnapshot, "from_view", classmethod(lambda cls, v, s: MagicMock()))
         return view
 
     def test_plugin_not_ready_bails_out(self, monkeypatch):
@@ -91,7 +91,7 @@ class TestRunAutoSetSyntaxOnView:
         view = self._prepare(monkeypatch)
         snapshots = []
         monkeypatch.setattr(
-            mod.ViewSnapshot, "from_view", classmethod(lambda cls, v: snapshots.append(v) or MagicMock())
+            mod.ViewSnapshot, "from_view", classmethod(lambda cls, v, s: snapshots.append(v) or MagicMock())
         )
         syntax = sublime.Syntax(name="Python")
         monkeypatch.setattr(mod, "detect_for_exec_output", lambda *a, **kw: SyntaxDecision(syntax, {"r": "exec"}))

@@ -5,6 +5,8 @@ plugin code is imported, so that unit tests can run outside Sublime Text.
 
 import importlib.machinery
 import importlib.util
+import json
+import re
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -13,6 +15,17 @@ from unittest.mock import MagicMock
 import pytest
 
 _PROJECT_ROOT = Path(__file__).parent.parent
+
+
+def _load_default_settings() -> dict:
+    """The shipped settings file: the one place a setting's default is written down."""
+    text = (_PROJECT_ROOT / "AutoSetSyntax.sublime-settings").read_text(encoding="utf-8")
+    text = re.sub(r'("(?:\\.|[^"\\])*")|//[^\n]*', lambda m: m.group(1) or "", text)
+    text = re.sub(r",(\s*[}\]])", r"\1", text)
+    return json.loads(text)
+
+
+DEFAULT_SETTINGS = _load_default_settings()
 
 
 # ── Sublime Text stubs ────────────────────────────────────────────────────────
@@ -216,6 +229,7 @@ def make_snapshot():
         char_count: int | None = None,
         # file size captured "at snapshot time" (use -1, the default, for "not on disk")
         file_size: int | None = None,
+        settings: dict | None = None,
     ) -> ViewSnapshot:
         snap = ViewSnapshot(
             view=MockView(),
@@ -227,6 +241,7 @@ def make_snapshot():
             path_obj=Path(path) if path else None,
             syntax=None,
             file_size=file_size if file_size is not None else -1,
+            settings=settings or {},
         )
         # Pre-populate lazy cached properties so tests don't need a real view
         snap.__dict__["content"] = content
