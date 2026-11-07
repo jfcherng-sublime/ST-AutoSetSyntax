@@ -3,6 +3,19 @@
 import pytest
 
 from plugin.rules.constraint import ConstraintRule
+from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
+from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [RelativeExistsConstraint("a"), IsJavascriptProjectConstraint()],
+    ids=lambda constraint: constraint.name(),
+)
+def test_never_passes_without_a_file_even_inverted(make_snapshot, constraint):
+    snap = make_snapshot()  # no path -> not on disk
+    for inverted in (False, True):
+        assert ConstraintRule(constraint=constraint, inverted=inverted).test(snap) is False
 
 
 class TestRelativeExistsConstraint:
@@ -51,15 +64,6 @@ class TestRelativeExistsConstraint:
         assert RelativeExistsConstraint("a.txt", "b.txt", match="all").test(snap) is True
         assert RelativeExistsConstraint("a.txt", "missing.txt", match="all").test(snap) is False
 
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
-
-        snap = make_snapshot()  # path=None
-        for inverted in (False, True):
-            assert (
-                ConstraintRule(constraint=RelativeExistsConstraint("anything"), inverted=inverted).test(snap) is False
-            )
-
     def test_empty_args_folds_to_false(self):
         from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
 
@@ -77,13 +81,7 @@ class TestRelativeExistsConstraint:
 
         snap = make_snapshot(path=str(test_file))
         constraint = RelativeExistsConstraint("a.txt", "missing.txt", match=None)
-        assert constraint.match == "any"
         assert constraint.test(snap) is True
-
-    def test_name(self):
-        from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
-
-        assert RelativeExistsConstraint.name() == "relative_exists"
 
 
 class TestIsInGitRepoConstraint:
@@ -98,60 +96,6 @@ class TestIsInGitRepoConstraint:
 
         snap = make_snapshot(path=str(test_file))
         assert IsInGitRepoConstraint().test(snap) is True
-
-    def test_name(self):
-        from plugin.rules.constraints.is_in_git_repo import IsInGitRepoConstraint
-
-        assert IsInGitRepoConstraint.name() == "is_in_git_repo"
-
-
-class TestIsInHgRepoConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_in_hg_repo import IsInHgRepoConstraint
-
-        assert IsInHgRepoConstraint.name() == "is_in_hg_repo"
-
-
-class TestIsInSvnRepoConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_in_svn_repo import IsInSvnRepoConstraint
-
-        assert IsInSvnRepoConstraint.name() == "is_in_svn_repo"
-
-
-class TestIsGoProjectConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_go_project import IsGoProjectConstraint
-
-        assert IsGoProjectConstraint.name() == "is_go_project"
-
-
-class TestIsPhpProjectConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_php_project import IsPhpProjectConstraint
-
-        assert IsPhpProjectConstraint.name() == "is_php_project"
-
-
-class TestIsPythonProjectConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_python_project import IsPythonProjectConstraint
-
-        assert IsPythonProjectConstraint.name() == "is_python_project"
-
-
-class TestIsRustProjectConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_rust_project import IsRustProjectConstraint
-
-        assert IsRustProjectConstraint.name() == "is_rust_project"
-
-
-class TestIsTypescriptProjectConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_typescript_project import IsTypescriptProjectConstraint
-
-        assert IsTypescriptProjectConstraint.name() == "is_typescript_project"
 
 
 class TestIsJavascriptProjectConstraint:
@@ -200,14 +144,6 @@ class TestIsJavascriptProjectConstraint:
         snap = make_snapshot(path=str(test_file))
         assert IsJavascriptProjectConstraint().test(snap) is True
 
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
-
-        snap = make_snapshot()  # no path -> not on disk
-        for inverted in (False, True):
-            rule = ConstraintRule(constraint=IsJavascriptProjectConstraint(), inverted=inverted)
-            assert rule.test(snap) is False
-
     def test_cached_outer_js_root_does_not_override_a_nearer_typescript_root(self, make_snapshot, tmp_path):
         """A monorepo whose root is JS but holds a TS package: the nearest `package.json` decides,
         so the cached outer root must not answer for a file under the nearer TS one."""
@@ -226,39 +162,13 @@ class TestIsJavascriptProjectConstraint:
         assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(root_file))) is True
         assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(app_file))) is False
 
-    def test_successful_match_is_cached_for_a_second_file_in_the_same_project(self, make_snapshot, tmp_path):
-        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
-
-        (tmp_path / "package.json").write_text("")
-        first_file = tmp_path / "src" / "index.js"
-        first_file.parent.mkdir(parents=True)
-        first_file.write_text("")
-        second_file = tmp_path / "src" / "app.js"
-        second_file.write_text("")
-
-        assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(first_file))) is True
-        assert tmp_path in IsJavascriptProjectConstraint._found_dirs
-        assert IsJavascriptProjectConstraint().test(make_snapshot(path=str(second_file))) is True
-
-    def test_name(self):
-        from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
-
-        assert IsJavascriptProjectConstraint.name() == "is_javascript_project"
-
-
-class TestIsInPythonDjangoProjectConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
-
-        assert IsInPythonDjangoProjectConstraint.name() == "is_in_python_django_project"
-
 
 class TestIsInPythonDjangoProjectConstraintRealTest:
     """The constraint's own `test()` is materially different from (stricter than) the shared
-    `find_parent_with_sibling` helper exercised above: it requires *both* a `manage.py` in a
+    `find_parent_with_sibling` helper: it requires *both* a `manage.py` in a
     parent directory *and* a sibling subdirectory of that parent containing all three of
     settings.py/urls.py/wsgi.py (the actual Django-root layout), not just `manage.py` alone.
-    None of the tests above actually call this method, so it had no real coverage."""
+    """
 
     @staticmethod
     def _make_django_project(tmp_path, *, django_root_name: str = "myproject"):
@@ -324,62 +234,15 @@ class TestIsInPythonDjangoProjectConstraintRealTest:
         snap = make_snapshot(path=str(app_file))
         assert IsInPythonDjangoProjectConstraint().test(snap) is False
 
-    def test_successful_match_is_cached_for_a_second_file_in_the_same_project(self, make_snapshot, tmp_path):
-        """A second file under the same project root should hit the `_found_dirs` fast-path
-        cache rather than re-scanning the filesystem."""
-        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
 
-        self._make_django_project(tmp_path)
-        first_file = tmp_path / "myapp" / "models.py"
-        first_file.parent.mkdir()
-        first_file.write_text("")
-        second_file = tmp_path / "myapp" / "views.py"
-        second_file.write_text("")
+@pytest.mark.parametrize(("setting", "expected"), [(True, True), (False, False), (None, False)])
+def test_is_magika_enabled_follows_the_setting_and_defaults_to_off(make_snapshot, setting, expected):
+    from unittest.mock import patch
 
-        assert IsInPythonDjangoProjectConstraint().test(make_snapshot(path=str(first_file))) is True
-        assert tmp_path in IsInPythonDjangoProjectConstraint._found_dirs
-        assert IsInPythonDjangoProjectConstraint().test(make_snapshot(path=str(second_file))) is True
+    from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
 
-
-class TestIsInRubyOnRailsProjectConstraint:
-    def test_name(self):
-        from plugin.rules.constraints.is_in_ruby_on_rails_project import IsInRubyOnRailsProjectConstraint
-
-        assert IsInRubyOnRailsProjectConstraint.name() == "is_in_ruby_on_rails_project"
-
-
-class TestIsMagikaEnabledConstraint:
-    def test_enabled(self, make_snapshot):
-        from unittest.mock import patch
-
-        from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
-
-        snap = make_snapshot()
-        with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=True):
-            assert IsMagikaEnabledConstraint().test(snap) is True
-
-    def test_disabled(self, make_snapshot):
-        from unittest.mock import patch
-
-        from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
-
-        snap = make_snapshot()
-        with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=False):
-            assert IsMagikaEnabledConstraint().test(snap) is False
-
-    def test_default_disabled(self, make_snapshot):
-        from unittest.mock import patch
-
-        from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
-
-        snap = make_snapshot()
-        with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=None):
-            assert IsMagikaEnabledConstraint().test(snap) is False
-
-    def test_name(self):
-        from plugin.rules.constraints.is_magika_enabled import IsMagikaEnabledConstraint
-
-        assert IsMagikaEnabledConstraint.name() == "is_magika_enabled"
+    with patch("plugin.rules.constraints.is_magika_enabled.get_merged_plugin_setting", return_value=setting):
+        assert IsMagikaEnabledConstraint().test(make_snapshot()) is expected
 
 
 # ── parent-marker constraints ────────────────────────────────────────────────

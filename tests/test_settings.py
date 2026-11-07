@@ -16,16 +16,11 @@ from plugin.settings import pref_syntax_rules
 # ── get_st_setting / get_st_settings ────────────────────────────────────────
 
 
-class TestStSettings:
-    def test_get_st_setting_returns_the_stored_value(self):
-        with patch("plugin.settings.get_st_settings") as mock_settings:
-            mock_settings.return_value.get.return_value = 7
-            assert get_st_setting("some_key", 3) == 7
-
-    def test_get_st_setting_treats_null_as_unset(self):
-        with patch("plugin.settings.get_st_settings") as mock_settings:
-            mock_settings.return_value.get.return_value = None
-            assert get_st_setting("some_key", 3) == 3
+@pytest.mark.parametrize(("stored", "expected"), [(7, 7), (None, 3)])
+def test_get_st_setting_treats_null_as_unset(stored, expected):
+    with patch("plugin.settings.get_st_settings") as mock_settings:
+        mock_settings.return_value.get.return_value = stored
+        assert get_st_setting("some_key", 3) == expected
 
 
 # ── AioSettings ──────────────────────────────────────────────────────────────

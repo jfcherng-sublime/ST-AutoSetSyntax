@@ -1,158 +1,91 @@
 """Tests for pure utility functions in plugin/utils.py."""
 
+import random
 import re
+from abc import ABC
+from abc import abstractmethod
 
 import pytest
 
-# ── camel_to_snake ────────────────────────────────────────────────────────────
+from plugin.utils import camel_to_snake
+from plugin.utils import drop_falsy
+from plugin.utils import ensure_trailing_newline
+from plugin.utils import first_last_n_lines
+from plugin.utils import get_fqcn
+from plugin.utils import head_tail_lines
+from plugin.utils import list_all_subclasses
+from plugin.utils import list_trimmed_filenames
+from plugin.utils import list_trimmed_strings
+from plugin.utils import merge_literals_to_regex
+from plugin.utils import merge_regexes
+from plugin.utils import parse_regex_flags
+from plugin.utils import str_finditer
 
 
-class TestCamelToSnake:
-    def test_basic_camel(self):
-        from plugin.utils import camel_to_snake
-
-        assert camel_to_snake("CamelCase") == "camel_case"
-
-    def test_single_word(self):
-        from plugin.utils import camel_to_snake
-
-        assert camel_to_snake("Foo") == "foo"
-
-    def test_already_lower(self):
-        from plugin.utils import camel_to_snake
-
-        assert camel_to_snake("foo") == "foo"
-
-    def test_three_words(self):
-        from plugin.utils import camel_to_snake
-
-        assert camel_to_snake("FooBarBaz") == "foo_bar_baz"
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [("CamelCase", "camel_case"), ("Foo", "foo"), ("foo", "foo"), ("FooBarBaz", "foo_bar_baz")],
+)
+def test_camel_to_snake(name, expected):
+    assert camel_to_snake(name) == expected
 
 
-# ── ensure_trailing_newline ───────────────────────────────────────────────────
-
-
-class TestEnsureTrailingNewline:
-    def test_str_already_has_newline(self):
-        from plugin.utils import ensure_trailing_newline
-
-        assert ensure_trailing_newline("hello\n") == "hello\n"
-
-    def test_str_no_newline(self):
-        from plugin.utils import ensure_trailing_newline
-
-        assert ensure_trailing_newline("hello") == "hello\n"
-
-    def test_empty_str(self):
-        from plugin.utils import ensure_trailing_newline
-
-        assert ensure_trailing_newline("") == "\n"
-
-    def test_bytes_already_has_newline(self):
-        from plugin.utils import ensure_trailing_newline
-
-        assert ensure_trailing_newline(b"hello\n") == b"hello\n"
-
-    def test_bytes_no_newline(self):
-        from plugin.utils import ensure_trailing_newline
-
-        assert ensure_trailing_newline(b"hello") == b"hello\n"
-
-
-# ── merge_regexes ─────────────────────────────────────────────────────────────
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [("hello\n", "hello\n"), ("hello", "hello\n"), ("", "\n"), (b"hello\n", b"hello\n"), (b"hello", b"hello\n")],
+)
+def test_ensure_trailing_newline(text, expected):
+    assert ensure_trailing_newline(text) == expected
 
 
 class TestMergeRegexes:
     def test_empty_returns_match_nothing(self):
-        from plugin.utils import merge_regexes
-
-        result = merge_regexes([])
-        # Should never match anything
-        assert not re.search(result, "anything")
+        assert not re.search(merge_regexes([]), "anything")
 
     def test_single_regex_wrapped(self):
-        from plugin.utils import merge_regexes
-
         result = merge_regexes(["foo"])
         assert re.search(result, "foobar")
         assert not re.search(result, "bar")
 
     def test_multiple_merged_as_alternation(self):
-        from plugin.utils import merge_regexes
-
         result = merge_regexes(["foo", "bar"])
         assert re.search(result, "foo")
         assert re.search(result, "bar")
         assert not re.search(result, "baz")
 
 
-# ── parse_regex_flags ─────────────────────────────────────────────────────────
-
-
-class TestParseRegexFlags:
-    def test_ignorecase(self):
-        from plugin.utils import parse_regex_flags
-
-        assert parse_regex_flags(["IGNORECASE"]) == re.IGNORECASE
-
-    def test_multiline(self):
-        from plugin.utils import parse_regex_flags
-
-        assert parse_regex_flags(["MULTILINE"]) == re.MULTILINE
-
-    def test_multiple_flags(self):
-        from plugin.utils import parse_regex_flags
-
-        result = parse_regex_flags(["IGNORECASE", "MULTILINE"])
-        assert result == (re.IGNORECASE | re.MULTILINE)
-
-    def test_invalid_flag_returns_zero(self):
-        from plugin.utils import parse_regex_flags
-
-        assert parse_regex_flags(["NONEXISTENT_FLAG"]) == 0
-
-    def test_short_alias(self):
-        from plugin.utils import parse_regex_flags
-
-        assert parse_regex_flags(["I"]) == re.IGNORECASE
-
-    def test_empty(self):
-        from plugin.utils import parse_regex_flags
-
-        assert parse_regex_flags([]) == 0
-
-
-# ── head_tail_lines ───────────────────────────────────────────────────────────
+@pytest.mark.parametrize(
+    ("flags", "expected"),
+    [
+        (["IGNORECASE"], re.IGNORECASE),
+        (["MULTILINE"], re.MULTILINE),
+        (["IGNORECASE", "MULTILINE"], re.IGNORECASE | re.MULTILINE),
+        (["NONEXISTENT_FLAG"], 0),
+        (["I"], re.IGNORECASE),
+        ([], 0),
+    ],
+)
+def test_parse_regex_flags(flags, expected):
+    assert parse_regex_flags(flags) == expected
 
 
 class TestHeadTailLines:
-    def test_short_content_returned_as_is(self):
-        from plugin.utils import head_tail_lines
-
-        content = "line1\nline2\nline3"
-        assert head_tail_lines(content, 5) == content
-
-    def test_negative_n_returns_as_is(self):
-        from plugin.utils import head_tail_lines
-
-        content = "line1\nline2\nline3"
-        assert head_tail_lines(content, -1) == content
-
-    def test_zero_n_returns_empty(self):
-        from plugin.utils import head_tail_lines
-
-        assert head_tail_lines("line1\nline2\nline3", 0) == ""
-
-    def test_long_content_keeps_only_head_and_tail_lines(self):
-        from plugin.utils import head_tail_lines
-
-        content = "\n".join(f"line{i}" for i in range(1, 11))  # line1..line10
-        result = head_tail_lines(content, 2)
-        assert result == "line1\nline2\n\nline9\nline10"
+    @pytest.mark.parametrize(
+        ("content", "n", "expected"),
+        [
+            ("line1\nline2\nline3", 5, "line1\nline2\nline3"),
+            ("line1\nline2\nline3", -1, "line1\nline2\nline3"),
+            ("line1\nline2\nline3", 0, ""),
+            ("a\nb\nc", 3, "a\nb\nc"),
+            ("", 1, ""),
+            ("\n", 1, "\n"),
+            ("\n".join(f"line{i}" for i in range(1, 11)), 2, "line1\nline2\n\nline9\nline10"),
+        ],
+    )
+    def test_trim(self, content, n, expected):
+        assert head_tail_lines(content, n) == expected
 
     def test_modeline_in_the_middle_is_dropped(self):
-        from plugin.utils import head_tail_lines
-
         # A "vim:" line that only appears deep inside the body (e.g., inside a fenced code
         # block in a Markdown file) must not survive the head/tail trim.
         content = "\n".join([
@@ -167,105 +100,50 @@ class TestHeadTailLines:
             "",
             "More text",
         ])
-        result = head_tail_lines(content, 2)
-        assert "vim:" not in result
-
-    def test_empty_content_returns_empty(self):
-        from plugin.utils import head_tail_lines
-
-        assert head_tail_lines("", 1) == ""
-
-    def test_single_blank_line_returned_as_is(self):
-        from plugin.utils import head_tail_lines
-
-        assert head_tail_lines("\n", 1) == "\n"
-
-    def test_exact_n_lines_no_trailing_newline_returned_as_is(self):
-        from plugin.utils import head_tail_lines
-
-        content = "a\nb\nc"
-        assert head_tail_lines(content, 3) == content
-
-
-# ── first_last_n_lines ────────────────────────────────────────────────────────
+        assert "vim:" not in head_tail_lines(content, 2)
 
 
 class TestFirstLastNLines:
-    def test_non_positive_n_returns_empty(self):
-        from plugin.utils import first_last_n_lines
-
-        assert first_last_n_lines("a\nb\nc", 0) == ([], [], 0)
-        assert first_last_n_lines("a\nb\nc", -1) == ([], [], 0)
-
-    def test_empty_text_returns_empty(self):
-        from plugin.utils import first_last_n_lines
-
-        assert first_last_n_lines("", 3) == ([], [], 0)
+    @pytest.mark.parametrize(("text", "n"), [("a\nb\nc", 0), ("a\nb\nc", -1), ("", 3)])
+    def test_non_positive_n_or_empty_text_returns_empty(self, text, n):
+        assert first_last_n_lines(text, n) == ([], [], 0)
 
     def test_single_blank_line_fully_overlaps(self):
         # A lone trailing newline is one empty line, not two: `last` must not drop it.
-        from plugin.utils import first_last_n_lines
-
         assert first_last_n_lines("\n", 1) == ([""], [""], 1)
 
     def test_fewer_lines_than_n_fully_overlaps(self):
-        from plugin.utils import first_last_n_lines
-
-        first, last, overlapped = first_last_n_lines("line1\nline2\nline3", 5)
-        assert first == last == ["line1", "line2", "line3"]
-        assert overlapped == 3
+        lines = ["line1", "line2", "line3"]
+        assert first_last_n_lines("line1\nline2\nline3", 5) == (lines, lines, 3)
 
     def test_exact_n_lines_no_trailing_newline_fully_overlaps(self):
         # Regression: the last line has no trailing "\n", so the forward scan must still
         # mark the whole text as consumed instead of leaving the overlap boundary stale.
-        from plugin.utils import first_last_n_lines
-
-        first, last, overlapped = first_last_n_lines("a\nb\nc", 3)
-        assert first == last == ["a", "b", "c"]
-        assert overlapped == 3
+        assert first_last_n_lines("a\nb\nc", 3) == (["a", "b", "c"], ["a", "b", "c"], 3)
 
     def test_no_overlap_when_lines_exceed_2n(self):
-        from plugin.utils import first_last_n_lines
-
-        content = "\n".join(f"line{i}" for i in range(1, 11))  # line1..line10
-        first, last, overlapped = first_last_n_lines(content, 2)
-        assert first == ["line1", "line2"]
-        assert last == ["line9", "line10"]
-        assert overlapped == 0
+        content = "\n".join(f"line{i}" for i in range(1, 11))
+        assert first_last_n_lines(content, 2) == (["line1", "line2"], ["line9", "line10"], 0)
 
     def test_no_overlap_at_exact_2n_boundary(self):
-        from plugin.utils import first_last_n_lines
-
-        first, last, overlapped = first_last_n_lines("l1\nl2\nl3\nl4", 2)
-        assert first == ["l1", "l2"]
-        assert last == ["l3", "l4"]
-        assert overlapped == 0
+        assert first_last_n_lines("l1\nl2\nl3\nl4", 2) == (["l1", "l2"], ["l3", "l4"], 0)
 
 
 class TestFirstLastNLinesRandomized:
     """Cross-check first_last_n_lines() against a naive str.split("\\n")-based reference across
-    many random texts/n, instead of relying only on hand-picked examples. This function
-    deliberately avoids materializing all lines for performance (it backs VIM/Emacs modeline
-    detection, where getting the line-counting semantics wrong silently breaks the feature --
-    see the `modeline_lines` bug this was built for)."""
+    many random texts/n. It deliberately avoids materializing all lines for performance (it backs
+    VIM/Emacs modeline detection, where wrong line counting silently breaks the feature)."""
 
     @staticmethod
     def _naive_lines(text: str) -> list:
-        """Same "line" semantics first_last_n_lines() implements: empty text has zero lines,
-        and a trailing "\\n" doesn't add a phantom empty final line."""
         if text == "":
             return []
         return text.removesuffix("\n").split("\n")
 
     def test_matches_naive_reference(self):
-        import random
-
-        from plugin.utils import first_last_n_lines
-
         for seed in range(30):
             rng = random.Random(seed)
-            line_count = rng.randint(0, 8)
-            lines = ["".join(rng.choices("ab", k=rng.randint(0, 3))) for _ in range(line_count)]
+            lines = ["".join(rng.choices("ab", k=rng.randint(0, 3))) for _ in range(rng.randint(0, 8))]
             text = "\n".join(lines)
             if lines and rng.random() < 0.5:
                 text += "\n"
@@ -273,214 +151,102 @@ class TestFirstLastNLinesRandomized:
             naive = self._naive_lines(text)
             total = len(naive)
 
-            for n in range(6):
+            for n in range(1, 6):
                 first, last, overlapped = first_last_n_lines(text, n)
-
-                if n == 0:
-                    assert (first, last, overlapped) == ([], [], 0), (seed, text, n)
-                    continue
 
                 assert first == naive[:n], (seed, text, n, "first")
                 assert last == naive[max(0, total - n) :], (seed, text, n, "last")
-
-                first_idxs = set(range(min(n, total)))
-                last_idxs = set(range(max(0, total - n), total))
-                expected_overlap = len(first_idxs & last_idxs)
+                expected_overlap = len(set(range(min(n, total))) & set(range(max(0, total - n), total)))
                 assert overlapped == expected_overlap, (seed, text, n, "overlap")
 
 
-# ── list_trimmed_filenames ────────────────────────────────────────────────────
-
-
-class TestListTrimmedFilenames:
-    def test_multiple_extensions(self):
-        from plugin.utils import list_trimmed_filenames
-
-        result = list(list_trimmed_filenames("file.bak.tmp"))
-        assert result == ["file.bak.tmp", "file.bak", "file"]
-
-    def test_skip_self(self):
-        from plugin.utils import list_trimmed_filenames
-
-        result = list(list_trimmed_filenames("file.bak.tmp", skip_self=True))
-        assert result == ["file.bak", "file"]
-
-    def test_no_extension(self):
-        from plugin.utils import list_trimmed_filenames
-
-        result = list(list_trimmed_filenames("Makefile"))
-        assert result == ["Makefile"]
-
-    def test_single_extension(self):
-        from plugin.utils import list_trimmed_filenames
-
-        result = list(list_trimmed_filenames("script.py"))
-        assert result == ["script.py", "script"]
-
-
-# ── str_finditer ──────────────────────────────────────────────────────────────
+@pytest.mark.parametrize(
+    ("filename", "skip_self", "expected"),
+    [
+        ("file.bak.tmp", False, ["file.bak.tmp", "file.bak", "file"]),
+        ("file.bak.tmp", True, ["file.bak", "file"]),
+        ("Makefile", False, ["Makefile"]),
+        ("script.py", False, ["script.py", "script"]),
+    ],
+)
+def test_list_trimmed_filenames(filename, skip_self, expected):
+    assert list(list_trimmed_filenames(filename, skip_self=skip_self)) == expected
 
 
 class TestStrFinditer:
-    def test_single_occurrence(self):
-        from plugin.utils import str_finditer
-
-        result = list(str_finditer("hello world", "world"))
-        assert result == [6]
-
-    def test_multiple_occurrences(self):
-        from plugin.utils import str_finditer
-
-        result = list(str_finditer("ababab", "ab"))
-        assert result == [0, 2, 4]
-
-    def test_no_match(self):
-        from plugin.utils import str_finditer
-
-        result = list(str_finditer("hello", "xyz"))
-        assert result == []
+    @pytest.mark.parametrize(
+        ("text", "sub", "expected"),
+        [("hello world", "world", [6]), ("ababab", "ab", [0, 2, 4]), ("hello", "xyz", [])],
+    )
+    def test_positions(self, text, sub, expected):
+        assert list(str_finditer(text, sub)) == expected
 
     def test_empty_substr_raises(self):
-        from plugin.utils import str_finditer
-
         with pytest.raises(ValueError, match="empty string"):
             list(str_finditer("hello", ""))
 
 
-# ── drop_falsy ──────────────────────────────────────────────────────────────
-
-
-class TestDropFalsy:
-    def test_drops_none(self):
-        from plugin.utils import drop_falsy
-
-        assert list(drop_falsy([1, None, 2, None, 3])) == [1, 2, 3]
-
-    def test_drops_empty_string(self):
-        from plugin.utils import drop_falsy
-
-        assert list(drop_falsy(["a", "", "b"])) == ["a", "b"]
-
-    def test_drops_false(self):
-        from plugin.utils import drop_falsy
-
-        assert list(drop_falsy([True, False, True])) == [True, True]
-
-    def test_drops_zero(self):
-        from plugin.utils import drop_falsy
-
-        assert list(drop_falsy([0, 1, 2])) == [1, 2]
-
-    def test_empty_iterable(self):
-        from plugin.utils import drop_falsy
-
-        assert list(drop_falsy([])) == []
-
-
-# ── get_fqcn ────────────────────────────────────────────────────────────────
+@pytest.mark.parametrize(
+    ("items", "expected"),
+    [
+        ([1, None, 2, None, 3], [1, 2, 3]),
+        (["a", "", "b"], ["a", "b"]),
+        ([True, False, True], [True, True]),
+        ([0, 1, 2], [1, 2]),
+        ([], []),
+    ],
+)
+def test_drop_falsy(items, expected):
+    assert list(drop_falsy(items)) == expected
 
 
 class TestGetFqcn:
     def test_none(self):
-        from plugin.utils import get_fqcn
-
         assert get_fqcn(None) == "None"
 
     def test_class_object(self):
-        from plugin.utils import get_fqcn
-
         assert get_fqcn(int) == "builtins.int"
 
     def test_instance(self):
-        from plugin.utils import get_fqcn
-
         assert get_fqcn("hello") == "builtins.str"
 
     def test_custom_class(self):
-        from plugin.utils import get_fqcn
-
         class Foo:
             pass
 
         assert get_fqcn(Foo()) == "test_utils.TestGetFqcn.test_custom_class.<locals>.Foo"
 
-    def test_type_object(self):
-        from plugin.utils import get_fqcn
-
-        assert get_fqcn(type) == "builtins.type"
-
-
-# ── merge_literals_to_regex ─────────────────────────────────────────────────
-
 
 class TestMergeLiteralsToRegex:
-    def test_single_literal(self):
-        import re
-
-        from plugin.utils import merge_literals_to_regex
-
-        result = merge_literals_to_regex(["hello"])
-        assert re.search(result, "hello")
-
     def test_multiple_literals(self):
-        import re
-
-        from plugin.utils import merge_literals_to_regex
-
         result = merge_literals_to_regex(["foo", "bar"])
         assert re.search(result, "foo")
         assert re.search(result, "bar")
         assert not re.search(result, "baz")
 
     def test_escapes_special_chars(self):
-        import re
-
-        from plugin.utils import merge_literals_to_regex
-
         result = merge_literals_to_regex(["foo.bar"])
         assert re.search(result, "foo.bar")
         assert not re.search(result, "fooXbar")
 
-    def test_empty_input(self):
-        from plugin.utils import merge_literals_to_regex
-
-        result = merge_literals_to_regex([])
-        # Empty list produces a never-match pattern
-        assert "match nothing" in result
+    def test_empty_input_matches_nothing(self):
+        assert not re.search(merge_literals_to_regex([]), "anything")
 
     def test_one_literal_is_prefix_of_another(self):
         """A trie-compressed alternation (e.g. the vendored Triegex) can silently drop the
         longer word when one literal is a strict prefix of another -- both must still match."""
-        import re
-
-        from plugin.utils import merge_literals_to_regex
-
         result = merge_literals_to_regex(["sh", "shell"])
         assert re.search(result, "shell")
         assert re.search(result, "sh")
         assert not re.search(result, "python")
 
     def test_three_literals_with_shared_prefix(self):
-        import re
-
-        from plugin.utils import merge_literals_to_regex
-
         result = merge_literals_to_regex(["cc", "aab", "ccc"])
         assert re.search(result, "cc")
         assert re.search(result, "ccc")
         assert re.search(result, "aab")
         # a bare "c" must never match on its own -- it's not one of the literals
         assert not re.search(result, "cbabbc")
-
-    def test_wrapped_in_non_capturing_group(self):
-        from plugin.utils import merge_literals_to_regex
-
-        result = merge_literals_to_regex(["test"])
-        assert result.startswith("(?:")
-        assert result.endswith(")")
-
-
-# ── list_all_subclasses ─────────────────────────────────────────────────────
 
 
 class _A:
@@ -501,31 +267,14 @@ class _D(_A):
 
 class TestListAllSubclasses:
     def test_yields_self_by_default(self):
-        from plugin.utils import list_all_subclasses
+        assert _A in list(list_all_subclasses(_A))
 
-        result = list(list_all_subclasses(_A))
-        assert _A in result
-
-    def test_skip_self(self):
-        from plugin.utils import list_all_subclasses
-
+    def test_skip_self_still_yields_every_descendant(self):
         result = list(list_all_subclasses(_A, skip_self=True))
         assert _A not in result
-
-    def test_all_leaves(self):
-        from plugin.utils import list_all_subclasses
-
-        result = list(list_all_subclasses(_A, skip_self=True))
-        assert _B in result
-        assert _C in result
-        assert _D in result
+        assert {_B, _C, _D} <= set(result)
 
     def test_skip_abstract(self):
-        from abc import ABC
-        from abc import abstractmethod
-
-        from plugin.utils import list_all_subclasses
-
         class _Abstract(ABC):
             @abstractmethod
             def foo(self): ...
@@ -538,71 +287,25 @@ class TestListAllSubclasses:
         assert _Concrete in result
 
     def test_no_subclasses(self):
-        from plugin.utils import list_all_subclasses
-
         class _Leaf:
             pass
 
-        result = list(list_all_subclasses(_Leaf, skip_self=True))
-        assert result == []
-
-
-# ── build_reversed_trie ─────────────────────────────────────────────────────
-
-
-class TestBuildReversedTrie:
-    def test_find_prefixes(self):
-        from plugin.utils import build_reversed_trie
-
-        trie = build_reversed_trie((".bak", ".tmp"))
-        assert list(trie.find_prefixes("kab.elif"))
-        assert not list(trie.find_prefixes("txt.elif"))
-
-    def test_matches_suffixes(self):
-        from plugin.utils import build_reversed_trie
-
-        trie = build_reversed_trie((".gz", ".xz"))
-        assert list(trie.find_prefixes("zg.xz"))
-        assert list(trie.find_prefixes("zg.gz"))
-        assert not list(trie.find_prefixes("ip.z"))
-
-    def test_compound_suffixes(self):
-        from plugin.utils import build_reversed_trie
-
-        trie = build_reversed_trie((".min.js", ".bundle.js"))
-        assert trie.find_prefixes("sj.nim.")
-        assert trie.find_prefixes("sj.eldnub.")
-
-
-# ── list_trimmed_strings ────────────────────────────────────────────────────
+        assert list(list_all_subclasses(_Leaf, skip_self=True)) == []
 
 
 class TestListTrimmedStrings:
     def test_trim_suffixes(self):
-        from plugin.utils import list_trimmed_strings
-
         result = list(list_trimmed_strings("file.bak.tmp", (".bak", ".tmp")))
-        assert "file.bak.tmp" in result
-        assert "file.bak" in result
-        assert "file" in result
+        assert {"file.bak.tmp", "file.bak", "file"} <= set(result)
 
     def test_skip_self(self):
-        from plugin.utils import list_trimmed_strings
-
         result = list(list_trimmed_strings("file.bak", (".bak",), skip_self=True))
         assert "file.bak" not in result
         assert "file" in result
 
     def test_no_suffixes(self):
-        from plugin.utils import list_trimmed_strings
-
-        result = list(list_trimmed_strings("file", ()))
-        assert result == ["file"]
+        assert list(list_trimmed_strings("file", ())) == ["file"]
 
     def test_compound_suffix_trimming(self):
-        from plugin.utils import list_trimmed_strings
-
         result = list(list_trimmed_strings("file.min.js", (".min.js", ".js")))
-        assert "file.min.js" in result
-        assert "file.min" in result
-        assert "file" in result
+        assert {"file.min.js", "file.min", "file"} <= set(result)

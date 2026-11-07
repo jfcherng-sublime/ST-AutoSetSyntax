@@ -1,340 +1,190 @@
 """Tests for built-in constraint implementations."""
 
+import importlib
 import re
+from unittest.mock import MagicMock
 
 import pytest
 
 from plugin.rules.constraint import ConstraintRule
 from plugin.types import Fold
 
-# ── ContainsConstraint ────────────────────────────────────────────────────────
+
+def _cls(path: str) -> type:
+    module, cls_name = path.split(".")
+    return getattr(importlib.import_module(f"plugin.rules.constraints.{module}"), cls_name)
 
 
-class TestContainsConstraint:
-    def test_needle_found(self, make_snapshot):
-        from plugin.rules.constraints.contains import ContainsConstraint
+# ── Text constraints: contains / first_line_contains / name_contains / path_contains (+ _regex) ──
 
-        snap = make_snapshot(content="hello world")
-        assert ContainsConstraint("hello").test(snap) is True
+# (class, snapshot kwargs, a needle found in them, a needle not found in them)
+_PLAIN_CASES = [
+    ("contains.ContainsConstraint", {"content": "hello world"}, "hello", "python"),
+    ("first_line_contains.FirstLineContainsConstraint", {"first_line": "#!/usr/bin/env python"}, "python", "ruby"),
+    ("name_contains.NameContainsConstraint", {"path": "/home/user/my_script.py"}, "script", "main"),
+    ("path_contains.PathContainsConstraint", {"path": "/home/user/projects/main.py"}, "projects", "nothing"),
+]
+_REGEX_CASES = [
+    ("contains_regex.ContainsRegexConstraint", {"content": "version: 1.2.3"}, r"\d+\.\d+", r"[a-z]{20}"),
+    (
+        "first_line_contains_regex.FirstLineContainsRegexConstraint",
+        {"first_line": "#!/usr/bin/python3"},
+        r"python\d?",
+        "ruby",
+    ),
+    ("name_contains_regex.NameContainsRegexConstraint", {"path": "/home/user/my_script.py"}, "script", "^main"),
+    (
+        "path_contains_regex.PathContainsRegexConstraint",
+        {"path": "/home/user/projects/main.py"},
+        "projects",
+        "^nothing",
+    ),
+]
+_TEXT_CASES = _PLAIN_CASES + _REGEX_CASES
 
-    def test_needle_not_found(self, make_snapshot):
-        from plugin.rules.constraints.contains import ContainsConstraint
 
-        snap = make_snapshot(content="hello world")
-        assert ContainsConstraint("python").test(snap) is False
+@pytest.mark.parametrize(("cls_path", "snap_kwargs", "hit", "miss"), _TEXT_CASES)
+class TestTextConstraints:
+    def test_needle_found_or_not(self, make_snapshot, cls_path, snap_kwargs, hit, miss):
+        snap = make_snapshot(**snap_kwargs)
+        assert _cls(cls_path)(hit).test(snap) is True
+        assert _cls(cls_path)(miss).test(snap) is False
 
-    def test_one_of_multiple_needles_found(self, make_snapshot):
-        from plugin.rules.constraints.contains import ContainsConstraint
+    def test_any_of_several_needles_is_enough(self, make_snapshot, cls_path, snap_kwargs, hit, miss):
+        assert _cls(cls_path)(miss, hit).test(make_snapshot(**snap_kwargs)) is True
 
-        snap = make_snapshot(content="hello world")
-        assert ContainsConstraint("python", "hello").test(snap) is True
+    def test_no_needles_can_never_match_so_folds_to_false(self, cls_path, snap_kwargs, hit, miss):
+        assert _cls(cls_path)().fold().value is False
 
-    def test_threshold_met(self, make_snapshot):
-        from plugin.rules.constraints.contains import ContainsConstraint
+    def test_with_needles_depends_on_the_view(self, cls_path, snap_kwargs, hit, miss):
+        assert _cls(cls_path)(hit).fold().value is None
 
-        # "ab" appears 3 times
-        snap = make_snapshot(content="ab ab ab")
-        assert ContainsConstraint("ab", threshold=3).test(snap) is True
 
-    def test_threshold_not_met(self, make_snapshot):
-        from plugin.rules.constraints.contains import ContainsConstraint
+@pytest.mark.parametrize(
+    "cls_path",
+    [
+        "name_contains.NameContainsConstraint",
+        "name_contains_regex.NameContainsRegexConstraint",
+        "path_contains.PathContainsConstraint",
+        "path_contains_regex.PathContainsRegexConstraint",
+        "is_name.IsNameConstraint",
+        "is_size.IsSizeConstraint",
+        "is_hidden_syntax.IsHiddenSyntaxConstraint",
+        "selector_matches.SelectorMatchesConstraint",
+    ],
+)
+def test_constraint_about_a_missing_file_or_syntax_never_passes_even_inverted(make_snapshot, cls_path):
+    """With no file (or no syntax) there is nothing to be about, so "inverted" must not turn that into a match."""
+    args = {"is_size": (">", 1000), "is_hidden_syntax": ()}.get(cls_path.split(".")[0], ("anything",))
+    snap = make_snapshot(file_size=-1)  # no path, no syntax
+    for inverted in (False, True):
+        assert ConstraintRule(constraint=_cls(cls_path)(*args), inverted=inverted).test(snap) is False
 
-        snap = make_snapshot(content="ab ab")
-        assert ContainsConstraint("ab", threshold=3).test(snap) is False
 
-    def test_threshold_zero_always_true(self, make_snapshot):
-        from plugin.rules.constraints.contains import ContainsConstraint
+@pytest.mark.parametrize(("cls_path", "snap_kwargs", "hit", "miss"), _REGEX_CASES)
+def test_empty_or_null_regex_pattern_matches_nothing(make_snapshot, cls_path, snap_kwargs, hit, miss):
+    """Regression: falsy patterns used to compile to `(?:)`, which matches everywhere (constant True)."""
+    snap = make_snapshot(**snap_kwargs)
+    for pattern in ("", None):
+        constraint = _cls(cls_path)(pattern)
+        assert constraint.fold().value is False
+        assert constraint.test(snap) is False
 
-        snap = make_snapshot(content="")
-        assert ContainsConstraint("anything", threshold=0).test(snap) is True
 
-    def test_no_needles_folds_to_false(self):
-        from plugin.rules.constraints.contains import ContainsConstraint
+# ── ContainsConstraint / ContainsRegexConstraint: threshold ──────────────────
 
-        assert ContainsConstraint().fold().value is False
 
-    def test_with_needles_does_not_fold(self):
-        from plugin.rules.constraints.contains import ContainsConstraint
+@pytest.mark.parametrize(
+    ("cls_path", "needle"),
+    [("contains.ContainsConstraint", "ab"), ("contains_regex.ContainsRegexConstraint", "ab")],
+)
+class TestContainsThreshold:
+    @pytest.mark.parametrize(("count", "expected"), [(3, True), (2, False)])
+    def test_needs_at_least_threshold_occurrences(self, make_snapshot, cls_path, needle, count, expected):
+        snap = make_snapshot(content=" ".join([needle] * count))
+        assert _cls(cls_path)(needle, threshold=3).test(snap) is expected
 
-        assert ContainsConstraint("foo").fold().value is None
-
-    def test_threshold_zero_no_needles_folds_to_true(self):
-        """threshold<=0 makes test() a constant True even with no needles (see
-        test_threshold_zero_always_true), so it folds to True -- not False, which would
-        invert the rule's meaning, and not None, which would keep testing a settled
-        answer on every view."""
-        from plugin.rules.constraints.contains import ContainsConstraint
-
-        assert ContainsConstraint(threshold=0).fold().value is True
+    def test_threshold_zero_always_matches_even_without_needles(self, make_snapshot, cls_path, needle):
+        """threshold<=0 makes test() a constant True, so it folds to True -- not False, which would
+        invert the rule's meaning, and not None, which would keep testing a settled answer."""
+        assert _cls(cls_path)(needle, threshold=0).test(make_snapshot(content="")) is True
+        assert _cls(cls_path)(threshold=0).fold().value is True
 
     @pytest.mark.parametrize("threshold", ["2", 1.5, True, None])
-    def test_non_integer_threshold_raises(self, threshold):
+    def test_non_integer_threshold_raises(self, cls_path, needle, threshold):
         """Raise rather than fold to False: under "not", False would flip to "always matches"."""
-        from plugin.rules.constraints.contains import ContainsConstraint
-
         with pytest.raises(ValueError, match='"threshold" must be an integer'):
-            ContainsConstraint("x", threshold=threshold)
+            _cls(cls_path)(needle, threshold=threshold)
 
 
-# ── ContainsRegexConstraint ───────────────────────────────────────────────────
+# ── ContainsRegexConstraint: flags and pattern merging ───────────────────────
 
 
 class TestContainsRegexConstraint:
-    def test_regex_matches(self, make_snapshot):
+    def test_multiple_patterns_are_alternatives(self, make_snapshot):
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        snap = make_snapshot(content="version: 1.2.3")
-        assert ContainsRegexConstraint(r"\d+\.\d+").test(snap) is True
+        assert ContainsRegexConstraint("foo", "bar").test(make_snapshot(content="bar")) is True
 
-    def test_regex_no_match(self, make_snapshot):
+    def test_multiline_is_the_default_and_null_flags_fall_back_to_it(self, make_snapshot):
+        """Regression: "regex_flags": null is present with value None, not absent, so the default
+        didn't cover it and parsing raised TypeError."""
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        snap = make_snapshot(content="hello world")
-        assert ContainsRegexConstraint(r"\d+").test(snap) is False
+        snap = make_snapshot(content="x\nfoo")
+        assert ContainsRegexConstraint("^foo").test(snap) is True
+        assert ContainsRegexConstraint("^foo", regex_flags=None).test(snap) is True
 
-    def test_threshold_met(self, make_snapshot):
+    def test_empty_regex_flags_list_disables_the_multiline_default(self, make_snapshot):
+        """`regex_flags: []` is a valid "no flags at all" and must not be coerced into the default."""
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
-        snap = make_snapshot(content="cat dog cat dog cat")
-        assert ContainsRegexConstraint(r"cat", threshold=3).test(snap) is True
+        assert ContainsRegexConstraint("^foo", regex_flags=[]).test(make_snapshot(content="x\nfoo")) is False
 
-    def test_threshold_not_met(self, make_snapshot):
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        snap = make_snapshot(content="cat dog cat")
-        assert ContainsRegexConstraint(r"cat", threshold=3).test(snap) is False
-
-    def test_threshold_zero_always_true(self, make_snapshot):
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        snap = make_snapshot(content="")
-        assert ContainsRegexConstraint(r"anything", threshold=0).test(snap) is True
-
-    def test_multiple_patterns_as_alternation(self, make_snapshot):
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        snap = make_snapshot(content="bar")
-        # Two patterns merged into one alternation
-        assert ContainsRegexConstraint("foo", "bar").test(snap) is True
-
-    def test_no_patterns_folds_to_false(self):
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        assert ContainsRegexConstraint().fold().value is False
-
-    def test_with_patterns_does_not_fold(self):
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        assert ContainsRegexConstraint("foo").fold().value is None
-
-    def test_threshold_zero_no_patterns_folds_to_true(self):
-        """Same reasoning as ContainsConstraint's equivalent test: threshold<=0 is a constant
-        True regardless of patterns."""
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        assert ContainsRegexConstraint(threshold=0).fold().value is True
-
-    def test_non_integer_threshold_raises(self):
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        with pytest.raises(ValueError, match='"threshold" must be an integer'):
-            ContainsRegexConstraint("x", threshold="2")
-
-    def test_null_regex_flags_falls_back_to_multiline_default(self, make_snapshot):
-        """Regression (AbstractConstraint._handled_regex): "regex_flags": null is present with
-        value None, not absent, so `kwargs.get("regex_flags", [...])`'s default doesn't cover it
-        -- parse_regex_flags(None) raised TypeError. Must fall back to the ["MULTILINE"] default."""
-        import re
-
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        constraint = ContainsRegexConstraint("foo", regex_flags=None)
-        assert constraint.regex.flags & re.MULTILINE
-        snap = make_snapshot(content="foo")
-        assert constraint.test(snap) is True
-
-    def test_empty_regex_flags_list_disables_multiline_default(self, make_snapshot):
-        """An explicit `regex_flags: []` is a distinct, valid "no flags at all, not even
-        MULTILINE" setting and must not be coerced into the `["MULTILINE"]` default."""
-        import re
-
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        constraint = ContainsRegexConstraint("foo", regex_flags=[])
-        assert not (constraint.regex.flags & re.MULTILINE)
-
-    def test_empty_pattern_falls_through_to_match_nothing(self, make_snapshot):
-        """Regression: `_handled_regex` didn't drop falsy args, so `contains_regex("")`
-        compiled `(?:)` (matches at every position, constant True). Now falsy entries are
-        dropped like `_handled_args` does, yielding the 'match nothing' sentinel instead."""
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        constraint = ContainsRegexConstraint("")
-        assert constraint.fold().value is False
-        snap = make_snapshot(content="anything")
-        assert constraint.test(snap) is False
-
-    def test_none_pattern_falls_through_to_match_nothing(self, make_snapshot):
-        """Same as above but with a JSON `null` in args, which becomes Python None."""
-        from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
-
-        constraint = ContainsRegexConstraint(None)
-        assert constraint.fold().value is False
-        snap = make_snapshot(content="anything")
-        assert constraint.test(snap) is False
-
-    def test_mixed_valid_and_empty_patterns_use_only_valid(self, make_snapshot):
-        """When some patterns are valid and some are falsy, the falsy ones are dropped and
-        the valid ones are used. Previously an empty-string-first arg like ("", "foo") caused
-        the whole merged regex to become a constant-True sub-pattern."""
+    def test_falsy_patterns_are_dropped_and_the_rest_used(self, make_snapshot):
+        """Previously an empty-string-first arg like ("", "foo") made the whole merged regex constant-True."""
         from plugin.rules.constraints.contains_regex import ContainsRegexConstraint
 
         constraint = ContainsRegexConstraint("", "foo")
-        # has a valid pattern "foo", so NOT droppable
         assert constraint.fold().value is None
-        snap = make_snapshot(content="foo")
-        assert constraint.test(snap) is True
-        snap = make_snapshot(content="bar")
-        assert constraint.test(snap) is False
-
-
-# ── FirstLineContainsConstraint ───────────────────────────────────────────────
-
-
-class TestFirstLineContainsConstraint:
-    def test_found_in_first_line(self, make_snapshot):
-        from plugin.rules.constraints.first_line_contains import FirstLineContainsConstraint
-
-        snap = make_snapshot(first_line="#!/usr/bin/env python")
-        assert FirstLineContainsConstraint("python").test(snap) is True
-
-    def test_not_in_first_line(self, make_snapshot):
-        from plugin.rules.constraints.first_line_contains import FirstLineContainsConstraint
-
-        snap = make_snapshot(first_line="#!/usr/bin/bash")
-        assert FirstLineContainsConstraint("python").test(snap) is False
-
-    def test_one_of_multiple_needles(self, make_snapshot):
-        from plugin.rules.constraints.first_line_contains import FirstLineContainsConstraint
-
-        snap = make_snapshot(first_line="#!/usr/bin/ruby")
-        assert FirstLineContainsConstraint("python", "ruby").test(snap) is True
-
-    def test_no_needles_folds_to_false(self):
-        from plugin.rules.constraints.first_line_contains import FirstLineContainsConstraint
-
-        assert FirstLineContainsConstraint().fold().value is False
-
-
-# ── FirstLineContainsRegexConstraint ─────────────────────────────────────────
-
-
-class TestFirstLineContainsRegexConstraint:
-    def test_regex_matches_first_line(self, make_snapshot):
-        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
-
-        snap = make_snapshot(first_line="#!/usr/bin/python3")
-        assert FirstLineContainsRegexConstraint(r"python\d?").test(snap) is True
-
-    def test_regex_no_match(self, make_snapshot):
-        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
-
-        snap = make_snapshot(first_line="#!/bin/bash")
-        assert FirstLineContainsRegexConstraint(r"python").test(snap) is False
+        assert constraint.test(make_snapshot(content="foo")) is True
+        assert constraint.test(make_snapshot(content="bar")) is False
 
     def test_case_insensitive_flag(self, make_snapshot):
         from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
 
         snap = make_snapshot(first_line="# -*- coding: UTF-8 -*-")
-        assert FirstLineContainsRegexConstraint(r"utf-8", regex_flags=["IGNORECASE"]).test(snap) is True
-
-    def test_no_patterns_folds_to_false(self):
-        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
-
-        assert FirstLineContainsRegexConstraint().fold().value is False
-
-    def test_with_patterns_does_not_fold(self):
-        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
-
-        assert FirstLineContainsRegexConstraint("python").fold().value is None
-
-    def test_empty_pattern_folds_to_false(self, make_snapshot):
-        from plugin.rules.constraints.first_line_contains_regex import FirstLineContainsRegexConstraint
-
-        assert FirstLineContainsRegexConstraint("").fold().value is False
-        snap = make_snapshot(first_line="anything")
-        assert FirstLineContainsRegexConstraint("").test(snap) is False
+        assert FirstLineContainsRegexConstraint("utf-8", regex_flags=["IGNORECASE"]).test(snap) is True
 
 
 # ── IsInterpreterConstraint ───────────────────────────────────────────────────
 
 
 class TestIsInterpreterConstraint:
-    def test_shebang_exact(self, make_snapshot):
+    @pytest.mark.parametrize(
+        ("first_line", "kwargs", "expected"),
+        [
+            ("#!/usr/bin/python", {}, True),
+            ("#!/usr/bin/env python", {}, True),
+            ("#!/usr/bin/bash", {}, False),
+            ("# vim: syntax=python", {}, True),
+            # a real VIM modeline usually continues with more options after `syntax=`
+            ("# vim: syntax=python ts=4:", {}, True),
+            ("#!/usr/bin/python3.11", {"loosy_version": True}, True),
+            ("#!/usr/bin/python3", {}, False),  # "python3" doesn't match the "python" boundary
+            ("print('hello')", {}, False),
+            ("", {}, False),
+        ],
+    )
+    def test_interpreter_detection(self, make_snapshot, first_line, kwargs, expected):
         from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
 
-        snap = make_snapshot(first_line="#!/usr/bin/python")
-        assert IsInterpreterConstraint("python").test(snap) is True
+        assert IsInterpreterConstraint("python", **kwargs).test(make_snapshot(first_line=first_line)) is expected
 
-    def test_shebang_env(self, make_snapshot):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        snap = make_snapshot(first_line="#!/usr/bin/env python")
-        assert IsInterpreterConstraint("python").test(snap) is True
-
-    def test_shebang_wrong_interpreter(self, make_snapshot):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        snap = make_snapshot(first_line="#!/usr/bin/bash")
-        assert IsInterpreterConstraint("python").test(snap) is False
-
-    def test_vim_modeline(self, make_snapshot):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        snap = make_snapshot(first_line="# vim: syntax=python")
-        assert IsInterpreterConstraint("python").test(snap) is True
-
-    def test_vim_modeline_with_trailing_options(self, make_snapshot):
-        """A real VIM modeline usually continues with more options after `syntax=`, e.g.
-        `syntax=python ts=4`, not just `syntax=python` at the very end of the line."""
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        snap = make_snapshot(first_line="# vim: syntax=python ts=4:")
-        assert IsInterpreterConstraint("python").test(snap) is True
-
-    def test_loosy_version_matches_numbered(self, make_snapshot):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        snap = make_snapshot(first_line="#!/usr/bin/python3.11")
-        assert IsInterpreterConstraint("python", loosy_version=True).test(snap) is True
-
-    def test_loosy_version_strict_fails(self, make_snapshot):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        # Without loosy_version, "python3" won't match the "python" boundary
-        snap = make_snapshot(first_line="#!/usr/bin/python3")
-        assert IsInterpreterConstraint("python").test(snap) is False
-
-    def test_no_shebang(self, make_snapshot):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        snap = make_snapshot(first_line="print('hello')")
-        assert IsInterpreterConstraint("python").test(snap) is False
-
-    def test_empty_first_line(self, make_snapshot):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
-        snap = make_snapshot(first_line="")
-        assert IsInterpreterConstraint("python").test(snap) is False
-
-    def test_no_interpreters_folds_to_false(self):
+    def test_fold(self):
         from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
 
         assert IsInterpreterConstraint().fold().value is False
-
-    def test_with_interpreter_does_not_fold(self):
-        from plugin.rules.constraints.is_interpreter import IsInterpreterConstraint
-
         assert IsInterpreterConstraint("python").fold().value is None
 
 
@@ -342,37 +192,20 @@ class TestIsInterpreterConstraint:
 
 
 class TestIsNameConstraint:
-    def test_exact_match(self, make_snapshot):
+    @pytest.mark.parametrize(
+        ("path", "names", "case_insensitive", "expected"),
+        [
+            ("/home/user/Makefile", ("Makefile",), False, True),
+            ("/home/user/Dockerfile", ("Makefile",), False, False),
+            ("/home/user/makefile", ("Makefile",), True, True),
+            ("/home/user/Dockerfile", ("Makefile", "Dockerfile"), False, True),
+        ],
+    )
+    def test_name_matching(self, make_snapshot, path, names, case_insensitive, expected):
         from plugin.rules.constraints.is_name import IsNameConstraint
 
-        snap = make_snapshot(path="/home/user/Makefile")
-        assert IsNameConstraint("Makefile", case_insensitive=False).test(snap) is True
-
-    def test_no_match(self, make_snapshot):
-        from plugin.rules.constraints.is_name import IsNameConstraint
-
-        snap = make_snapshot(path="/home/user/Dockerfile")
-        assert IsNameConstraint("Makefile", case_insensitive=False).test(snap) is False
-
-    def test_case_insensitive(self, make_snapshot):
-        from plugin.rules.constraints.is_name import IsNameConstraint
-
-        snap = make_snapshot(path="/home/user/makefile")
-        assert IsNameConstraint("Makefile", case_insensitive=True).test(snap) is True
-
-    def test_one_of_multiple_names(self, make_snapshot):
-        from plugin.rules.constraints.is_name import IsNameConstraint
-
-        snap = make_snapshot(path="/home/user/Dockerfile")
-        assert IsNameConstraint("Makefile", "Dockerfile", case_insensitive=False).test(snap) is True
-
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.is_name import IsNameConstraint
-
-        snap = make_snapshot()  # path=None
-        for inverted in (False, True):
-            rule = ConstraintRule(constraint=IsNameConstraint("Makefile"), inverted=inverted)
-            assert rule.test(snap) is False
+        constraint = IsNameConstraint(*names, case_insensitive=case_insensitive)
+        assert constraint.test(make_snapshot(path=path)) is expected
 
     def test_no_names_folds_to_false(self):
         from plugin.rules.constraints.is_name import IsNameConstraint
@@ -380,243 +213,57 @@ class TestIsNameConstraint:
         assert IsNameConstraint().fold().value is False
 
 
-# ── NameContainsConstraint ────────────────────────────────────────────────────
-
-
-class TestNameContainsConstraint:
-    def test_needle_in_name(self, make_snapshot):
-        from plugin.rules.constraints.name_contains import NameContainsConstraint
-
-        snap = make_snapshot(path="/home/user/my_script.py")
-        assert NameContainsConstraint("script").test(snap) is True
-
-    def test_needle_not_in_name(self, make_snapshot):
-        from plugin.rules.constraints.name_contains import NameContainsConstraint
-
-        snap = make_snapshot(path="/home/user/main.py")
-        assert NameContainsConstraint("script").test(snap) is False
-
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.name_contains import NameContainsConstraint
-
-        snap = make_snapshot()
-        for inverted in (False, True):
-            rule = ConstraintRule(constraint=NameContainsConstraint("anything"), inverted=inverted)
-            assert rule.test(snap) is False
-
-    def test_no_needles_folds_to_false(self):
-        from plugin.rules.constraints.name_contains import NameContainsConstraint
-
-        assert NameContainsConstraint().fold().value is False
-
-
-# ── NameContainsRegexConstraint ───────────────────────────────────────────────
-
-
-class TestNameContainsRegexConstraint:
-    def test_regex_matches_name(self, make_snapshot):
-        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
-
-        snap = make_snapshot(path="/home/user/my_script.py")
-        assert NameContainsRegexConstraint(r"script").test(snap) is True
-
-    def test_regex_no_match(self, make_snapshot):
-        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
-
-        snap = make_snapshot(path="/home/user/main.py")
-        assert NameContainsRegexConstraint(r"script").test(snap) is False
-
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
-
-        snap = make_snapshot()
-        for inverted in (False, True):
-            assert (
-                ConstraintRule(constraint=NameContainsRegexConstraint("anything"), inverted=inverted).test(snap)
-                is False
-            )
-
-    def test_no_patterns_folds_to_false(self):
-        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
-
-        assert NameContainsRegexConstraint().fold().value is False
-
-    def test_with_patterns_does_not_fold(self):
-        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
-
-        assert NameContainsRegexConstraint("script").fold().value is None
-
-    def test_empty_pattern_folds_to_false(self, make_snapshot):
-        from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
-
-        assert NameContainsRegexConstraint("").fold().value is False
-        snap = make_snapshot(path="file.py")
-        assert NameContainsRegexConstraint("").test(snap) is False
-
-
-# ── PathContainsConstraint ────────────────────────────────────────────────────
-
-
-class TestPathContainsConstraint:
-    def test_needle_in_path(self, make_snapshot):
-        from plugin.rules.constraints.path_contains import PathContainsConstraint
-
-        snap = make_snapshot(path="/home/user/projects/myapp/main.py")
-        assert PathContainsConstraint("projects").test(snap) is True
-
-    def test_needle_not_in_path(self, make_snapshot):
-        from plugin.rules.constraints.path_contains import PathContainsConstraint
-
-        snap = make_snapshot(path="/home/user/main.py")
-        assert PathContainsConstraint("projects").test(snap) is False
-
-    def test_multiple_needles_one_matches(self, make_snapshot):
-        from plugin.rules.constraints.path_contains import PathContainsConstraint
-
-        snap = make_snapshot(path="/home/user/src/main.py")
-        assert PathContainsConstraint("projects", "src").test(snap) is True
-
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.path_contains import PathContainsConstraint
-
-        snap = make_snapshot()
-        for inverted in (False, True):
-            rule = ConstraintRule(constraint=PathContainsConstraint("anything"), inverted=inverted)
-            assert rule.test(snap) is False
-
-    def test_no_needles_folds_to_false(self):
-        from plugin.rules.constraints.path_contains import PathContainsConstraint
-
-        assert PathContainsConstraint().fold().value is False
-
-
 # ── name_contains / path_contains: case sensitivity ───────────────────────────
 
-
 _CONTAINS_CASES = [
-    # (module, class name, file path, needle differing from it only in case)
-    ("name_contains", "NameContainsConstraint", "/home/user/Makefile", "makefile"),
-    ("path_contains", "PathContainsConstraint", "/home/user/Templates/page.html", "/templates/"),
+    # (class, file path, needle differing from it only in case, the same needle in the path's case)
+    ("name_contains.NameContainsConstraint", "/home/user/Makefile", "makefile", "Makefile"),
+    ("path_contains.PathContainsConstraint", "/home/user/Templates/page.html", "/templates/", "/Templates/"),
 ]
-
-
-def _contains_constraint(module: str, cls_name: str) -> type:
-    import importlib
-
-    return getattr(importlib.import_module(f"plugin.rules.constraints.{module}"), cls_name)
 
 
 class TestNameAndPathContainsCaseSensitivity:
     """Like `is_name`/`is_extension`: these look at file names, so they follow the filesystem's
     case sensitivity by default -- insensitive on Windows/macOS, sensitive on Linux."""
 
-    @pytest.mark.parametrize(("module", "cls_name", "path", "needle"), _CONTAINS_CASES)
-    def test_explicit_case_insensitive(self, make_snapshot, module, cls_name, path, needle):
-        constraint = _contains_constraint(module, cls_name)
+    @pytest.mark.parametrize(("cls_path", "path", "needle", "exact"), _CONTAINS_CASES)
+    def test_explicit_case_insensitive(self, make_snapshot, cls_path, path, needle, exact):
         snap = make_snapshot(path=path)
 
-        assert constraint(needle, case_insensitive=True).test(snap) is True
-        assert constraint(needle, case_insensitive=False).test(snap) is False
+        assert _cls(cls_path)(needle, case_insensitive=True).test(snap) is True
+        assert _cls(cls_path)(needle, case_insensitive=False).test(snap) is False
+        assert _cls(cls_path)(exact, case_insensitive=True).test(snap) is True
+        assert _cls(cls_path)(exact, case_insensitive=False).test(snap) is True
 
-    @pytest.mark.parametrize(("module", "cls_name", "path", "needle"), _CONTAINS_CASES)
+    @pytest.mark.parametrize(("cls_path", "path", "needle", "exact"), _CONTAINS_CASES)
     @pytest.mark.parametrize(("platform", "matches"), [("windows", True), ("osx", True), ("linux", False)])
     def test_default_follows_the_platform(
-        self, make_snapshot, monkeypatch, module, cls_name, path, needle, platform, matches
+        self, make_snapshot, monkeypatch, cls_path, path, needle, exact, platform, matches
     ):
         import plugin.rules.constraint as constraint_mod
 
         monkeypatch.setattr(constraint_mod, "ST_PLATFORM", platform)
-        constraint = _contains_constraint(module, cls_name)
 
-        assert constraint(needle).test(make_snapshot(path=path)) is matches
-
-    @pytest.mark.parametrize(("module", "cls_name", "path", "needle"), _CONTAINS_CASES)
-    def test_exact_case_matches_either_way(self, make_snapshot, module, cls_name, path, needle):
-        constraint = _contains_constraint(module, cls_name)
-        exact = needle.title() if module == "name_contains" else "/Templates/"
-        snap = make_snapshot(path=path)
-
-        assert constraint(exact, case_insensitive=True).test(snap) is True
-        assert constraint(exact, case_insensitive=False).test(snap) is True
+        assert _cls(cls_path)(needle).test(make_snapshot(path=path)) is matches
 
 
-# ── PathContainsRegexConstraint ───────────────────────────────────────────────
+# ── IsLineCountConstraint / IsSizeConstraint ──────────────────────────────────
+
+_COUNT_CASES = [
+    ("is_line_count.IsLineCountConstraint", "line_count"),
+    ("is_size.IsSizeConstraint", "file_size"),
+]
 
 
-class TestPathContainsRegexConstraint:
-    def test_regex_matches_path(self, make_snapshot):
-        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
-
-        snap = make_snapshot(path="/home/user/projects/myapp/main.py")
-        assert PathContainsRegexConstraint(r"projects").test(snap) is True
-
-    def test_regex_no_match(self, make_snapshot):
-        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
-
-        snap = make_snapshot(path="/home/user/main.py")
-        assert PathContainsRegexConstraint(r"projects").test(snap) is False
-
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
-
-        snap = make_snapshot()
-        for inverted in (False, True):
-            assert (
-                ConstraintRule(constraint=PathContainsRegexConstraint("anything"), inverted=inverted).test(snap)
-                is False
-            )
-
-    def test_no_patterns_folds_to_false(self):
-        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
-
-        assert PathContainsRegexConstraint().fold().value is False
-
-    def test_with_patterns_does_not_fold(self):
-        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
-
-        assert PathContainsRegexConstraint("projects").fold().value is None
-
-    def test_empty_pattern_folds_to_false(self, make_snapshot):
-        from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
-
-        assert PathContainsRegexConstraint("").fold().value is False
-        snap = make_snapshot(path="/home/file.py")
-        assert PathContainsRegexConstraint("").test(snap) is False
-
-
-# ── IsLineCountConstraint ─────────────────────────────────────────────────────
-
-
-class TestIsLineCountConstraint:
-    def test_greater_than_true(self, make_snapshot):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        snap = make_snapshot(line_count=10)
-        assert IsLineCountConstraint(">", 5).test(snap) is True
-
-    def test_greater_than_false(self, make_snapshot):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        snap = make_snapshot(line_count=3)
-        assert IsLineCountConstraint(">", 5).test(snap) is False
-
-    def test_equal(self, make_snapshot):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        snap = make_snapshot(line_count=5)
-        assert IsLineCountConstraint("==", 5).test(snap) is True
-
-    def test_not_equal(self, make_snapshot):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        snap = make_snapshot(line_count=5)
-        assert IsLineCountConstraint("!=", 5).test(snap) is False
-
-    def test_less_than(self, make_snapshot):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        snap = make_snapshot(line_count=2)
-        assert IsLineCountConstraint("<", 5).test(snap) is True
+@pytest.mark.parametrize(("cls_path", "field"), _COUNT_CASES)
+class TestComparatorConstraints:
+    @pytest.mark.parametrize(
+        ("comparator", "actual", "expected"),
+        [(">", 10, True), (">", 3, False), ("==", 5, True), ("!=", 5, False), ("<", 2, True), ("gte", 5, True)],
+    )
+    def test_comparison_against_threshold_five(self, make_snapshot, cls_path, field, comparator, actual, expected):
+        snap = make_snapshot(**{field: actual})
+        assert _cls(cls_path)(comparator, 5).test(snap) is expected
 
     @pytest.mark.parametrize(
         ("args", "message"),
@@ -626,316 +273,84 @@ class TestIsLineCountConstraint:
             (("~~", 10), "'~~' is not a known comparator"),
         ],
     )
-    def test_invalid_args_raise(self, args, message):
+    def test_invalid_args_raise(self, cls_path, field, args, message):
         """Raise rather than fold to False: under "not", False would flip to "always matches"."""
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
         with pytest.raises(ValueError, match=re.escape(message)):
-            IsLineCountConstraint(*args)
+            _cls(cls_path)(*args)
 
-    def test_valid_does_not_fold(self):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        assert IsLineCountConstraint(">", 10).fold().value is None
-
-    def test_gte_alias(self, make_snapshot):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        snap = make_snapshot(line_count=5)
-        assert IsLineCountConstraint("gte", 5).test(snap) is True
+    def test_valid_args_depend_on_the_view(self, cls_path, field):
+        assert _cls(cls_path)(">", 10).fold().value is None
 
 
-# ── IsSizeConstraint ──────────────────────────────────────────────────────────
+# ── IsPlatformConstraint / IsArchConstraint / IsPlatformArchConstraint ───────
+# The sublime stub reports linux / x64 / linux_x64.
+
+_ENV_CASES = [
+    ("is_platform.IsPlatformConstraint", "linux", "windows", "no platform was given"),
+    ("is_arch.IsArchConstraint", "x64", "x32", "no architecture was given"),
+    ("is_platform_arch.IsPlatformArchConstraint", "linux_x64", "windows_x64", "no platform/arch pair was given"),
+]
 
 
-class TestIsSizeConstraint:
-    def test_file_on_disk_larger(self, make_snapshot):
-        from plugin.rules.constraints.is_size import IsSizeConstraint
-
-        snap = make_snapshot(file_size=2048)
-        assert IsSizeConstraint(">", 1000).test(snap) is True
-
-    def test_file_on_disk_smaller(self, make_snapshot):
-        from plugin.rules.constraints.is_size import IsSizeConstraint
-
-        snap = make_snapshot(file_size=500)
-        assert IsSizeConstraint(">", 1000).test(snap) is False
-
-    def test_never_passes_without_a_file(self, make_snapshot):
-        from plugin.rules.constraints.is_size import IsSizeConstraint
-
-        snap = make_snapshot(file_size=-1)
-        for inverted in (False, True):
-            rule = ConstraintRule(constraint=IsSizeConstraint(">", 1000), inverted=inverted)
-            assert rule.test(snap) is False
-
-    def test_equal(self, make_snapshot):
-        from plugin.rules.constraints.is_size import IsSizeConstraint
-
-        snap = make_snapshot(file_size=1024)
-        assert IsSizeConstraint("==", 1024).test(snap) is True
-
-    @pytest.mark.parametrize(
-        ("args", "message"),
-        [
-            ((">",), "expects exactly 2 args (a comparator and a threshold), got 1"),
-            ((), "expects exactly 2 args (a comparator and a threshold), got 0"),
-            (("~~", 10), "'~~' is not a known comparator"),
-        ],
-    )
-    def test_invalid_args_raise(self, args, message):
-        """Raise rather than fold to False: under "not", False would flip to "always matches"."""
-        from plugin.rules.constraints.is_size import IsSizeConstraint
-
-        with pytest.raises(ValueError, match=re.escape(message)):
-            IsSizeConstraint(*args)
-
-    def test_valid_does_not_fold(self):
-        from plugin.rules.constraints.is_size import IsSizeConstraint
-
-        assert IsSizeConstraint(">", 0).fold().value is None
-
-
-# ── IsPlatformConstraint ──────────────────────────────────────────────────────
-
-
-class TestIsPlatformConstraint:
-    # The sublime mock returns platform() == "linux"
-
-    def test_matching_platform(self, make_snapshot):
-        from plugin.rules.constraints.is_platform import IsPlatformConstraint
-
+@pytest.mark.parametrize(("cls_path", "current", "other", "empty_reason"), _ENV_CASES)
+class TestEnvironmentConstraints:
+    def test_matches_only_the_current_value(self, make_snapshot, cls_path, current, other, empty_reason):
         snap = make_snapshot()
-        assert IsPlatformConstraint("linux").test(snap) is True
+        assert _cls(cls_path)(current).test(snap) is True
+        assert _cls(cls_path)(current.upper()).test(snap) is True
+        assert _cls(cls_path)(other).test(snap) is False
+        assert _cls(cls_path)(other, current).test(snap) is True
 
-    def test_non_matching_platform(self, make_snapshot):
-        from plugin.rules.constraints.is_platform import IsPlatformConstraint
+    def test_folds_when_it_can_never_match(self, cls_path, current, other, empty_reason):
+        """The environment is fixed at install time, so a constraint that can never match is a
+        compile-time constant the optimizer may prune."""
+        assert _cls(cls_path)().fold() == Fold(False, empty_reason)
+        assert _cls(cls_path)(other).fold() == Fold(False, f'this Sublime Text is {current}, not any of "{other}"')
 
-        snap = make_snapshot()
-        assert IsPlatformConstraint("windows").test(snap) is False
-
-    def test_case_insensitive_matching(self, make_snapshot):
-        from plugin.rules.constraints.is_platform import IsPlatformConstraint
-
-        snap = make_snapshot()
-        assert IsPlatformConstraint("Linux").test(snap) is True
-
-    def test_one_of_multiple_platforms(self, make_snapshot):
-        from plugin.rules.constraints.is_platform import IsPlatformConstraint
-
-        snap = make_snapshot()
-        assert IsPlatformConstraint("windows", "linux").test(snap) is True
-
-    def test_empty_args_folds_to_false(self):
-        from plugin.rules.constraints.is_platform import IsPlatformConstraint
-
-        assert IsPlatformConstraint().fold() == Fold(False, "no platform was given")
-
-    def test_guaranteed_false_folds_to_false(self):
-        """The platform is fixed at install time, so a constraint that can never match given the
-        current platform is just as much a compile-time constant as one with no names at all --
-        the optimizer should be able to prune it the same way."""
-        from plugin.rules.constraints.is_platform import IsPlatformConstraint
-
-        assert IsPlatformConstraint("windows").fold() == Fold(False, 'this Sublime Text is linux, not any of "windows"')
-
-    def test_guaranteed_true_does_not_fold(self):
-        """`fold()` could report `True` here -- the platform is fixed at install time, so this
-        constraint is a constant on this machine. It deliberately doesn't: unlike a degenerate
-        config (`contains(threshold=0)`), a platform check that matches is a normal, intended
-        rule, and folding it would report it to the user as a dropped rule on exactly the
-        platform it was written for."""
-        from plugin.rules.constraints.is_platform import IsPlatformConstraint
-
-        assert IsPlatformConstraint("linux").fold().value is None
-
-
-# ── AbstractConstraint class methods ──────────────────────────────────────────
-
-
-class TestAbstractConstraintClassMethods:
-    def test_name_derives_from_class_name(self):
-        from plugin.rules.constraints.contains import ContainsConstraint
-
-        assert ContainsConstraint.name() == "contains"
-
-    def test_name_multi_word(self):
-        from plugin.rules.constraints.is_line_count import IsLineCountConstraint
-
-        assert IsLineCountConstraint.name() == "is_line_count"
-
-    def test_can_support_matching_string(self):
-        from plugin.rules.constraints.contains import ContainsConstraint
-
-        assert ContainsConstraint.can_support("contains") is True
-
-    def test_can_support_non_matching_string(self):
-        from plugin.rules.constraints.contains import ContainsConstraint
-
-        assert ContainsConstraint.can_support("contains_regex") is False
-
-
-# ── IsArchConstraint ────────────────────────────────────────────────────────
-
-
-class TestIsArchConstraint:
-    def test_matching_arch(self, make_snapshot):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        snap = make_snapshot()
-        # ST_ARCH is resolved at import time; in the test mock it's "x64"
-        assert IsArchConstraint("x64").test(snap) is True
-
-    def test_non_matching_arch(self, make_snapshot):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        snap = make_snapshot()
-        assert IsArchConstraint("x32").test(snap) is False
-
-    def test_one_of_multiple(self, make_snapshot):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        snap = make_snapshot()
-        assert IsArchConstraint("x32", "x64").test(snap) is True
-
-    def test_case_insensitive(self, make_snapshot):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        snap = make_snapshot()
-        assert IsArchConstraint("X64").test(snap) is True
-
-    def test_empty_folds_to_false(self):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        assert IsArchConstraint().fold() == Fold(False, "no architecture was given")
-
-    def test_guaranteed_false_folds_to_false(self):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        assert IsArchConstraint("x32").fold() == Fold(False, 'this Sublime Text is x64, not any of "x32"')
-
-    def test_guaranteed_true_does_not_fold(self):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        assert IsArchConstraint("x64").fold().value is None
-
-    def test_name(self):
-        from plugin.rules.constraints.is_arch import IsArchConstraint
-
-        assert IsArchConstraint.name() == "is_arch"
-
-
-# ── IsPlatformArchConstraint ────────────────────────────────────────────────
-
-
-class TestIsPlatformArchConstraint:
-    def test_matching_platform_arch(self, make_snapshot):
-        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
-
-        snap = make_snapshot()
-        # ST_PLATFORM_ARCH is resolved at import time; mock returns "linux_x64"
-        assert IsPlatformArchConstraint("linux_x64").test(snap) is True
-
-    def test_non_matching(self, make_snapshot):
-        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
-
-        snap = make_snapshot()
-        assert IsPlatformArchConstraint("windows_x64").test(snap) is False
-
-    def test_empty_folds_to_false(self):
-        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
-
-        assert IsPlatformArchConstraint().fold() == Fold(False, "no platform/arch pair was given")
-
-    def test_guaranteed_false_folds_to_false(self):
-        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
-
-        assert IsPlatformArchConstraint("windows_x64").fold() == Fold(
-            False, 'this Sublime Text is linux_x64, not any of "windows_x64"'
-        )
-
-    def test_guaranteed_true_does_not_fold(self):
-        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
-
-        assert IsPlatformArchConstraint("linux_x64").fold().value is None
-
-    def test_name(self):
-        from plugin.rules.constraints.is_platform_arch import IsPlatformArchConstraint
-
-        assert IsPlatformArchConstraint.name() == "is_platform_arch"
+    def test_does_not_fold_when_it_always_matches(self, cls_path, current, other, empty_reason):
+        """It could fold to True, but deliberately doesn't: unlike a degenerate config
+        (`contains(threshold=0)`), a check that matches is a normal, intended rule, and folding it
+        would report it to the user as dropped on exactly the platform it was written for."""
+        assert _cls(cls_path)(current).fold().value is None
 
 
 # ── IsHiddenSyntaxConstraint ────────────────────────────────────────────────
 
 
-class TestIsHiddenSyntaxConstraint:
-    def test_hidden_syntax(self, make_snapshot):
-        from unittest.mock import MagicMock
+@pytest.mark.parametrize("hidden", [True, False])
+def test_is_hidden_syntax_reports_the_syntaxs_hidden_flag(make_snapshot, hidden):
+    from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
 
-        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
+    snap = make_snapshot()
+    object.__setattr__(snap, "syntax", MagicMock(hidden=hidden))
 
-        snap = make_snapshot()
-        # Inject a mock syntax with hidden=True
-        mock_syntax = MagicMock()
-        mock_syntax.hidden = True
-        object.__setattr__(snap, "syntax", mock_syntax)
-
-        assert IsHiddenSyntaxConstraint().test(snap) is True
-
-    def test_visible_syntax(self, make_snapshot):
-        from unittest.mock import MagicMock
-
-        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
-
-        snap = make_snapshot()
-        mock_syntax = MagicMock()
-        mock_syntax.hidden = False
-        object.__setattr__(snap, "syntax", mock_syntax)
-
-        assert IsHiddenSyntaxConstraint().test(snap) is False
-
-    def test_never_passes_without_a_syntax(self, make_snapshot):
-        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
-
-        snap = make_snapshot()  # syntax=None
-        for inverted in (False, True):
-            rule = ConstraintRule(constraint=IsHiddenSyntaxConstraint(), inverted=inverted)
-            assert rule.test(snap) is False
-
-    def test_name(self):
-        from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
-
-        assert IsHiddenSyntaxConstraint.name() == "is_hidden_syntax"
+    assert IsHiddenSyntaxConstraint().test(snap) is hidden
 
 
 # ── SelectorMatchesConstraint ───────────────────────────────────────────────
 
 
-class TestSelectorMatchesConstraint:
-    def test_no_candidates_folds_to_false(self):
-        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
+def test_selector_matches_fold():
+    from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
-        assert SelectorMatchesConstraint().fold().value is False
+    assert SelectorMatchesConstraint().fold().value is False
+    assert SelectorMatchesConstraint("source.python").fold().value is None
 
-    def test_with_candidates_does_not_fold(self):
-        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
-        assert SelectorMatchesConstraint("source.python").fold().value is None
+# ── Naming ────────────────────────────────────────────────────────────────────
 
-    def test_never_passes_without_a_syntax(self, make_snapshot):
-        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
-        snap = make_snapshot()  # syntax=None
-        for inverted in (False, True):
-            assert (
-                ConstraintRule(constraint=SelectorMatchesConstraint("source.python"), inverted=inverted).test(snap)
-                is False
-            )
+def test_name_is_derived_from_the_class_name():
+    from plugin.rules.constraints.contains import ContainsConstraint
+    from plugin.rules.constraints.is_line_count import IsLineCountConstraint
 
-    def test_name(self):
-        from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
+    assert ContainsConstraint.name() == "contains"
+    assert IsLineCountConstraint.name() == "is_line_count"
+    assert ContainsConstraint.can_support("contains") is True
+    assert ContainsConstraint.can_support("contains_regex") is False
 
-        assert SelectorMatchesConstraint.name() == "selector_matches"
+
+# ── IsExtensionConstraint ─────────────────────────────────────────────────────
 
 
 class TestIsExtensionConstraint:

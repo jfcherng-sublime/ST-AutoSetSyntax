@@ -88,21 +88,21 @@ class TestUnoptimizedSyntaxRuleTest:
         syntax_rule = SyntaxRule.make(_INVALID_RULE)
         syntax_rule.syntax = sublime.Syntax(name="Python")
 
-        assert syntax_rule.test(self._snapshot(make_snapshot)) is False
+        assert syntax_rule.test(self._snapshot(make_snapshot), ListenerEvent.LOAD) is False
 
     def test_rule_without_syntax_never_matches(self, make_snapshot, monkeypatch):
         monkeypatch.setattr(sublime, "score_selector", lambda scope, selector: 1)
         always = MatchRule.make(StMatchRule(match="all"))
         syntax_rule = SyntaxRule(syntax=None, root_rule=always)
 
-        assert syntax_rule.test(self._snapshot(make_snapshot)) is False
+        assert syntax_rule.test(self._snapshot(make_snapshot), ListenerEvent.LOAD) is False
 
     def test_valid_rule_still_matches(self, make_snapshot, monkeypatch):
         monkeypatch.setattr(sublime, "score_selector", lambda scope, selector: 1)
         always = MatchRule.make(StMatchRule(match="all"))
         syntax_rule = SyntaxRule(syntax=sublime.Syntax(name="Python"), root_rule=always)
 
-        assert syntax_rule.test(self._snapshot(make_snapshot)) is True
+        assert syntax_rule.test(self._snapshot(make_snapshot), ListenerEvent.LOAD) is True
 
 
 class TestEmptyCollectionKeepsWindowReady:

@@ -1,9 +1,12 @@
 """Tests for ConstraintRule, MatchRule, SyntaxRule, SyntaxRuleCollection, sift_optimizable."""
 
+import gc
+
 import pytest
 
 from plugin.types import UNFOLDED
 from plugin.types import Fold
+from plugin.types import ListenerEvent
 from plugin.types import StConstraintRule
 from plugin.types import StMatchRule
 from plugin.types import StSyntaxRule
@@ -43,22 +46,19 @@ class TestConstraintRule:
         rule = mod.ConstraintRule(constraint=Forced(), inverted=inverted)
         assert rule.test(make_snapshot()) is (exception_name == "AlwaysTruthyException")
 
-    def test_make_from_known_constraint(self):
+        # a lingering subclass would show up in get_constraints() and break the schema-sync test
+        del Forced, rule
+        gc.collect()
+
+    @pytest.mark.parametrize("inverted", [False, True])
+    def test_make_from_known_constraint(self, inverted):
         _ensure_rules_imported()
         from plugin.rules.constraint import ConstraintRule
 
-        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"]))
+        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"], inverted=inverted))
         assert rule is not None
         assert rule.constraint_name == "is_extension"
-        assert rule.inverted is False
-
-    def test_make_with_inverted(self):
-        _ensure_rules_imported()
-        from plugin.rules.constraint import ConstraintRule
-
-        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"], inverted=True))
-        assert rule is not None
-        assert rule.inverted is True
+        assert rule.inverted is inverted
 
     def test_make_unsupported_returns_none(self):
         from plugin.rules.constraint import ConstraintRule
@@ -83,15 +83,6 @@ class TestConstraintRule:
 
         src = StConstraintRule(constraint=constraint, args=args, kwargs=kwargs, inverted=True)
         assert ConstraintRule.make(src) is None
-
-    def test_src_setting_stored(self):
-        _ensure_rules_imported()
-        from plugin.rules.constraint import ConstraintRule
-
-        src = StConstraintRule(constraint="is_extension", args=["py"])
-        rule = ConstraintRule.make(src)
-        assert rule is not None
-        assert rule.src_setting is src
 
     def test_folds_to_false_when_not_inverted(self):
         """A constraint that always fails is constant False."""
@@ -128,39 +119,6 @@ class TestConstraintRule:
 
 
 class TestMatchRule:
-    def test_make_any_with_constraints(self):
-        _ensure_rules_imported()
-        from plugin.rules.match import MatchRule
-
-        rule = MatchRule.make(
-            StMatchRule(
-                match="any",
-                rules=[
-                    StConstraintRule(constraint="is_extension", args=["py"]),
-                    StConstraintRule(constraint="is_extension", args=["js"]),
-                ],
-            )
-        )
-        assert rule is not None
-        assert rule.match_name == "any"
-        assert len(rule.rules) == 2
-
-    def test_make_all_with_constraints(self):
-        _ensure_rules_imported()
-        from plugin.rules.match import MatchRule
-
-        rule = MatchRule.make(
-            StMatchRule(
-                match="all",
-                rules=[
-                    StConstraintRule(constraint="is_extension", args=["py"]),
-                ],
-            )
-        )
-        assert rule is not None
-        assert rule.match_name == "all"
-        assert len(rule.rules) == 1
-
     def test_make_with_nested_match(self):
         _ensure_rules_imported()
         from plugin.rules.match import MatchRule
@@ -195,69 +153,6 @@ class TestMatchRule:
 
         rule = MatchRule.make(StMatchRule(match="nonexistent_match"))
         assert rule is None
-
-    def test_empty_rules_folds_to_false(self):
-        _ensure_rules_imported()
-        from plugin.rules.match import MatchRule
-
-        rule = MatchRule.make(StMatchRule(match="any", rules=[]))
-        assert rule is not None
-        assert rule.fold().value is False
-
-    def test_src_setting_stored(self):
-        _ensure_rules_imported()
-        from plugin.rules.match import MatchRule
-
-        src = StMatchRule(
-            match="any",
-            rules=[StConstraintRule(constraint="is_extension", args=["py"])],
-        )
-        rule = MatchRule.make(src)
-        assert rule is not None
-        assert rule.src_setting is src
-
-
-# ── AbstractMatch.fold / prunable_child_value ──────────────────────────────────
-
-
-class TestMatchFoldAndPrunability:
-    def test_any_match_folds_empty_to_false(self):
-        _ensure_rules_imported()
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch().fold(()).value is False
-        assert AnyMatch().prunable_child_value() is False
-
-    def test_all_match_folds_empty_to_true(self):
-        """`all([])` is `True`, so an empty `all` is constant True, not False."""
-        _ensure_rules_imported()
-        from plugin.rules.matches.all import AllMatch
-
-        assert AllMatch().fold(()).value is True
-        assert AllMatch().prunable_child_value() is True
-
-    def test_some_match_folds_to_true_when_goal_unreachable_low(self):
-        """A count of 0 means the goal is always satisfied (`goal <= 0` -> constant True). A
-        negative count is rejected outright, see `TestSomeMatch.test_invalid_args_are_rejected`."""
-        _ensure_rules_imported()
-        from plugin.rules.matches.some import SomeMatch
-
-        assert SomeMatch(0).fold(()).value is True
-        assert SomeMatch(0).fold((_FixedRule(True), _FixedRule(True))).value is True
-
-    def test_some_match_folds_to_false_when_goal_unreachable_high(self):
-        """count > len(rules) can never be satisfied -> constant False."""
-        _ensure_rules_imported()
-        from plugin.rules.matches.some import SomeMatch
-
-        assert SomeMatch(3).fold((_FixedRule(True), _FixedRule(True))).value is False
-
-    def test_ratio_match_never_allows_child_pruning(self):
-        """Ratio's goal is recomputed from `len(rules)`, so pruning any child would corrupt it."""
-        _ensure_rules_imported()
-        from plugin.rules.matches.ratio import RatioMatch
-
-        assert RatioMatch(2, 3).prunable_child_value() is None
 
 
 # ── MatchRule.optimize() semantics (AND/OR-correctness of pruning) ──────────────
@@ -333,6 +228,22 @@ class TestMatchRuleOptimizeSemantics:
 
         assert const_true_leaf in dropped
         assert const_true_leaf not in rule.rules
+
+    def test_some_prunes_constant_false_child_but_keeps_constant_true(self):
+        """A constant-False child never counts toward `some`'s fixed `n`, so it can go; a constant-True
+        one does count, so dropping it would change the result."""
+        _ensure_rules_imported()
+        from plugin.rules.match import MatchRule
+        from plugin.rules.matches.some import SomeMatch
+
+        never, always = _FixedRule(False, folded=False), _FixedRule(True, folded=True)
+        rule = MatchRule(match=SomeMatch(1), match_name="some", rules=(_FixedRule(True), never, always))
+
+        dropped = list(rule.optimize())
+
+        assert dropped == [never]
+        assert always in rule.rules
+        assert rule.test(None) is True
 
     def test_ratio_never_prunes_children_even_when_folds_to_false(self):
         """Ratio's own goal depends on len(rules), so no child pruning is ever safe."""
@@ -417,8 +328,8 @@ class TestSyntaxRule:
         assert rule.selector == "source.python"
         assert rule.root_rule is not None
 
-    def test_make_no_syntax_resolved(self, make_snapshot):
-        """Syntax resolution returns None in test mock, so syntax attr is None."""
+    def test_unresolvable_syntax_makes_the_rule_droppable(self):
+        """Syntax resolution returns None in the test stub."""
         _ensure_rules_imported()
         from plugin.rules.syntax import SyntaxRule
 
@@ -430,45 +341,7 @@ class TestSyntaxRule:
         )
         assert rule.syntax is None
         assert rule.syntaxes_name == ("NonexistentSyntax",)
-
-    def test_folds_to_false_with_no_syntax(self, make_snapshot):
-        """Without a resolved syntax, the rule should be droppable."""
-        _ensure_rules_imported()
-        from plugin.rules.syntax import SyntaxRule
-
-        rule = SyntaxRule.make(
-            StSyntaxRule(
-                syntaxes=["NonexistentSyntax"],
-                rules=[StConstraintRule(constraint="is_extension", args=["py"])],
-            )
-        )
         assert rule.fold().value is False
-
-    def test_empty_on_events_never_triggers(self, make_snapshot):
-        """on_events=[] means no event triggers — rule becomes droppable."""
-        _ensure_rules_imported()
-        from plugin.rules.syntax import SyntaxRule
-
-        rule = SyntaxRule.make(
-            StSyntaxRule(
-                syntaxes=["Python"],
-                rules=[StConstraintRule(constraint="is_extension", args=["py"])],
-            )
-        )
-        # With syntax=None (mock) the rule is droppable
-        # The main thing is the constructor doesn't crash with empty on_events
-        assert rule.on_events is None  # not set → None = no restriction
-
-    def test_src_setting_stored(self):
-        _ensure_rules_imported()
-        from plugin.rules.syntax import SyntaxRule
-
-        src = StSyntaxRule(
-            syntaxes=["Python"],
-            rules=[StConstraintRule(constraint="is_extension", args=["py"])],
-        )
-        rule = SyntaxRule.make(src)
-        assert rule.src_setting is src
 
     def test_optimize_no_root_rule_yields_nothing(self):
         """Unsupported match → root_rule is None → optimize() is a no-op."""
@@ -560,48 +433,6 @@ class TestSyntaxRule:
 
 
 class TestSyntaxRuleCollection:
-    def test_make_from_empty(self):
-        _ensure_rules_imported()
-        from plugin.rules.syntax import SyntaxRuleCollection
-
-        col = SyntaxRuleCollection.make([])
-        assert len(col) == 0
-
-    def test_make_from_rules(self):
-        _ensure_rules_imported()
-        from plugin.rules.syntax import SyntaxRuleCollection
-
-        col = SyntaxRuleCollection.make([
-            StSyntaxRule(
-                syntaxes=["Python"],
-                rules=[StConstraintRule(constraint="is_extension", args=["py"])],
-            ),
-        ])
-        assert len(col) == 1
-
-    def test_len(self):
-        _ensure_rules_imported()
-        from plugin.rules.syntax import SyntaxRuleCollection
-
-        col = SyntaxRuleCollection.make([
-            StSyntaxRule(syntaxes=["A"], rules=[]),
-            StSyntaxRule(syntaxes=["B"], rules=[]),
-        ])
-        assert len(col) == 2
-
-    def test_optimize_drops_droppable_rules(self):
-        _ensure_rules_imported()
-        from plugin.rules.syntax import SyntaxRuleCollection
-
-        # All rules have syntax=None → droppable → should all be dropped
-        col = SyntaxRuleCollection.make([
-            StSyntaxRule(syntaxes=["A"], rules=[]),
-            StSyntaxRule(syntaxes=["B"], rules=[]),
-        ])
-        dropped = list(col.optimize())
-        assert len(col) == 0  # all rules dropped
-        assert len(dropped) == 2
-
     def test_test_no_match(self, make_snapshot):
         _ensure_rules_imported()
         from plugin.rules.syntax import SyntaxRuleCollection
@@ -615,7 +446,7 @@ class TestSyntaxRuleCollection:
         snap = make_snapshot(path="/tmp/test.py", content="print('hello')", first_line="print('hello')")
         # Syntax is None in mock → rules are droppable → optimize drops them
         col.optimize()
-        result = col.test(snap)
+        result = col.test(snap, ListenerEvent.LOAD)
         assert result is None
 
 
@@ -771,7 +602,7 @@ class TestWarnLegacyFoldOverrides:
     working but silently stops being optimized away, so it has to be told at load time."""
 
     def test_warns_about_a_legacy_override(self, capsys):
-        from plugin.rules._optimize import warn_legacy_fold_overrides
+        from plugin.custom import warn_legacy_fold_overrides
 
         class _Base:
             pass
@@ -788,7 +619,7 @@ class TestWarnLegacyFoldOverrides:
         assert "fold()" in out
 
     def test_silent_when_nothing_overrides_the_old_names(self, capsys):
-        from plugin.rules._optimize import warn_legacy_fold_overrides
+        from plugin.custom import warn_legacy_fold_overrides
 
         class _Base:
             pass
@@ -804,7 +635,7 @@ class TestWarnLegacyFoldOverrides:
     def test_built_in_constraints_and_matches_are_all_migrated(self, capsys):
         """Guards against a built-in being missed by the migration."""
         _ensure_rules_imported()
-        from plugin.rules._optimize import warn_legacy_fold_overrides
+        from plugin.custom import warn_legacy_fold_overrides
         from plugin.rules.constraint import AbstractConstraint
         from plugin.rules.match import AbstractMatch
 

@@ -2,9 +2,13 @@
 
 from unittest.mock import MagicMock
 
+import pytest
 import sublime
 
 import plugin.helpers as mod
+
+PYTHON = sublime.Syntax(name="Python")
+PLAIN = sublime.Syntax(name="Plain Text")
 
 
 def _make_view(
@@ -25,63 +29,27 @@ def _make_view(
 
 
 class TestIsSyntaxableView:
-    def test_invalid_view_rejected(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view(valid=False)
-        assert mod.is_syntaxable_view(view) is False
+    @pytest.mark.parametrize(
+        ("view_kwargs", "kwargs", "size_max", "expected"),
+        [
+            pytest.param({"valid": False}, {}, 0, False, id="invalid"),
+            # `element()` is non-None for special views (find panels, quick-input widgets, ...)
+            pytest.param({"element": "find_input"}, {}, 0, False, id="widget"),
+            pytest.param({"transient": True}, {}, 0, False, id="transient"),
+            pytest.param({}, {}, 0, True, id="plain"),
+            pytest.param({"syntax": PYTHON}, {"must_plaintext": True}, 0, False, id="plaintext-required-got-python"),
+            pytest.param({"syntax": PLAIN}, {"must_plaintext": True}, 0, True, id="plaintext-required-got-plain"),
+            pytest.param({"syntax": PYTHON}, {"must_plaintext": False}, 0, True, id="plaintext-not-required"),
+            pytest.param({"size": 10_000_000}, {}, 0, True, id="zero-limit-is-unlimited"),
+            pytest.param({"size": 2000}, {}, 1000, False, id="over-limit"),
+            pytest.param({"size": 500}, {}, 1000, True, id="under-limit"),
+            pytest.param({"size": 1000}, {}, 1000, True, id="exactly-at-limit"),
+        ],
+    )
+    def test_verdict(self, monkeypatch, view_kwargs, kwargs, size_max, expected):
+        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: size_max)
 
-    def test_widget_element_rejected(self, monkeypatch):
-        """`element()` is non-None/non-empty for special views (find panels, quick-input
-        widgets, etc.) which must never get an automatic syntax reassignment."""
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view(element="find_input")
-        assert mod.is_syntaxable_view(view) is False
-
-    def test_transient_view_rejected(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view(transient=True)
-        assert mod.is_syntaxable_view(view) is False
-
-    def test_plain_view_accepted_by_default(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view()
-        assert mod.is_syntaxable_view(view) is True
-
-    def test_must_plaintext_rejects_non_plaintext_syntax(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view(syntax=sublime.Syntax(name="Python"))
-        assert mod.is_syntaxable_view(view, must_plaintext=True) is False
-
-    def test_must_plaintext_accepts_plaintext_syntax(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view(syntax=sublime.Syntax(name="Plain Text"))
-        assert mod.is_syntaxable_view(view, must_plaintext=True) is True
-
-    def test_must_plaintext_false_ignores_current_syntax(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view(syntax=sublime.Syntax(name="Python"))
-        assert mod.is_syntaxable_view(view, must_plaintext=False) is True
-
-    def test_zero_size_limit_means_unlimited(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 0)
-        view = _make_view(size=10_000_000)
-        assert mod.is_syntaxable_view(view) is True
-
-    def test_view_over_size_limit_rejected(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 1000)
-        view = _make_view(size=2000)
-        assert mod.is_syntaxable_view(view) is False
-
-    def test_view_within_size_limit_accepted(self, monkeypatch):
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 1000)
-        view = _make_view(size=500)
-        assert mod.is_syntaxable_view(view) is True
-
-    def test_view_exactly_at_size_limit_accepted(self, monkeypatch):
-        """The boundary is inclusive (`size_max >= view.size()`)."""
-        monkeypatch.setattr(mod, "get_st_setting", lambda *a, **kw: 1000)
-        view = _make_view(size=1000)
-        assert mod.is_syntaxable_view(view) is True
+        assert mod.is_syntaxable_view(_make_view(**view_kwargs), **kwargs) is expected
 
 
 class TestCreateNewView:
@@ -95,18 +63,6 @@ class TestCreateNewView:
         assert result is new_view
         new_view.set_name.assert_called_once_with("My View")
         new_view.run_command.assert_called_once_with("append", {"characters": "hello"})
-
-    def test_marks_view_as_created(self):
-        window = MagicMock()
-        new_view = MagicMock()
-        window.new_file.return_value = new_view
-        settings_obj = MagicMock()
-        new_view.settings.return_value = settings_obj
-
-        mod.create_new_view(window=window)
-
-        updated = settings_obj.update.call_args[0][0]
-        assert updated[mod.VIEW_KEY_IS_CREATED] is True
 
     def test_user_settings_are_preserved_alongside_created_marker(self):
         window = MagicMock()

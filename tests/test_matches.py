@@ -36,9 +36,6 @@ def _rules(*results: bool) -> tuple[_MockRule, ...]:
     return tuple(_MockRule(r) for r in results)
 
 
-# ── AnyMatch ──────────────────────────────────────────────────────────────────
-
-
 @pytest.mark.parametrize("match_cls_path", ["any.AnyMatch", "all.AllMatch", "some.SomeMatch", "ratio.RatioMatch"])
 def test_match_name_is_derived_from_the_class_name(match_cls_path):
     import importlib
@@ -49,83 +46,57 @@ def test_match_name_is_derived_from_the_class_name(match_cls_path):
     assert cls.can_support(module) is True
 
 
-class TestAnyMatch:
-    def test_one_true_rule_passes(self, make_snapshot):
-        from plugin.rules.matches.any import AnyMatch
+def _match(path):
+    import importlib
 
-        snap = make_snapshot()
-        assert AnyMatch().test(snap, _rules(False, True, False)) is True
-
-    def test_all_false_fails(self, make_snapshot):
-        from plugin.rules.matches.any import AnyMatch
-
-        snap = make_snapshot()
-        assert AnyMatch().test(snap, _rules(False, False)) is False
-
-    def test_all_true_passes(self, make_snapshot):
-        from plugin.rules.matches.any import AnyMatch
-
-        snap = make_snapshot()
-        assert AnyMatch().test(snap, _rules(True, True)) is True
-
-    def test_empty_rules_fails(self, make_snapshot):
-        from plugin.rules.matches.any import AnyMatch
-
-        snap = make_snapshot()
-        assert AnyMatch().test(snap, ()) is False
-
-    def test_empty_rules_folds_to_false(self):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch().fold(()).value is False
-
-    def test_non_empty_rules_does_not_fold(self):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch().fold(_rules(True)).value is None
+    module, cls_name = path.split(".")
+    return getattr(importlib.import_module(f"plugin.rules.matches.{module}"), cls_name)
 
 
-# ── AllMatch ──────────────────────────────────────────────────────────────────
+@pytest.mark.parametrize(
+    ("match_path", "args", "results", "expected"),
+    [
+        ("any.AnyMatch", (), (False, True, False), True),
+        ("any.AnyMatch", (), (True, True), True),
+        ("any.AnyMatch", (), (False, False), False),
+        ("any.AnyMatch", (), (), False),
+        ("all.AllMatch", (), (True, True, True), True),
+        ("all.AllMatch", (), (True, False, True), False),
+        ("all.AllMatch", (), (False, False), False),
+        ("all.AllMatch", (), (True,), True),
+        ("all.AllMatch", (), (), True),
+        ("some.SomeMatch", (2,), (True, True, False), True),
+        ("some.SomeMatch", (2,), (True, True, True), True),
+        ("some.SomeMatch", (3,), (True, True, False), False),
+        ("some.SomeMatch", (0,), (False, False), True),
+        ("ratio.RatioMatch", (2, 3), (True, True, False), True),
+        ("ratio.RatioMatch", (2, 3), (True, False, False), False),
+        ("ratio.RatioMatch", (1, 2), (True, False), True),
+        ("ratio.RatioMatch", (1, 1), (True, True), True),
+        ("ratio.RatioMatch", (1, 1), (True, False), False),
+        # Regression: `nth(...) or 0` conflated a missing numerator with an explicit zero.
+        ("ratio.RatioMatch", (0, 3), (False, False, False), True),
+    ],
+)
+def test_match_verdict(make_snapshot, match_path, args, results, expected):
+    assert _match(match_path)(*args).test(make_snapshot(), _rules(*results)) is expected
 
 
-class TestAllMatch:
-    def test_all_true_passes(self, make_snapshot):
-        from plugin.rules.matches.all import AllMatch
-
-        snap = make_snapshot()
-        assert AllMatch().test(snap, _rules(True, True, True)) is True
-
-    def test_one_false_fails(self, make_snapshot):
-        from plugin.rules.matches.all import AllMatch
-
-        snap = make_snapshot()
-        assert AllMatch().test(snap, _rules(True, False, True)) is False
-
-    def test_all_false_fails(self, make_snapshot):
-        from plugin.rules.matches.all import AllMatch
-
-        snap = make_snapshot()
-        assert AllMatch().test(snap, _rules(False, False)) is False
-
-    def test_single_true_passes(self, make_snapshot):
-        from plugin.rules.matches.all import AllMatch
-
-        snap = make_snapshot()
-        assert AllMatch().test(snap, _rules(True)) is True
-
-    def test_empty_rules_passes(self, make_snapshot):
-        from plugin.rules.matches.all import AllMatch
-
-        # all() of empty iterable is True in Python
-        snap = make_snapshot()
-        assert AllMatch().test(snap, ()) is True
-
-    def test_empty_rules_folds_to_true(self):
-        """`all([])` is True -- the opposite constant to an empty `any`, and the distinction
-        `fold()` exists to carry."""
-        from plugin.rules.matches.all import AllMatch
-
-        assert AllMatch().fold(()).value is True
+@pytest.mark.parametrize(
+    ("match_path", "args", "results", "expected"),
+    [
+        ("any.AnyMatch", (), (), False),
+        ("any.AnyMatch", (), (True,), None),
+        ("all.AllMatch", (), (), True),  # `all([])` is True: the opposite constant to an empty `any`
+        ("some.SomeMatch", (5,), (True, True, True), False),  # count exceeds the rules
+        ("some.SomeMatch", (2,), (True, True, True), None),
+        ("ratio.RatioMatch", (0, 3), (False, False), True),
+        ("ratio.RatioMatch", (3, 2), (True,), False),  # ratio above one
+        ("ratio.RatioMatch", (2, 3), (True, True, True), None),
+    ],
+)
+def test_match_fold(match_path, args, results, expected):
+    assert _match(match_path)(*args).fold(_rules(*results)).value is expected
 
 
 # ── Absorbing children ────────────────────────────────────────────────────────
@@ -187,193 +158,44 @@ class TestAbsorbingChildSettlesTheMatch:
         assert any(reason.startswith("never matches") and "no extension was given" in reason for reason in reasons)
 
 
-# ── SomeMatch ─────────────────────────────────────────────────────────────────
+# ── SomeMatch / RatioMatch arguments ──────────────────────────────────────────
 
 
-class TestSomeMatch:
-    def test_exactly_n_pass(self, make_snapshot):
-        from plugin.rules.matches.some import SomeMatch
+@pytest.mark.parametrize("args", [(), (-1,), ("2",), (True,), (2.5,), (1, 2)])
+def test_some_invalid_args_are_rejected(args):
+    """An invalid count used to fall back to "satisfied by nothing", i.e. matching every file."""
+    from plugin.rules.matches.some import SomeMatch
 
-        snap = make_snapshot()
-        assert SomeMatch(2).test(snap, _rules(True, True, False)) is True
-
-    def test_more_than_n_pass(self, make_snapshot):
-        from plugin.rules.matches.some import SomeMatch
-
-        snap = make_snapshot()
-        assert SomeMatch(2).test(snap, _rules(True, True, True)) is True
-
-    def test_fewer_than_n_fail(self, make_snapshot):
-        from plugin.rules.matches.some import SomeMatch
-
-        snap = make_snapshot()
-        assert SomeMatch(3).test(snap, _rules(True, True, False)) is False
-
-    def test_zero_count_always_passes(self, make_snapshot):
-        from plugin.rules.matches.some import SomeMatch
-
-        snap = make_snapshot()
-        assert SomeMatch(0).test(snap, _rules(False, False)) is True
-
-    @pytest.mark.parametrize("args", [(), (-1,), ("2",), (True,), (2.5,), (1, 2)])
-    def test_invalid_args_are_rejected(self, args):
-        """An invalid count used to fall back to "satisfied by nothing", i.e. matching every file."""
-        from plugin.rules.matches.some import SomeMatch
-
-        with pytest.raises(ValueError, match='"some"'):
-            SomeMatch(*args)
-
-    def test_rule_with_invalid_some_is_not_made(self):
-        import plugin.rules.constraints  # ruff:ignore[unused-import]
-        from plugin.rules.match import MatchRule
-        from plugin.types import StConstraintRule
-        from plugin.types import StMatchRule
-
-        rule = MatchRule.make(
-            StMatchRule(match="some", rules=[StConstraintRule(constraint="is_extension", args=["py"])])
-        )
-
-        assert rule is None
-
-    def test_count_exceeds_rules_folds_to_false(self):
-        from plugin.rules.matches.some import SomeMatch
-
-        # count=5 but only 3 rules → droppable
-        assert SomeMatch(5).fold(_rules(True, True, True)).value is False
-
-    def test_valid_count_does_not_fold(self):
-        from plugin.rules.matches.some import SomeMatch
-
-        assert SomeMatch(2).fold(_rules(True, True, True)).value is None
+    with pytest.raises(ValueError, match='"some"'):
+        SomeMatch(*args)
 
 
-# ── RatioMatch ────────────────────────────────────────────────────────────────
+def test_rule_with_invalid_some_is_not_made():
+    import plugin.rules.constraints  # ruff:ignore[unused-import]
+    from plugin.rules.match import MatchRule
+    from plugin.types import StConstraintRule
+    from plugin.types import StMatchRule
+
+    rule = MatchRule.make(StMatchRule(match="some", rules=[StConstraintRule(constraint="is_extension", args=["py"])]))
+
+    assert rule is None
 
 
-class TestRatioMatch:
-    def test_two_thirds_passes(self, make_snapshot):
-        from plugin.rules.matches.ratio import RatioMatch
+@pytest.mark.parametrize("args", [(), (1,), (1, 0), (-1, 2), (1, -2), ("1", "2"), (True, 2), (1, 2, 3)])
+def test_ratio_invalid_args_are_rejected(args):
+    """An invalid ratio used to fall back to "demands nothing", i.e. matching every file."""
+    from plugin.rules.matches.ratio import RatioMatch
 
-        # 2/3 ratio → need ceil(2/3 * 3) = 2 passing rules out of 3
-        snap = make_snapshot()
-        assert RatioMatch(2, 3).test(snap, _rules(True, True, False)) is True
-
-    def test_two_thirds_fails(self, make_snapshot):
-        from plugin.rules.matches.ratio import RatioMatch
-
-        snap = make_snapshot()
-        assert RatioMatch(2, 3).test(snap, _rules(True, False, False)) is False
-
-    def test_half_passes(self, make_snapshot):
-        from plugin.rules.matches.ratio import RatioMatch
-
-        snap = make_snapshot()
-        assert RatioMatch(1, 2).test(snap, _rules(True, False)) is True
-
-    def test_full_ratio_all_must_pass(self, make_snapshot):
-        from plugin.rules.matches.ratio import RatioMatch
-
-        snap = make_snapshot()
-        assert RatioMatch(1, 1).test(snap, _rules(True, True)) is True
-        assert RatioMatch(1, 1).test(snap, _rules(True, False)) is False
-
-    def test_zero_numerator_passes_with_nothing_matching(self, make_snapshot):
-        """Regression: `nth(...) or 0` conflated missing with explicit zero."""
-        from plugin.rules.matches.ratio import RatioMatch
-
-        assert RatioMatch(0, 3).test(make_snapshot(), _rules(False, False, False)) is True
-
-    @pytest.mark.parametrize("args", [(), (1,), (1, 0), (-1, 2), (1, -2), ("1", "2"), (True, 2), (1, 2, 3)])
-    def test_invalid_args_are_rejected(self, args):
-        """An invalid ratio used to fall back to "demands nothing", i.e. matching every file."""
-        from plugin.rules.matches.ratio import RatioMatch
-
-        with pytest.raises(ValueError, match='"ratio"'):
-            RatioMatch(*args)
-
-    def test_zero_ratio_folds_to_true(self):
-        from plugin.rules.matches.ratio import RatioMatch
-
-        assert RatioMatch(0, 3).fold(_rules(False, False)).value is True
-
-    @pytest.mark.parametrize(("args", "passing"), [((7, 25), 7), ((0.28, 1), 7), ((14, 50), 7)])
-    def test_goal_is_exact(self, make_snapshot, args, passing):
-        """`0.28 * 25` is `7.000000000000001` in floats, which `ceil()` turned into a goal of 8."""
-        from plugin.rules.matches.ratio import RatioMatch
-
-        rules = _rules(*([True] * passing + [False] * (25 - passing)))
-
-        assert RatioMatch(*args).test(make_snapshot(), rules) is True
-        assert RatioMatch(*args).test(make_snapshot(), (*rules[1:], _MockRule(False))) is False
-
-    def test_ratio_above_one_folds_to_false(self):
-        from plugin.rules.matches.ratio import RatioMatch
-
-        assert RatioMatch(3, 2).fold(_rules(True)).value is False
-
-    def test_valid_ratio_does_not_fold(self):
-        from plugin.rules.matches.ratio import RatioMatch
-
-        assert RatioMatch(2, 3).fold(_rules(True, True, True)).value is None
+    with pytest.raises(ValueError, match='"ratio"'):
+        RatioMatch(*args)
 
 
-# ── AbstractMatch.test_count algorithm ───────────────────────────────────────
+@pytest.mark.parametrize(("args", "passing"), [((7, 25), 7), ((0.28, 1), 7), ((14, 50), 7)])
+def test_ratio_goal_is_exact(make_snapshot, args, passing):
+    """`0.28 * 25` is `7.000000000000001` in floats, which `ceil()` turned into a goal of 8."""
+    from plugin.rules.matches.ratio import RatioMatch
 
+    rules = _rules(*([True] * passing + [False] * (25 - passing)))
 
-class TestTestCount:
-    """Direct tests of the test_count short-circuit counting algorithm."""
-
-    @pytest.fixture()
-    def snap(self, make_snapshot):
-        return make_snapshot()
-
-    def test_goal_zero_always_true(self, snap):
-        from plugin.rules.matches.any import AnyMatch
-
-        # test_count is a static method on AbstractMatch
-        assert AnyMatch.test_count(snap, _rules(False, False), 0) is True
-
-    def test_exact_goal_met(self, snap):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch.test_count(snap, _rules(True, True, False), 2) is True
-
-    def test_goal_not_met(self, snap):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch.test_count(snap, _rules(True, False, False), 2) is False
-
-    def test_goal_exceeds_rule_count(self, snap):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch.test_count(snap, _rules(True, True), 3) is False
-
-    def test_all_pass(self, snap):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch.test_count(snap, _rules(True, True, True), 3) is True
-
-    def test_early_exit_when_tolerance_exhausted(self, snap):
-        """Ensure the algorithm short-circuits rather than evaluating all rules."""
-        from plugin.rules.matches.any import AnyMatch
-
-        call_count = 0
-
-        class CountingRule:
-            def __init__(self, result: bool) -> None:
-                self._result = result
-
-            def test(self, _) -> bool:
-                nonlocal call_count
-                call_count += 1
-                return self._result
-
-        # goal=3, tolerance=5-3=2
-        # Rules: [F, F, F, T, T]
-        # After rule[2] fails: tolerance drops to -1
-        # rule[3] check: tolerance < 0 → bail without calling rule[3] or rule[4]
-        rules = tuple(CountingRule(r) for r in [False, False, False, True, True])
-        result = AnyMatch.test_count(snap, rules, 3)
-        assert result is False
-        # Only rules 0,1,2 evaluated (3 calls), not 3 or 4
-        assert call_count == 3
+    assert RatioMatch(*args).test(make_snapshot(), rules) is True
+    assert RatioMatch(*args).test(make_snapshot(), (*rules[1:], _MockRule(False))) is False

@@ -1,10 +1,14 @@
 """Tests for loading custom implementations across plugin reloads."""
 
+import gc
 import sys
 
+import pytest
 import sublime
 
 import plugin.custom as custom_mod
+from plugin.rules import AbstractConstraint
+from plugin.rules import AbstractMatch
 
 _ROOT = "zz-Custom"
 """A custom-package name no other test imports, so its `sys.modules` entries are this test's own."""
@@ -43,3 +47,32 @@ class TestReloadReExecutesCustomModules:
             assert sys.modules[f"{_ROOT}.matches.mine"].GENERATION == 2
         finally:
             _forget(_ROOT)
+
+
+class TestLegacyFoldOverrideWarning:
+    """A custom implementation still overriding `is_droppable`/`droppable_value` silently stops being
+    optimized, so loading must say so (this warning was once dropped without anything noticing)."""
+
+    @pytest.fixture
+    def no_custom_modules(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(sublime, "packages_path", lambda: str(tmp_path))
+        monkeypatch.setattr(custom_mod, "PLUGIN_CUSTOM_MODULE_PATHS", {})
+
+    @pytest.mark.parametrize("base", [AbstractConstraint, AbstractMatch])
+    def test_load_warns_about_each_legacy_override(self, no_custom_modules, capsys, base):
+        cls = type("LegacyThing", (base,), {"is_droppable": lambda self: False, "droppable_value": lambda self: None})
+        try:
+            custom_mod.load_custom_implementations()
+            out = capsys.readouterr().out
+        finally:
+            del cls
+            gc.collect()  # forget the throwaway subclass so it never shows up as an implementation
+
+        assert "[WARNING]" in out
+        assert "LegacyThing overrides is_droppable/droppable_value" in out
+        assert "fold()" in out
+
+    def test_current_implementations_do_not_warn(self, no_custom_modules, capsys):
+        custom_mod.load_custom_implementations()
+
+        assert "[WARNING]" not in capsys.readouterr().out

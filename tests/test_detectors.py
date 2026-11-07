@@ -127,9 +127,6 @@ class TestDetectWithHeuristicsJson:
     def _detected(self, monkeypatch, content: str, *, char_count: int | None = None) -> bool:
         return self._decide(monkeypatch, content, char_count=char_count) is not None
 
-    def test_plain_json_map_detected(self, monkeypatch):
-        assert self._detected(monkeypatch, _big_json_map()) is True
-
     def test_decision_carries_the_full_details_payload(self, monkeypatch):
         decision = self._decide(monkeypatch, _big_json_map())
         assert decision is not None
@@ -433,7 +430,7 @@ class TestDetectWithFirstLineModelineLinesSetting:
 
 class TestDetectWithTrimmedFilename:
     @staticmethod
-    def _make_snapshot_for_trimming(filename: str) -> ViewSnapshot:
+    def _make_snapshot_for_trimming(filename: str, trim_suffixes: tuple[str, ...] = (".min",)) -> ViewSnapshot:
         view = _make_view(syntax=sublime.Syntax(name="Plain Text"))
         view.file_name.return_value = f"/some/dir/{filename}"
         return ViewSnapshot(
@@ -445,11 +442,12 @@ class TestDetectWithTrimmedFilename:
             line_count=1,
             path_obj=None,
             syntax=sublime.Syntax(name="Plain Text"),
+            trim_suffixes=trim_suffixes,
         )
 
     def test_trims_configured_suffix_and_finds_syntax(self, monkeypatch):
         snap = self._make_snapshot_for_trimming("app.js.min")
-        settings = {"trim_suffixes": (".min",), "trim_suffixes_auto": False}
+        settings = {"trim_suffixes_auto": False}
 
         def _fake_find_syntax(filename):
             return sublime.Syntax(name="JavaScript") if filename == "app.js" else sublime.Syntax(name="Plain Text")
@@ -469,7 +467,7 @@ class TestDetectWithTrimmedFilename:
 
     def test_no_matching_suffix_returns_no_decision(self, monkeypatch):
         snap = self._make_snapshot_for_trimming("app.js")
-        settings = {"trim_suffixes": (".min",), "trim_suffixes_auto": False}
+        settings = {"trim_suffixes_auto": False}
 
         monkeypatch.setattr(mod.sublime, "find_syntax_for_file", lambda *a, **kw: None, raising=False)
 
@@ -479,7 +477,7 @@ class TestDetectWithTrimmedFilename:
         """A trimmed candidate resolving back to Plain Text isn't a real match -- must keep
         trying other candidates / suffixes instead of "succeeding" with a no-op syntax."""
         snap = self._make_snapshot_for_trimming("app.js.min.min")
-        settings = {"trim_suffixes": (".min",), "trim_suffixes_auto": False}
+        settings = {"trim_suffixes_auto": False}
 
         def _fake_find_syntax(filename):
             if filename == "app.js":

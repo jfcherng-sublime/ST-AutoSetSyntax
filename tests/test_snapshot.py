@@ -40,17 +40,13 @@ class TestViewSnapshotConstruction:
         snap = make_snapshot(path="/tmp/foo/bar.txt")
         assert snap.file_path == "/tmp/foo/bar.txt"
 
-    def test_file_path_empty_when_no_path(self, make_snapshot):
-        snap = make_snapshot()
-        assert snap.file_path == ""
-
     def test_file_name(self, make_snapshot):
         snap = make_snapshot(path="/tmp/foo.txt")
         assert snap.file_name == "foo.txt"
 
-    def test_file_name_empty_when_no_path(self, make_snapshot):
+    def test_path_properties_are_empty_when_no_path(self, make_snapshot):
         snap = make_snapshot()
-        assert snap.file_name == ""
+        assert (snap.file_path, snap.file_name) == ("", "")
 
     def test_file_name_unhidden(self, make_snapshot):
         snap = make_snapshot(path="/tmp/.hidden")
@@ -140,14 +136,8 @@ class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
 
 
 class TestViewSnapshotContentBytes:
-    def test_simple_utf8(self, make_snapshot):
-        snap = make_snapshot(content="hello")
-        assert snap.content_bytes == b"hello"
-
-    def test_unicode_content(self, make_snapshot):
-        snap = make_snapshot(content="héllo wörld 🎉")
-        assert isinstance(snap.content_bytes, bytes)
-        assert snap.content_bytes.decode("utf-8") == "héllo wörld 🎉"
+    def test_content_bytes_are_utf8(self, make_snapshot):
+        assert make_snapshot(content="héllo wörld 🎉").content_bytes == "héllo wörld 🎉".encode()
 
 
 class TestViewSnapshotEdgeCases:

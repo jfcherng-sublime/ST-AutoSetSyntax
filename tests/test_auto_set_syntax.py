@@ -30,7 +30,7 @@ class TestApply:
         assert mod._apply(view, None, ListenerEvent.LOAD) is False
         view.assign_syntax.assert_not_called()
 
-    def test_decision_is_assigned_with_its_details(self, monkeypatch):
+    def test_decision_is_assigned_to_the_view(self):
         view = _make_view(syntax=sublime.Syntax(name="Plain Text"))
         view.buffer.return_value.views.return_value = [view]
         syntax = sublime.Syntax(name="Python")
