@@ -80,7 +80,7 @@ The settings file defines `rules` entries that match file content to syntaxes. E
 
 - **`syntaxes`** — target syntax scope(s) to apply (e.g., `"scope:source.python"`)
 - **`selector`** — a scope selector to pre-filter views (e.g., `"text.plain"`)
-- **`on_events`** — optional list of events that trigger the rule (`"on_load"`, `"on_post_save"`, `"on_close"`)
+- **`on_events`** — optional list of events that trigger the rule (`"load"`, `"save"`, `"modify"`, ... — lowercase `ListenerEvent` values; an unknown name invalidates the rule)
 - **`rules`** — a list of match/constraint entries, each with:
   - **`match`** — match type: `"any"`, `"all"`, `"some"`, `"ratio"`
   - **`constraint`** — the leaf constraint name (e.g., `"is_extension"`, `"first_line_contains"`, `"contains_regex"`)

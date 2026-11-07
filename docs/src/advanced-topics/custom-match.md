@@ -33,6 +33,8 @@ You may create your own custom `Match` implementation by following steps.
     That is, you can use it via `"match": "my_own"` in a match rule.
 
 1.  At least, implement the `test` method.
+    Optionally override `fold()` to let the optimizer drop the match when its arguments already settle the answer
+    (see [how it works](how-it-works.md#optimization)).
 1.  Save your implementation in `Packages/AutoSetSyntax-Custom/matches/`.
     Conventionally, the file name used is the match name, `my_own.py`.
 

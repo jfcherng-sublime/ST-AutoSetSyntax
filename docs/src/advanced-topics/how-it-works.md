@@ -118,9 +118,13 @@ A detector never touches the view. It inspects the `ViewSnapshot` and returns ei
 @dataclass(slots=True, frozen=True)
 class SyntaxDecision:
     syntax: sublime.Syntax          # what to assign
-    details: dict[str, Any]         # why — logged verbatim
+    reason: str                     # why this detector decided — logged
+    details: dict[str, Any]         # further evidence — logged after the reason
     status_message: str | None      # optional status bar text, shown when applied
 ```
+
+Not every detector runs on every event: trimmed filename only runs for `command`, `init`, `load`,
+`save` and `untransientize`; Magika additionally runs for `modify` and `paste`.
 
 Steps 1 and 2 are early-outs handled directly by `run_auto_set_syntax_on_view()` — exec output
 runs *before* the (comparatively expensive) `ViewSnapshot` is built, since a build panel updates
@@ -179,6 +183,7 @@ Fields:
 - **`selector`**: Scope filter — only applies if current scope matches (default: `text.plain`)
 - **`on_events`**: Restrict which events trigger this rule (`None` = all events)
 - **`root_rule`**: A `MatchRule` (the match/constraint tree)
+- **`is_invalid`**: Set when the setting was understood but a match/constraint in it wasn't; such a rule folds to `False`
 - **`comment`**: Human-readable label (for logging/debugging)
 - **`src_setting`**: Reference back to the original setting object
 
@@ -224,6 +229,7 @@ A `ConstraintRule` wraps an `AbstractConstraint` with optional inversion:
 | `path_contains` / `path_contains_regex`               | Full path substring / regex          |
 | `relative_exists`                                     | Relative path/file exists in project |
 | `selector_matches`                                    | Scope selector matches               |
+| `is_go_project` / `is_python_project` / ...           | Nearest ancestor holds the project's marker file (Go, Python, Rust, PHP, JS, TS) |
 
 ### Optimization
 
@@ -297,6 +303,8 @@ Before the detector chain runs, a `ViewSnapshot` is created — a frozen snapsho
 - **`file_extensions`**: List of suffixes (e.g., `.tar.gz` → `['.tar', '.gz']`)
 - **`file_name`**, **`file_name_unhidden`**: With/without leading dot
 - **`syntax`**: Current syntax object
+- **`file_size`**: Size on disk in bytes, captured when the snapshot is taken (`-1` if not on disk)
+- **`trim_suffixes`**: The merged `trim_suffixes` setting, captured so detectors and constraints don't read the live view
 - **`encoding`**: Encoding (defaults to UTF-8 for unsaved buffers)
 - **`caret_rowcol`**: Cursor position `(row, col)` for edit-aware decisions
 - **`content_bytes`**, **`encoding_py`**: Lazy-computed derivatives
@@ -344,7 +352,7 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
      It has to be a real `Fold`: a bare `False`/`None`, or a plain `(False, "…")` tuple, is
      rejected.
    - To make `test()` give a verdict that `not` must not flip, raise `AlwaysTruthyException` or
-     `AlwaysFalsyException` (from `plugin.rules.constraint`) instead of returning.
+     `AlwaysFalsyException` (from `AutoSetSyntax.plugin.rules.constraint`) instead of returning.
    - For `AbstractMatch`, also override `prunable_child_value()` if the match supports safely
      pruning individual children (see [Optimization](#optimization)); the default of "only a
      constant-`False` child is prunable" is right for `any`-like combinators but wrong for

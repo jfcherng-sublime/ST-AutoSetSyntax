@@ -42,6 +42,16 @@ This setting controls what syntax a build output should use. The value can be an
 - An empty string, which does nothing.
 - A [syntax representation][plugin-syntax-representations].
 
+### `modeline_lines`
+
+| Type      | Default |
+| --------- | ------- |
+| `integer` | `5`     |
+
+The number of lines, counted from the beginning and the end of the file, in which a VIM/Emacs
+modeline (e.g., `# vim: syntax=python` or `-*- mode: python -*-`) is recognized.
+A negative number means no limit, which may cause false positives on modeline-like text anywhere in the file.
+
 ### `new_file_syntax`
 
 | Type     | Default |
@@ -407,9 +417,10 @@ To edit project settings, go to `Project` » `Edit Project`.
     !!! warning
 
         Under certain circumstances, the test result will not be inverted.
-        For example, if the `is_size` constraint tests a unsaved buffer,
-        the result will always be `false` no matter `inverted` is `true` or `false`,
-        because a unsaved buffer has no file size.
+        A constraint about something the view doesn't have is always `false` no matter `inverted`
+        is `true` or `false`. For example, `is_size`, `is_name`, `name_contains(_regex)`,
+        `path_contains(_regex)`, `relative_exists` and the `is_in_*_repo` / `is_*_project` constraints test an unsaved buffer (no file), and `is_syntax`,
+        `is_hidden_syntax` and `selector_matches` test a view that has no syntax.
 
 #### `contains`
 

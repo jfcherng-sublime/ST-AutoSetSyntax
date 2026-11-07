@@ -33,6 +33,15 @@ You may create your own custom `Constraint` implementation by following steps.
     That is, you can use it via `"constraint": "my_own"` in a constraint rule.
 
 1.  At least, implement the `test` method.
+
+    Optionally:
+
+    - Override `fold()` to let the optimizer drop the constraint when its arguments already settle the answer
+      (see [how it works](how-it-works.md#optimization)).
+    - Set `needs_file = True` (or `needs_syntax = True`) if the constraint is meaningless for an unsaved
+      buffer (or a view without a syntax). It then fails without being inverted by `inverted`.
+    - Raise `AlwaysTruthyException` or `AlwaysFalsyException` (from `AutoSetSyntax.plugin.rules.constraint`)
+      in `test()` to force the verdict regardless of `inverted`.
 1.  Save your implementation in `Packages/AutoSetSyntax-Custom/constraints/`.
     Conventionally, the file name used is the constraint name, `my_own.py`.
 
