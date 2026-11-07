@@ -1,20 +1,12 @@
-from typing import Any
 from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ..constraint import AbstractConstraint
+from ._text import AbstractRegexConstraint
 
 
 @final
-class FirstLineContainsRegexConstraint(AbstractConstraint):
-    args_noun = "pattern to look for"
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.regex = self._handled_regex(self.args, self.kwargs)
-
+class FirstLineContainsRegexConstraint(AbstractRegexConstraint):
     @override
-    def test(self, view_snapshot: ViewSnapshot) -> bool:
-        return bool(self.regex.search(view_snapshot.first_line))
+    def subject(self, view_snapshot: ViewSnapshot) -> str:
+        return view_snapshot.first_line

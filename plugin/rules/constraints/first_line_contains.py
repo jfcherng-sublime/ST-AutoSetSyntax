@@ -1,20 +1,12 @@
-from typing import Any
 from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ..constraint import AbstractConstraint
+from ._text import AbstractNeedlesConstraint
 
 
 @final
-class FirstLineContainsConstraint(AbstractConstraint):
-    args_noun = "needle to look for"
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.needles: tuple[str, ...] = self._handled_args()
-
+class FirstLineContainsConstraint(AbstractNeedlesConstraint):
     @override
-    def test(self, view_snapshot: ViewSnapshot) -> bool:
-        return any((needle in view_snapshot.first_line) for needle in self.needles)
+    def subject(self, view_snapshot: ViewSnapshot) -> str:
+        return view_snapshot.first_line

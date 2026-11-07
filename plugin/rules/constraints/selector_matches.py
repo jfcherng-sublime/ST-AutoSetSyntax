@@ -46,7 +46,6 @@ class SelectorMatchesConstraint(AbstractConstraint):
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         assert view_snapshot.syntax
         return any(
-            # ...
             sublime.score_selector(view_snapshot.syntax.scope, candidate) >= self.SCORE_THRESHOLD
             for candidate in self.candidates
         )
