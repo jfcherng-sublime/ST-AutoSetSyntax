@@ -251,13 +251,7 @@ def head_tail_content_st(view: sublime.View, partial: int) -> str:
     if (size := view.size()) <= partial:
         return view.substr(sublime.Region(0, size))
 
-    return (
-        # for large files, most characteristics is at the beginning
-        view.substr(sublime.Region(0, half))
-        + "\n\n"
-        # but some may be at the ending...
-        + view.substr(sublime.Region(size - half, size))
-    )
+    return view.substr(sublime.Region(0, half)) + "\n\n" + view.substr(sublime.Region(size - half, size))
 
 
 def first_last_n_lines(text: str, n: int) -> tuple[list[str], list[str], int]:
@@ -272,7 +266,6 @@ def first_last_n_lines(text: str, n: int) -> tuple[list[str], list[str], int]:
         return [], [], 0
     length = len(text)
 
-    # First n lines (scan forward)
     first: list[str] = []
     pos = 0
     for _ in range(n):
@@ -286,9 +279,7 @@ def first_last_n_lines(text: str, n: int) -> tuple[list[str], list[str], int]:
         first.append(text[pos:idx])
         pos = idx + 1
 
-    # Last n lines (scan backward). A line's start offset below `pos` means the
-    # forward scan above already counted it, so tally that overlap on the fly
-    # instead of collecting all offsets just to intersect them afterwards.
+    # a line starting below `pos` was already counted by the forward scan
     last: list[str] = []
     overlapped = 0
     end = length

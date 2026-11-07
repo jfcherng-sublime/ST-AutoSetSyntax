@@ -51,7 +51,6 @@ def resolve_magika_label_with_syntax_map(label: str, syntax_map: Mapping[str, li
         value = syntax_map.get(key)
         return value if isinstance(value, list) else []
 
-    # note that dict is insertion-ordered as of Python 3.7
     res: dict[str, bool] = {}
 
     deq = deque(notations_of(label))
