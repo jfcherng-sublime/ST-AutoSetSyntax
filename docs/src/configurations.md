@@ -495,6 +495,7 @@ To edit project settings, go to `Project` » `Edit Project`.
     ```
 
     Test whether both file `foo` and directory `bar/` exist relatively to the file.
+    `match` must be `"any"` (the default) or `"all"`; anything else invalidates the rule.
 
 #### `is_arch`
 

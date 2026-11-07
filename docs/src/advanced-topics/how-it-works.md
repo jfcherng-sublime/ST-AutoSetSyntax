@@ -43,7 +43,7 @@ On `plugin_loaded()` (ST lifecycle hook):
 2. Loads custom implementations from `AutoSetSyntax-Custom/matches/` and `AutoSetSyntax-Custom/constraints/`
 3. Sets up `AioSettings` — watches settings files asynchronously; recompiles rules on change
 4. Calls `set_up_window()` for each open window — compiles rules, logs version info, checks Magika availability
-5. Optionally runs syntax detection on startup views
+5. Runs syntax detection on startup views whose window enables `run_on_startup_views`
 
 On `plugin_unloaded()`:
 
@@ -304,7 +304,8 @@ Before the detector chain runs, a `ViewSnapshot` is created — a frozen snapsho
 - **`file_name`**, **`file_name_unhidden`**: With/without leading dot
 - **`syntax`**: Current syntax object
 - **`file_size`**: Size on disk in bytes, captured when the snapshot is taken (`-1` if not on disk)
-- **`trim_suffixes`**: The merged `trim_suffixes` setting, captured so detectors and constraints don't read the live view
+- **`settings`**: The window's merged plugin settings, so detectors and constraints don't look a window up
+- **`trim_suffixes`**: The merged `trim_suffixes` setting, read from `settings`
 - **`encoding`**: Encoding (defaults to UTF-8 for unsaved buffers)
 - **`caret_rowcol`**: Cursor position `(row, col)` for edit-aware decisions
 - **`content_bytes`**, **`encoding_py`**: Lazy-computed derivatives
@@ -354,9 +355,10 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
    - To make `test()` give a verdict that `inverted` must not flip, raise `AlwaysTruthyException` or
      `AlwaysFalsyException` (from `AutoSetSyntax.plugin.rules.constraint`) instead of returning.
    - For `AbstractMatch`, also override `prunable_child_value()` if the match supports safely
-     pruning individual children (see [Optimization](#optimization)); the default of "only a
-     constant-`False` child is prunable" is right for `any`-like combinators but wrong for
-     `all`-like ones.
+     pruning individual children (see [Optimization](#optimization)). The default is `None`:
+     nothing is pruned, which is always correct. Name your combinator's identity element
+     (`False` for `any`-like ones, `True` for `all`-like ones) to opt in; naming the wrong one
+     silently changes the match's result.
 
 !!! warning "Breaking change for existing Custom Implementations"
 
@@ -408,7 +410,7 @@ Uses `AioSettings` — an async settings watcher that:
 
 - Merges per-project settings over plugin settings (a `null` value reads as unset)
 - Merges `project_`, `user_` and `default_trim_suffixes` into one `trim_suffixes` list
-  (deduplicated, in that order), which `ViewSnapshot.trim_suffixes` captures
+  (deduplicated, in that order), which `ViewSnapshot.trim_suffixes` reads
 - Recompiles a window's rules when the plugin settings file changes or its project is loaded
   (`on_load_project_async`)
 - Tracks per-window settings independently; a window is tracked by `set_up_window()` and
