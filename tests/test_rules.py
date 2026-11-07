@@ -112,7 +112,7 @@ class TestConstraintRule:
         assert rule is not None
         # the reason still states what the constraint settled, so it has to name the flip too --
         # a bare "always matches: no extension was given" reads like its own contradiction
-        assert rule.fold() == Fold(True, 'no extension was given, negated by "not"')
+        assert rule.fold() == Fold(True, 'no extension was given, negated by "inverted"')
 
     def test_does_not_fold_when_constraint_depends_on_the_view(self):
         """`inverted` must not turn a non-constant constraint into one."""

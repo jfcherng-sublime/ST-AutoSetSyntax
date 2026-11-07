@@ -85,7 +85,7 @@ The settings file defines `rules` entries that match file content to syntaxes. E
   - **`match`** — match type: `"any"`, `"all"`, `"some"`, `"ratio"`
   - **`constraint`** — the leaf constraint name (e.g., `"is_extension"`, `"first_line_contains"`, `"contains_regex"`)
   - **`args`** — arguments passed to the constraint
-  - **`not`** — optional bool to negate the constraint
+  - **`inverted`** — optional bool to negate the constraint
   - **`comment`** — optional description of the rule's purpose
 
 Rules are evaluated top-to-bottom; the first matching rule wins. A constraint with falsy patterns (`""`, `[]`) can never match, so it's dropped while compiling — and reported, with the reason, in the log panel and in Debug Information. Nothing is dropped silently. An unknown or invalid match/constraint anywhere in a rule drops that whole syntax rule rather than just the bad entry: removing one child changes what its parent means (an `all` left empty would match everything).

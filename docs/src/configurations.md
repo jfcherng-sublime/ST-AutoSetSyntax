@@ -637,7 +637,8 @@ To edit project settings, go to `Project` » `Edit Project`.
     - the interpreter in shebang
     - the `syntax` in the VIM's syntax line
 
-    is `python`, `pypy`, `python3`, `python3.8`, etc.
+    is one of `args`. With `loosy_version`, a trailing version is accepted as well:
+    `python` in `args` matches `python`, `python3`, `python3.8`, etc.
 
 #### `is_javascript_project`
 

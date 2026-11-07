@@ -62,7 +62,7 @@ class ConstraintRule(Optimizable):
             return Fold(value, reason)
         # the reason states what the *constraint* settled, so say "not" flipped it, or the
         # report reads "always matches: no extension was given"
-        return Fold(not value, ", ".join(drop_falsy((reason, 'negated by "not"'))))
+        return Fold(not value, ", ".join(drop_falsy((reason, 'negated by "inverted"'))))
 
     @override
     def optimize(self) -> Generator[Optimizable]:

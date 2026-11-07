@@ -65,7 +65,7 @@
     ```
 
     This command downloads the Magika deep-learning detection dependencies.
-    It is the first step of the [Magika setup guide][plugin-magika].
+    It is the first step of the [Magika setup guide][plugin-dl-based-syntax-detection].
 
 ### `auto_set_syntax_syntax_rules_summary`
 

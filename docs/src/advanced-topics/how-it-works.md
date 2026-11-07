@@ -351,7 +351,7 @@ Users can add custom `AbstractMatch` or `AbstractConstraint` implementations:
      "always fails" one reports `False` — getting this backwards inverts the rule's meaning.
      It has to be a real `Fold`: a bare `False`/`None`, or a plain `(False, "…")` tuple, is
      rejected.
-   - To make `test()` give a verdict that `not` must not flip, raise `AlwaysTruthyException` or
+   - To make `test()` give a verdict that `inverted` must not flip, raise `AlwaysTruthyException` or
      `AlwaysFalsyException` (from `AutoSetSyntax.plugin.rules.constraint`) instead of returning.
    - For `AbstractMatch`, also override `prunable_child_value()` if the match supports safely
      pruning individual children (see [Optimization](#optimization)); the default of "only a
