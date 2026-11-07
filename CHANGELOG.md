@@ -1,7 +1,15 @@
 # AutoSetSyntax Changelog
 
-## Unreleased
+## 6.3.0
 
+> **Custom matches:** `AbstractMatch.prunable_child_value()` now defaults to `None`. If your
+> `Match` relied on the old default (`False`, i.e. constant-`False` children are removed from
+> `rules`), override it and return `False` explicitly. `AnyMatch`, `AllMatch`, `SomeMatch` and
+> `RatioMatch` are unaffected.
+
+- refactor!: `AbstractMatch.prunable_child_value()` defaults to `None` (nothing is pruned), which is
+  always correct. The old default of `False` silently changed the result of a custom AND-like
+  match.
 - fix: re-downloading dependencies on Windows while Magika is loaded no longer breaks the install.
   The old dependencies, which can't be deleted then, are now moved aside and removed on the next
   start, instead of being half-deleted with the new ones installed into a subdirectory.
@@ -51,6 +59,17 @@
   `invalid setting at user_syntax_rules[3]: rules[0].constrait: Extra inputs are not permitted`.
   A rules setting that isn't a list (e.g. a single rule without the surrounding `[...]`) is
   reported the same way instead of being ignored silently.
+- fix!: `relative_exists` with a `match` other than `"any"`/`"all"` makes the rule invalid.
+  Previously a typo such as `"al"` silently meant `"any"`.
+- fix: a constraint that raises while testing a view is logged in that view's window (not the
+  active one), with the constraint's class name.
+- fix: the parent-marker constraints (`is_in_git_repo`, `is_python_project`, ...) forget the
+  directories they found when a window's rules are recompiled. A deleted marker no longer
+  counts until the plugin is reloaded.
+- fix: `debounce` and `run_on_startup_views` follow the project settings of the view's own
+  window, instead of those of whichever window is active.
+- fix: the settings schema described every constraint after `is_extension` with the wrong
+  tooltip, because the six `is_*_project` constraints had no description.
 
 ## 6.2.0
 
