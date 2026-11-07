@@ -41,8 +41,6 @@ class ViewSnapshot:
         if self.encoding == "Undefined":
             super().__setattr__("encoding", "UTF-8")
 
-    # ── Derived cached properties ──────────────────────────────────
-
     @cached_property
     def content_bytes(self) -> bytes:
         """The `bytes` representation of the content."""
@@ -83,8 +81,6 @@ class ViewSnapshot:
         """Create a `ViewSnapshot` object from a `sublime.View` object."""
         window = view.window() or sublime.active_window()
 
-        # is real file on a disk? Single stat() call does double duty: it both answers that
-        # question and gives us file_size, instead of a separate is_file() + stat() pair.
         path: Path | None = None
         file_size = -1
         if path_ := view.file_name():

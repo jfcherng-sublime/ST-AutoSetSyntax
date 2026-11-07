@@ -35,7 +35,7 @@ _RE_EMACS_MODE_KV = re.compile(r"\bmode\s*:\s*(?P<syntax>[^\s;]+)", re.IGNORECAS
 # nothing after it to satisfy a whitespace-only lookahead
 _RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|ft|syntax)=(?P<syntax>[^\s:]+):?(?=\s|$)", re.IGNORECASE)
 
-_FILE_SAVE_EVENTS: Final[frozenset[ListenerEvent]] = frozenset({
+_FILE_EVENTS: Final[frozenset[ListenerEvent]] = frozenset({
     ListenerEvent.COMMAND,
     ListenerEvent.INIT,
     ListenerEvent.LOAD,
@@ -44,7 +44,7 @@ _FILE_SAVE_EVENTS: Final[frozenset[ListenerEvent]] = frozenset({
 })
 """Events where file-on-disk strategies (trimmed filename, etc.) can run."""
 
-_FILE_AND_MODIFY_EVENTS: Final[frozenset[ListenerEvent]] = _FILE_SAVE_EVENTS | frozenset({
+_FILE_OR_EDIT_EVENTS: Final[frozenset[ListenerEvent]] = _FILE_EVENTS | frozenset({
     ListenerEvent.MODIFY,
     ListenerEvent.PASTE,
 })
@@ -68,7 +68,7 @@ class SyntaxDecision:
 def detect(
     view_snapshot: ViewSnapshot,
     syntax_rule_collection: SyntaxRuleCollection,
-    event: ListenerEvent | None,
+    event: ListenerEvent,
     settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     """Try each detector in order and return the first decision reached, if any."""
@@ -81,10 +81,10 @@ def detect(
     if decision := _detect_with_first_line(view_snapshot, event, settings):
         return decision
 
-    if event in _FILE_SAVE_EVENTS and (decision := _detect_with_trimmed_filename(view_snapshot, settings)):
+    if event in _FILE_EVENTS and (decision := _detect_with_trimmed_filename(view_snapshot, settings)):
         return decision
 
-    if event in _FILE_AND_MODIFY_EVENTS and (decision := _detect_with_magika(view_snapshot, event, settings)):
+    if event in _FILE_OR_EDIT_EVENTS and (decision := _detect_with_magika(view_snapshot, event, settings)):
         return decision
 
     return _detect_with_heuristics(view_snapshot)
@@ -134,7 +134,7 @@ def _detect_for_st_syntax_test(view_snapshot: ViewSnapshot) -> SyntaxDecision | 
 def _detect_with_plugin_rules(
     view_snapshot: ViewSnapshot,
     syntax_rule_collection: SyntaxRuleCollection,
-    event: ListenerEvent | None,
+    event: ListenerEvent,
 ) -> SyntaxDecision | None:
     if view_snapshot.valid_view and (syntax_rule := syntax_rule_collection.test(view_snapshot, event)):
         assert syntax_rule.syntax  # otherwise it should be dropped during optimizing
@@ -144,7 +144,7 @@ def _detect_with_plugin_rules(
 
 def _detect_with_first_line(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None,
+    event: ListenerEvent,
     settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     # Note that this only works for files under some circumstances.
@@ -223,13 +223,13 @@ def _detect_with_trimmed_filename(
     if not (
         (view := view_snapshot.valid_view)
         and (filepath := view.file_name())
-        and (syntax_old := view.syntax())
+        and (syntax_old := view_snapshot.syntax)
         and is_plaintext_syntax(syntax_old)
     ):
         return None
 
     original = Path(filepath).name
-    trim_suffixes = settings.get("trim_suffixes", ())
+    trim_suffixes = view_snapshot.trim_suffixes
     trim_suffixes_auto = settings.get("trim_suffixes_auto", False)
 
     filenames = chain(
@@ -254,14 +254,14 @@ def _detect_with_trimmed_filename(
 
 def _detect_with_magika(
     view_snapshot: ViewSnapshot,
-    event: ListenerEvent | None,
+    event: ListenerEvent,
     settings: MergedSettingsDict,
 ) -> SyntaxDecision | None:
     if not (
-        (magika_obj := get_magika_object())
+        settings.get("magika.enabled")
+        and (magika_obj := get_magika_object())
         and (view := view_snapshot.valid_view)
         and (window := view.window())
-        and settings.get("magika.enabled")
         and (event == ListenerEvent.COMMAND or "." not in view_snapshot.file_name_unhidden)
         and ((syntax := view_snapshot.syntax) and is_plaintext_syntax(syntax))
         # we don't want to use AI model during typing when there is only one line
@@ -285,8 +285,8 @@ def _detect_with_magika(
     magika_label = magika_result.dl.label
     magika_score = magika_result.score  # range: 0.0 ~ 1.0
 
-    threadshold: float = settings.get("magika.min_confidence", 0.0)
-    if magika_score < threadshold or magika_label in get_magika_ignored_labels():
+    threshold: float = settings.get("magika.min_confidence", 0.0)
+    if magika_score < threshold or magika_label in get_magika_ignored_labels():
         return None
 
     syntax_map: dict[str, list[str]] = extract_prefixed_dict(settings, prefix="magika.syntax_map.")
@@ -339,13 +339,9 @@ def _detect_with_heuristics(view_snapshot: ViewSnapshot) -> SyntaxDecision | Non
             return True
 
         return not is_small_file(view_snapshot) and bool(
-            # map
             (_RE_JSON_MAP_BEGIN.search(text_begin) and _RE_JSON_MAP_END.search(text_end))
-            # array
             or (_RE_JSON_ARRAY_BEGIN.search(text_begin) and _RE_JSON_ARRAY_END.search(text_end))
-            # array of arrays
             or (_RE_JSON_NESTED_ARRAY_BEGIN.search(text_begin) and _RE_JSON_NESTED_ARRAY_END.search(text_end))
-            # array of objects
             or (_RE_JSON_NESTED_OBJECT_BEGIN.search(text_begin) and _RE_JSON_NESTED_OBJECT_END.search(text_end))
         )
 
