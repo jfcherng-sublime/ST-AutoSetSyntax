@@ -1,4 +1,3 @@
-import re
 import sys
 from pathlib import Path
 
@@ -55,13 +54,3 @@ VIEW_KEY_IS_TRANSIENT = f"{PLUGIN_NAME}/is_transient"
 
 PLAIN_TEXT_SCOPE = "text.plain"
 """The scope of the Plain Text syntax: the default target of syntax rules and what exec output starts as."""
-
-RE_ST_SYNTAX_TEST_LINE = re.compile(r'\bSYNTAX\s+TEST\s+"(?P<syntax>[^"]+)"', re.IGNORECASE)
-# captures the raw "-*- ... -*-" payload; RE_EMACS_MODE_KV then picks the mode name out of it,
-# since that payload may be a bare mode name or a "key: value; ..." list containing "mode: ..."
-RE_EMACS_SYNTAX_LINE = re.compile(r"^\s*\#.*?-\*-(?P<syntax>.*?)-\*-", re.IGNORECASE | re.MULTILINE)
-RE_EMACS_MODE_KV = re.compile(r"\bmode\s*:\s*(?P<syntax>[^\s;]+)", re.IGNORECASE)
-# the trailing lookahead also accepts end-of-string ("$"), not just whitespace -- a modeline on
-# the file's last line with no trailing newline (a common "no newline at end of file" case) has
-# nothing after it to satisfy a whitespace-only lookahead
-RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|ft|syntax)=(?P<syntax>[^\s:]+):?(?=\s|$)", re.IGNORECASE)

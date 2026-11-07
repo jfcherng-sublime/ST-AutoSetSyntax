@@ -9,10 +9,6 @@ from typing import Final
 import sublime
 
 from .constants import PLAIN_TEXT_SCOPE
-from .constants import RE_EMACS_MODE_KV
-from .constants import RE_EMACS_SYNTAX_LINE
-from .constants import RE_ST_SYNTAX_TEST_LINE
-from .constants import RE_VIM_SYNTAX_LINE
 from .logger import Logger
 from .magika import get_magika_ignored_labels
 from .magika import get_magika_object
@@ -28,6 +24,16 @@ from .utils import head_tail_lines
 from .utils import is_plaintext_syntax
 from .utils import list_trimmed_filenames
 from .utils import list_trimmed_strings
+
+_RE_ST_SYNTAX_TEST_LINE = re.compile(r'\bSYNTAX\s+TEST\s+"(?P<syntax>[^"]+)"', re.IGNORECASE)
+# captures the raw "-*- ... -*-" payload; _RE_EMACS_MODE_KV then picks the mode name out of it,
+# since that payload may be a bare mode name or a "key: value; ..." list containing "mode: ..."
+_RE_EMACS_SYNTAX_LINE = re.compile(r"^\s*\#.*?-\*-(?P<syntax>.*?)-\*-", re.IGNORECASE | re.MULTILINE)
+_RE_EMACS_MODE_KV = re.compile(r"\bmode\s*:\s*(?P<syntax>[^\s;]+)", re.IGNORECASE)
+# the trailing lookahead also accepts end-of-string ("$"), not just whitespace -- a modeline on
+# the file's last line with no trailing newline (a common "no newline at end of file" case) has
+# nothing after it to satisfy a whitespace-only lookahead
+_RE_VIM_SYNTAX_LINE = re.compile(r"\b(?:filetype|ft|syntax)=(?P<syntax>[^\s:]+):?(?=\s|$)", re.IGNORECASE)
 
 _FILE_SAVE_EVENTS: Final[frozenset[ListenerEvent]] = frozenset({
     ListenerEvent.COMMAND,
@@ -115,7 +121,7 @@ def _detect_for_st_syntax_test(view_snapshot: ViewSnapshot) -> SyntaxDecision | 
     if (
         (view := view_snapshot.valid_view)
         and view_snapshot.file_name.startswith("syntax_test_")
-        and (m := RE_ST_SYNTAX_TEST_LINE.search(view_snapshot.first_line))
+        and (m := _RE_ST_SYNTAX_TEST_LINE.search(view_snapshot.first_line))
     ):
         new_syntax: str = m.group("syntax")
         if syntax := find_syntax(new_syntax, include_hidden=True, include_plaintext=True):
@@ -166,9 +172,9 @@ def _detect_with_first_line(
         # "key: value; ..." list that may or may not contain a "mode" key ("-*- coding: utf-8;
         # mode: python -*-", in any order) -- the mode name has to be picked out of that payload
         # rather than used as-is.
-        for emacs_match in RE_EMACS_SYNTAX_LINE.finditer(modeline_content):
+        for emacs_match in _RE_EMACS_SYNTAX_LINE.finditer(modeline_content):
             payload = emacs_match.group("syntax")
-            if mode_match := RE_EMACS_MODE_KV.search(payload):
+            if mode_match := _RE_EMACS_MODE_KV.search(payload):
                 mode_name = mode_match.group("syntax")
             elif ":" not in payload:
                 mode_name = payload.strip()
@@ -177,7 +183,7 @@ def _detect_with_first_line(
             if mode_name and (syntax := find_syntax(mode_name)):
                 return syntax
 
-        for vim_match in RE_VIM_SYNTAX_LINE.finditer(modeline_content):
+        for vim_match in _RE_VIM_SYNTAX_LINE.finditer(modeline_content):
             if syntax := find_syntax(vim_match.group("syntax")):
                 return syntax
 

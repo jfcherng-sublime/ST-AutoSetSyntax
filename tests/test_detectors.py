@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
 import sublime
 
 import plugin.detectors as mod
@@ -135,15 +136,15 @@ class TestDetectWithHeuristicsJson:
         assert decision.reason == "heuristics"
         assert decision.status_message is None
 
-    def test_plain_json_array_detected(self, monkeypatch):
-        assert self._detected(monkeypatch, _big_json_array()) is True
-
-    def test_nested_array_of_arrays_detected(self, monkeypatch):
-        content = "[" + ", ".join(f"[{i}, {i + 1}]" for i in range(200)) + "]"
-        assert self._detected(monkeypatch, content) is True
-
-    def test_array_of_maps_detected(self, monkeypatch):
-        content = "[" + ", ".join(f'{{"k": {i}}}' for i in range(200)) + "]"
+    @pytest.mark.parametrize(
+        "content",
+        [
+            pytest.param(_big_json_array(), id="array"),
+            pytest.param("[" + ", ".join(f"[{i}, {i + 1}]" for i in range(200)) + "]", id="array-of-arrays"),
+            pytest.param("[" + ", ".join(f'{{"k": {i}}}' for i in range(200)) + "]", id="array-of-maps"),
+        ],
+    )
+    def test_compact_json_shapes_detected(self, monkeypatch, content):
         assert self._detected(monkeypatch, content) is True
 
     def test_json_with_long_leading_and_trailing_whitespace_padding_detected(self, monkeypatch):
@@ -164,20 +165,16 @@ class TestDetectWithHeuristicsJson:
         common real-world shape of a JSON file."""
         assert self._detected(monkeypatch, _big_pretty_json_map()) is True
 
-    def test_pretty_printed_json_array_of_strings_detected(self, monkeypatch):
-        content = json.dumps([f"item{i}" for i in range(200)], indent=2)
-        assert self._detected(monkeypatch, content) is True
-
-    def test_pretty_printed_nested_array_of_arrays_detected(self, monkeypatch):
-        content = json.dumps([[i, i + 1] for i in range(200)], indent=2)
-        assert self._detected(monkeypatch, content) is True
-
-    def test_pretty_printed_array_of_maps_detected(self, monkeypatch):
-        content = json.dumps([{"k": i} for i in range(200)], indent=2)
-        assert self._detected(monkeypatch, content) is True
-
-    def test_pretty_printed_json_with_tab_indent_detected(self, monkeypatch):
-        content = json.dumps({f"key{i}": i for i in range(200)}, indent="\t")
+    @pytest.mark.parametrize(
+        "content",
+        [
+            pytest.param(json.dumps([f"item{i}" for i in range(200)], indent=2), id="array-of-strings"),
+            pytest.param(json.dumps([[i, i + 1] for i in range(200)], indent=2), id="array-of-arrays"),
+            pytest.param(json.dumps([{"k": i} for i in range(200)], indent=2), id="array-of-maps"),
+            pytest.param(json.dumps({f"key{i}": i for i in range(200)}, indent="	"), id="map-tab-indent"),
+        ],
+    )
+    def test_pretty_printed_json_shapes_detected(self, monkeypatch, content):
         assert self._detected(monkeypatch, content) is True
 
     def test_non_json_content_not_detected(self, monkeypatch):
