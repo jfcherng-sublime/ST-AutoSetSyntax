@@ -4,14 +4,14 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ...types import UNFOLDED
-from ...types import Fold
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 @final
 class RelativeExistsConstraint(AbstractConstraint):
+    needs_file = True
+    args_noun = "relative path"
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
@@ -20,14 +20,8 @@ class RelativeExistsConstraint(AbstractConstraint):
         self.matcher = all if self.match == "all" else any
 
     @override
-    def fold(self) -> Fold:
-        return UNFOLDED if self.relatives else Fold(False, "no relative path was given")
-
-    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        # file not on disk, maybe just a buffer
-        if not (file_path := view_snapshot.file_path):
-            raise AlwaysFalsyException("no filename")
+        file_path = view_snapshot.file_path
 
         folder = Path(file_path).parent
         return self.matcher(

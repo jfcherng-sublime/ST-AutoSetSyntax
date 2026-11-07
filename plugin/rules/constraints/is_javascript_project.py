@@ -5,12 +5,13 @@ from typing import override
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 @final
 class IsJavascriptProjectConstraint(AbstractConstraint):
     """Check whether this file is in a JavaScript (non-TypeScript) project."""
+
+    needs_file = True
 
     _found_dirs: ClassVar[set[Path]] = set()
     """Cached directories which make the result `True`."""
@@ -19,10 +20,7 @@ class IsJavascriptProjectConstraint(AbstractConstraint):
     def test(self, view_snapshot: ViewSnapshot) -> bool:
         cls = self.__class__
 
-        # file not on disk, maybe just a buffer
-        if not (file_path_ := view_snapshot.file_path):
-            raise AlwaysFalsyException("no filename")
-        file_path = Path(file_path_)
+        file_path = Path(view_snapshot.file_path)
 
         # "package.json" alone isn't enough: TypeScript projects have one too. The nearest
         # ancestor with "package.json" is the project root; it's only a JS (not TS) project if

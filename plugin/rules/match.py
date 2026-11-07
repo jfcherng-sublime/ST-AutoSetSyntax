@@ -34,7 +34,7 @@ def get_matches() -> tuple[type[AbstractMatch], ...]:
 
 @dataclass(slots=True)
 class MatchRule(Optimizable):
-    match: AbstractMatch | None = None
+    match: AbstractMatch
     match_name: str = ""
     rules: tuple[MatchableRule, ...] = ()
 
@@ -43,21 +43,14 @@ class MatchRule(Optimizable):
 
     @override
     def fold(self) -> Fold:
-        # `make()` returns `None` rather than a match-less rule, and every parent drops those,
-        # so a rule in a compiled tree always has one -- same assumption `test()` makes
-        assert self.match
-
         value, reason = require_fold(self.match, self.match.fold(self.rules))
         if value is None and not self.rules:
-            # whatever the combinator, a match with no child rules can't depend on the view;
-            # `False` mirrors what a match that doesn't say what it folds to used to collapse to
+            # whatever the combinator, a match with no child rules can't depend on the view
             return Fold(False, f'the "{self.match_name}" match has no sub-rule')
         return Fold(value, reason)
 
     @override
     def optimize(self) -> Generator[Optimizable]:
-        assert self.match
-
         for rule in self.rules:
             yield from rule.optimize()
 
@@ -77,7 +70,6 @@ class MatchRule(Optimizable):
         self.rules = tuple(survivors)
 
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        assert self.match
         return self.match.test(view_snapshot, self.rules)
 
     @classmethod

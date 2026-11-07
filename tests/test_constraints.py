@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from plugin.rules.constraint import AlwaysFalsyException
+from plugin.rules.constraint import ConstraintRule
 from plugin.types import Fold
 
 # ── ContainsConstraint ────────────────────────────────────────────────────────
@@ -366,12 +366,13 @@ class TestIsNameConstraint:
         snap = make_snapshot(path="/home/user/Dockerfile")
         assert IsNameConstraint("Makefile", "Dockerfile", case_insensitive=False).test(snap) is True
 
-    def test_no_file_path_raises(self, make_snapshot):
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.is_name import IsNameConstraint
 
         snap = make_snapshot()  # path=None
-        with pytest.raises(AlwaysFalsyException):
-            IsNameConstraint("Makefile").test(snap)
+        for inverted in (False, True):
+            rule = ConstraintRule(constraint=IsNameConstraint("Makefile"), inverted=inverted)
+            assert rule.test(snap) is False
 
     def test_no_names_folds_to_false(self):
         from plugin.rules.constraints.is_name import IsNameConstraint
@@ -395,12 +396,13 @@ class TestNameContainsConstraint:
         snap = make_snapshot(path="/home/user/main.py")
         assert NameContainsConstraint("script").test(snap) is False
 
-    def test_no_file_path_raises(self, make_snapshot):
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.name_contains import NameContainsConstraint
 
         snap = make_snapshot()
-        with pytest.raises(AlwaysFalsyException):
-            NameContainsConstraint("anything").test(snap)
+        for inverted in (False, True):
+            rule = ConstraintRule(constraint=NameContainsConstraint("anything"), inverted=inverted)
+            assert rule.test(snap) is False
 
     def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.name_contains import NameContainsConstraint
@@ -424,12 +426,15 @@ class TestNameContainsRegexConstraint:
         snap = make_snapshot(path="/home/user/main.py")
         assert NameContainsRegexConstraint(r"script").test(snap) is False
 
-    def test_no_file_path_raises(self, make_snapshot):
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
 
         snap = make_snapshot()
-        with pytest.raises(AlwaysFalsyException):
-            NameContainsRegexConstraint("anything").test(snap)
+        for inverted in (False, True):
+            assert (
+                ConstraintRule(constraint=NameContainsRegexConstraint("anything"), inverted=inverted).test(snap)
+                is False
+            )
 
     def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.name_contains_regex import NameContainsRegexConstraint
@@ -471,12 +476,13 @@ class TestPathContainsConstraint:
         snap = make_snapshot(path="/home/user/src/main.py")
         assert PathContainsConstraint("projects", "src").test(snap) is True
 
-    def test_no_file_path_raises(self, make_snapshot):
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.path_contains import PathContainsConstraint
 
         snap = make_snapshot()
-        with pytest.raises(AlwaysFalsyException):
-            PathContainsConstraint("anything").test(snap)
+        for inverted in (False, True):
+            rule = ConstraintRule(constraint=PathContainsConstraint("anything"), inverted=inverted)
+            assert rule.test(snap) is False
 
     def test_no_needles_folds_to_false(self):
         from plugin.rules.constraints.path_contains import PathContainsConstraint
@@ -550,12 +556,15 @@ class TestPathContainsRegexConstraint:
         snap = make_snapshot(path="/home/user/main.py")
         assert PathContainsRegexConstraint(r"projects").test(snap) is False
 
-    def test_no_file_path_raises(self, make_snapshot):
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
 
         snap = make_snapshot()
-        with pytest.raises(AlwaysFalsyException):
-            PathContainsRegexConstraint("anything").test(snap)
+        for inverted in (False, True):
+            assert (
+                ConstraintRule(constraint=PathContainsRegexConstraint("anything"), inverted=inverted).test(snap)
+                is False
+            )
 
     def test_no_patterns_folds_to_false(self):
         from plugin.rules.constraints.path_contains_regex import PathContainsRegexConstraint
@@ -652,12 +661,13 @@ class TestIsSizeConstraint:
         snap = make_snapshot(file_size=500)
         assert IsSizeConstraint(">", 1000).test(snap) is False
 
-    def test_file_not_on_disk_raises(self, make_snapshot):
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.is_size import IsSizeConstraint
 
         snap = make_snapshot(file_size=-1)
-        with pytest.raises(AlwaysFalsyException):
-            IsSizeConstraint(">", 1000).test(snap)
+        for inverted in (False, True):
+            rule = ConstraintRule(constraint=IsSizeConstraint(">", 1000), inverted=inverted)
+            assert rule.test(snap) is False
 
     def test_equal(self, make_snapshot):
         from plugin.rules.constraints.is_size import IsSizeConstraint
@@ -884,13 +894,13 @@ class TestIsHiddenSyntaxConstraint:
 
         assert IsHiddenSyntaxConstraint().test(snap) is False
 
-    def test_no_syntax_raises(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
+    def test_never_passes_without_a_syntax(self, make_snapshot):
         from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
 
         snap = make_snapshot()  # syntax=None
-        with pytest.raises(AlwaysFalsyException):
-            IsHiddenSyntaxConstraint().test(snap)
+        for inverted in (False, True):
+            rule = ConstraintRule(constraint=IsHiddenSyntaxConstraint(), inverted=inverted)
+            assert rule.test(snap) is False
 
     def test_name(self):
         from plugin.rules.constraints.is_hidden_syntax import IsHiddenSyntaxConstraint
@@ -912,13 +922,15 @@ class TestSelectorMatchesConstraint:
 
         assert SelectorMatchesConstraint("source.python").fold().value is None
 
-    def test_no_syntax_raises(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
+    def test_never_passes_without_a_syntax(self, make_snapshot):
         from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint
 
         snap = make_snapshot()  # syntax=None
-        with pytest.raises(AlwaysFalsyException):
-            SelectorMatchesConstraint("source.python").test(snap)
+        for inverted in (False, True):
+            assert (
+                ConstraintRule(constraint=SelectorMatchesConstraint("source.python"), inverted=inverted).test(snap)
+                is False
+            )
 
     def test_name(self):
         from plugin.rules.constraints.selector_matches import SelectorMatchesConstraint

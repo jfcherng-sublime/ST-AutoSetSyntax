@@ -2,6 +2,8 @@
 
 import pytest
 
+from plugin.rules.constraint import ConstraintRule
+
 
 class TestRelativeExistsConstraint:
     def test_sibling_file_exists(self, make_snapshot, tmp_path):
@@ -49,13 +51,14 @@ class TestRelativeExistsConstraint:
         assert RelativeExistsConstraint("a.txt", "b.txt", match="all").test(snap) is True
         assert RelativeExistsConstraint("a.txt", "missing.txt", match="all").test(snap) is False
 
-    def test_no_file_path_raises(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
 
         snap = make_snapshot()  # path=None
-        with pytest.raises(AlwaysFalsyException):
-            RelativeExistsConstraint("anything").test(snap)
+        for inverted in (False, True):
+            assert (
+                ConstraintRule(constraint=RelativeExistsConstraint("anything"), inverted=inverted).test(snap) is False
+            )
 
     def test_empty_args_folds_to_false(self):
         from plugin.rules.constraints.relative_exists import RelativeExistsConstraint
@@ -197,13 +200,13 @@ class TestIsJavascriptProjectConstraint:
         snap = make_snapshot(path=str(test_file))
         assert IsJavascriptProjectConstraint().test(snap) is True
 
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
+    def test_never_passes_without_a_file(self, make_snapshot):
         from plugin.rules.constraints.is_javascript_project import IsJavascriptProjectConstraint
 
         snap = make_snapshot()  # no path -> not on disk
-        with pytest.raises(AlwaysFalsyException):
-            IsJavascriptProjectConstraint().test(snap)
+        for inverted in (False, True):
+            rule = ConstraintRule(constraint=IsJavascriptProjectConstraint(), inverted=inverted)
+            assert rule.test(snap) is False
 
     def test_cached_outer_js_root_does_not_override_a_nearer_typescript_root(self, make_snapshot, tmp_path):
         """A monorepo whose root is JS but holds a TS package: the nearest `package.json` decides,
@@ -321,14 +324,6 @@ class TestIsInPythonDjangoProjectConstraintRealTest:
         snap = make_snapshot(path=str(app_file))
         assert IsInPythonDjangoProjectConstraint().test(snap) is False
 
-    def test_no_file_on_disk_raises_always_falsy(self, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-        from plugin.rules.constraints.is_in_python_django_project import IsInPythonDjangoProjectConstraint
-
-        snap = make_snapshot()  # no path -> not on disk
-        with pytest.raises(AlwaysFalsyException):
-            IsInPythonDjangoProjectConstraint().test(snap)
-
     def test_successful_match_is_cached_for_a_second_file_in_the_same_project(self, make_snapshot, tmp_path):
         """A second file under the same project root should hit the `_found_dirs` fast-path
         cache rather than re-scanning the filesystem."""
@@ -414,6 +409,10 @@ def _make_marker(root, marker):
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("")
+    if marker == "manage.py":  # Django also wants a package holding settings/urls/wsgi
+        for name in ("settings.py", "urls.py", "wsgi.py"):
+            (root / "proj" / name).parent.mkdir(exist_ok=True)
+            (root / "proj" / name).write_text("")
 
 
 def _make_source_file(root):
@@ -435,11 +434,11 @@ class TestParentMarkerConstraints:
 
         assert marker_constraint.test(make_snapshot(path=str(source))) is False
 
-    def test_no_file_on_disk_is_always_falsy(self, marker_constraint, make_snapshot):
-        from plugin.rules.constraint import AlwaysFalsyException
-
-        with pytest.raises(AlwaysFalsyException):
-            marker_constraint.test(make_snapshot())
+    def test_never_passes_without_a_file(self, marker_constraint, make_snapshot):
+        snap = make_snapshot()
+        for inverted in (False, True):
+            rule = ConstraintRule(constraint=marker_constraint, inverted=inverted)
+            assert rule.test(snap) is False
 
     def test_remembers_the_directory_that_held_the_marker(self, marker_constraint, make_snapshot, tmp_path):
         _make_marker(tmp_path, marker_constraint.marker)

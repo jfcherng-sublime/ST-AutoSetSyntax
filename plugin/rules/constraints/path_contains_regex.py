@@ -3,28 +3,21 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ...types import UNFOLDED
-from ...types import Fold
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 @final
 class PathContainsRegexConstraint(AbstractConstraint):
+    needs_file = True
+    args_noun = "pattern to look for"
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.regex = self._handled_regex(self.args, self.kwargs)
 
     @override
-    def fold(self) -> Fold:
-        """With no patterns, `merge_regexes(())` compiles a "match nothing" regex, so `test()`
-        always fails."""
-        return UNFOLDED if any(self.args) else Fold(False, "no pattern to look for was given")
-
-    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        if not (file_path := view_snapshot.file_path):
-            raise AlwaysFalsyException("file not on disk")
+        file_path = view_snapshot.file_path
 
         return bool(self.regex.search(file_path))

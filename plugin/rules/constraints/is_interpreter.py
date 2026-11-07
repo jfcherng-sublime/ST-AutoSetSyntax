@@ -3,8 +3,6 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ...types import UNFOLDED
-from ...types import Fold
 from ...utils import compile_regex
 from ...utils import merge_literals_to_regex
 from ...utils import merge_regexes
@@ -13,6 +11,8 @@ from ..constraint import AbstractConstraint
 
 @final
 class IsInterpreterConstraint(AbstractConstraint):
+    args_noun = "interpreter"
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
@@ -31,15 +31,6 @@ class IsInterpreterConstraint(AbstractConstraint):
                 rf"\bsyntax={interpreters_regex}(?=$|\s)",
             ))
         )
-
-    @override
-    def fold(self) -> Fold:
-        """
-        `self.first_line_regex` is always a compiled `Pattern`, which is never falsy, even with
-        no interpreters given (it then embeds a "match nothing" sub-pattern). Check
-        `self.interpreters` itself instead of the always-truthy compiled regex.
-        """
-        return UNFOLDED if self.interpreters else Fold(False, "no interpreter was given")
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:

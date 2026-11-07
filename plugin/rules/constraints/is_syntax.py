@@ -3,27 +3,21 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ...types import UNFOLDED
-from ...types import Fold
 from ...utils import find_syntaxes
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 @final
 class IsSyntaxConstraint(AbstractConstraint):
+    args_noun = "syntax"
+    needs_syntax = True
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self.candidates: tuple[str, ...] = self._handled_args()
 
     @override
-    def fold(self) -> Fold:
-        return UNFOLDED if self.candidates else Fold(False, "no syntax was given")
-
-    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        if not (syntax := view_snapshot.syntax):
-            raise AlwaysFalsyException(f"{view_snapshot.view} has no syntax")
-
-        return syntax in find_syntaxes(self.candidates)
+        assert view_snapshot.syntax
+        return view_snapshot.syntax in find_syntaxes(self.candidates)

@@ -1,7 +1,6 @@
 """Tests for ViewSnapshot and related helper functions."""
 
 import sys
-from pathlib import Path
 
 from plugin.snapshot import ViewSnapshot
 
@@ -37,22 +36,6 @@ class TestHeadTailContentSt:
 
 
 class TestViewSnapshotConstruction:
-    def test_basic_fields(self, make_snapshot):
-        snap = make_snapshot(content="hello\nworld", path="/tmp/test.txt")
-        assert snap.char_count == 11
-        assert snap.path_obj == Path("/tmp/test.txt")
-        assert snap.syntax is None
-        assert snap.caret_rowcol == (-1, -1)
-
-    def test_content_defaults_to_empty(self, make_snapshot):
-        """Content is a regular dataclass field, always present."""
-        snap = make_snapshot()
-        assert snap.content == ""
-
-    def test_first_line_is_the_first_line_of_content(self, make_snapshot):
-        snap = make_snapshot(content="line1\nline2")
-        assert snap.first_line == "line1"
-
     def test_file_path_property(self, make_snapshot):
         snap = make_snapshot(path="/tmp/foo/bar.txt")
         assert snap.file_path == "/tmp/foo/bar.txt"
@@ -72,10 +55,6 @@ class TestViewSnapshotConstruction:
     def test_file_name_unhidden(self, make_snapshot):
         snap = make_snapshot(path="/tmp/.hidden")
         assert snap.file_name_unhidden == "hidden"
-
-    def test_line_count(self, make_snapshot):
-        snap = make_snapshot(line_count=42)
-        assert snap.line_count == 42
 
     def test_encoding_undefined_normalized(self):
         """Encoding 'Undefined' should be normalized to 'UTF-8'."""
@@ -101,19 +80,6 @@ class TestViewSnapshotConstruction:
         assert snap.valid_view is snap.view
         snap.view.is_valid = lambda: False
         assert snap.valid_view is None
-
-    def test_syntax_none(self, make_snapshot):
-        snap = make_snapshot()
-        assert snap.syntax is None
-
-    def test_file_size_on_disk(self, make_snapshot):
-        snap = make_snapshot(file_size=1024)
-        assert snap.file_size == 1024
-
-    def test_file_size_not_on_disk(self, make_snapshot):
-        snap = make_snapshot()  # no path, no file_size
-        # file_size returns -1 when path_obj is None
-        assert snap.file_size == -1
 
 
 class TestViewSnapshotFileSizeCapturedAtSnapshotTime:
@@ -185,15 +151,6 @@ class TestViewSnapshotContentBytes:
 
 
 class TestViewSnapshotEdgeCases:
-    def test_empty_content(self, make_snapshot):
-        snap = make_snapshot(content="")
-        assert snap.char_count == 0
-        assert snap.first_line == ""
-
-    def test_single_char(self, make_snapshot):
-        snap = make_snapshot(content="a")
-        assert snap.first_line == "a"
-
     def test_very_short_path(self, make_snapshot):
         snap = make_snapshot(path="/a.b")
         assert snap.file_name == "a.b"

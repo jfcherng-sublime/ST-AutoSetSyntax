@@ -33,6 +33,8 @@ class ViewSnapshot:
     """The 0-indexed `(row, column)` of the first caret visually. -1 if no caret."""
     file_size: int = -1
     """The file size in bytes, captured at snapshot time. `-1` if not on a disk."""
+    trim_suffixes: tuple[str, ...] = ()
+    """The suffixes a file name may be trimmed of to find its syntax, per the window's settings."""
 
     def __post_init__(self) -> None:
         # for unsaved buffer, ST returns "Undefined" for its encoding
@@ -106,6 +108,7 @@ class ViewSnapshot:
             syntax=view.syntax(),
             caret_rowcol=view.rowcol(sels[0].b) if len(sels := view.sel()) else (-1, -1),
             file_size=file_size,
+            trim_suffixes=get_merged_plugin_setting("trim_suffixes", (), window=window),
         )
 
 

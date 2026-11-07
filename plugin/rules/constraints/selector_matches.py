@@ -6,14 +6,14 @@ from typing import override
 import sublime
 
 from ...snapshot import ViewSnapshot
-from ...types import UNFOLDED
-from ...types import Fold
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 @final
 class SelectorMatchesConstraint(AbstractConstraint):
+    args_noun = "selector"
+    needs_syntax = True
+
     SCORE_THRESHOLD: Final[int] = 1
     """
     Quick tips (ST >= 4173):
@@ -43,16 +43,10 @@ class SelectorMatchesConstraint(AbstractConstraint):
         self.candidates: tuple[str, ...] = self._handled_args()
 
     @override
-    def fold(self) -> Fold:
-        return UNFOLDED if self.candidates else Fold(False, "no selector was given")
-
-    @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        if not (syntax := view_snapshot.syntax):
-            raise AlwaysFalsyException(f"{view_snapshot.view} has no syntax")
-
+        assert view_snapshot.syntax
         return any(
             # ...
-            sublime.score_selector(syntax.scope, candidate) >= self.SCORE_THRESHOLD
+            sublime.score_selector(view_snapshot.syntax.scope, candidate) >= self.SCORE_THRESHOLD
             for candidate in self.candidates
         )

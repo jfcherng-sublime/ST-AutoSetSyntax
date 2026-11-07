@@ -3,31 +3,20 @@ from typing import final
 from typing import override
 
 from ...snapshot import ViewSnapshot
-from ...types import UNFOLDED
-from ...types import Fold
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 @final
 class IsNameConstraint(AbstractConstraint):
+    needs_file = True
+    args_noun = "file name"
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        names: tuple[str, ...] = self._handled_args()
-
-        self.case_insensitive = self._handled_case_insensitive(kwargs)
-        self.names = set(map(str.lower, names) if self.case_insensitive else names)
-
-    @override
-    def fold(self) -> Fold:
-        return UNFOLDED if self.names else Fold(False, "no file name was given")
+        self.fix_case = self._handled_case_folder(kwargs)
+        self.names = set(self._handled_args(self.fix_case))
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        if not (file_name := view_snapshot.file_name):
-            raise AlwaysFalsyException("file not on disk")
-
-        if self.case_insensitive:
-            file_name = file_name.lower()
-        return file_name in self.names
+        return self.fix_case(view_snapshot.file_name) in self.names

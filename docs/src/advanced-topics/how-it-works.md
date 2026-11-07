@@ -138,7 +138,7 @@ flowchart TD
     SCR --> SR3["... N"]
 
     SR1 -->|properties| Selector["selector: 'text.plain'"]
-    SR1 -->|properties| OnEvents["on_events: [LOAD, SAVE]"]
+    SR1 -->|properties| OnEvents["on_events: [load, save]"]
     SR1 -->|properties| Syntaxes["syntax: 'source.python'"]
 
     SR1 --> MR["root_rule: MatchRule"]
@@ -162,7 +162,7 @@ The top-level rule configured in settings:
   "comment": "Python files",
   "syntaxes": ["Python", "scope:source.python"],
   "selector": "text.plain",
-  "on_events": ["LOAD", "SAVE"],
+  "on_events": ["load", "save"],
   "match": {
     "match": "all",
     "rules": [

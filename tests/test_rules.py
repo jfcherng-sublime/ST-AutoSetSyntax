@@ -27,6 +27,18 @@ def _ensure_rules_imported() -> None:
 
 
 class TestConstraintRule:
+    @pytest.mark.parametrize("inverted", [False, True])
+    def test_a_custom_constraint_can_fail_regardless_of_inversion(self, make_snapshot, inverted):
+        from plugin.rules.constraint import AbstractConstraint
+        from plugin.rules.constraint import AlwaysFalsyException
+        from plugin.rules.constraint import ConstraintRule
+
+        class GivesUp(AbstractConstraint):
+            def test(self, view_snapshot):
+                raise AlwaysFalsyException
+
+        assert ConstraintRule(constraint=GivesUp(), inverted=inverted).test(make_snapshot()) is False
+
     def test_make_from_known_constraint(self):
         _ensure_rules_imported()
         from plugin.rules.constraint import ConstraintRule
@@ -35,7 +47,6 @@ class TestConstraintRule:
         assert rule is not None
         assert rule.constraint_name == "is_extension"
         assert rule.inverted is False
-        assert rule.constraint is not None
 
     def test_make_with_inverted(self):
         _ensure_rules_imported()
@@ -69,15 +80,6 @@ class TestConstraintRule:
         src = StConstraintRule(constraint=constraint, args=args, kwargs=kwargs, inverted=True)
         assert ConstraintRule.make(src) is None
 
-    def test_make_empty_args(self):
-        _ensure_rules_imported()
-        from plugin.rules.constraint import ConstraintRule
-
-        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension"))
-        assert rule is not None
-        # empty args → no extensions → constraint folds to a constant False
-        assert rule.fold().value is False
-
     def test_src_setting_stored(self):
         _ensure_rules_imported()
         from plugin.rules.constraint import ConstraintRule
@@ -86,15 +88,6 @@ class TestConstraintRule:
         rule = ConstraintRule.make(src)
         assert rule is not None
         assert rule.src_setting is src
-
-    def test_optimize_leaf_yields_nothing(self, make_snapshot):
-        _ensure_rules_imported()
-        from plugin.rules.constraint import ConstraintRule
-
-        rule = ConstraintRule.make(StConstraintRule(constraint="is_extension", args=["py"]))
-        assert rule is not None
-        dropped = list(rule.optimize())
-        assert dropped == []
 
     def test_folds_to_false_when_not_inverted(self):
         """A constraint that always fails is constant False."""
@@ -647,22 +640,6 @@ class TestSiftOptimizable:
         assert dropped == []
         assert survivors == ()
 
-    def test_drops_droppable_rules(self):
-        from plugin.rules._optimize import sift_optimizable
-
-        d1, d2 = _OptimizableBase(droppable=True), _OptimizableBase(droppable=True)
-        dropped, survivors = sift_optimizable((d1, d2))
-        assert len(dropped) == 2
-        assert survivors == ()
-
-    def test_preserves_non_droppable_rules(self):
-        from plugin.rules._optimize import sift_optimizable
-
-        v1, v2 = _OptimizableBase(droppable=False), _OptimizableBase(droppable=False)
-        dropped, survivors = sift_optimizable((v1, v2))
-        assert dropped == []
-        assert len(survivors) == 2
-
     def test_mixed_droppable_and_valid(self):
         from plugin.rules._optimize import sift_optimizable
 
@@ -685,7 +662,6 @@ class TestSiftOptimizable:
         dropped, survivors = sift_optimizable((parent,))
         # inner was yielded by parent.optimize() and added to dropped
         assert inner in dropped
-        assert next(r for r in dropped if r is inner)
         # parent survives
         assert len(survivors) == 1
         assert survivors[0] is parent

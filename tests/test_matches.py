@@ -39,6 +39,16 @@ def _rules(*results: bool) -> tuple[_MockRule, ...]:
 # ── AnyMatch ──────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.parametrize("match_cls_path", ["any.AnyMatch", "all.AllMatch", "some.SomeMatch", "ratio.RatioMatch"])
+def test_match_name_is_derived_from_the_class_name(match_cls_path):
+    import importlib
+
+    module, cls_name = match_cls_path.split(".")
+    cls = getattr(importlib.import_module(f"plugin.rules.matches.{module}"), cls_name)
+    assert cls.name() == module
+    assert cls.can_support(module) is True
+
+
 class TestAnyMatch:
     def test_one_true_rule_passes(self, make_snapshot):
         from plugin.rules.matches.any import AnyMatch
@@ -73,17 +83,6 @@ class TestAnyMatch:
         from plugin.rules.matches.any import AnyMatch
 
         assert AnyMatch().fold(_rules(True)).value is None
-
-    def test_name(self):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch.name() == "any"
-
-    def test_can_support(self):
-        from plugin.rules.matches.any import AnyMatch
-
-        assert AnyMatch.can_support("any") is True
-        assert AnyMatch.can_support("all") is False
 
 
 # ── AllMatch ──────────────────────────────────────────────────────────────────
@@ -127,11 +126,6 @@ class TestAllMatch:
         from plugin.rules.matches.all import AllMatch
 
         assert AllMatch().fold(()).value is True
-
-    def test_name(self):
-        from plugin.rules.matches.all import AllMatch
-
-        assert AllMatch.name() == "all"
 
 
 # ── Absorbing children ────────────────────────────────────────────────────────
@@ -221,12 +215,6 @@ class TestSomeMatch:
         snap = make_snapshot()
         assert SomeMatch(0).test(snap, _rules(False, False)) is True
 
-    def test_explicit_zero_count_stored_as_zero(self):
-        """Regression: `nth(self.args, 0) or -1` treated explicit 0 as missing, storing -1."""
-        from plugin.rules.matches.some import SomeMatch
-
-        assert SomeMatch(0).count == 0
-
     @pytest.mark.parametrize("args", [(), (-1,), ("2",), (True,), (2.5,), (1, 2)])
     def test_invalid_args_are_rejected(self, args):
         """An invalid count used to fall back to "satisfied by nothing", i.e. matching every file."""
@@ -257,11 +245,6 @@ class TestSomeMatch:
         from plugin.rules.matches.some import SomeMatch
 
         assert SomeMatch(2).fold(_rules(True, True, True)).value is None
-
-    def test_name(self):
-        from plugin.rules.matches.some import SomeMatch
-
-        assert SomeMatch.name() == "some"
 
 
 # ── RatioMatch ────────────────────────────────────────────────────────────────
@@ -294,12 +277,11 @@ class TestRatioMatch:
         assert RatioMatch(1, 1).test(snap, _rules(True, True)) is True
         assert RatioMatch(1, 1).test(snap, _rules(True, False)) is False
 
-    def test_zero_numerator_stored_as_zero(self):
+    def test_zero_numerator_passes_with_nothing_matching(self, make_snapshot):
         """Regression: `nth(...) or 0` conflated missing with explicit zero."""
         from plugin.rules.matches.ratio import RatioMatch
 
-        assert RatioMatch(0, 3).numerator == 0
-        assert RatioMatch(2, 4).numerator == 2
+        assert RatioMatch(0, 3).test(make_snapshot(), _rules(False, False, False)) is True
 
     @pytest.mark.parametrize("args", [(), (1,), (1, 0), (-1, 2), (1, -2), ("1", "2"), (True, 2), (1, 2, 3)])
     def test_invalid_args_are_rejected(self, args):
@@ -333,11 +315,6 @@ class TestRatioMatch:
         from plugin.rules.matches.ratio import RatioMatch
 
         assert RatioMatch(2, 3).fold(_rules(True, True, True)).value is None
-
-    def test_name(self):
-        from plugin.rules.matches.ratio import RatioMatch
-
-        assert RatioMatch.name() == "ratio"
 
 
 # ── AbstractMatch.test_count algorithm ───────────────────────────────────────

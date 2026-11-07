@@ -197,6 +197,15 @@ class StSyntaxRule(StMatchRule):
     def str_to_list_str(cls, v: Any) -> list[str]:
         return list(always_iterable(v, base_type=str))
 
+    @field_validator("on_events", mode="after")
+    @classmethod
+    def known_events_only(cls, v: list[str] | None) -> list[str] | None:
+        if unknown := [event for event in v or () if event not in set(ListenerEvent)]:
+            raise ValueError(
+                f"unknown event(s) {', '.join(map(repr, unknown))}; expected any of {', '.join(ListenerEvent)}"
+            )
+        return v
+
 
 class WindowKeyedDict[VT](UserDict[WindowIdAble, VT]):
     def __contains__(self, key: object) -> bool:

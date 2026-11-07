@@ -7,7 +7,6 @@ from more_itertools import first_true
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 class AbstractParentMarkerConstraint(AbstractConstraint):
@@ -17,6 +16,8 @@ class AbstractParentMarkerConstraint(AbstractConstraint):
     A subclass only names its `marker`. A marker ending in `/` must be a directory; otherwise it is a
     file, or either when `use_exists` is set.
     """
+
+    needs_file = True
 
     use_exists: ClassVar[bool] = False
 
@@ -34,9 +35,7 @@ class AbstractParentMarkerConstraint(AbstractConstraint):
 
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        if not (file_path := view_snapshot.file_path):
-            raise AlwaysFalsyException("file not on disk")
-        parents = Path(file_path).parents
+        parents = Path(view_snapshot.file_path).parents
 
         if first_true(parents, pred=lambda parent: parent in self._found_dirs):
             return True

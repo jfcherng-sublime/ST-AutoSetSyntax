@@ -3,14 +3,13 @@ from typing import override
 
 from ...snapshot import ViewSnapshot
 from ..constraint import AbstractConstraint
-from ..constraint import AlwaysFalsyException
 
 
 @final
 class IsHiddenSyntaxConstraint(AbstractConstraint):
+    needs_syntax = True
+
     @override
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        if not (syntax := view_snapshot.syntax):
-            raise AlwaysFalsyException(f"{view_snapshot.view} has no syntax")
-
-        return syntax.hidden
+        assert view_snapshot.syntax
+        return view_snapshot.syntax.hidden

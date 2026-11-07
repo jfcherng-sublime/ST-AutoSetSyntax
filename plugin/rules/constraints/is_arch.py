@@ -7,4 +7,4 @@ from ._fixed_value import AbstractFixedValueConstraint
 @final
 class IsArchConstraint(AbstractFixedValueConstraint):
     current = ST_ARCH
-    noun = "architecture"
+    args_noun = "architecture"

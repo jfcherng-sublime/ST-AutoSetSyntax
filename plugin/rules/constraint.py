@@ -1,6 +1,5 @@
 import operator
 import re
-from abc import ABC
 from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Generator
@@ -46,7 +45,7 @@ def get_constraints() -> tuple[type[AbstractConstraint], ...]:
 
 @dataclass(slots=True, frozen=True)
 class ConstraintRule(Optimizable):
-    constraint: AbstractConstraint | None = None
+    constraint: AbstractConstraint
     constraint_name: str = ""
     inverted: bool = False
 
@@ -55,10 +54,6 @@ class ConstraintRule(Optimizable):
 
     @override
     def fold(self) -> Fold:
-        # `make()` returns `None` rather than a constraint-less rule, and every parent drops
-        # those, so a rule in a compiled tree always has one -- same assumption `test()` makes
-        assert self.constraint
-
         value, reason = require_fold(self.constraint, self.constraint.fold())
         if value is None:
             return UNFOLDED
@@ -74,12 +69,16 @@ class ConstraintRule(Optimizable):
         yield from ()
 
     def test(self, view_snapshot: ViewSnapshot) -> bool:
-        assert self.constraint
+        # false whether inverted or not: a constraint about something this view lacks has no verdict to negate
+        if (self.constraint.needs_file and not view_snapshot.path_obj) or (
+            self.constraint.needs_syntax and not view_snapshot.syntax
+        ):
+            return False
 
         try:
             result = self.constraint.test(view_snapshot)
-        except AlwaysBoolException as e:
-            return e.value
+        except AlwaysFalsyException:
+            return False
         except Exception as e:
             Logger.log(f"[{PLUGIN_NAME}] ConstraintRule Exception: {e}")
             return False
@@ -113,6 +112,13 @@ class ConstraintRule(Optimizable):
 class AbstractConstraint(NamedImplementation):
     _NAME_SUFFIX = "Constraint"
 
+    args_noun: ClassVar[str | None] = None
+    """What the arguments name ("extension"). When set, giving none of them folds to "never matches"."""
+    needs_file: ClassVar[bool] = False
+    """Whether it is about a file on disk. A view that isn't one never passes, `not` or not."""
+    needs_syntax: ClassVar[bool] = False
+    """Whether it is about the view's syntax. A view without one never passes, `not` or not."""
+
     def fold(self) -> Fold:
         """
         The constant `test()` always returns and why, or `UNFOLDED` when the result still
@@ -123,7 +129,11 @@ class AbstractConstraint(NamedImplementation):
         `Fold(False, "no extensions given")`, and `contains` with a threshold of `0` always
         matches, so it folds to `Fold(True, ...)`. A folded constraint is reported to the user as
         a dropped rule -- carrying that reason verbatim -- instead of being tested per view.
+
+        Without an override, it folds only when `args_noun` is set and no usable argument was given.
         """
+        if self.args_noun and not self._handled_args():
+            return Fold(False, f"no {self.args_noun} was given")
         return UNFOLDED
 
     @abstractmethod
@@ -216,24 +226,10 @@ class AbstractConstraint(NamedImplementation):
 
     @final
     @staticmethod
-    def _handled_case_insensitive(kwargs: dict[str, Any]) -> bool:
-        """Returns `case_insensitive` in `kwars`. Defaulted to platform's specification."""
-        return bool(kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}))
+    def _handled_case_folder(kwargs: dict[str, Any]) -> Callable[[str], str]:
+        """Returns what to normalize strings with: `case_insensitive` in `kwargs`, defaulted to the platform's."""
+        return str.lower if kwargs.get("case_insensitive", ST_PLATFORM in {"windows", "osx"}) else str
 
 
-class AlwaysValueException[T](Exception, ABC):
-    """Used to indicate that the constraint returns a fixed value no matter it's inverted or not."""
-
-    value: T
-
-
-class AlwaysBoolException(AlwaysValueException[bool], ABC):
-    pass
-
-
-class AlwaysTruthyException(AlwaysBoolException):
-    value = True
-
-
-class AlwaysFalsyException(AlwaysBoolException):
-    value = False
+class AlwaysFalsyException(Exception):
+    """Raised from a custom constraint's `test()` to fail whether it's inverted or not."""

@@ -18,8 +18,7 @@ class RatioMatch(AbstractMatch):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        # reject rather than default: an invalid ratio used to mean "demands nothing", i.e. a typo
-        # made the rule match every file. Raising makes the whole rule invalid instead
+        # raise, don't default: a defaulted typo would make the rule match every file
         if not (
             len(self.args) == 2 and all(map(_is_finite_number, self.args)) and self.args[0] >= 0 and self.args[1] > 0
         ):

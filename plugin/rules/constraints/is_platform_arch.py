@@ -7,4 +7,4 @@ from ._fixed_value import AbstractFixedValueConstraint
 @final
 class IsPlatformArchConstraint(AbstractFixedValueConstraint):
     current = ST_PLATFORM_ARCH
-    noun = "platform/arch pair"
+    args_noun = "platform/arch pair"

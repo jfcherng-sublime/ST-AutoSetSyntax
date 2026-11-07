@@ -16,8 +16,7 @@ class SomeMatch(AbstractMatch):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        # reject rather than default: a missing/negative count used to mean "satisfied by nothing",
-        # i.e. a typo made the rule match every file. Raising makes the whole rule invalid instead
+        # raise, don't default: a defaulted typo would make the rule match every file
         if not (len(self.args) == 1 and _is_count(count := self.args[0])):
             raise ValueError(f'"some" needs exactly one argument, a non-negative integer count, got {list(self.args)}')
         self.count: int = count

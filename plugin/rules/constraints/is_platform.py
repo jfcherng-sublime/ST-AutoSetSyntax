@@ -7,4 +7,4 @@ from ._fixed_value import AbstractFixedValueConstraint
 @final
 class IsPlatformConstraint(AbstractFixedValueConstraint):
     current = ST_PLATFORM
-    noun = "platform"
+    args_noun = "platform"

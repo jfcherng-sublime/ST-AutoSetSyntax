@@ -6,7 +6,6 @@ from typing import override
 
 import sublime
 from more_itertools import first_true
-from more_itertools import map_except
 
 from ..constants import PLAIN_TEXT_SCOPE
 from ..snapshot import ViewSnapshot
@@ -96,7 +95,7 @@ class SyntaxRule(Optimizable):
         this.selector = syntax_rule.selector
 
         if (on_events := syntax_rule.on_events) is not None:
-            this.on_events = set(map_except(ListenerEvent, on_events, ValueError))
+            this.on_events = set(map(ListenerEvent, on_events))
 
         if match_rule_compiled := MatchRule.make(syntax_rule):
             this.root_rule = match_rule_compiled

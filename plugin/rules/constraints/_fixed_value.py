@@ -20,11 +20,6 @@ class AbstractFixedValueConstraint(AbstractConstraint):
     def current(self) -> str:
         """This Sublime Text's value, in lower case."""
 
-    @property
-    @abstractmethod
-    def noun(self) -> str:
-        """What `current` is, for the dropped-rules report: "platform"."""
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
@@ -33,8 +28,8 @@ class AbstractFixedValueConstraint(AbstractConstraint):
 
     @override
     def fold(self) -> Fold:
-        if not self.names:
-            return Fold(False, f"no {self.noun} was given")
+        if (fold := super().fold()) is not UNFOLDED:
+            return fold
         if not self.result:
             return Fold(False, f"this Sublime Text is {self.current}, not any of {quote_join(sorted(self.names))}")
         return UNFOLDED
