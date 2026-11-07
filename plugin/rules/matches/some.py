@@ -34,11 +34,10 @@ class SomeMatch(AbstractMatch):
             return Fold(False, f'a "some" count of {self.count} needs more than the {len(rules)} sub-rule(s) given')
         return UNFOLDED
 
-    # prunable_child_value() is intentionally NOT overridden. `some(n)`'s goal `n` is a fixed
-    # literal, independent of how many rules it has (unlike `ratio`), so dropping a
-    # constant-False child -- one that could never contribute toward reaching `n` -- never
-    # changes whether `n` is reachable. The inherited default (only constant-False is prunable)
-    # is exactly right here.
+    @override
+    def prunable_child_value(self) -> bool | None:
+        """`n` is a fixed literal, so a constant-False child, which never contributes toward it, can go."""
+        return False
 
     @override
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:

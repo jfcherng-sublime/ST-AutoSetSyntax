@@ -156,11 +156,10 @@ class AbstractMatch(NamedImplementation):
         individual values. `RatioMatch` returns `None`: its goal is `ceil(ratio * len(rules))`,
         so removing any child -- constant or not -- shifts that goal.
 
-        Defaults to `False` (safe to drop a constant-`False` child), which is correct for `any`
-        (OR: `False` is the identity element) and for a fixed-goal `some(n)` (removing a rule
-        that could never contribute toward reaching `n` doesn't change whether `n` is reachable).
+        Defaults to `None`, which is always correct; a combinator opts in to pruning by naming its
+        identity element (see `AnyMatch`, `AllMatch`, `SomeMatch`).
         """
-        return False
+        return None
 
     @abstractmethod
     def test(self, view_snapshot: ViewSnapshot, rules: tuple[MatchableRule, ...]) -> bool:

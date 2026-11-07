@@ -16,7 +16,6 @@ from typing import override
 from more_itertools import first_true
 
 from ..cache import clearable_lru_cache
-from ..constants import PLUGIN_NAME
 from ..constants import ST_PLATFORM
 from ..logger import Logger
 from ..snapshot import ViewSnapshot
@@ -26,6 +25,7 @@ from ..types import Optimizable
 from ..types import StConstraintRule
 from ..utils import compile_regex
 from ..utils import drop_falsy
+from ..utils import get_fqcn
 from ..utils import list_all_subclasses
 from ..utils import merge_regexes
 from ..utils import parse_regex_flags
@@ -81,7 +81,10 @@ class ConstraintRule(Optimizable):
         except AlwaysBoolException as e:
             return e.value
         except Exception as e:
-            Logger.log(f"[{PLUGIN_NAME}] ConstraintRule Exception: {e}")
+            Logger.log(
+                f"❌ {get_fqcn(self.constraint)}.test() raised, so it counts as not matching: {e!r}",
+                window=view_snapshot.view.window(),
+            )
             return False
 
         return not result if self.inverted else result
@@ -152,24 +155,19 @@ class AbstractConstraint(NamedImplementation):
     _COMPARATORS: Final[ClassVar[dict[str, Callable[[Any, Any], bool]]]] = {
         "<": operator.lt,
         "lt": operator.lt,
-        # ...
         "<=": operator.le,
         "le": operator.le,
         "lte": operator.le,
-        # ...
         ">=": operator.ge,
         "ge": operator.ge,
         "gte": operator.ge,
-        # ...
         ">": operator.gt,
         "gt": operator.gt,
-        # ...
         "=": operator.eq,
         "==": operator.eq,
         "===": operator.eq,
         "eq": operator.eq,
         "is": operator.eq,
-        # ...
         "!": operator.ne,
         "!=": operator.ne,
         "!==": operator.ne,

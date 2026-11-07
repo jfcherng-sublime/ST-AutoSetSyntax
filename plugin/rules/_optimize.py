@@ -1,32 +1,8 @@
 from typing import Any
 
-from ..constants import PLUGIN_NAME
 from ..types import Fold
 from ..types import Optimizable
 from ..utils import get_fqcn
-from ..utils import list_all_subclasses
-
-_LEGACY_METHOD_NAMES = ("is_droppable", "droppable_value")
-"""The methods `fold()` replaced. Overriding one no longer does anything."""
-
-
-def warn_legacy_fold_overrides(*bases: type[Any]) -> None:
-    """
-    Warn about custom implementations still overriding the methods `fold()` replaced.
-
-    A custom constraint/match that overrides `is_droppable()`/`droppable_value()` isn't broken
-    -- it just silently stops being optimized away, since nothing calls those names any more.
-    A silent loss of optimization is a miserable thing to debug, so say so at load time.
-    """
-    for base in bases:
-        for cls in list_all_subclasses(base, skip_self=True):
-            if legacy := [name for name in _LEGACY_METHOD_NAMES if name in vars(cls)]:
-                print(
-                    f"[{PLUGIN_NAME}][WARNING] {cls.__module__}.{cls.__qualname__} overrides"
-                    f" {'/'.join(legacy)}, which is no longer used."
-                    " Rename it to fold(), returning True/False for a constant result"
-                    " or None when the result still depends on the view."
-                )
 
 
 def require_fold(owner: Any, fold: Any) -> Fold:
@@ -37,7 +13,7 @@ def require_fold(owner: Any, fold: Any) -> Fold:
     happens to have the right shape. Rejecting here rather than at the unpack is what makes the
     failure actionable: "cannot unpack non-iterable bool object" blames this module and never
     says whose `fold()` produced it, and the class name is the only part a user can do anything
-    about -- the same reason `warn_legacy_fold_overrides()` above bothers to print one.
+    about.
     """
     if isinstance(fold, Fold):
         return fold

@@ -63,8 +63,8 @@ class SyntaxRule(Optimizable):
             yield self.root_rule
             self.root_rule = None
 
-    def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> bool:
-        if event and self.on_events is not None and event not in self.on_events:
+    def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent) -> bool:
+        if self.on_events is not None and event not in self.on_events:
             return False
 
         # what `fold()` settles as never matching; optimizing normally drops such a rule, but
@@ -117,7 +117,7 @@ class SyntaxRuleCollection(Optimizable):
         dropped, self.rules = sift_optimizable(self.rules)
         yield from dropped
 
-    def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent | None = None) -> SyntaxRule | None:
+    def test(self, view_snapshot: ViewSnapshot, event: ListenerEvent) -> SyntaxRule | None:
         return first_true(self.rules, pred=lambda rule: rule.test(view_snapshot, event))
 
     @classmethod
