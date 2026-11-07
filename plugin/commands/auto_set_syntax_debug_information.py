@@ -71,8 +71,9 @@ class AutoSetSyntaxDebugInformationCommand(sublime_plugin.WindowCommand):
             },
         }
         info["plugin_settings"] = get_merged_plugin_settings(window=self.window)
-        info["syntax_rule_collection"] = G.syntax_rule_collections.get(self.window)
-        info["dropped_rules"] = G.dropped_rules_collection.get(self.window, [])
+        compiled = G.compiled_rules.get(self.window)
+        info["syntax_rule_collection"] = compiled.collection if compiled else None
+        info["dropped_rules"] = compiled.dropped if compiled else []
 
         content = TEMPLATE.format_map(_pythonize(info))
 

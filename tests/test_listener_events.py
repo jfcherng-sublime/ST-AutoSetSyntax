@@ -1,5 +1,6 @@
 """Tests for how Sublime Text events become `ListenerEvent`s (plugin/listener.py)."""
 
+import time
 from unittest.mock import MagicMock
 
 import pytest
@@ -120,15 +121,69 @@ class TestWindowClose:
     def test_tear_down_forgets_the_windows_compiled_rules(self, monkeypatch):
         window = MagicMock()
         window.id.return_value = 8801
-        G.syntax_rule_collections[window] = MagicMock()
-        G.dropped_rules_collection[window] = []
+        G.compiled_rules[window] = MagicMock()
         monkeypatch.setattr(windows_mod.Logger, "log", lambda *a, **kw: None)
         monkeypatch.setattr(windows_mod.Logger, "destroy", lambda **kw: None)
 
         windows_mod.tear_down_window(window)
 
-        assert window not in G.syntax_rule_collections
-        assert window not in G.dropped_rules_collection
+        assert window not in G.compiled_rules
+
+
+class TestProjectSettingsSaved:
+    def test_refreshes_the_windows_settings(self, listener, monkeypatch):
+        refreshed = []
+        monkeypatch.setattr(listener_mod.AioSettings, "refresh", refreshed.append)
+        window = MagicMock()
+
+        listener.on_load_project_async(window)
+
+        assert refreshed == [window]
+
+
+class TestDebounce:
+    @pytest.fixture
+    def record(self, monkeypatch):
+        monkeypatch.setattr(listener_mod, "get_merged_plugin_setting", lambda *a, **kw: self.delay)
+        calls = []
+        return listener_mod._configured_debounce(lambda key, value: calls.append((key, value))), calls
+
+    delay = 0.05
+
+    def test_no_delay_runs_immediately(self, record):
+        self.delay = 0
+        func, calls = record
+
+        func("view1", 1)
+
+        assert calls == [("view1", 1)]
+
+    def test_runs_once_after_the_delay(self, record):
+        func, calls = record
+
+        func("view1", "a")
+        assert calls == []
+        time.sleep(0.2)
+
+        assert calls == [("view1", "a")]
+
+    def test_rapid_calls_for_one_key_only_run_the_last(self, record):
+        func, calls = record
+
+        for value in (1, 2, 3):
+            func("view1", value)
+        time.sleep(0.2)
+
+        assert calls == [("view1", 3)]
+
+    def test_another_key_is_not_cancelled(self, record):
+        func, calls = record
+
+        func("view1", "a")
+        func("view2", "b")
+        time.sleep(0.2)
+
+        assert sorted(calls) == [("view1", "a"), ("view2", "b")]
 
 
 class TestTextChangeListener:

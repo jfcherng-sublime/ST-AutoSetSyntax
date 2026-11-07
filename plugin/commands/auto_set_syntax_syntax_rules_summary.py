@@ -19,11 +19,11 @@ class AutoSetSyntaxSyntaxRulesSummaryCommand(sublime_plugin.WindowCommand):
     def run(self) -> None:
         tab_size = 2
 
-        if not (rule_collection := G.syntax_rule_collections.get(self.window)):
+        if not (compiled := G.compiled_rules.get(self.window)) or not compiled.collection:
             return
 
         summary: defaultdict[sublime.Syntax, list[StSyntaxRule]] = defaultdict(list)
-        for rule in rule_collection.rules:
+        for rule in compiled.collection.rules:
             if rule.syntax and rule.src_setting:
                 summary[rule.syntax].append(rule.src_setting)
 

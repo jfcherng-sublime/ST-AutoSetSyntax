@@ -7,6 +7,7 @@ import sublime
 
 import plugin.commands.auto_set_syntax_debug_information as debug_mod
 import plugin.commands.auto_set_syntax_syntax_rules_summary as summary_mod
+from plugin.shared import CompiledRules
 from plugin.shared import G
 from plugin.types import DroppedRule
 from plugin.types import StSyntaxRule
@@ -17,8 +18,7 @@ def window():
     window = MagicMock(spec=sublime.Window)
     window.id.return_value = 9901
     yield window
-    G.syntax_rule_collections.pop(window, None)
-    G.dropped_rules_collection.pop(window, None)
+    G.compiled_rules.pop(window, None)
 
 
 @pytest.fixture
@@ -45,7 +45,9 @@ class TestDebugInformation:
 
     def test_dropped_rules_are_listed_with_the_reason_they_were_dropped(self, window, created_views, monkeypatch):
         monkeypatch.setattr(debug_mod, "get_merged_plugin_settings", lambda **kw: {})
-        G.dropped_rules_collection[window] = [DroppedRule("never matches: no extension was given", "a rule")]
+        G.compiled_rules[window] = CompiledRules(
+            MagicMock(), [DroppedRule("never matches: no extension was given", "a rule")]
+        )
 
         debug_mod.AutoSetSyntaxDebugInformationCommand(window).run()
 
@@ -92,7 +94,7 @@ class TestSyntaxRulesSummary:
             _compiled_rule(json, comment="a json"),
             _compiled_rule(python, comment="second python"),
         )
-        G.syntax_rule_collections[window] = collection
+        G.compiled_rules[window] = CompiledRules(collection, [])
 
         summary_mod.AutoSetSyntaxSyntaxRulesSummaryCommand(window).run()
 
@@ -105,7 +107,7 @@ class TestSyntaxRulesSummary:
         python = sublime.Syntax("Packages/Python/Python.sublime-syntax", "Python", False, "source.python")
         collection = MagicMock()
         collection.rules = (_compiled_rule(None, comment="unresolved"), _compiled_rule(python, comment="resolved"))
-        G.syntax_rule_collections[window] = collection
+        G.compiled_rules[window] = CompiledRules(collection, [])
 
         summary_mod.AutoSetSyntaxSyntaxRulesSummaryCommand(window).run()
 
@@ -117,7 +119,7 @@ class TestSyntaxRulesSummary:
         python = sublime.Syntax("Packages/Python/Python.sublime-syntax", "Python", False, "source.python")
         collection = MagicMock()
         collection.rules = (_compiled_rule(python),)
-        G.syntax_rule_collections[window] = collection
+        G.compiled_rules[window] = CompiledRules(collection, [])
 
         summary_mod.AutoSetSyntaxSyntaxRulesSummaryCommand(window).run()
 

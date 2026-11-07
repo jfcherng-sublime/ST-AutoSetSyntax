@@ -2,18 +2,25 @@
 
 Regression coverage: Sublime Text fires `on_new(view)` *before* `on_new_window(window)` for a
 brand new window's first tab. `on_new_window` is what compiles a window's rule collection
-(`G.syntax_rule_collections`), which `run_auto_set_syntax_on_view()` requires via
+(`G.compiled_rules`), which `run_auto_set_syntax_on_view()` requires via
 `G.is_plugin_ready()`. Without ensuring setup runs first, the NEW event -- and therefore
 `new_file_syntax` -- would silently never apply to a new window's first tab.
 """
 
 from unittest.mock import MagicMock
 
+import pytest
 import sublime
 
 import plugin.listener as listener_mod
 import plugin.windows as windows_mod
+from plugin.shared import CompiledRules
 from plugin.shared import G
+
+
+@pytest.fixture(autouse=True)
+def _no_settings_tracking(monkeypatch):
+    monkeypatch.setattr(windows_mod.AioSettings, "track", lambda w: None)
 
 
 def _make_window(window_id: int) -> MagicMock:
@@ -25,10 +32,10 @@ def _make_window(window_id: int) -> MagicMock:
 class TestEnsureWindowSetUp:
     def test_calls_set_up_window_when_not_yet_tracked(self, monkeypatch):
         window = _make_window(101)
-        assert window not in G.syntax_rule_collections
+        assert window not in G.compiled_rules
 
         calls = []
-        monkeypatch.setattr(windows_mod, "set_up_window", lambda w: calls.append(w))
+        monkeypatch.setattr(windows_mod, "set_up_window", calls.append)
 
         windows_mod.ensure_window_set_up(window)
 
@@ -38,7 +45,7 @@ class TestEnsureWindowSetUp:
         from plugin.rules import SyntaxRuleCollection
 
         window = _make_window(102)
-        G.syntax_rule_collections[window] = SyntaxRuleCollection.make([])
+        G.compiled_rules[window] = CompiledRules(SyntaxRuleCollection.make([]), [])
         try:
             calls = []
             monkeypatch.setattr(windows_mod, "set_up_window", lambda w: calls.append(w))
@@ -47,7 +54,7 @@ class TestEnsureWindowSetUp:
 
             assert calls == []
         finally:
-            G.syntax_rule_collections.pop(window, None)
+            G.compiled_rules.pop(window, None)
 
 
 class TestOnNewEnsuresWindowSetUpBeforeEvaluating:
@@ -55,7 +62,7 @@ class TestOnNewEnsuresWindowSetUpBeforeEvaluating:
         window = _make_window(103)
         view = MagicMock()
         view.window.return_value = window
-        assert window not in G.syntax_rule_collections
+        assert window not in G.compiled_rules
 
         call_order = []
         monkeypatch.setattr(windows_mod, "set_up_window", lambda w: call_order.append("set_up_window"))
@@ -73,7 +80,7 @@ class TestOnNewEnsuresWindowSetUpBeforeEvaluating:
         from plugin.rules import SyntaxRuleCollection
 
         window = _make_window(104)
-        G.syntax_rule_collections[window] = SyntaxRuleCollection.make([])
+        G.compiled_rules[window] = CompiledRules(SyntaxRuleCollection.make([]), [])
         try:
             view = MagicMock()
             view.window.return_value = window
@@ -86,13 +93,13 @@ class TestOnNewEnsuresWindowSetUpBeforeEvaluating:
 
             assert calls == []
         finally:
-            G.syntax_rule_collections.pop(window, None)
+            G.compiled_rules.pop(window, None)
 
 
 class TestOnNewWindowStillSetsUpWhenOnNewDidNotRunFirst:
     def test_on_new_window_sets_up_window_when_not_yet_tracked(self, monkeypatch):
         window = _make_window(105)
-        assert window not in G.syntax_rule_collections
+        assert window not in G.compiled_rules
 
         calls = []
         monkeypatch.setattr(windows_mod, "set_up_window", lambda w: calls.append(w))

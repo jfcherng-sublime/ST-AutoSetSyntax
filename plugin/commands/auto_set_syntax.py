@@ -37,7 +37,7 @@ def run_auto_set_syntax_on_view(
     *,
     must_plaintext: bool = False,
 ) -> bool:
-    if not ((window := view.window()) and G.is_plugin_ready(window) and view.is_valid()):
+    if not ((window := view.window()) and view.is_valid() and (compiled := G.compiled_rules.get(window))):
         Logger.log("⏳ Calm down! View has gone or the plugin is not ready yet.")
         return False
 
@@ -46,11 +46,7 @@ def run_auto_set_syntax_on_view(
     if event is ListenerEvent.EXEC:
         return _apply(view, detect_for_exec_output(view, settings), event)
 
-    if not (
-        is_syntaxable_view(view, must_plaintext=must_plaintext)
-        # `is not None`, not truthiness: an empty collection still lets the non-rule detectors run
-        and (syntax_rule_collection := G.syntax_rule_collections.get(window)) is not None
-    ):
+    if not is_syntaxable_view(view, must_plaintext=must_plaintext):
         return False
 
     view_snapshot = ViewSnapshot.from_view(view)
@@ -58,7 +54,7 @@ def run_auto_set_syntax_on_view(
     if event is ListenerEvent.NEW:
         return _apply(view, detect_for_new_view(view_snapshot, settings), event)
 
-    if decision := detect(view_snapshot, syntax_rule_collection, event, settings):
+    if decision := detect(view_snapshot, compiled.collection, event, settings):
         return _apply(view, decision, event)
 
     return _sorry_cannot_help(view, event)

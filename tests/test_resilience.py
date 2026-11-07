@@ -16,10 +16,10 @@ import sublime
 
 import plugin.commands.auto_set_syntax as auto_mod
 import plugin.custom as custom_mod
-import plugin.shared as shared_mod
 from plugin.rules import SyntaxRuleCollection
 from plugin.rules.match import MatchRule
 from plugin.rules.syntax import SyntaxRule
+from plugin.shared import CompiledRules
 from plugin.shared import G
 from plugin.types import DroppedRule
 from plugin.types import ListenerEvent
@@ -106,24 +106,14 @@ class TestUnoptimizedSyntaxRuleTest:
 
 
 class TestEmptyCollectionKeepsWindowReady:
-    def test_window_with_empty_rule_collection_is_ready(self, monkeypatch):
-        window = _make_window(301)
-        monkeypatch.setattr(shared_mod, "get_merged_plugin_settings", lambda **kw: {"debounce": 0})
-        G.syntax_rule_collections[window] = SyntaxRuleCollection.make([])
-        try:
-            assert G.is_plugin_ready(window) is True
-        finally:
-            G.syntax_rule_collections.pop(window, None)
-
     def test_detection_still_runs_when_every_rule_was_dropped(self, monkeypatch):
         window = _make_window(302)
         view = MagicMock()
         view.window.return_value = window
         view.is_valid.return_value = True
-        G.syntax_rule_collections[window] = SyntaxRuleCollection.make([])
+        G.compiled_rules[window] = CompiledRules(SyntaxRuleCollection.make([]), [])
 
         detect = MagicMock(return_value=None)
-        monkeypatch.setattr(shared_mod, "get_merged_plugin_settings", lambda **kw: {"debounce": 0})
         monkeypatch.setattr(auto_mod, "get_merged_plugin_settings", lambda **kw: {})
         monkeypatch.setattr(auto_mod, "is_syntaxable_view", lambda *a, **kw: True)
         monkeypatch.setattr(auto_mod.ViewSnapshot, "from_view", classmethod(lambda cls, v: MagicMock()))
@@ -131,7 +121,7 @@ class TestEmptyCollectionKeepsWindowReady:
         try:
             auto_mod.run_auto_set_syntax_on_view(view, ListenerEvent.LOAD)
         finally:
-            G.syntax_rule_collections.pop(window, None)
+            G.compiled_rules.pop(window, None)
 
         detect.assert_called_once()
 

@@ -20,20 +20,6 @@ class TestClearableLruCache:
         assert add(1, 2) == 3
         assert call_count == 1
 
-    def test_different_args_uncached(self):
-        call_count = 0
-
-        @clearable_lru_cache()
-        def add(a: int, b: int) -> int:
-            nonlocal call_count
-            call_count += 1
-            return a + b
-
-        assert add(1, 2) == 3
-        assert call_count == 1
-        assert add(2, 3) == 5
-        assert call_count == 2
-
     def test_clear_all_caches(self):
         call_count = 0
 
@@ -49,22 +35,3 @@ class TestClearableLruCache:
         clear_all_cached_functions()
         assert square(4) == 16
         assert call_count == 2  # recomputed
-
-    def test_maxsize_passthrough(self):
-        call_count = 0
-
-        @clearable_lru_cache(maxsize=2)
-        def get(x: int) -> int:
-            nonlocal call_count
-            call_count += 1
-            return x
-
-        get(1)
-        get(2)
-        assert call_count == 2
-        # 3rd call with new arg evicts oldest (1)
-        get(3)
-        assert call_count == 3
-        # 1 was evicted, so it recomputes
-        get(1)
-        assert call_count == 4

@@ -4,6 +4,7 @@ from typing import Any
 
 import sublime
 
+from .cache import clear_all_cached_functions
 from .constants import PLUGIN_NAME
 from .constants import PY_VERSION
 from .constants import ST_CHANNEL
@@ -15,13 +16,16 @@ from .magika import get_magika_object
 from .rules import SyntaxRuleCollection
 from .rules import get_constraints
 from .rules import get_matches
+from .settings import AioSettings
 from .settings import pref_syntax_rules
+from .shared import CompiledRules
 from .shared import G
 from .types import DroppedRule
 from .utils import stringify
 
 
 def set_up_window(window: sublime.Window) -> None:
+    AioSettings.track(window)
     Logger.log(f"🤠 Howdy! This is {PLUGIN_NAME} {VERSION}. (Panel for {window})", window=window)
     Logger.log(
         f"🌱 Environment: ST {ST_VERSION} {ST_CHANNEL} build with Python {PY_VERSION} ({ST_PLATFORM_ARCH})",
@@ -37,21 +41,15 @@ def set_up_window(window: sublime.Window) -> None:
 
 
 def tear_down_window(window: sublime.Window) -> None:
-    G.syntax_rule_collections.pop(window, None)
-    G.dropped_rules_collection.pop(window, None)
+    G.compiled_rules.pop(window, None)
+    AioSettings.forget(window)
     Logger.log("👋 Bye!", window=window)
     Logger.destroy(window=window)
 
 
-def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
+def compile_rules(window: sublime.Window) -> None:
     def names_as_str(items: Iterable[Any], *, sep: str = ", ") -> str:
         return sep.join(item.name() for item in items)
-
-    Logger.log(
-        f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} BEGIN",
-        window=window,
-        enabled=is_update,
-    )
 
     Logger.log(f'🔍 Found "Match" implementations: {names_as_str(get_matches())}', window=window)
     Logger.log(f'🔍 Found "Constraint" implementations: {names_as_str(get_constraints())}', window=window)
@@ -79,22 +77,23 @@ def compile_rules(window: sublime.Window, *, is_update: bool = False) -> None:
         syntax_rule_collection = SyntaxRuleCollection.make(syntax_rules)
         dropped_rules = list(invalid_rules)
 
-    G.syntax_rule_collections[window] = syntax_rule_collection
-    G.dropped_rules_collection[window] = dropped_rules
+    G.compiled_rules[window] = CompiledRules(syntax_rule_collection, dropped_rules)
     Logger.log(f"✨ Optimized syntax rule collection: {stringify(syntax_rule_collection)}", window=window)
     Logger.log(f"💀 Dropped rules: {stringify(dropped_rules)}", window=window)
-
-    Logger.log(
-        f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} END",
-        window=window,
-        enabled=is_update,
-    )
 
 
 def ensure_window_set_up(window: sublime.Window) -> None:
     """
     ST fires `on_new(view)` before `on_new_window(window)` for a brand new window's first tab,
-    so `on_new` must make sure the window's rules are compiled before evaluating that view.
+    so `on_new` must make sure the window is set up before evaluating that view.
     """
-    if window not in G.syntax_rule_collections:
+    if window not in G.compiled_rules:
         set_up_window(window)
+
+
+def recompile_window(window: sublime.Window) -> None:
+    """The window's settings changed: whatever was cached from the old ones is stale."""
+    clear_all_cached_functions()
+    Logger.log(f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} BEGIN", window=window)
+    compile_rules(window)
+    Logger.log(f"# {Logger.DELIMITER} re-compile rules for {window} {Logger.DELIMITER} END", window=window)

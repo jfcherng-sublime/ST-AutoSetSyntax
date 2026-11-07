@@ -77,14 +77,6 @@ class TestLoggerLog:
 
         window.run_command.assert_not_called()
 
-    def test_noop_when_enabled_kwarg_is_false(self, monkeypatch):
-        monkeypatch.setattr(logger_mod, "get_merged_plugin_setting", lambda *a, **kw: True)
-        window = _make_window()
-
-        Logger.log("hello", window=window, enabled=False)
-
-        window.run_command.assert_not_called()
-
     def test_callable_message_not_evaluated_when_logging_disabled(self, monkeypatch):
         """Lazy messages (e.g. `lambda: expensive_stringify(...)`) must not be evaluated at all
         when logging is off -- that's the whole point of allowing a callable."""
@@ -96,7 +88,7 @@ class TestLoggerLog:
 
         assert calls == []
 
-    def test_appends_message_and_increments_history_count(self, monkeypatch):
+    def test_appends_the_message(self, monkeypatch):
         monkeypatch.setattr(logger_mod, "get_merged_plugin_setting", lambda *a, **kw: True)
         monkeypatch.setattr(logger_mod, "get_st_setting", lambda *a, **kw: math.inf)
         window = _make_window()
@@ -104,31 +96,38 @@ class TestLoggerLog:
         Logger.log("hello", window=window)
 
         window.run_command.assert_called_once_with("auto_set_syntax_append_log", {"msg": "hello"})
-        assert Logger._get_history_count(window) == 1
 
-    def test_history_count_triggers_auto_clear_at_threshold(self, monkeypatch):
-        """console_max_history_lines / 8 is the auto-clear threshold; reaching it must clear the
-        panel *before* appending the new message, not after."""
+    def _logged_commands(self, monkeypatch, *, already_logged: int) -> list[str]:
+        """Log once with `console_max_history_lines` at 16 (so the panel holds 2 messages)."""
         monkeypatch.setattr(logger_mod, "get_merged_plugin_setting", lambda *a, **kw: True)
-        monkeypatch.setattr(logger_mod, "get_st_setting", lambda *a, **kw: 16)  # threshold = 16/8 = 2
+        monkeypatch.setattr(logger_mod, "get_st_setting", lambda *a, **kw: 16)
         window = _make_window()
-        Logger._set_history_count(window, 2)
+        for _ in range(already_logged):
+            Logger.log("earlier", window=window)
+        window.run_command.reset_mock()
+        # a real window would run the command, which is what resets the count
+        window.run_command.side_effect = lambda name, *a: (
+            AutoSetSyntaxClearLogPanelCommand(window).run() if name == "auto_set_syntax_clear_log_panel" else None
+        )
 
         Logger.log("hello", window=window)
 
-        calls = [c.args[0] for c in window.run_command.call_args_list]
+        return [c.args[0] for c in window.run_command.call_args_list]
+
+    def test_a_full_panel_is_cleared_before_the_new_message_is_appended(self, monkeypatch):
+        calls = self._logged_commands(monkeypatch, already_logged=2)
+
         assert calls == ["auto_set_syntax_clear_log_panel", "auto_set_syntax_append_log"]
-        assert Logger._get_history_count(window) == 1  # reset by clear(), then incremented once
 
-    def test_below_threshold_does_not_auto_clear(self, monkeypatch):
-        monkeypatch.setattr(logger_mod, "get_merged_plugin_setting", lambda *a, **kw: True)
-        monkeypatch.setattr(logger_mod, "get_st_setting", lambda *a, **kw: 16)  # threshold = 2
-        window = _make_window()
-        Logger._set_history_count(window, 1)
+    def test_a_panel_with_room_is_not_cleared(self, monkeypatch):
+        calls = self._logged_commands(monkeypatch, already_logged=1)
 
-        Logger.log("hello", window=window)
+        assert calls == ["auto_set_syntax_append_log"]
 
-        calls = [c.args[0] for c in window.run_command.call_args_list]
+    def test_the_count_starts_over_after_a_clear(self, monkeypatch):
+        self._logged_commands(monkeypatch, already_logged=2)  # cleared, then logged once
+
+        calls = self._logged_commands(monkeypatch, already_logged=0)
         assert calls == ["auto_set_syntax_append_log"]
 
 
@@ -136,18 +135,16 @@ class TestLoggerClearAndDestroy:
     def setup_method(self):
         Logger.history_counts.clear()
 
-    def test_clear_resets_history_count(self):
+    def test_clear_runs_the_clear_command(self):
         window = _make_window()
-        Logger._set_history_count(window, 5)
 
         Logger.clear(window=window)
 
-        window.run_command.assert_called_once_with("auto_set_syntax_clear_log_panel", {"from_logger": True})
-        assert Logger._get_history_count(window) == 0
+        window.run_command.assert_called_once_with("auto_set_syntax_clear_log_panel")
 
-    def test_destroy_removes_history_count_entry(self):
+    def test_destroy_removes_the_panel_and_forgets_its_count(self):
         window = _make_window()
-        Logger._set_history_count(window, 5)
+        Logger.history_counts[window.id()] = 5
 
         Logger.destroy(window=window)
 
@@ -181,34 +178,25 @@ class TestAutoSetSyntaxUpdateLogCommand:
 
 
 class TestAutoSetSyntaxClearLogPanelCommand:
-    def test_direct_invocation_delegates_to_logger_clear(self, monkeypatch):
-        """A direct user invocation (from_logger=False, the default) must go through
-        Logger.clear() so its bookkeeping (history count reset) stays in sync, rather than
-        clearing the panel's text directly."""
-        window = _make_window()
-        cleared = []
-        monkeypatch.setattr(Logger, "clear", classmethod(lambda cls, *, window: cleared.append(window)))
-
-        AutoSetSyntaxClearLogPanelCommand(window).run()
-
-        assert cleared == [window]
-        window.run_command.assert_not_called()
-
-    def test_from_logger_invocation_clears_panel_text_directly(self):
+    def test_empties_the_panel_and_resets_the_count(self):
         window = _make_window()
         panel = MagicMock()
         panel.size.return_value = 123
         window.find_output_panel.return_value = panel
+        Logger.history_counts[window.id()] = 5
 
-        AutoSetSyntaxClearLogPanelCommand(window).run(from_logger=True)
+        AutoSetSyntaxClearLogPanelCommand(window).run()
 
         panel.run_command.assert_called_once_with("auto_set_syntax_update_log", {"region": (0, 123), "msg": ""})
+        assert window.id() not in Logger.history_counts
 
-    def test_from_logger_invocation_noop_when_no_panel_exists(self):
+    def test_without_a_panel_it_only_resets_the_count(self):
         window = _make_window()
-        window.find_output_panel.return_value = None
+        Logger.history_counts[window.id()] = 5
 
-        AutoSetSyntaxClearLogPanelCommand(window).run(from_logger=True)  # must not raise
+        AutoSetSyntaxClearLogPanelCommand(window).run()  # must not raise
+
+        assert window.id() not in Logger.history_counts
 
     def test_is_enabled_reflects_panel_existence(self):
         window = _make_window()

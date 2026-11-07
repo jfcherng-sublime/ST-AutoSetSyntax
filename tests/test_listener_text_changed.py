@@ -3,12 +3,14 @@
 `_try_assign_syntax_when_text_changed` decides, from the shape of a text edit alone, whether
 it's worth re-running syntax detection: a paste (large insert), an edit near the start/end of a
 short-enough buffer, or an edit deep in the middle of a large file (skipped -- unlikely to reveal
-anything about the file's type). This had zero dedicated test coverage.
+anything about the file's type).
 """
 
 from unittest.mock import MagicMock
 
 import plugin.listener as listener_mod
+
+_assign = listener_mod._try_assign_syntax_when_text_changed.__wrapped__  # the decision, without the debounce
 
 
 class _FakePos:
@@ -40,7 +42,7 @@ class TestTryAssignSyntaxWhenTextChanged:
         view = _make_view(size=100, sel_count=2)
         changes = [_FakeChange("x", b_pt=50, b_row=5)]
 
-        assert listener_mod._try_assign_syntax_when_text_changed(view, changes) is False
+        assert _assign(view, changes) is False
         assert calls == []
 
     def test_large_insert_is_treated_as_paste(self, monkeypatch):
@@ -52,7 +54,7 @@ class TestTryAssignSyntaxWhenTextChanged:
         view = _make_view(size=1000)
         changes = [_FakeChange("x" * 20, b_pt=500, b_row=10)]  # deep in the middle, but large
 
-        assert listener_mod._try_assign_syntax_when_text_changed(view, changes) is True
+        assert _assign(view, changes) is True
         assert calls[0][0] == listener_mod.ListenerEvent.PASTE
         assert calls[0][1] == {"must_plaintext": True}
 
@@ -68,7 +70,7 @@ class TestTryAssignSyntaxWhenTextChanged:
         view = _make_view(size=1000)
         changes = [_FakeChange("x" * 3, b_pt=500, b_row=10) for _ in range(3)]  # 3+3+3=9 >= threshold(8)
 
-        assert listener_mod._try_assign_syntax_when_text_changed(view, changes) is True
+        assert _assign(view, changes) is True
         assert calls[0] == listener_mod.ListenerEvent.PASTE
 
     def test_small_edit_in_short_buffer_triggers_modify(self, monkeypatch):
@@ -80,7 +82,7 @@ class TestTryAssignSyntaxWhenTextChanged:
         view = _make_view(size=100)  # under the short-content threshold (300)
         changes = [_FakeChange("x", b_pt=50, b_row=3)]  # not near start or end
 
-        assert listener_mod._try_assign_syntax_when_text_changed(view, changes) is True
+        assert _assign(view, changes) is True
         assert calls[0] == (listener_mod.ListenerEvent.MODIFY, {"must_plaintext": True})
 
     def test_small_edit_on_first_line_of_large_buffer_triggers_modify(self, monkeypatch):
@@ -90,7 +92,7 @@ class TestTryAssignSyntaxWhenTextChanged:
         view = _make_view(size=10000)
         changes = [_FakeChange("x", b_pt=5, b_row=0)]  # row 0 = first line
 
-        listener_mod._try_assign_syntax_when_text_changed(view, changes)
+        _assign(view, changes)
         assert calls == [listener_mod.ListenerEvent.MODIFY]
 
     def test_small_edit_near_end_of_large_buffer_triggers_modify(self, monkeypatch):
@@ -100,7 +102,7 @@ class TestTryAssignSyntaxWhenTextChanged:
         view = _make_view(size=10000)
         changes = [_FakeChange("x", b_pt=9999, b_row=50)]  # within _EDIT_END_PROXIMITY(2) of size
 
-        listener_mod._try_assign_syntax_when_text_changed(view, changes)
+        _assign(view, changes)
         assert calls == [listener_mod.ListenerEvent.MODIFY]
 
     def test_small_edit_deep_in_middle_of_large_buffer_is_skipped(self, monkeypatch):
@@ -110,5 +112,5 @@ class TestTryAssignSyntaxWhenTextChanged:
         view = _make_view(size=10000)
         changes = [_FakeChange("x", b_pt=5000, b_row=250)]  # not first line, not short, not near end
 
-        assert listener_mod._try_assign_syntax_when_text_changed(view, changes) is False
+        assert _assign(view, changes) is False
         assert calls == []

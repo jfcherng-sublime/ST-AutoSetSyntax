@@ -1,23 +1,14 @@
-# This file is more self-sustained and shouldn't use things from other higher-level modules.
-
 import inspect
 import operator
-import os
 import re
-import shutil
-import stat
-import threading
-from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterable
 from collections.abc import Mapping
 from functools import reduce
-from functools import wraps
 from itertools import chain
 from pathlib import Path
 from re import Pattern
 from typing import Any
-from typing import cast
 
 import sublime
 from more_itertools import always_iterable
@@ -118,39 +109,6 @@ def build_reversed_trie(words: tuple[str, ...]) -> TrieNode:
     return trie
 
 
-def debounce[T: Callable](time_s: float = 0.3) -> Callable[[T], T]:
-    """
-    Debounce a function so that it's called after `time_s` seconds.
-    If it's called multiple times in the time frame for the same first argument (the "key"),
-    only the last call for that key runs; calls for a different key are debounced independently
-    and don't cancel each other.
-
-    Taken and modified from https://github.com/salesforce/decorator-operations
-    """
-
-    def decorator(func: T) -> T:
-        timers: dict[Any, threading.Timer] = {}
-
-        @wraps(func)
-        def debounced(*args: Any, **kwargs: Any) -> None:
-            key = args[0] if args else None
-
-            def call_function() -> Any:
-                timers.pop(key, None)
-                return func(*args, **kwargs)
-
-            if timer := timers.get(key):
-                timer.cancel()
-
-            timer = threading.Timer(time_s, call_function)
-            timers[key] = timer
-            timer.start()
-
-        return cast(T, debounced)
-
-    return decorator
-
-
 def list_all_subclasses[T](
     root: type[T],
     skip_abstract: bool = False,
@@ -183,7 +141,7 @@ def find_syntaxes(
     # `_find_syntaxes()` is cached, so its arguments have to be hashable -- normalize here rather
     # than making "pass a tuple" a rule every caller has to know
     return _find_syntaxes(
-        always_iterable(likes, base_type=(str, sublime.Syntax)),
+        tuple(always_iterable(likes, base_type=(str, sublime.Syntax))),
         include_hidden=include_hidden,
         include_plaintext=include_plaintext,
     )
@@ -191,7 +149,7 @@ def find_syntaxes(
 
 @clearable_lru_cache()
 def _find_syntaxes(
-    likes: Iterable[SyntaxLike],
+    likes: tuple[SyntaxLike, ...],
     *,
     include_hidden: bool,
     include_plaintext: bool,
@@ -401,29 +359,6 @@ def str_finditer(content: str, substr: str) -> Generator[int]:
     if substr == "":
         raise ValueError("substr cannot be an empty string (infinite loop)")
     yield from _()
-
-
-def rmtree_ex(path: str | Path, ignore_errors: bool = False) -> None:
-    """
-    Remove the given recursively.
-
-    :note: we use shutil rmtree but adjust its behaviour to see whether files that
-        couldn't be deleted are read-only. Windows will not remove them in that case
-
-    @see https://github.com/gitpython-developers/GitPython/blob/ea43defd777a9c0751fc44a9c6a622fc2dbd18a0/git/util.py#L101-L118
-    """
-    if os.name == "nt" and (path := Path(path)).is_absolute():
-        path = Rf"\\?\{path}"  # use UNC path to resolve Windows long path issue
-
-    def onexc(func: Callable, path: str | Path, exec_info: Any) -> None:
-        try:
-            os.chmod(path, stat.S_IWUSR)
-            func(path)  # will scream if still not possible to delete.
-        except Exception:
-            if not ignore_errors:
-                raise
-
-    return shutil.rmtree(path, False, onexc=onexc)
 
 
 def get_syntax_name(syntax: sublime.Syntax) -> str:

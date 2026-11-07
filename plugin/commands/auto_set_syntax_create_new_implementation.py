@@ -20,7 +20,7 @@ _PYTHON_VERSION_SHORT = f"{sys.version_info.major}.{sys.version_info.minor}"
 class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
     template_type = ""
     template_file = ""
-    template_syntax: str | None = None
+    template_syntax = "scope:source.python"
     save_dir = ""
 
     @override
@@ -45,14 +45,12 @@ class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
 class AutoSetSyntaxCreateNewConstraintCommand(AbstractCreateNewImplementationCommand):
     template_type = "Constraint"
     template_file = "example_constraint.py"
-    template_syntax = "scope:source.python"
     save_dir = str(PLUGIN_CUSTOM_MODULE_PATHS["constraint"])
 
 
 class AutoSetSyntaxCreateNewMatchCommand(AbstractCreateNewImplementationCommand):
     template_type = "Match"
     template_file = "example_match.py"
-    template_syntax = "scope:source.python"
     save_dir = str(PLUGIN_CUSTOM_MODULE_PATHS["match"])
 
 

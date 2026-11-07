@@ -40,12 +40,11 @@ class TestCompileRulesHandlesInvalidSyntaxRules:
         try:
             windows_mod.compile_rules(window)  # must not raise
 
-            assert len(G.syntax_rule_collections[window]) == 1
-            [dropped] = G.dropped_rules_collection[window]
+            assert len(G.compiled_rules[window].collection) == 1
+            [dropped] = G.compiled_rules[window].dropped
             assert dropped.reason.startswith("invalid setting at user_syntax_rules[0]: ")
         finally:
-            G.syntax_rule_collections.pop(window, None)
-            G.dropped_rules_collection.pop(window, None)
+            G.compiled_rules.pop(window, None)
 
     def test_invalid_rules_stay_reported_when_optimizing_fails(self, monkeypatch):
         """The unoptimized fallback must not forget the rules that never got that far."""
@@ -65,10 +64,9 @@ class TestCompileRulesHandlesInvalidSyntaxRules:
         try:
             windows_mod.compile_rules(window)
 
-            assert G.dropped_rules_collection[window] == [invalid]
+            assert G.compiled_rules[window].dropped == [invalid]
         finally:
-            G.syntax_rule_collections.pop(window, None)
-            G.dropped_rules_collection.pop(window, None)
+            G.compiled_rules.pop(window, None)
 
 
 class TestCompileRulesSurvivesABrokenFold:
@@ -121,15 +119,14 @@ class TestCompileRulesSurvivesABrokenFold:
 
             # the rule survived unoptimized, still holding the root that `SyntaxRule.test()`
             # asserts on -- a half-pruned tree would have detached it
-            collection = G.syntax_rule_collections[window]
+            collection = G.compiled_rules[window].collection
             assert len(collection) == 1
             assert collection.rules[0].root_rule is not None
-            assert G.dropped_rules_collection[window] == []
+            assert G.compiled_rules[window].dropped == []
 
             # naming the class is the whole point: "cannot unpack non-iterable bool object"
             # would leave the user guessing which of their custom implementations broke
             failure = next(msg for msg in logged if msg.startswith("❌"))
             assert "BrokenFoldConstraint.fold() must return a Fold" in failure
         finally:
-            G.syntax_rule_collections.pop(window, None)
-            G.dropped_rules_collection.pop(window, None)
+            G.compiled_rules.pop(window, None)

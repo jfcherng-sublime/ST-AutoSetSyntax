@@ -27,7 +27,6 @@ def create_new_view(
     syntax: str | sublime.Syntax | None = None,
     include_hidden_syntax: bool = False,
     scratch: bool = False,
-    read_only: bool = False,
     settings: dict[str, Any] | None = None,
     window: sublime.Window | None = None,
 ) -> sublime.View:
@@ -38,7 +37,6 @@ def create_new_view(
     view = window.new_file()
     view.set_name(name)
     view.set_scratch(scratch)
-    view.set_read_only(read_only)
     view.settings().update(settings | {VIEW_KEY_IS_CREATED: True})
 
     if syntax and (syntax := find_syntax(syntax, include_hidden=include_hidden_syntax)):

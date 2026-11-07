@@ -1,15 +1,19 @@
 import gzip
 import hashlib
 import io
+import os
 import re
 import shutil
+import stat
 import tarfile
 import tempfile
 import threading
 import urllib.request
 import uuid
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 from typing import BinaryIO
 from typing import override
 
@@ -20,7 +24,6 @@ from ..constants import PLUGIN_NAME
 from ..constants import PLUGIN_PY_LIBS_DIR
 from ..constants import PLUGIN_PY_LIBS_URL
 from ..constants import PLUGIN_PY_LIBS_ZIP_NAME
-from ..utils import rmtree_ex
 
 type PathLike = Path | str
 
@@ -53,8 +56,8 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
     @staticmethod
     def _prepare_dependencies() -> bool:
         """Download, verify and install dependencies. Returns whether it succeeded."""
-        # the checksum is mandatory: a missing (404) or empty sidecar used to skip validation and
-        # install whatever was downloaded. Fetched first, since it's tiny and the archive isn't
+        # the checksum is mandatory (a missing or empty sidecar must not skip validation). Fetched
+        # first, since it's tiny and the archive isn't
         sha256_url = f"{PLUGIN_PY_LIBS_URL}.sha256"
         try:
             content_hash = simple_urlopen(sha256_url).decode("utf-8").strip()
@@ -72,7 +75,7 @@ class AutoSetSyntaxDownloadDependenciesCommand(sublime_plugin.ApplicationCommand
             sublime.error_message(f"[{PLUGIN_NAME}] Error while fetching: {url} ({e})")
             return False
 
-        if sha256sum(content_bytes).casefold() != content_hash.casefold():
+        if hashlib.sha256(content_bytes).hexdigest().casefold() != content_hash.casefold():
             sublime.error_message(f"[{PLUGIN_NAME}] SHA-256 checksum mismatches: {PLUGIN_PY_LIBS_URL}")
             return False
 
@@ -141,6 +144,29 @@ def _swap_in(new_dir: Path) -> bool:
     return True
 
 
+def rmtree_ex(path: str | Path, ignore_errors: bool = False) -> None:
+    """
+    Remove the given recursively.
+
+    :note: we use shutil rmtree but adjust its behaviour to see whether files that
+        couldn't be deleted are read-only. Windows will not remove them in that case
+
+    @see https://github.com/gitpython-developers/GitPython/blob/ea43defd777a9c0751fc44a9c6a622fc2dbd18a0/git/util.py#L101-L118
+    """
+    if os.name == "nt" and (path := Path(path)).is_absolute():
+        path = Rf"\\?\{path}"  # use UNC path to resolve Windows long path issue
+
+    def onexc(func: Callable, path: str | Path, exec_info: Any) -> None:
+        try:
+            os.chmod(path, stat.S_IWUSR)
+            func(path)  # will scream if still not possible to delete.
+        except Exception:
+            if not ignore_errors:
+                raise
+
+    return shutil.rmtree(path, False, onexc=onexc)
+
+
 def remove_stale_dependency_dirs() -> None:
     """Remove the old installs and scratch dirs a previous download couldn't, e.g. for a loaded DLL."""
     if not (parent := PLUGIN_PY_LIBS_DIR.parent).is_dir():
@@ -184,14 +210,3 @@ def simple_urlopen(url: str, *, chunk_size: int = 512 * 1024, timeout: float = 3
         if resp.info().get("Content-Encoding") == "gzip":
             data = gzip.decompress(data)
     return data
-
-
-def sha256sum(target: bytes | str | Path, *, encoding: str = "utf-8") -> str:
-    """Calculates the lowercase SHA-256 hash of the string, bytes or file."""
-    match target:
-        case Path():
-            with target.open("rb") as f:
-                return hashlib.file_digest(f, "sha256").hexdigest()
-        case str():
-            target = target.encode(encoding)
-    return hashlib.sha256(target).hexdigest()

@@ -1,6 +1,6 @@
+import threading
 from collections.abc import Callable
 from collections.abc import Sequence
-from functools import lru_cache
 from functools import wraps
 from typing import Any
 from typing import Final
@@ -12,37 +12,41 @@ import sublime_plugin
 from .commands.auto_set_syntax import run_auto_set_syntax_on_view
 from .constants import VIEW_KEY_IS_TRANSIENT
 from .helpers import is_syntaxable_view
+from .settings import AioSettings
 from .settings import get_merged_plugin_setting
 from .shared import G
 from .types import ListenerEvent
-from .utils import debounce
 from .utils import is_transient_view
 from .windows import ensure_window_set_up
 from .windows import tear_down_window
 
 
-@lru_cache(maxsize=2)
-def _make_debounced[T: Callable](func: T, time_s: float) -> T:
-    """
-    Cache the debounced wrapper so the same (func, time_s) pair reuses one wrapper.
-
-    The wrapper itself debounces independently per first argument (e.g. per view), so
-    reusing it across calls for different views doesn't cancel each other's pending calls.
-
-    ``maxsize=2`` covers the common case (one debounced function with one
-    setting-driven delay). Bump when more debounced callbacks are added.
-    """
-    return debounce(time_s)(func)
-
-
 def _configured_debounce[T: Callable](func: T) -> T:
-    """Debounce a function so that it's called once in seconds."""
+    """
+    Run `func` once the "debounce" setting's seconds have passed without another call for the same
+    first argument (the "key", e.g. a view); other keys are debounced independently. No delay
+    configured, no debouncing.
+
+    Taken and modified from https://github.com/salesforce/decorator-operations
+    """
+    timers: dict[Any, threading.Timer] = {}
 
     @wraps(func)
-    def debounced(*args: Any, **kwargs: Any) -> Any:
-        if (time_s := get_merged_plugin_setting("debounce", 0)) > 0:
-            return _make_debounced(func, time_s)(*args, **kwargs)
-        return func(*args, **kwargs)
+    def debounced(*args: Any, **kwargs: Any) -> None:
+        if (time_s := get_merged_plugin_setting("debounce", 0)) <= 0:
+            func(*args, **kwargs)
+            return
+
+        key = args[0] if args else None
+
+        def call_function() -> None:
+            timers.pop(key, None)
+            func(*args, **kwargs)
+
+        if timer := timers.get(key):
+            timer.cancel()
+        timers[key] = timer = threading.Timer(time_s, call_function)
+        timer.start()
 
     return cast(T, debounced)
 
@@ -92,6 +96,10 @@ class AutoSetSyntaxEventListener(sublime_plugin.EventListener):
 
     def on_new_window(self, window: sublime.Window) -> None:
         ensure_window_set_up(window)
+
+    def on_load_project_async(self, window: sublime.Window) -> None:
+        """Called after the project settings are saved. It has to be async for a newly loaded project to recompile."""
+        AioSettings.refresh(window)
 
     def on_post_save(self, view: sublime.View) -> None:
         run_auto_set_syntax_on_view(view, ListenerEvent.SAVE)

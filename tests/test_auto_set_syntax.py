@@ -74,8 +74,7 @@ class TestRunAutoSetSyntaxOnView:
         view.buffer.return_value.views.return_value = [view]
 
         fake_g = MagicMock()
-        fake_g.is_plugin_ready.return_value = ready
-        fake_g.syntax_rule_collections.get.return_value = MagicMock()
+        fake_g.compiled_rules.get.return_value = MagicMock() if ready else None
         monkeypatch.setattr(mod, "G", fake_g)
         monkeypatch.setattr(mod, "get_merged_plugin_settings", lambda **kw: {})
         monkeypatch.setattr(mod, "is_syntaxable_view", lambda *a, **kw: syntaxable)
