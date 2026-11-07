@@ -8,14 +8,12 @@ from .auto_set_syntax_download_dependencies import remove_stale_dependency_dirs
 from .auto_set_syntax_syntax_rules_summary import AutoSetSyntaxSyntaxRulesSummaryCommand
 
 __all__ = (
-    # ST: commands
     "AutoSetSyntaxCommand",
     "AutoSetSyntaxCreateNewConstraintCommand",
     "AutoSetSyntaxCreateNewMatchCommand",
     "AutoSetSyntaxDebugInformationCommand",
     "AutoSetSyntaxDownloadDependenciesCommand",
     "AutoSetSyntaxSyntaxRulesSummaryCommand",
-    # ...
     "remove_stale_dependency_dirs",
     "run_auto_set_syntax_on_view",
 )

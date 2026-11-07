@@ -22,7 +22,7 @@ def is_syntaxable_view(view: sublime.View, *, must_plaintext: bool = False) -> b
 
 def create_new_view(
     *,
-    name: str = "Untitled",
+    name: str | None = None,
     content: str = "",
     syntax: str | sublime.Syntax | None = None,
     include_hidden_syntax: bool = False,
@@ -35,7 +35,8 @@ def create_new_view(
     window = window or sublime.active_window()
 
     view = window.new_file()
-    view.set_name(name)
+    if name is not None:
+        view.set_name(name)
     view.set_scratch(scratch)
     view.settings().update(settings | {VIEW_KEY_IS_CREATED: True})
 

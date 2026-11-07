@@ -9,9 +9,7 @@ import sublime_plugin
 from ..constants import PLUGIN_CUSTOM_DIR
 from ..constants import PLUGIN_CUSTOM_MODULE_PATHS
 from ..constants import PLUGIN_NAME
-from ..constants import VIEW_KEY_IS_CREATED
-from ..types import SyntaxLike
-from ..utils import find_syntax
+from ..helpers import create_new_view
 
 _PYTHON_VERSION_SHORT = f"{sys.version_info.major}.{sys.version_info.minor}"
 """The running interpreter's `major.minor` version, for the scaffolded `.python-version` file."""
@@ -29,13 +27,19 @@ class AbstractCreateNewImplementationCommand(ABC, sublime_plugin.WindowCommand):
 
     @override
     def run(self) -> None:
-        if not _clone_file_as_template(
-            self.window,
-            f"Packages/{PLUGIN_NAME}/templates/{self.template_file}",
-            self.save_dir,
-            self.template_syntax,
-        ):
+        source_path = f"Packages/{PLUGIN_NAME}/templates/{self.template_file}"
+        try:
+            template = sublime.load_resource(source_path)
+        except FileNotFoundError as e:
+            sublime.error_message(str(e))
             return
+
+        create_new_view(
+            content=template,
+            syntax=self.template_syntax,
+            settings={"default_dir": self.save_dir},
+            window=self.window,
+        )
 
         save_dir = Path(self.save_dir)
         save_dir.mkdir(parents=True, exist_ok=True)
@@ -52,28 +56,3 @@ class AutoSetSyntaxCreateNewMatchCommand(AbstractCreateNewImplementationCommand)
     template_type = "Match"
     template_file = "example_match.py"
     save_dir = str(PLUGIN_CUSTOM_MODULE_PATHS["match"])
-
-
-def _clone_file_as_template(
-    window: sublime.Window,
-    source_path: str,
-    save_dir: str,
-    syntax: SyntaxLike | None = None,
-) -> sublime.View | None:
-    try:
-        template = sublime.load_resource(source_path)
-    except FileNotFoundError as e:
-        sublime.error_message(str(e))
-        return None
-
-    new = window.new_file()
-    new.run_command("append", {"characters": template})
-    new.settings().update({
-        "default_dir": save_dir,
-        VIEW_KEY_IS_CREATED: True,
-    })
-
-    if syntax and (syntax := find_syntax(syntax)):
-        new.assign_syntax(syntax)
-
-    return new

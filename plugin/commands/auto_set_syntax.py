@@ -33,7 +33,7 @@ class AutoSetSyntaxCommand(sublime_plugin.TextCommand):
 
 def run_auto_set_syntax_on_view(
     view: sublime.View,
-    event: ListenerEvent | None = None,
+    event: ListenerEvent,
     *,
     must_plaintext: bool = False,
 ) -> bool:
@@ -60,7 +60,7 @@ def run_auto_set_syntax_on_view(
     return _sorry_cannot_help(view, event)
 
 
-def _apply(view: sublime.View, decision: SyntaxDecision | None, event: ListenerEvent | None) -> bool:
+def _apply(view: sublime.View, decision: SyntaxDecision | None, event: ListenerEvent) -> bool:
     """Carry out a `decision`. The only place a detector's verdict reaches the view."""
     if not decision:
         return False
@@ -70,7 +70,7 @@ def _apply(view: sublime.View, decision: SyntaxDecision | None, event: ListenerE
     return assign_syntax_to_view(view, decision.syntax, details=details)
 
 
-def _sorry_cannot_help(view: sublime.View, event: ListenerEvent | None = None) -> bool:
+def _sorry_cannot_help(view: sublime.View, event: ListenerEvent) -> bool:
     details: dict[str, Any] = {"event": event, "reason": "no matching rule"}
     Logger.log(lambda: f"❌ Cannot help {stringify(view)} because {stringify(details)}", window=view.window())
     return False
